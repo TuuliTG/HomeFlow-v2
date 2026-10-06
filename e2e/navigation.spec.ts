@@ -18,7 +18,7 @@ test('user can move between all main screens', async ({ page }) => {
 });
 
 test('main screens have no detectable accessibility violations', async ({ page }) => {
-  for (const path of ['/', '/me', '/rewards', '/statistics']) {
+  for (const path of ['/', '/me', '/rewards', '/statistics', '/login']) {
     await page.goto(path);
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations, `a11y violations on ${path}`).toEqual([]);
