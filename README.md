@@ -56,7 +56,7 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
 ## One-time hosting setup
 
 1. **Supabase:** create a project and copy the Project URL and anon key into `.env.local` and Vercel.
-2. **Vercel:** import the GitHub repo (framework preset: Vite) and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+2. **Vercel:** import the GitHub repo and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Build settings and SPA routing come from `vercel.json`.
 3. **GitHub → Settings → Branches:** add a protection rule for `main`. Require a pull request, and require these
    status checks to pass: _Lint, format, types, dead code_, _Unit tests_, _Build_, _E2E (Playwright)_,
    _Dependency security_, _Analyze_. Block force pushes.
