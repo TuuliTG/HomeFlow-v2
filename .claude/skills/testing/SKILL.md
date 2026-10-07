@@ -22,8 +22,8 @@ Every behaviour change comes with tests. Coverage threshold is 80% and must not 
 - Query like a user: `getByRole`, `getByLabelText`, `getByText`. `data-testid` only as last resort.
 - Interact via `userEvent.setup()`, assert visible outcomes — not internal state or implementation calls.
 - Mock at the boundary: mock the feature `api.ts` module (`vi.mock('@/features/tasks/api')`), never React internals.
-  Never hit a real Supabase project from unit tests. The auth api is faked for every test in `src/test/setup.ts`;
-  drive it with `fakeAuthBackend` from `src/test/fakeAuthApi.ts`. E2E fakes Supabase over the network with
+  Never hit a real Supabase project from unit tests. The auth and household apis are faked for every test in
+  `src/test/setup.ts`; drive them with `fakeAuthBackend` / `fakeHouseholdBackend` from `src/test/fake*Api.ts`. E2E fakes Supabase over the network with
   `e2e/fakeSupabase.ts`.
 - Wrap components using TanStack Query in a fresh `QueryClient` per test (retries off).
 - One behaviour per test; descriptive names (`it('awards creation points when a task is added')`).

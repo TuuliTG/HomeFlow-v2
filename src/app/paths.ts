@@ -5,4 +5,6 @@ export const paths = {
   rewards: '/rewards',
   statistics: '/statistics',
   login: '/login',
+  household: '/household',
+  householdSetup: '/household/setup',
 } as const;

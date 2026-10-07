@@ -26,7 +26,8 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node ≥ 22.12 (`.
 
 - Feature folders: `src/features/<feature>/` holds its components, hooks, `api.ts` and tests side by side.
   `src/app` = shell/routing/providers, `src/components/ui` = shared presentational components, `src/lib` = infrastructure.
-- Features must not import other features' internals; promote shared code to `components/ui` or `lib`.
+- Features must not import other features' internals; promote shared code to `components/ui` or `lib`. Read the
+  logged-in user with `useAuth()` from `@/lib/auth`; cross-feature composition (e.g. `OnboardingGate`) lives in `src/app`.
 - Data access: components → hooks (TanStack Query) → feature `api.ts` → `getSupabaseClient()`. Never call Supabase
   from components (ESLint enforces the import ban). Validate external data with Zod.
 - Every Supabase table has Row Level Security enabled with explicit policies. Scope family data with
