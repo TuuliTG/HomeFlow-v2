@@ -4,8 +4,9 @@ A mobile-first web app (PWA) that helps families share household tasks fairly. I
 invisible planning work visible, and motivates through shared goals instead of control.
 See [docs/product-brief.md](docs/product-brief.md).
 
-**Status:** development foundation in place (app shell, CI/CD, agent tooling). Front-end-only previews of mock
-log-in and task creation; tasks live in memory and reset on reload until the Supabase backend is wired up.
+**Status:** development foundation in place (app shell, CI/CD, agent tooling). Log-in uses Supabase Auth with
+emailed one-time codes and stores a display name per user ([ADR 0009](docs/adr/0009-passwordless-email-login.md)).
+Tasks still live in memory and reset on reload.
 
 ## Tech stack
 
@@ -19,7 +20,7 @@ Requires Node ≥ 22.12 (see `.nvmrc`).
 
 ```sh
 npm install
-cp .env.example .env.local   # fill in Supabase URL + anon key (only needed once features use data)
+cp .env.example .env.local   # fill in Supabase URL + anon key (needed to log in)
 npm run dev
 ```
 
@@ -32,6 +33,7 @@ npm run dev
 | `npm run knip`         | Find unused files, exports and dependencies                             |
 | `npm run db:start`     | Local Supabase (requires Docker)                                        |
 | `npm run db:migration` | Create a new SQL migration                                              |
+| `npm run db:test`      | Run database tests (RLS) in `supabase/tests` against local Supabase     |
 
 ## Project structure
 
@@ -56,7 +58,16 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
 
 ## One-time hosting setup
 
-1. **Supabase:** create a project and copy the Project URL and anon key into `.env.local` and Vercel.
+1. **Supabase:** create a project in an **EU region** and copy the Project URL and anon key into `.env.local` and
+   Vercel. Then:
+   - Apply the migrations: `npx supabase link --project-ref <ref>` and `npx supabase db push`.
+   - **Auth → URL Configuration:** set the Site URL to the production URL and add `https://homeflow-v2-*-tuuli1.vercel.app/**`
+     (previews) and `http://localhost:5173/login` to the redirect URLs.
+   - **Auth → Email Templates:** paste `supabase/templates/login_code.html` into both _Confirm signup_ and
+     _Magic Link_, so the email shows the login code.
+   - **Auth → SMTP:** the built-in sender only emails project members and is rate-limited; add custom SMTP
+     before inviting others.
+   - Accept Supabase's DPA (Organization → Legal documents).
 2. **Vercel:** import the GitHub repo and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Build settings and SPA routing come from `vercel.json`.
 3. **GitHub → Settings → Branches:** add a protection rule for `main`. Require a pull request, and require these
    status checks to pass: _Lint, format, types, dead code_, _Unit tests_, _Build_, _E2E (Playwright)_,

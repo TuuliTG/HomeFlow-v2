@@ -15,14 +15,16 @@ Every behaviour change comes with tests. Coverage threshold is 80% and must not 
 | Components & hooks                       | Vitest + RTL                                               | next to component          | What the user sees and does                        |
 | Routing/shell                            | Vitest + `renderAppAt()` (`src/test/renderWithRouter.tsx`) | `src/app`                  | Navigation                                         |
 | User flows, layout, a11y                 | Playwright + axe                                           | `e2e/*.spec.ts`            | Critical journeys on mobile + desktop              |
-| DB policies (RLS)                        | SQL/integration in CI (local Supabase)                     | `supabase/tests`           | Members can't see other families' data             |
+| DB policies (RLS)                        | pgTAP via `npm run db:test` (local Supabase, CI)           | `supabase/tests`           | Members can't see other families' data             |
 
 ## Rules
 
 - Query like a user: `getByRole`, `getByLabelText`, `getByText`. `data-testid` only as last resort.
 - Interact via `userEvent.setup()`, assert visible outcomes — not internal state or implementation calls.
 - Mock at the boundary: mock the feature `api.ts` module (`vi.mock('@/features/tasks/api')`), never React internals.
-  Never hit a real Supabase project from unit tests.
+  Never hit a real Supabase project from unit tests. The auth api is faked for every test in `src/test/setup.ts`;
+  drive it with `fakeAuthBackend` from `src/test/fakeAuthApi.ts`. E2E fakes Supabase over the network with
+  `e2e/fakeSupabase.ts`.
 - Wrap components using TanStack Query in a fresh `QueryClient` per test (retries off).
 - One behaviour per test; descriptive names (`it('awards creation points when a task is added')`).
 - No snapshot tests for components. No sleeps — use `findBy*` / Playwright auto-waiting.
