@@ -15,3 +15,4 @@ Never edit an accepted ADR's decision — supersede it with a new one and update
 | [0008](0008-branch-pr-workflow.md)            | Branch → PR → main workflow                    | Accepted |
 | [0009](0009-passwordless-email-login.md)      | Passwordless email login, minimal profile      | Accepted |
 | [0010](0010-households-and-shared-tasks.md)   | Households and shared tasks                    | Accepted |
+| [0011](0011-app-requires-login.md)            | The app requires logging in                    | Accepted |

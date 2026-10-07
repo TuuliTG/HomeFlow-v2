@@ -30,9 +30,10 @@ Today tasks live in memory on one device (`TasksProvider`) and there is no notio
       (name) or joins one (invite code). A household screen shows the invite code to share and the member names.
       New `src/features/household/` feature with `api.ts` + TanStack Query hooks; unit tests with a faked api;
       e2e flow with `e2e/fakeSupabase.ts`.
-- [ ] **1c. Tasks in Supabase** — `src/features/tasks/api.ts` + query/mutation hooks replace the in-memory
+- [x] **1c. Tasks in Supabase** — `src/features/tasks/api.ts` + query/mutation hooks replace the in-memory
       `TasksProvider`. Tasks show who created them. Logged-out visitors and users without a household are guided
       to log in / set up a household instead of seeing an empty board. Update unit tests, e2e and README status.
+      Decided: no logged-out "try it out" mode ([ADR 0011](docs/adr/0011-app-requires-login.md)).
 
 ### 2. Live updates while the app is open
 
@@ -63,4 +64,3 @@ Today tasks live in memory on one device (`TasksProvider`) and there is no notio
 ## Open questions
 
 - Should leaving a household / switching households be possible? (Not needed for 1–3; a user is in at most one.)
-- Should logged-out "try it out" use stay possible once tasks are stored in Supabase? (Decide in 1c.)
