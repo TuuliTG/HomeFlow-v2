@@ -63,12 +63,14 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
    - Apply the migrations: `npx supabase link --project-ref <ref>` and `npx supabase db push`.
    - **Auth → URL Configuration:** set the Site URL to the production URL and add `https://homeflow-v2-*-tuuli1.vercel.app/**`
      (previews) and `http://localhost:5173/login` to the redirect URLs.
-   - **Auth → Email Templates:** paste `supabase/templates/login_code.html` into both _Confirm signup_ and
-     _Magic Link_, so the email shows the login code.
-   - **Auth → SMTP:** the built-in sender only emails project members and is rate-limited; add custom SMTP
-     before inviting others.
+   - **Auth → SMTP:** the built-in sender only emails project members and is rate-limited, and on the free plan
+     email templates can't be edited without custom SMTP. Add one (e.g. Brevo, EU-based) before inviting others.
+     Until then the default email has only a login link, which the app also accepts.
+   - **Auth → Emails → Templates** (after SMTP): paste `supabase/templates/login_code.html` into both
+     _Confirm signup_ and _Magic Link_, so the email also shows the login code.
    - Accept Supabase's DPA (Organization → Legal documents).
-2. **Vercel:** import the GitHub repo and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Build settings and SPA routing come from `vercel.json`.
+2. **Vercel:** import the GitHub repo and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (real values, for
+   both Production and Preview; redeploy after changing them). Build settings and SPA routing come from `vercel.json`.
 3. **GitHub → Settings → Branches:** add a protection rule for `main`. Require a pull request, and require these
    status checks to pass: _Lint, format, types, dead code_, _Unit tests_, _Build_, _E2E (Playwright)_,
    _Dependency security_, _Analyze_. Block force pushes.
