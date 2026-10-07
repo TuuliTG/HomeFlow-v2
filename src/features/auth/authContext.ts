@@ -1,11 +1,12 @@
 import { createContext, useContext } from 'react';
 
-import type { MockUser } from '@/features/auth/mockSession';
+import type { AuthUser } from '@/features/auth/api';
 
 export interface AuthState {
-  user: MockUser | null;
-  logIn: (name: string) => void;
-  logOut: () => void;
+  /** `loading` until the stored session has been checked on startup. */
+  status: 'loading' | 'ready';
+  user: AuthUser | null;
+  logOut: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthState | null>(null);

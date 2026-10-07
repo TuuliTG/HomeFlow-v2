@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4173;
+
+/** Never a real project: e2e/fakeSupabase.ts answers every request to this URL. */
+export const FAKE_SUPABASE_URL = 'https://e2e.supabase.test';
 const isCI = Boolean(process.env.CI);
 
 export default defineConfig({
@@ -23,5 +26,6 @@ export default defineConfig({
     port: PORT,
     reuseExistingServer: !isCI,
     timeout: 120_000,
+    env: { VITE_SUPABASE_URL: FAKE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY: 'e2e-anon-key' },
   },
 });

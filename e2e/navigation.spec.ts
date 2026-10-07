@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
+import { fakeSupabase } from './fakeSupabase';
+
 test('user can move between all main screens', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeVisible();
@@ -17,12 +19,17 @@ test('user can move between all main screens', async ({ page }) => {
   }
 });
 
-test('user can log in with a name and log out (mock, front end only)', async ({ page }) => {
+test('user can log in with an emailed code, choose a name and log out', async ({ page }) => {
+  await fakeSupabase(page);
   await page.goto('/');
   await page.getByRole('link', { name: 'Log in' }).click();
 
-  await page.getByLabel('Your name').fill('Anna');
+  await page.getByLabel('Email').fill('anna@example.com');
+  await page.getByRole('button', { name: 'Send code' }).click();
+  await page.getByLabel('Login code').fill('123456');
   await page.getByRole('button', { name: 'Log in' }).click();
+  await page.getByLabel('Your name').fill('Anna');
+  await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText('Hello, Anna')).toBeVisible();
 
   await page.reload();
