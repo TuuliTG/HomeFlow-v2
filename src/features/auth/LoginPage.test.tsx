@@ -34,8 +34,8 @@ describe('login', () => {
 
     await requestCode(user);
 
-    expect(await screen.findByText(/We sent a login code to/)).toHaveTextContent(
-      'We sent a login code to anna@example.com',
+    expect(await screen.findByText(/We sent an email to/)).toHaveTextContent(
+      'We sent an email to anna@example.com',
     );
     expect(screen.getByLabelText('Login code')).toHaveFocus();
   });
@@ -57,7 +57,9 @@ describe('login', () => {
 
     await requestCode(user);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't send the code.");
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "We couldn't send the code (Email rate limit exceeded).",
+    );
   });
 
   it('explains when the code is wrong', async () => {

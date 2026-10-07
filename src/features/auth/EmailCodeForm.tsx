@@ -29,8 +29,10 @@ export function EmailCodeForm() {
     onSuccess: () => {
       setCodeSent(true);
     },
-    onError: () => {
-      setError("We couldn't send the code. Wait a moment and try again.");
+    onError: (sendError) => {
+      // Supabase's reason (e.g. a rate limit or a sender restriction) tells the user what to do next.
+      const reason = sendError instanceof Error ? ` (${sendError.message})` : '';
+      setError(`We couldn't send the code${reason}. Wait a moment and try again.`);
     },
   });
   const verifyCode = useMutation({
@@ -100,7 +102,8 @@ export function EmailCodeForm() {
   return (
     <form onSubmit={handleVerifyCode} className="flex flex-col gap-4" noValidate>
       <p className="text-sm text-slate-700">
-        We sent a login code to <strong>{email.trim()}</strong>. It can take a minute to arrive.
+        We sent an email to <strong>{email.trim()}</strong>. Open the link in it on this device, or
+        enter the code from it below. It can take a minute to arrive.
       </p>
       <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
         Login code
