@@ -29,7 +29,8 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node ≥ 22.12 (`.
 - Features must not import other features' internals; promote shared code to `components/ui` or `lib`.
 - Data access: components → hooks (TanStack Query) → feature `api.ts` → `getSupabaseClient()`. Never call Supabase
   from components (ESLint enforces the import ban). Validate external data with Zod.
-- Every Supabase table has Row Level Security enabled with explicit policies.
+- Every Supabase table has Row Level Security enabled with explicit policies. Scope family data with
+  `household_id = (select private.current_household_id())` ([ADR 0010](docs/adr/0010-households-and-shared-tasks.md)).
 - Mobile first: design for ~390px wide, then enhance with `md:` breakpoints. Accessible by default (roles, labels, contrast).
 - Import with the `@/` alias. Add dependencies with `npm install <pkg>` (exact versions are saved automatically).
 

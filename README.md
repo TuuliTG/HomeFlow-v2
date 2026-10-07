@@ -6,7 +6,9 @@ See [docs/product-brief.md](docs/product-brief.md).
 
 **Status:** development foundation in place (app shell, CI/CD, agent tooling). Log-in uses Supabase Auth with
 emailed one-time codes and stores a display name per user ([ADR 0009](docs/adr/0009-passwordless-email-login.md)).
-Tasks still live in memory and reset on reload.
+The database has households, members and shared tasks ([ADR 0010](docs/adr/0010-households-and-shared-tasks.md)),
+but the app doesn't use them yet: tasks still live in memory and reset on reload. Work in progress is tracked in
+[plan.md](plan.md).
 
 ## Tech stack
 
