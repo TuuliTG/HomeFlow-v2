@@ -3,6 +3,7 @@ import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { FAKE_LOGIN_CODE, fakeAuthBackend } from '@/test/fakeAuthApi';
+import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { renderAppAt } from '@/test/renderWithRouter';
 
 async function requestCode(user: UserEvent, email = 'anna@example.com') {
@@ -82,7 +83,7 @@ describe('login', () => {
     expect(screen.getByLabelText('Email')).toHaveValue('anna@example.com');
   });
 
-  it('asks a first-time user for their name, then greets them', async () => {
+  it('asks a first-time user for their name, then to set up a household', async () => {
     const user = userEvent.setup();
     renderAppAt('/login');
 
@@ -92,9 +93,8 @@ describe('login', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Available tasks' }),
+      await screen.findByRole('heading', { level: 1, name: 'Set up your household' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Hello, Anna')).toBeInTheDocument();
   });
 
   it('asks for a name instead of saving an empty one', async () => {
@@ -110,7 +110,8 @@ describe('login', () => {
 
   it('takes a returning user straight to the app', async () => {
     const user = userEvent.setup();
-    fakeAuthBackend.logInAs('ben@example.com', 'Ben');
+    const ben = fakeAuthBackend.logInAs('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
     const { unmount } = renderAppAt('/');
     await user.click(await screen.findByRole('button', { name: 'Log out' }));
     unmount();
@@ -120,6 +121,7 @@ describe('login', () => {
     await enterCode(user);
 
     expect(await screen.findByText('Hello, Ben')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeInTheDocument();
   });
 
   it('lets the user continue to the app without logging in', async () => {
@@ -135,7 +137,8 @@ describe('login', () => {
 describe('account status', () => {
   it('greets a logged-in user by name and logs them out', async () => {
     const user = userEvent.setup();
-    fakeAuthBackend.logInAs('anna@example.com', 'Anna');
+    const anna = fakeAuthBackend.logInAs('anna@example.com', 'Anna');
+    fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
     renderAppAt('/me');
 
     expect(await screen.findByText('Hello, Anna')).toBeInTheDocument();
@@ -145,8 +148,10 @@ describe('account status', () => {
     expect(screen.queryByText('Hello, Anna')).not.toBeInTheDocument();
   });
 
-  it('shows the email when the user has not chosen a name yet', async () => {
-    fakeAuthBackend.logInAs('anna@example.com');
+  it("shows the email when the user's name can't be loaded", async () => {
+    const anna = fakeAuthBackend.logInAs('anna@example.com', 'Anna');
+    fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
+    fakeAuthBackend.failLoadingProfiles();
     renderAppAt('/');
 
     expect(await screen.findByText('Logged in as anna@example.com')).toBeInTheDocument();

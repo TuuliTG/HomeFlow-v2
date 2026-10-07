@@ -51,3 +51,11 @@ export function ChartIcon(props: IconProps) {
     </BaseIcon>
   );
 }
+
+export function HomeIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="m3 11 9-7 9 7M5 9.5V20h14V9.5M10 20v-5h4v5" />
+    </BaseIcon>
+  );
+}

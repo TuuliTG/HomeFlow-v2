@@ -10,6 +10,7 @@ export const FAKE_LOGIN_CODE = '123456';
 
 let currentUser: AuthUser | null = null;
 let sendingFails = false;
+let loadingProfilesFails = false;
 const profiles = new Map<string, Profile>();
 const listeners = new Set<(user: AuthUser | null) => void>();
 
@@ -28,17 +29,30 @@ export const fakeAuthBackend = {
   reset() {
     currentUser = null;
     sendingFails = false;
+    loadingProfilesFails = false;
     profiles.clear();
     listeners.clear();
   },
   /** Starts the next render already logged in, optionally with a saved profile. */
-  logInAs(email: string, displayName?: string) {
+  logInAs(email: string, displayName?: string): AuthUser {
     const user = userFor(email);
     if (displayName) profiles.set(user.id, { displayName });
     currentUser = user;
+    return user;
   },
+  /** Saves a profile for someone other than the logged-in user, e.g. a family member. */
+  addProfile(email: string, displayName: string): AuthUser {
+    const user = userFor(email);
+    profiles.set(user.id, { displayName });
+    return user;
+  },
+  currentUser: () => currentUser,
+  displayNameOf: (userId: string) => profiles.get(userId)?.displayName ?? null,
   failSendingCodes() {
     sendingFails = true;
+  },
+  failLoadingProfiles() {
+    loadingProfilesFails = true;
   },
 };
 
@@ -65,7 +79,9 @@ export const subscribeToAuthChanges: typeof authApi.subscribeToAuthChanges = (on
 };
 
 export const fetchOwnProfile: typeof authApi.fetchOwnProfile = (userId) =>
-  Promise.resolve(profiles.get(userId) ?? null);
+  loadingProfilesFails
+    ? Promise.reject(new Error('Network error'))
+    : Promise.resolve(profiles.get(userId) ?? null);
 
 export const saveOwnProfile: typeof authApi.saveOwnProfile = (userId, displayName) => {
   profiles.set(userId, { displayName });
