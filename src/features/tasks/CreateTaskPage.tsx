@@ -1,12 +1,23 @@
-import { type SyntheticEvent, useState } from 'react';
+import { type SyntheticEvent, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { newTaskSchema, type TaskType, taskTypeLabels, taskTypes } from '@/features/tasks/task';
+import {
+  newTaskSchema,
+  TITLE_MAX_LENGTH,
+  type TaskType,
+  taskTypeLabels,
+  taskTypes,
+} from '@/features/tasks/task';
 import { useTasks } from '@/features/tasks/tasksContext';
 
 const DEFAULT_POINTS = '3';
+
+interface FormError {
+  field: 'title' | 'points';
+  message: string;
+}
 
 const inputClassName =
   'focus:border-brand-600 focus:ring-brand-600 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base font-normal text-slate-900 focus:ring-1 focus:outline-none';
@@ -17,13 +28,24 @@ export function CreateTaskPage() {
   const [title, setTitle] = useState('');
   const [type, setType] = useState<TaskType>('physical');
   const [points, setPoints] = useState(DEFAULT_POINTS);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<FormError | null>(null);
+  const errorId = useId();
+  const titleRef = useRef<HTMLInputElement>(null);
+  const pointsRef = useRef<HTMLInputElement>(null);
+
+  function errorPropsFor(field: FormError['field']) {
+    const hasError = error?.field === field;
+    return { 'aria-invalid': hasError, 'aria-describedby': hasError ? errorId : undefined };
+  }
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     const parsed = newTaskSchema.safeParse({ title, type, points });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Check the task details.');
+      const [issue] = parsed.error.issues;
+      const field = issue?.path[0] === 'points' ? 'points' : 'title';
+      setError({ field, message: issue?.message ?? 'Check the task details.' });
+      (field === 'points' ? pointsRef : titleRef).current?.focus();
       return;
     }
     addTask(parsed.data);
@@ -50,6 +72,9 @@ export function CreateTaskPage() {
           <input
             type="text"
             name="title"
+            ref={titleRef}
+            maxLength={TITLE_MAX_LENGTH}
+            {...errorPropsFor('title')}
             placeholder="e.g. Take out the recycling"
             value={title}
             onChange={(event) => {
@@ -88,6 +113,8 @@ export function CreateTaskPage() {
           <input
             type="number"
             name="points"
+            ref={pointsRef}
+            {...errorPropsFor('points')}
             inputMode="numeric"
             min={1}
             max={10}
@@ -100,8 +127,8 @@ export function CreateTaskPage() {
         </label>
 
         {error && (
-          <p role="alert" className="text-sm text-red-700">
-            {error}
+          <p id={errorId} role="alert" className="text-sm text-red-700">
+            {error.message}
           </p>
         )}
 

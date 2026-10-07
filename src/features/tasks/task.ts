@@ -9,12 +9,14 @@ export const taskTypeLabels: Record<TaskType, string> = {
   planning: 'Planning',
 };
 
+export const TITLE_MAX_LENGTH = 80;
+
 export const newTaskSchema = z.object({
   title: z
     .string()
     .trim()
     .min(1, 'Give the task a name.')
-    .max(80, 'Keep the name under 80 characters.'),
+    .max(TITLE_MAX_LENGTH, `Keep the name to ${TITLE_MAX_LENGTH} characters or fewer.`),
   type: z.enum(taskTypes),
   points: z.coerce
     .number()

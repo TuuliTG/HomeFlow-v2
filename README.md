@@ -4,7 +4,8 @@ A mobile-first web app (PWA) that helps families share household tasks fairly. I
 invisible planning work visible, and motivates through shared goals instead of control.
 See [docs/product-brief.md](docs/product-brief.md).
 
-**Status:** development foundation in place (app shell, CI/CD, agent tooling). Features come next.
+**Status:** development foundation in place (app shell, CI/CD, agent tooling). Front-end-only previews of mock
+log-in and task creation; tasks live in memory and reset on reload until the Supabase backend is wired up.
 
 ## Tech stack
 

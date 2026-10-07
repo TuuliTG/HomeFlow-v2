@@ -60,6 +60,7 @@ describe('creating a task', () => {
     { case: 'an empty name', title: '   ', points: '3', message: 'Give the task a name.' },
     { case: 'too few points', title: 'Dishes', points: '0', message: POINTS_ERROR },
     { case: 'too many points', title: 'Dishes', points: '11', message: POINTS_ERROR },
+    { case: 'fractional points', title: 'Dishes', points: '2.5', message: POINTS_ERROR },
   ])('refuses to create a task with $case', async ({ title, points, message }) => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
@@ -71,6 +72,30 @@ describe('creating a task', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent(message);
     expect(screen.getByRole('heading', { level: 1, name: 'New task' })).toBeInTheDocument();
+  });
+
+  it('points out and focuses the field that needs fixing', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.type(screen.getByLabelText('Task'), 'Dishes');
+    await user.clear(screen.getByLabelText('Points'));
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    const points = screen.getByLabelText('Points');
+    expect(points).toHaveFocus();
+    expect(points).toHaveAttribute('aria-invalid', 'true');
+    expect(points).toHaveAccessibleDescription(POINTS_ERROR);
+    expect(screen.getByLabelText('Task')).toHaveAttribute('aria-invalid', 'false');
+  });
+
+  it('limits task names to 80 characters', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.type(screen.getByLabelText('Task'), 'a'.repeat(90));
+
+    expect(screen.getByLabelText('Task')).toHaveValue('a'.repeat(80));
   });
 
   it('can be cancelled without creating a task', async () => {
