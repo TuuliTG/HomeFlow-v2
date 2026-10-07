@@ -1,8 +1,11 @@
 import { z } from 'zod';
 
+// Copying .env.example without filling it in is an easy mistake; fail on its placeholders by name.
+const isNotPlaceholder = (value: string) => !value.includes('your-');
+
 const envSchema = z.object({
-  VITE_SUPABASE_URL: z.url(),
-  VITE_SUPABASE_ANON_KEY: z.string().min(1),
+  VITE_SUPABASE_URL: z.url().refine(isNotPlaceholder),
+  VITE_SUPABASE_ANON_KEY: z.string().min(1).refine(isNotPlaceholder),
 });
 
 export type Env = z.infer<typeof envSchema>;
