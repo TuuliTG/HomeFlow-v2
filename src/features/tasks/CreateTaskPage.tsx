@@ -11,17 +11,20 @@ import {
   taskTypeLabels,
   taskTypes,
 } from '@/features/tasks/task';
-import { useTasks } from '@/features/tasks/tasksContext';
+import { useAddTask } from '@/features/tasks/useTasks';
+import { useLoggedInUser } from '@/lib/auth';
 
 const DEFAULT_POINTS = '3';
 
 interface FormError {
-  field: 'title' | 'points';
+  /** The field to fix, or null when saving failed. */
+  field: 'title' | 'points' | null;
   message: string;
 }
 
 export function CreateTaskPage() {
-  const { addTask } = useTasks();
+  const user = useLoggedInUser();
+  const addTask = useAddTask(user.id);
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [type, setType] = useState<TaskType>('physical');
@@ -31,7 +34,7 @@ export function CreateTaskPage() {
   const titleRef = useRef<HTMLInputElement>(null);
   const pointsRef = useRef<HTMLInputElement>(null);
 
-  function errorPropsFor(field: FormError['field']) {
+  function errorPropsFor(field: 'title' | 'points') {
     const hasError = error?.field === field;
     return { 'aria-invalid': hasError, 'aria-describedby': hasError ? errorId : undefined };
   }
@@ -46,8 +49,12 @@ export function CreateTaskPage() {
       (field === 'points' ? pointsRef : titleRef).current?.focus();
       return;
     }
-    addTask(parsed.data);
-    void navigate(paths.tasks);
+    addTask.mutate(parsed.data, {
+      onSuccess: () => void navigate(paths.tasks),
+      onError: () => {
+        setError({ field: null, message: "We couldn't save the task. Try again." });
+      },
+    });
   }
 
   return (
@@ -133,7 +140,8 @@ export function CreateTaskPage() {
         <div className="flex gap-3">
           <button
             type="submit"
-            className="bg-brand-600 hover:bg-brand-900 flex-1 rounded-lg px-4 py-2.5 font-semibold text-white"
+            disabled={addTask.isPending}
+            className="bg-brand-600 hover:bg-brand-900 flex-1 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
           >
             Create task
           </button>

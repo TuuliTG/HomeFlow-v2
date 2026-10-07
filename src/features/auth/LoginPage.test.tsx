@@ -17,11 +17,8 @@ async function enterCode(user: UserEvent, code = FAKE_LOGIN_CODE) {
 }
 
 describe('login', () => {
-  it('opens from the log-in link and shows no main navigation', async () => {
-    const user = userEvent.setup();
+  it('is where logged-out visitors are sent, without the main navigation', () => {
     renderAppAt('/');
-
-    await user.click(screen.getByRole('link', { name: 'Log in' }));
 
     expect(
       screen.getByRole('heading', { level: 1, name: 'Log in to HomeFlow' }),
@@ -123,15 +120,6 @@ describe('login', () => {
     expect(await screen.findByText('Hello, Ben')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeInTheDocument();
   });
-
-  it('lets the user continue to the app without logging in', async () => {
-    const user = userEvent.setup();
-    renderAppAt('/login');
-
-    await user.click(screen.getByRole('link', { name: 'Continue without logging in' }));
-
-    expect(screen.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeInTheDocument();
-  });
 });
 
 describe('account status', () => {
@@ -144,7 +132,9 @@ describe('account status', () => {
     expect(await screen.findByText('Hello, Anna')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Log out' }));
 
-    expect(await screen.findByRole('link', { name: 'Log in' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Log in to HomeFlow' }),
+    ).toBeInTheDocument();
     expect(screen.queryByText('Hello, Anna')).not.toBeInTheDocument();
   });
 

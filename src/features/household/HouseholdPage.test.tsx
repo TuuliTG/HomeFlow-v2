@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -71,12 +71,5 @@ describe('household page', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load your household.");
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
-  });
-
-  it('asks a logged-out visitor to log in', () => {
-    renderAppAt('/household');
-
-    const prompt = screen.getByText(/to create or join your family's household/);
-    expect(within(prompt).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
   });
 });

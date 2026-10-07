@@ -23,3 +23,10 @@ export function useAuth(): AuthState {
   if (!auth) throw new Error('useAuth must be used inside <AuthProvider>');
   return auth;
 }
+
+/** The logged-in user, for screens that `OnboardingGate` only shows after logging in. */
+export function useLoggedInUser(): AuthUser {
+  const { user } = useAuth();
+  if (!user) throw new Error('useLoggedInUser must be used on a screen that requires logging in');
+  return user;
+}

@@ -1,26 +1,11 @@
-import { Link } from 'react-router';
-
-import { paths } from '@/app/paths';
 import { useOwnProfile } from '@/features/auth/useOwnProfile';
-import { useAuth } from '@/lib/auth';
+import { useAuth, useLoggedInUser } from '@/lib/auth';
 
-/** Shows who is logged in with a log-out button, or a log-in link. */
+/** Shows who is logged in, with a log-out button. */
 export function AccountStatus() {
-  const { status, user, logOut } = useAuth();
-  const profile = useOwnProfile(user?.id);
-
-  if (status === 'loading') return null;
-
-  if (!user) {
-    return (
-      <Link
-        to={paths.login}
-        className="bg-brand-600 hover:bg-brand-900 rounded-lg px-3 py-1.5 text-sm font-semibold text-white"
-      >
-        Log in
-      </Link>
-    );
-  }
+  const user = useLoggedInUser();
+  const { logOut } = useAuth();
+  const profile = useOwnProfile(user.id);
 
   return (
     <div className="flex min-w-0 items-center gap-3 text-sm">

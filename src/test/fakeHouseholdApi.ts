@@ -49,6 +49,7 @@ export const fakeHouseholdBackend = {
     memberships.set(userId, household.id);
     return household;
   },
+  householdIdOf: (userId: string) => memberships.get(userId) ?? null,
   /** Makes creating and joining households fail, like a network error. */
   failRequests() {
     requestsFail = true;
