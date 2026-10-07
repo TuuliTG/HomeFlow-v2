@@ -22,9 +22,9 @@ phone (including an iPhone with HomeFlow installed to the home screen) if it isn
 
 Today tasks live in memory on one device (`TasksProvider`) and there is no notion of a family.
 
-- [ ] **1a. Data model** — `households`, `household_members` and `tasks` tables with Row Level Security; create/join a
+- [x] **1a. Data model** — `households`, `household_members` and `tasks` tables with Row Level Security; create/join a
       household through database functions with an invite code; household members can see each other's display
-      names. pgTAP tests for every policy. ADR 0010. _(This PR, together with this plan.)_
+      names. pgTAP tests for every policy. ADR 0010.
 - [ ] **1b. Household UI** — after choosing a display name, a logged-in user without a household either creates one
       (name) or joins one (invite code). A household screen shows the invite code to share and the member names.
       New `src/features/household/` feature with `api.ts` + TanStack Query hooks; unit tests with a faked api;
