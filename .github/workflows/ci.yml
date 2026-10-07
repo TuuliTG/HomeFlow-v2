@@ -96,6 +96,6 @@ jobs:
           node-version-file: .nvmrc
       - run: npm audit --audit-level=high --omit=dev
       - if: github.event_name == 'pull_request'
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
