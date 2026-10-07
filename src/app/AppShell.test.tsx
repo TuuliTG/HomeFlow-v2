@@ -1,14 +1,21 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { renderAppAt } from '@/test/renderWithRouter';
+import { logInAsFamilyMember } from '@/test/session';
 
 describe('AppShell', () => {
-  it('shows the available tasks screen by default', () => {
+  beforeEach(() => {
+    logInAsFamilyMember();
+  });
+
+  it('shows the available tasks screen by default', async () => {
     renderAppAt('/');
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Available tasks' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Tasks' })).toHaveAttribute('aria-current', 'page');
   });
 
@@ -21,7 +28,7 @@ describe('AppShell', () => {
     const user = userEvent.setup();
     renderAppAt('/statistics');
 
-    await user.click(screen.getByRole('link', { name: linkName }));
+    await user.click(await screen.findByRole('link', { name: linkName }));
 
     expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: linkName })).toHaveAttribute('aria-current', 'page');
@@ -31,8 +38,8 @@ describe('AppShell', () => {
     const user = userEvent.setup();
     renderAppAt('/does-not-exist');
 
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'Back to tasks' }));
-    expect(screen.getByRole('heading', { name: 'Available tasks' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Available tasks' })).toBeInTheDocument();
   });
 });

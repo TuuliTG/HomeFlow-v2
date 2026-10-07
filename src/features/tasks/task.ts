@@ -29,4 +29,8 @@ export type NewTask = z.infer<typeof newTaskSchema>;
 
 export interface Task extends NewTask {
   id: string;
+  /** User id of whoever added the task; null if they have deleted their account. */
+  createdBy: string | null;
+  /** Their display name, if they have chosen one. */
+  creatorName: string | null;
 }

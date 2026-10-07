@@ -9,7 +9,7 @@ test.use({ serviceWorkers: 'block' });
 test('user can log in with an emailed code, choose a name and log out', async ({ page }) => {
   await fakeSupabase(page);
   await page.goto('/');
-  await page.getByRole('link', { name: 'Log in' }).click();
+  await expect(page).toHaveURL(/\/login$/);
 
   await page.getByLabel('Email').fill('anna@example.com');
   await page.getByRole('button', { name: 'Send code' }).click();

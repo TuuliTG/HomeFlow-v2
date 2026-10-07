@@ -6,10 +6,10 @@ See [docs/product-brief.md](docs/product-brief.md).
 
 **Status:** development foundation in place (app shell, CI/CD, agent tooling). Log-in uses Supabase Auth with
 emailed one-time codes and stores a display name per user ([ADR 0009](docs/adr/0009-passwordless-email-login.md)).
-After choosing a name, a user creates a household or joins one with its invite code, and can see who is in it
-([ADR 0010](docs/adr/0010-households-and-shared-tasks.md)). Tasks don't use the household yet: they still live in
-memory and reset on reload. Work in progress is tracked in
-[plan.md](plan.md).
+After choosing a name, a user creates a household or joins one with its invite code
+([ADR 0010](docs/adr/0010-households-and-shared-tasks.md)). The household shares one task board stored in Supabase,
+showing who added each task. The app requires logging in ([ADR 0011](docs/adr/0011-app-requires-login.md)).
+Work in progress is tracked in [plan.md](plan.md).
 
 ## Tech stack
 
@@ -23,7 +23,7 @@ Requires Node ≥ 22.12 (see `.nvmrc`).
 
 ```sh
 npm install
-cp .env.example .env.local   # fill in Supabase URL + anon key (needed to log in)
+cp .env.example .env.local   # fill in Supabase URL + anon key (required: log-in and tasks)
 npm run dev
 ```
 

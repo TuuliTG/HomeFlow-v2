@@ -3,12 +3,12 @@ import { Link } from 'react-router';
 import { paths } from '@/app/paths';
 import { HomeIcon } from '@/components/ui/icons';
 import { useOwnHousehold } from '@/features/household/useHousehold';
-import { useAuth } from '@/lib/auth';
+import { useLoggedInUser } from '@/lib/auth';
 
 /** The household's name, leading to its page (invite code, members). Hidden until there is one. */
 export function HouseholdLink() {
-  const { user } = useAuth();
-  const household = useOwnHousehold(user?.id);
+  const user = useLoggedInUser();
+  const household = useOwnHousehold(user.id);
 
   if (!household.data) return null;
 

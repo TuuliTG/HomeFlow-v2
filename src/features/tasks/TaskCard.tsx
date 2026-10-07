@@ -4,9 +4,16 @@ import { type Task, taskTypeLabels } from '@/features/tasks/task';
 
 interface TaskCardProps {
   task: Task;
+  currentUserId: string;
 }
 
-export function TaskCard({ task }: TaskCardProps) {
+function creatorLabel({ createdBy, creatorName }: Task, currentUserId: string): string {
+  if (createdBy === currentUserId) return 'you';
+  // No name: they haven't chosen one yet, or have deleted their account.
+  return creatorName ?? 'someone';
+}
+
+export function TaskCard({ task, currentUserId }: TaskCardProps) {
   const titleId = useId();
   const isPlanning = task.type === 'planning';
 
@@ -27,6 +34,7 @@ export function TaskCard({ task }: TaskCardProps) {
         >
           {taskTypeLabels[task.type]}
         </span>
+        <span className="text-xs text-slate-500">Added by {creatorLabel(task, currentUserId)}</span>
       </div>
       <span className="text-brand-900 shrink-0 text-sm font-semibold">{task.points} points</span>
     </li>

@@ -1,4 +1,4 @@
-import { Link, Navigate } from 'react-router';
+import { Navigate } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -24,14 +24,6 @@ export function LoginPage() {
         }
       />
       {status === 'ready' && (user ? <ProfileStep userId={user.id} /> : <EmailCodeForm />)}
-      {!user && (
-        <Link
-          to={paths.tasks}
-          className="text-brand-600 mt-6 text-center text-sm font-medium underline"
-        >
-          Continue without logging in
-        </Link>
-      )}
     </main>
   );
 }

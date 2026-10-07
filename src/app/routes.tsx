@@ -13,15 +13,12 @@ import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { AvailableTasksPage } from '@/features/tasks/AvailableTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
-import { TasksProvider } from '@/features/tasks/TasksProvider';
 
 export const routes: RouteObject[] = [
   {
     element: (
       <AuthProvider>
-        <TasksProvider>
-          <Outlet />
-        </TasksProvider>
+        <Outlet />
       </AuthProvider>
     ),
     children: [

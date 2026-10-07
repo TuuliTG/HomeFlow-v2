@@ -9,7 +9,11 @@ function fakeJwt(sub: string) {
 }
 
 /** A household someone else already created; join it with this code. */
-export const EXISTING_HOUSEHOLD = { name: 'The Virtanens', inviteCode: 'KTXN4P7Q' };
+export const EXISTING_HOUSEHOLD = {
+  name: 'The Virtanens',
+  inviteCode: 'KTXN4P7Q',
+  task: 'Book dentist',
+};
 /** The code a household created in a test gets. */
 export const NEW_INVITE_CODE = 'ABCD2345';
 
@@ -17,6 +21,15 @@ interface HouseholdRow {
   id: string;
   name: string;
   invite_code: string;
+}
+
+interface TaskRow {
+  id: string;
+  household_id: string;
+  title: string;
+  type: string;
+  points: number;
+  created_by: string;
 }
 
 async function reply(route: Route, status: number, body?: unknown) {
@@ -45,7 +58,8 @@ function filterIds(filter: string | null): string[] {
 /**
  * Answers the Supabase Auth and REST calls the app makes, so e2e tests run without a backend.
  * Any code is accepted for any email. Like Row Level Security, it shows the user only their own
- * household; another household (Ben's) exists to join with `EXISTING_HOUSEHOLD.inviteCode`.
+ * household and its tasks; another household (Ben's, with one task) exists to join with
+ * `EXISTING_HOUSEHOLD.inviteCode`.
  */
 export async function fakeSupabase(page: Page) {
   const user = {
@@ -62,6 +76,17 @@ export async function fakeSupabase(page: Page) {
   };
   const members = new Map([[existing.id, ['e2e-ben']]]);
   let ownHousehold: HouseholdRow | null = null;
+  // Newest first, like the app asks for.
+  const tasks: TaskRow[] = [
+    {
+      id: 'e2e-ben-task',
+      household_id: existing.id,
+      title: EXISTING_HOUSEHOLD.task,
+      type: 'planning',
+      points: 5,
+      created_by: 'e2e-ben',
+    },
+  ];
 
   function joinAs(household: HouseholdRow) {
     ownHousehold = household;
@@ -110,34 +135,50 @@ export async function fakeSupabase(page: Page) {
     );
   }
 
+  async function tasksEndpoint(route: Route) {
+    const request = route.request();
+    if (request.method() === 'POST') {
+      if (!ownHousehold) return reply(route, 400, { code: '23502', message: 'No household' });
+      const task = request.postDataJSON() as Pick<TaskRow, 'title' | 'type' | 'points'>;
+      tasks.unshift({
+        ...task,
+        id: `e2e-task-${String(tasks.length)}`,
+        household_id: ownHousehold.id,
+        created_by: user.id,
+      });
+      return reply(route, 201);
+    }
+    const householdId = ownHousehold?.id;
+    return reply(
+      route,
+      200,
+      tasks.filter((task) => task.household_id === householdId),
+    );
+  }
+
+  const endpoints: Record<string, (route: Route) => Promise<void>> = {
+    '/auth/v1/otp': (route) => reply(route, 200, {}),
+    '/auth/v1/verify': (route) =>
+      reply(route, 200, {
+        access_token: fakeJwt(user.id),
+        refresh_token: 'e2e-refresh-token',
+        token_type: 'bearer',
+        expires_in: 3600,
+        user,
+      }),
+    '/auth/v1/logout': (route) => reply(route, 204),
+    '/rest/v1/profiles': profilesEndpoint,
+    '/rest/v1/households': (route) => replyWithRows(route, ownHousehold ? [ownHousehold] : []),
+    '/rest/v1/household_members': membersEndpoint,
+    '/rest/v1/rpc/create_household': createHousehold,
+    '/rest/v1/rpc/join_household': joinHousehold,
+    '/rest/v1/tasks': tasksEndpoint,
+  };
+
   await page.route(`${FAKE_SUPABASE_URL}/**`, async (route) => {
     const pathname = new URL(route.request().url()).pathname.replace(/^\/fake-supabase/, '');
-    switch (pathname) {
-      case '/auth/v1/otp':
-        return reply(route, 200, {});
-      case '/auth/v1/verify':
-        return reply(route, 200, {
-          access_token: fakeJwt(user.id),
-          refresh_token: 'e2e-refresh-token',
-          token_type: 'bearer',
-          expires_in: 3600,
-          user,
-        });
-      case '/auth/v1/logout':
-        return reply(route, 204);
-      case '/rest/v1/profiles':
-        return profilesEndpoint(route);
-      case '/rest/v1/households':
-        return replyWithRows(route, ownHousehold ? [ownHousehold] : []);
-      case '/rest/v1/household_members':
-        return membersEndpoint(route);
-      case '/rest/v1/rpc/create_household':
-        return createHousehold(route);
-      case '/rest/v1/rpc/join_household':
-        return joinHousehold(route);
-      default:
-        return reply(route, 404, { message: `Not faked: ${pathname}` });
-    }
+    const endpoint = endpoints[pathname];
+    return endpoint ? endpoint(route) : reply(route, 404, { message: `Not faked: ${pathname}` });
   });
 }
 
@@ -150,4 +191,12 @@ export async function logInAsNewUser(page: Page) {
   await page.getByRole('button', { name: 'Log in' }).click();
   await page.getByLabel('Your name').fill('Anna');
   await page.getByRole('button', { name: 'Save' }).click();
+}
+
+/** Logs in as a new user and creates a household, ending on the household page. */
+export async function logInAsFamilyMember(page: Page) {
+  await logInAsNewUser(page);
+  await page.getByLabel('Household name').fill('The Andersons');
+  await page.getByRole('button', { name: 'Create household' }).click();
+  await page.getByRole('heading', { level: 1, name: 'The Andersons' }).waitFor();
 }

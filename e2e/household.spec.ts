@@ -50,6 +50,10 @@ test('new user can join a household with its invite code', async ({ page }) => {
   ).toBeVisible();
   await expect(memberList(page)).toHaveText(['Ben', 'Anna (you)']);
 
+  await page.getByRole('link', { name: 'Tasks' }).click();
+  const bensTask = page.getByRole('listitem', { name: EXISTING_HOUSEHOLD.task });
+  await expect(bensTask.getByText('Added by Ben')).toBeVisible();
+
   await page.reload();
   await expect(page.getByRole('link', { name: EXISTING_HOUSEHOLD.name })).toBeVisible();
 });
