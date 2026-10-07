@@ -17,11 +17,11 @@ test('user can log in with an emailed code, choose a name and log out', async ({
   await page.getByRole('button', { name: 'Log in' }).click();
   await page.getByLabel('Your name').fill('Anna');
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByText('Hello, Anna')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Set up your household' })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByText('Hello, Anna')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Set up your household' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Log out' }).click();
-  await expect(page.getByRole('link', { name: 'Log in' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Log in to HomeFlow' })).toBeVisible();
 });
