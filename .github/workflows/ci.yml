@@ -72,6 +72,20 @@ jobs:
           path: playwright-report
           retention-days: 7
 
+  database:
+    name: Database (migrations + RLS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx supabase db start
+      - run: npm run db:test
+
   security:
     name: Dependency security
     runs-on: ubuntu-latest

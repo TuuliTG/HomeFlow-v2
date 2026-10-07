@@ -13,3 +13,4 @@ Never edit an accepted ADR's decision — supersede it with a new one and update
 | [0006](0006-testing-strategy.md)              | Testing strategy                               | Accepted |
 | [0007](0007-feature-folder-architecture.md)   | Feature-folder architecture                    | Accepted |
 | [0008](0008-branch-pr-workflow.md)            | Branch → PR → main workflow                    | Accepted |
+| [0009](0009-passwordless-email-login.md)      | Passwordless email login, minimal profile      | Accepted |

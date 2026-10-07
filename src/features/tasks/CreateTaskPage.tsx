@@ -2,6 +2,7 @@ import { type SyntheticEvent, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import { paths } from '@/app/paths';
+import { inputClassName } from '@/components/ui/formStyles';
 import { PageHeader } from '@/components/ui/PageHeader';
 import {
   newTaskSchema,
@@ -18,9 +19,6 @@ interface FormError {
   field: 'title' | 'points';
   message: string;
 }
-
-const inputClassName =
-  'focus:border-brand-600 focus:ring-brand-600 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base font-normal text-slate-900 focus:ring-1 focus:outline-none';
 
 export function CreateTaskPage() {
   const { addTask } = useTasks();

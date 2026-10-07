@@ -17,4 +17,13 @@ describe('parseEnv', () => {
       /VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY/,
     );
   });
+
+  it('rejects the placeholder values from .env.example', () => {
+    expect(() =>
+      parseEnv({
+        VITE_SUPABASE_URL: 'https://your-project-ref.supabase.co',
+        VITE_SUPABASE_ANON_KEY: 'your-anon-key',
+      }),
+    ).toThrow(/VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY/);
+  });
 });

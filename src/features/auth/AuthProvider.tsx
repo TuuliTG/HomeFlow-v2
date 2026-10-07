@@ -1,30 +1,41 @@
-import { type ReactNode, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
+import { type AuthUser, logOut, subscribeToAuthChanges } from '@/features/auth/api';
 import { AuthContext, type AuthState } from '@/features/auth/authContext';
-import { loadMockUser, type MockUser, saveMockUser } from '@/features/auth/mockSession';
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<MockUser | null>(loadMockUser);
+interface Session {
+  status: AuthState['status'];
+  user: AuthUser | null;
+}
 
-  const auth = useMemo<AuthState>(() => {
-    function update(next: MockUser | null) {
-      saveMockUser(next);
-      setUser(next);
-    }
-    return {
-      user,
-      logIn: (name) => {
-        update({ name: name.trim() });
+export function AuthProvider({ children }: AuthProviderProps) {
+  const queryClient = useQueryClient();
+  const [session, setSession] = useState<Session>({ status: 'loading', user: null });
+
+  useEffect(
+    () =>
+      subscribeToAuthChanges((user) => {
+        setSession({ status: 'ready', user });
+      }),
+    [],
+  );
+
+  const auth = useMemo<AuthState>(
+    () => ({
+      ...session,
+      logOut: async () => {
+        await logOut();
+        // Don't leave the previous user's data cached on a shared device.
+        queryClient.clear();
       },
-      logOut: () => {
-        update(null);
-      },
-    };
-  }, [user]);
+    }),
+    [session, queryClient],
+  );
 
   return <AuthContext value={auth}>{children}</AuthContext>;
 }

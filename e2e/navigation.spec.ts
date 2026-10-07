@@ -17,21 +17,6 @@ test('user can move between all main screens', async ({ page }) => {
   }
 });
 
-test('user can log in with a name and log out (mock, front end only)', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('link', { name: 'Log in' }).click();
-
-  await page.getByLabel('Your name').fill('Anna');
-  await page.getByRole('button', { name: 'Log in' }).click();
-  await expect(page.getByText('Hello, Anna')).toBeVisible();
-
-  await page.reload();
-  await expect(page.getByText('Hello, Anna')).toBeVisible();
-
-  await page.getByRole('button', { name: 'Log out' }).click();
-  await expect(page.getByRole('link', { name: 'Log in' })).toBeVisible();
-});
-
 test('main screens have no detectable accessibility violations', async ({ page }) => {
   for (const path of ['/', '/me', '/rewards', '/statistics', '/login']) {
     await page.goto(path);
