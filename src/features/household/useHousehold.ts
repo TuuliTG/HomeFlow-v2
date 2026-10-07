@@ -37,8 +37,14 @@ export function useCreateHousehold(userId: string) {
 export function useJoinHousehold(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: joinHousehold,
-    // Stay pending until the joined household is loaded, so the next screen can show it.
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: householdKey(userId) }),
+    // Load the joined household as part of joining, so a failure shows as an error and success
+    // lands on a screen that can show it.
+    mutationFn: async (inviteCode: string) => {
+      await joinHousehold(inviteCode);
+      return fetchOwnHousehold();
+    },
+    onSuccess: (household) => {
+      queryClient.setQueryData(householdKey(userId), household);
+    },
   });
 }

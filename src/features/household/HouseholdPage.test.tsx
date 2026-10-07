@@ -45,12 +45,32 @@ describe('household page', () => {
     expect(await screen.findByRole('status')).toHaveTextContent("Couldn't copy.");
   });
 
+  it('says so when the browser offers no clipboard', async () => {
+    const user = userEvent.setup();
+    Reflect.deleteProperty(navigator, 'clipboard');
+    logInWithHousehold();
+    renderAppAt('/household');
+
+    await user.click(await screen.findByRole('button', { name: 'Copy code' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent("Couldn't copy.");
+  });
+
   it('lists members who have not chosen a name yet', async () => {
     const { name } = logInWithHousehold();
     fakeHouseholdBackend.addMember('user:ben@example.com', name);
     renderAppAt('/household');
 
     expect(await screen.findByText('New member (no name yet)')).toBeInTheDocument();
+  });
+
+  it('keeps the app usable when the household cannot be loaded', async () => {
+    logInWithHousehold();
+    fakeHouseholdBackend.failLoading();
+    renderAppAt('/household');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load your household.");
+    expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
   });
 
   it('asks a logged-out visitor to log in', () => {

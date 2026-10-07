@@ -36,6 +36,15 @@ describe('household setup', () => {
     ).toBeInTheDocument();
   });
 
+  it("doesn't lock the user out of the app when their household can't be loaded", async () => {
+    logInAsAnna();
+    fakeHouseholdBackend.failLoading();
+    renderAppAt('/');
+
+    expect(await screen.findByText('Hello, Anna')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeInTheDocument();
+  });
+
   it('asks a logged-in user without a name for one first', async () => {
     fakeAuthBackend.logInAs('anna@example.com');
     renderAppAt('/');
@@ -119,6 +128,17 @@ describe('household setup', () => {
     await submit(user);
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message);
+  });
+
+  it("doesn't offer the forms when it can't tell whether the user has a household", async () => {
+    logInAsAnna();
+    fakeHouseholdBackend.failLoading();
+    renderAppAt('/household/setup');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "We couldn't check whether you already have a household.",
+    );
+    expect(screen.queryByLabelText('Household name')).not.toBeInTheDocument();
   });
 
   it('sends a user who already has a household to it', async () => {

@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth';
 export function HouseholdSetupPage() {
   const { status, user, logOut } = useAuth();
 
-  if (status === 'loading') return null;
+  if (status === 'loading') return <LoadingMessage />;
   if (!user) return <Navigate to={paths.login} replace />;
 
   return (
@@ -38,6 +38,15 @@ function SetupForms({ userId }: { userId: string }) {
 
   if (household.isPending) return <LoadingMessage />;
   if (household.data) return <Navigate to={paths.household} replace />;
+  if (household.isError) {
+    // Offering the forms here would fail for someone who already has a household.
+    return (
+      <p role="alert" className="text-sm text-red-700">
+        We couldn&apos;t check whether you already have a household. Check your connection and
+        reload the page.
+      </p>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">

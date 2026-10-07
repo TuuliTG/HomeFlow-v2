@@ -1,3 +1,4 @@
+import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { useHouseholdMembers } from '@/features/household/useHousehold';
 
 interface MemberListProps {
@@ -13,9 +14,11 @@ export function MemberList({ householdId, currentUserId }: MemberListProps) {
       <h2 id="members" className="font-semibold text-slate-900">
         Members
       </h2>
-      {members.isPending && <p className="text-sm text-slate-600">Loading…</p>}
+      {members.isPending && <LoadingMessage />}
       {members.isError && (
-        <p className="text-sm text-red-700">We couldn&apos;t load the members.</p>
+        <p role="alert" className="text-sm text-red-700">
+          We couldn&apos;t load the members.
+        </p>
       )}
       {members.data && (
         <ul className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">

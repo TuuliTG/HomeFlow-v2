@@ -17,6 +17,12 @@ export function InviteCode({ code }: InviteCodeProps) {
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
 
   function copy() {
+    setCopyStatus('idle');
+    // The Clipboard API is missing outside secure contexts (e.g. testing over plain http on a LAN).
+    if (!('clipboard' in navigator)) {
+      setCopyStatus('failed');
+      return;
+    }
     navigator.clipboard.writeText(code).then(
       () => {
         setCopyStatus('copied');
