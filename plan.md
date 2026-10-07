@@ -26,7 +26,7 @@ Today tasks live in memory on one device (`TasksProvider`) and there is no notio
       household through database functions with an invite code; household members can see each other's display
       names. pgTAP tests for every policy. ADR 0010. _(Done: merged, and the migration is applied to the
       Supabase project.)_
-- [ ] **1b. Household UI** — after choosing a display name, a logged-in user without a household either creates one
+- [x] **1b. Household UI** — after choosing a display name, a logged-in user without a household either creates one
       (name) or joins one (invite code). A household screen shows the invite code to share and the member names.
       New `src/features/household/` feature with `api.ts` + TanStack Query hooks; unit tests with a faked api;
       e2e flow with `e2e/fakeSupabase.ts`.
