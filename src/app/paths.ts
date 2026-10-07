@@ -3,4 +3,5 @@ export const paths = {
   me: '/me',
   rewards: '/rewards',
   statistics: '/statistics',
+  login: '/login',
 } as const;
