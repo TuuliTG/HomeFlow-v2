@@ -25,8 +25,8 @@ select results_eq(
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select throws_ok(
   $$ insert into public.tasks (title, type, points) values ('Sneaky', 'physical', 3) $$,
-  '23502', null,
-  'a user without a household cannot add tasks'
+  '42501', null,
+  'a user without a household cannot add tasks (the row-level security check fails first)'
 );
 
 select * from finish();

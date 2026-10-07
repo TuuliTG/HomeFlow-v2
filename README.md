@@ -23,7 +23,7 @@ Requires Node ≥ 22.12 (see `.nvmrc`).
 
 ```sh
 npm install
-cp .env.example .env.local   # fill in Supabase URL + anon key (needed to log in)
+cp .env.example .env.local   # fill in Supabase URL + anon key (required: log-in and tasks)
 npm run dev
 ```
 

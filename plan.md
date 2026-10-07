@@ -20,7 +20,7 @@ phone (including an iPhone with HomeFlow installed to the home screen) if it isn
 
 ### 1. Shared, persisted tasks
 
-Today tasks live in memory on one device (`TasksProvider`) and there is no notion of a family.
+Before this step, tasks lived in memory on one device and there was no notion of a family.
 
 - [x] **1a. Data model** — `households`, `household_members` and `tasks` tables with Row Level Security; create/join a
       household through database functions with an invite code; household members can see each other's display
