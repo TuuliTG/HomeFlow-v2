@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
-import { type AuthUser, logOut, subscribeToAuthChanges } from '@/features/auth/api';
-import { AuthContext, type AuthState } from '@/features/auth/authContext';
+import { logOut, subscribeToAuthChanges } from '@/features/auth/api';
+import { AuthContext, type AuthState, type AuthUser } from '@/lib/auth';
 
 interface AuthProviderProps {
   children: ReactNode;

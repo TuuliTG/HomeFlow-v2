@@ -2,10 +2,10 @@ import { Link, Navigate } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { useAuth } from '@/features/auth/authContext';
 import { DisplayNameForm } from '@/features/auth/DisplayNameForm';
 import { EmailCodeForm } from '@/features/auth/EmailCodeForm';
 import { useOwnProfile } from '@/features/auth/useOwnProfile';
+import { useAuth } from '@/lib/auth';
 
 /**
  * Log in with an emailed code. A first-time user then picks a display name;

@@ -1,6 +1,13 @@
 import { createContext, useContext } from 'react';
 
-import type { AuthUser } from '@/features/auth/api';
+/**
+ * The logged-in user, shared by every feature that needs to know who is using the app.
+ * `AuthProvider` in the auth feature keeps it up to date.
+ */
+export interface AuthUser {
+  id: string;
+  email: string;
+}
 
 export interface AuthState {
   /** `loading` until the stored session has been checked on startup. */

@@ -1,11 +1,7 @@
 import { z } from 'zod';
 
+import type { AuthUser } from '@/lib/auth';
 import { getSupabaseClient } from '@/lib/supabase';
-
-export interface AuthUser {
-  id: string;
-  email: string;
-}
 
 export interface Profile {
   displayName: string;

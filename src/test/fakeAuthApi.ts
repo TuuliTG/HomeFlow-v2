@@ -1,5 +1,6 @@
 import type * as authApi from '@/features/auth/api';
-import type { AuthUser, Profile } from '@/features/auth/api';
+import type { Profile } from '@/features/auth/api';
+import type { AuthUser } from '@/lib/auth';
 
 /**
  * In-memory stand-in for `@/features/auth/api`, installed for every unit test in `setup.ts`.

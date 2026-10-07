@@ -1,8 +1,8 @@
 import { Link } from 'react-router';
 
 import { paths } from '@/app/paths';
-import { useAuth } from '@/features/auth/authContext';
 import { useOwnProfile } from '@/features/auth/useOwnProfile';
+import { useAuth } from '@/lib/auth';
 
 /** Shows who is logged in with a log-out button, or a log-in link. */
 export function AccountStatus() {
