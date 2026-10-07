@@ -9,12 +9,16 @@ import { MyTasksPage } from '@/features/my-tasks/MyTasksPage';
 import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { AvailableTasksPage } from '@/features/tasks/AvailableTasksPage';
+import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
+import { TasksProvider } from '@/features/tasks/TasksProvider';
 
 export const routes: RouteObject[] = [
   {
     element: (
       <AuthProvider>
-        <Outlet />
+        <TasksProvider>
+          <Outlet />
+        </TasksProvider>
       </AuthProvider>
     ),
     children: [
@@ -23,6 +27,7 @@ export const routes: RouteObject[] = [
         element: <AppShell />,
         children: [
           { path: paths.tasks, element: <AvailableTasksPage /> },
+          { path: paths.newTask, element: <CreateTaskPage /> },
           { path: paths.me, element: <MyTasksPage /> },
           { path: paths.rewards, element: <RewardsPage /> },
           { path: paths.statistics, element: <StatisticsPage /> },
