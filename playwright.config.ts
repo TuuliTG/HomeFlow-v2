@@ -2,8 +2,11 @@ import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4173;
 
-/** Never a real project: e2e/fakeSupabase.ts answers every request to this URL. */
-export const FAKE_SUPABASE_URL = 'https://e2e.supabase.test';
+/**
+ * Never a real project: e2e/fakeSupabase.ts answers every request to this URL. It shares the app's
+ * origin so browsers send no CORS preflights, which WebKit and Chromium handle differently.
+ */
+export const FAKE_SUPABASE_URL = `http://localhost:${PORT}/fake-supabase`;
 const isCI = Boolean(process.env.CI);
 
 export default defineConfig({

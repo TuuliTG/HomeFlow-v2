@@ -2,12 +2,6 @@ import type { Page, Route } from '@playwright/test';
 
 import { FAKE_SUPABASE_URL } from '../playwright.config';
 
-const corsHeaders = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-headers': '*',
-  'access-control-allow-methods': '*',
-};
-
 function fakeJwt(sub: string) {
   const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
   const exp = Math.floor(Date.now() / 1000) + 3600;
@@ -30,7 +24,7 @@ export async function fakeSupabase(page: Page) {
   async function reply(route: Route, status: number, body?: unknown) {
     await route.fulfill({
       status,
-      headers: { ...corsHeaders, 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json' },
       body: body === undefined ? '' : JSON.stringify(body),
     });
   }
@@ -49,8 +43,7 @@ export async function fakeSupabase(page: Page) {
   }
 
   await page.route(`${FAKE_SUPABASE_URL}/**`, async (route) => {
-    const { pathname } = new URL(route.request().url());
-    if (route.request().method() === 'OPTIONS') return reply(route, 204);
+    const pathname = new URL(route.request().url()).pathname.replace(/^\/fake-supabase/, '');
     if (pathname === '/auth/v1/otp') return reply(route, 200, {});
     if (pathname === '/auth/v1/verify') {
       return reply(route, 200, {
