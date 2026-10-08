@@ -27,6 +27,8 @@ open apps.
   but they are processors that learn a device is being notified.
 - Needs one-time setup outside the repo: VAPID keys, Edge Function deploy and secrets, and the webhook (README).
 - iPhone users must add HomeFlow to the home screen before they can turn notifications on.
+- Anyone logged in who knew a device's endpoint could move it to their account. Endpoints are unguessable URLs
+  only the device and its push service know, so this is accepted.
 
 ## Alternatives considered
 
