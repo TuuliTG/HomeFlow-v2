@@ -18,7 +18,9 @@ open apps.
   user logged in now, so a shared device never notifies a previous user.
 - Notifications are sent by a Supabase Edge Function (`notify-household`), triggered by a Database Webhook on task
   insert. It notifies every household member except the creator and deletes subscriptions the push service reports
-  as gone (404/410).
+  as gone (404/410). The webhook sends a shared secret (`x-webhook-secret`) the function checks, since the function
+  itself doesn't require a user JWT. Its logic lives in `notify.ts` (unit-tested with Vitest); the Deno entry point
+  is type-checked with `deno check`.
 - Notifications are turned on per device from the Me screen (permission is asked from the tap). Each app load
   re-saves an existing subscription, so the database matches the browser and the device belongs to whoever is
   logged in; a subscription made with an old VAPID key is dropped. Logging out forgets and unsubscribes the device.

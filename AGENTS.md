@@ -21,6 +21,7 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node ≥ 22.12 (`.
 | `npm run lint:fix` / `npm run format` | Auto-fix lint / formatting                                        |
 | `npm run knip`                        | Find dead code, unused exports and dependencies                   |
 | `npm run db:migration <name>`         | New Supabase SQL migration (local DB needs Docker)                |
+| `npm run functions:check`             | Type-check the Deno Edge Function entry points (`deno check`)     |
 
 ## Architecture rules
 

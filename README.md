@@ -48,7 +48,7 @@ src/components/ui/  shared presentational components
 src/lib/            infrastructure (env, Supabase client, push message format)
 src/sw.ts           service worker: offline cache and push notifications
 e2e/                Playwright specs
-supabase/           Supabase config and SQL migrations
+supabase/           Supabase config, SQL migrations and tests, Edge Functions
 docs/               product brief, ADRs, cloud workflow guide
 .claude/            agent settings, hooks, skills, reviewer agent
 ```
@@ -76,8 +76,22 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
    - Accept Supabase's DPA (Organization → Legal documents).
 2. **Vercel:** import the GitHub repo and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (real values, for
    both Production and Preview; redeploy after changing them). Optionally add `VITE_VAPID_PUBLIC_KEY` to show the
-   notifications setting ([ADR 0014](docs/adr/0014-web-push-notifications.md)); sending also needs the steps for
-   push notifications. Build settings and SPA routing come from `vercel.json`.
+   notifications setting ([ADR 0014](docs/adr/0014-web-push-notifications.md)); sending also needs step 4. Build
+   settings and SPA routing come from `vercel.json`.
 3. **GitHub → Settings → Branches:** add a protection rule for `main`. Require a pull request, and require these
    status checks to pass: _Lint, format, types, dead code_, _Unit tests_, _Build_, _E2E (Playwright)_,
    _Dependency security_, _Analyze_. Block force pushes.
+4. **Push notifications** (optional, [ADR 0014](docs/adr/0014-web-push-notifications.md)):
+   1. Create a VAPID key pair on your own computer: `npx web-push@3.6.7 generate-vapid-keys`. Keep the private key secret.
+   2. **Vercel:** set `VITE_VAPID_PUBLIC_KEY` to the public key and redeploy.
+   3. **Supabase → Edge Functions → Secrets:** add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+      (`mailto:` plus your email; push services use it to reach you) and `NOTIFY_WEBHOOK_SECRET` (a long random
+      string, e.g. from `openssl rand -hex 32`).
+   4. Deploy the function (uses the project linked in step 1, or add `--project-ref <ref>`):
+      `npx supabase functions deploy notify-household`. Its settings come from `supabase/config.toml`; without the
+      secrets from step 3 it answers every call with an error.
+   5. **Supabase → Database → Webhooks** (newer dashboards: **Integrations → Database Webhooks**; enable webhooks
+      once if asked) **→ Create:** table `tasks`, event _Insert_, type _Supabase Edge Functions_, function
+      `notify-household`, method POST, timeout at its maximum, and an HTTP header `x-webhook-secret` with the same
+      secret. Don't add the service-key auth header: the function doesn't need it.
+   6. In the app: Me → _Turn on notifications_ on each device. On iPhone, add HomeFlow to the Home Screen first.

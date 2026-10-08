@@ -51,7 +51,7 @@ Before this step, tasks lived in memory on one device and there was no notion of
 - [x] **3c. Turn notifications on** — a settings control that asks permission from a tap, subscribes with the
       public VAPID key (`VITE_VAPID_PUBLIC_KEY`) and saves the subscription; turning off removes it. On iOS, explain
       that HomeFlow must first be added to the home screen.
-- [ ] **3d. Sending** — Edge Function `notify-household` triggered by a Database Webhook on task insert: sends to
+- [x] **3d. Sending** — Edge Function `notify-household` triggered by a Database Webhook on task insert: sends to
       every household member except the creator, removes subscriptions the push service reports as gone (404/410).
       VAPID private key only in Edge Function secrets. README gets the one-time setup steps.
 - [ ] **3e. Less noise** _(optional, decide after trying 3d)_ — batch several tasks added in a short time into one

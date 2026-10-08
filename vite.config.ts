@@ -44,18 +44,19 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'supabase/functions/**/*.test.ts'],
     restoreMocks: true,
     unstubEnvs: true,
     unstubGlobals: true,
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.{ts,tsx}'],
+      include: ['src/**/*.{ts,tsx}', 'supabase/functions/**/*.ts'],
       exclude: [
         'src/**/*.test.{ts,tsx}',
         'src/test/**',
         'src/main.tsx',
         'src/sw.ts',
+        'supabase/functions/**/index.ts',
         'src/**/*.d.ts',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },

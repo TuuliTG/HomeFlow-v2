@@ -16,6 +16,8 @@ export default tseslint.config(
       'playwright-report',
       'test-results',
       'supabase/.temp',
+      // Deno entry points (npm:/jsr: imports, Deno globals); type-checked with `deno check` instead.
+      'supabase/functions/**/index.ts',
       'eslint.config.js',
     ],
   },

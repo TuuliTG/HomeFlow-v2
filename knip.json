@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["e2e/**/*.ts"],
-  "project": ["src/**/*.{ts,tsx,css}", "e2e/**/*.ts"]
+  "entry": ["e2e/**/*.ts", "supabase/functions/*/index.ts"],
+  "project": ["src/**/*.{ts,tsx,css}", "e2e/**/*.ts", "supabase/functions/**/*.ts"],
+  "ignoreDependencies": ["npm"]
 }
