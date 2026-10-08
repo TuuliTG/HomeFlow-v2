@@ -152,6 +152,8 @@ describe('tasks api', () => {
   it.each([
     ['pickUpTask', 'pick_up_task'],
     ['putBackTask', 'put_back_task'],
+    ['deleteTask', 'delete_task'],
+    ['undoCompleteTask', 'undo_complete_task'],
   ] as const)('%s calls %s and passes errors on', async (name, rpc) => {
     client.rpc.mockResolvedValueOnce({ data: null, error: null });
     await api[name]('t1');
@@ -159,6 +161,23 @@ describe('tasks api', () => {
 
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api[name]('t1')).rejects.toBe(failure);
+  });
+
+  it("replaces a task's details", async () => {
+    client.rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    await api.updateTask('t1', { ...newTask, repeatEveryDays: 7, dueOn: '2026-10-10' });
+
+    expect(client.rpc).toHaveBeenCalledWith('update_task', {
+      task_id: 't1',
+      task_title: 'Vacuum',
+      task_type: 'physical',
+      task_points: 3,
+      task_due_on: '2026-10-10',
+      task_repeat_every_days: 7,
+    });
+    client.rpc.mockResolvedValueOnce({ data: null, error: failure });
+    await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
   });
 
   it('reads how often a task repeats and when it is due', async () => {
@@ -239,8 +258,10 @@ describe('tasks api', () => {
     const onChange = vi.fn();
 
     const unsubscribe = api.subscribeToTaskChanges(onChange);
-    const [[event, inserts, onInsert], [, updates, onUpdate]] = channel.on.mock.calls as [
+    const [[event, inserts, onInsert], [, updates, onUpdate], [, deletes, onDelete]] = channel.on
+      .mock.calls as [
       [string, unknown, (payload: { new: unknown }) => void],
+      [string, unknown, () => void],
       [string, unknown, () => void],
     ];
     const inserted = { ...row, household_id: 'h1', created_at: '2026-10-08T04:00:00Z' };
@@ -248,16 +269,19 @@ describe('tasks api', () => {
     onInsert({ new: { ...inserted, id: 't2', previous_task_id: 't1' } });
     onInsert({ new: { id: 't3' } });
     onUpdate();
+    onDelete();
     unsubscribe();
 
     expect(client.channel).toHaveBeenCalledWith(expect.stringMatching(/^household-tasks:/));
     expect(event).toBe('postgres_changes');
     expect(inserts).toEqual({ event: 'INSERT', schema: 'public', table: 'tasks' });
     expect(updates).toEqual({ event: 'UPDATE', schema: 'public', table: 'tasks' });
+    expect(deletes).toEqual({ event: 'DELETE', schema: 'public', table: 'tasks' });
     expect(onChange.mock.calls).toEqual([
       [{ kind: 'added', id: 't1', title: 'Vacuum', createdBy: 'u1', isRepeat: false }],
       [{ kind: 'added', id: 't2', title: 'Vacuum', createdBy: 'u1', isRepeat: true }],
-      [{ kind: 'updated' }],
+      [{ kind: 'changed' }],
+      [{ kind: 'changed' }],
     ]);
     expect(client.removeChannel).toHaveBeenCalledWith(channel);
   });

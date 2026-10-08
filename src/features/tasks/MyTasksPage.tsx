@@ -1,8 +1,11 @@
+import { useState } from 'react';
+
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { formatShortDate } from '@/features/tasks/dueDate';
 import { TaskCard } from '@/features/tasks/TaskCard';
-import { useCompletedTasks, useTasks } from '@/features/tasks/useTasks';
+import { type CompletedTask, UNDO_WINDOW_MS } from '@/features/tasks/task';
+import { useCompletedTasks, useTasks, useUndoCompleteTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 
 const emptyClassName =
@@ -81,13 +84,46 @@ function CompletedList() {
       className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white"
     >
       {completed.data.map((task) => (
-        <li key={task.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-          <span className="font-medium text-slate-900">{task.title}</span>
-          <span className="shrink-0 text-slate-500">
-            Done {formatShortDate(new Date(task.completedAt))} · {task.points} points
-          </span>
-        </li>
+        <CompletedItem key={task.id} task={task} userId={user.id} />
       ))}
     </ul>
+  );
+}
+
+function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }) {
+  const undo = useUndoCompleteTask(userId);
+  // Checked when the item appears; the database has the final say.
+  const [canUndo] = useState(
+    () => Date.now() - new Date(task.completedAt).getTime() < UNDO_WINDOW_MS,
+  );
+
+  return (
+    <li className="flex flex-col gap-1 px-4 py-3 text-sm">
+      <div className="flex items-center justify-between gap-4">
+        <span className="font-medium text-slate-900">{task.title}</span>
+        <span className="flex shrink-0 items-center gap-3 text-slate-500">
+          Done {formatShortDate(new Date(task.completedAt))} · {task.points} points
+          {canUndo && (
+            <button
+              type="button"
+              aria-label={`Undo: ${task.title}`}
+              disabled={undo.isPending}
+              onClick={() => {
+                undo.mutate(task.id);
+              }}
+              className="text-brand-900 font-semibold hover:underline disabled:opacity-60"
+            >
+              Undo
+            </button>
+          )}
+        </span>
+      </div>
+      {undo.isError && (
+        <p role="alert" className="text-xs text-red-700">
+          We couldn&apos;t undo this. Tasks can be undone for an hour, before their next one is
+          done.
+        </p>
+      )}
+    </li>
   );
 }

@@ -12,6 +12,8 @@ interface StoredTask extends NewTask {
   householdId: string;
   createdBy: string;
   pickedUpBy: string | null;
+  /** The task this one is the next occurrence of. */
+  previousTaskId: string | null;
   /** Who marked it done and when (ISO timestamp); null while open. */
   completed: { by: string; at: string } | null;
 }
@@ -22,6 +24,7 @@ type TaskDetails = Pick<NewTask, 'title' | 'type' | 'points'> & Partial<NewTask>
 /** Oldest first; the api returns them soonest due first, then newest first (`byDueDate`). */
 const tasks: StoredTask[] = [];
 let requestsFail = false;
+let completions = 0;
 const listeners = new Set<Parameters<typeof tasksApi.subscribeToTaskChanges>[0]>();
 
 function ownHouseholdId(): string | null {
@@ -69,6 +72,7 @@ export const fakeTasksBackend = {
   reset() {
     tasks.length = 0;
     requestsFail = false;
+    completions = 0;
     listeners.clear();
   },
   /** Stores a task as if `userId` had added it to their household, and delivers it live. */
@@ -84,6 +88,7 @@ export const fakeTasksBackend = {
         householdId,
         createdBy: userId,
         pickedUpBy: null,
+        previousTaskId: null,
         completed: null,
       },
       false,
@@ -95,7 +100,7 @@ export const fakeTasksBackend = {
     if (task.pickedUpBy === userId) return;
     if (task.pickedUpBy) throw new Error('Someone else has picked up this task');
     task.pickedUpBy = userId;
-    deliver(task.householdId, { kind: 'updated' });
+    deliver(task.householdId, { kind: 'changed' });
   },
   /**
    * Marks an open task in `userId`'s household done on `completedOn`, adding the next occurrence of
@@ -103,12 +108,10 @@ export const fakeTasksBackend = {
    */
   completeTaskAs(userId: string, taskId: string, completedOn: string) {
     const task = openTaskOf(userId, taskId);
-    // Spread over time, so the newest completion sorts first.
-    task.completed = {
-      by: userId,
-      at: new Date(Date.UTC(2026, 0, 1, 0, tasks.length)).toISOString(),
-    };
-    deliver(task.householdId, { kind: 'updated' });
+    completions += 1;
+    // A millisecond apart, so the newest completion sorts first.
+    task.completed = { by: userId, at: new Date(Date.now() + completions).toISOString() };
+    deliver(task.householdId, { kind: 'changed' });
     if (task.repeatEveryDays === null) return;
     store(
       {
@@ -116,10 +119,19 @@ export const fakeTasksBackend = {
         id: `task:${String(tasks.length)}`,
         dueOn: addDays(completedOn, task.repeatEveryDays),
         pickedUpBy: null,
+        previousTaskId: task.id,
         completed: null,
       },
       true,
     );
+  },
+  /** Moves every completion `ms` into the past, e.g. beyond the undo window. */
+  ageCompletions(ms: number) {
+    for (const task of tasks) {
+      if (task.completed) {
+        task.completed.at = new Date(new Date(task.completed.at).getTime() - ms).toISOString();
+      }
+    }
   },
   /** Makes every request fail, like a network error. */
   failRequests() {
@@ -165,7 +177,7 @@ export const fetchCompletedTasks: typeof tasksApi.fetchCompletedTasks = (userId)
       .flatMap(({ id, title, type, points, completed }) =>
         completed?.by === userId ? [{ id, title, type, points, completedAt: completed.at }] : [],
       )
-      .reverse(),
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
   );
 };
 
@@ -200,7 +212,33 @@ export const putBackTask: typeof tasksApi.putBackTask = (taskId) =>
     const task = openTaskOf(userId, taskId);
     if (task.pickedUpBy !== userId) throw new Error('You have not picked up this task');
     task.pickedUpBy = null;
-    deliver(task.householdId, { kind: 'updated' });
+    deliver(task.householdId, { kind: 'changed' });
+  });
+
+export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
+  asCurrentUser((userId) => {
+    const task = openTaskOf(userId, taskId);
+    Object.assign(task, details);
+    deliver(task.householdId, { kind: 'changed' });
+  });
+
+export const deleteTask: typeof tasksApi.deleteTask = (taskId) =>
+  asCurrentUser((userId) => {
+    const task = openTaskOf(userId, taskId);
+    tasks.splice(tasks.indexOf(task), 1);
+    deliver(task.householdId, { kind: 'changed' });
+  });
+
+/** Like `undo_complete_task()`, without the time limit (tests run within it). */
+export const undoCompleteTask: typeof tasksApi.undoCompleteTask = (taskId) =>
+  asCurrentUser((userId) => {
+    const task = tasks.find((candidate) => candidate.id === taskId);
+    if (task?.completed?.by !== userId) throw new Error('You have not marked this task done');
+    const next = tasks.find((candidate) => candidate.previousTaskId === taskId);
+    if (next?.completed) throw new Error('The next occurrence is already done');
+    if (next) tasks.splice(tasks.indexOf(next), 1);
+    task.completed = null;
+    deliver(task.householdId, { kind: 'changed' });
   });
 
 export const subscribeToTaskChanges: typeof tasksApi.subscribeToTaskChanges = (onChange) => {

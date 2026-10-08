@@ -3,11 +3,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addTask,
   completeTask,
+  deleteTask,
   fetchCompletedTasks,
   fetchTasks,
   pickUpTask,
   putBackTask,
+  undoCompleteTask,
+  updateTask,
 } from '@/features/tasks/api';
+import type { NewTask } from '@/features/tasks/task';
 import { today } from '@/features/tasks/dueDate';
 
 export const tasksKey = (userId: string) => ['tasks', userId] as const;
@@ -56,6 +60,31 @@ export function usePutBackTask(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: putBackTask,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+  });
+}
+
+export function useUpdateTask(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, task }: { taskId: string; task: NewTask }) => updateTask(taskId, task),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+  });
+}
+
+export function useDeleteTask(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteTask,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+  });
+}
+
+/** Reopens a task the user marked done recently; it goes back on the board. */
+export function useUndoCompleteTask(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: undoCompleteTask,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
 }
