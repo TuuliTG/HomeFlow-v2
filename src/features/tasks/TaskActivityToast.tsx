@@ -21,13 +21,17 @@ export function TaskActivityToast() {
   }, [activity, dismiss]);
 
   return (
-    <div
-      role="status"
-      className="pointer-events-none fixed inset-x-0 bottom-24 z-20 flex justify-center px-4 md:bottom-6"
-    >
-      {activity && (
-        <p className="pointer-events-auto flex max-w-sm items-center gap-3 rounded-full bg-slate-900 py-2 pr-2 pl-4 text-sm text-white shadow-lg">
-          <span className="min-w-0 truncate">{activity.message}</span>
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 flex justify-center px-4 md:bottom-6">
+      <div
+        className={[
+          'flex max-w-sm items-center gap-3 rounded-full bg-slate-900 py-2 pr-2 pl-4 text-sm text-white shadow-lg',
+          activity ? 'pointer-events-auto' : 'sr-only',
+        ].join(' ')}
+      >
+        <p role="status" className="min-w-0 truncate">
+          {activity && <span key={activity.id}>{activity.message}</span>}
+        </p>
+        {activity && (
           <button
             type="button"
             onClick={dismiss}
@@ -36,8 +40,8 @@ export function TaskActivityToast() {
             <span aria-hidden="true">✕</span>
             <span className="sr-only">Dismiss</span>
           </button>
-        </p>
-      )}
+        )}
+      </div>
     </div>
   );
 }

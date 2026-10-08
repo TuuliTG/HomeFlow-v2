@@ -66,15 +66,20 @@ export interface NewTaskEvent {
  */
 export function subscribeToNewTasks(onAdded: (task: NewTaskEvent) => void): () => void {
   const client = getSupabaseClient();
+  // A unique topic per subscription: a channel that is still leaving would otherwise be reused.
   const channel = client
-    .channel('household-tasks')
+    .channel(`household-tasks:${crypto.randomUUID()}`)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload) => {
       const row = newTaskRowSchema.safeParse(payload.new);
       if (row.success) {
         onAdded({ id: row.data.id, title: row.data.title, createdBy: row.data.created_by });
       }
     })
-    .subscribe();
+    .subscribe((status, error) => {
+      if ((['CHANNEL_ERROR', 'TIMED_OUT'] as string[]).includes(status)) {
+        console.warn('Live task updates are unavailable', status, error);
+      }
+    });
   return () => {
     void client.removeChannel(channel);
   };

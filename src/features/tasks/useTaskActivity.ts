@@ -24,9 +24,12 @@ export function useTaskActivity(userId: string) {
   useEffect(
     () =>
       subscribeToNewTasks((added) => {
-        // Fetching also refreshes the board, and gives the creator's display name.
+        // Refetch (cancelling any fetch that started before the insert), then read the creator's
+        // display name from the refreshed list.
+        const key = tasksKey(userId);
         const tasks = queryClient
-          .query({ queryKey: tasksKey(userId), queryFn: fetchTasks })
+          .invalidateQueries({ queryKey: key })
+          .then(() => queryClient.query({ queryKey: key, queryFn: fetchTasks }))
           .catch(() => [] as Task[]);
         if (added.createdBy === userId) return;
         void tasks.then((list) => {

@@ -102,9 +102,29 @@ describe('tasks api', () => {
     listener({ new: { id: 't2' } });
     unsubscribe();
 
+    expect(client.channel).toHaveBeenCalledWith(expect.stringMatching(/^household-tasks:/));
     expect(event).toBe('postgres_changes');
     expect(filter).toEqual({ event: 'INSERT', schema: 'public', table: 'tasks' });
     expect(onAdded).toHaveBeenCalledExactlyOnceWith({ id: 't1', title: 'Vacuum', createdBy: 'u1' });
     expect(client.removeChannel).toHaveBeenCalledWith(channel);
+  });
+
+  it('warns when live updates cannot connect', () => {
+    channel.on.mockReturnValue(channel);
+    channel.subscribe.mockReturnValue(channel);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    api.subscribeToNewTasks(vi.fn());
+    const [[onStatus]] = channel.subscribe.mock.calls as [
+      [(status: string, error?: Error) => void],
+    ];
+    onStatus('SUBSCRIBED');
+    onStatus('CHANNEL_ERROR', new Error('boom'));
+
+    expect(warn).toHaveBeenCalledExactlyOnceWith(
+      'Live task updates are unavailable',
+      'CHANNEL_ERROR',
+      new Error('boom'),
+    );
   });
 });
