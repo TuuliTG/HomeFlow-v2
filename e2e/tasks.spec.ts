@@ -81,6 +81,7 @@ test('family member can pick up a task, find it on the Me screen and mark it don
   await expect(
     page.getByRole('list', { name: 'Completed tasks' }).getByText('Vacuum'),
   ).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Points earned' })).toContainText('3');
 });
 
 test('family member can fix a task and then delete it', async ({ page }) => {
