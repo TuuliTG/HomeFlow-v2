@@ -45,7 +45,8 @@ npm run dev
 src/app/            shell, routing, providers
 src/features/<x>/   feature code: components, hooks, api.ts, tests
 src/components/ui/  shared presentational components
-src/lib/            infrastructure (env, Supabase client)
+src/lib/            infrastructure (env, Supabase client, push message format)
+src/sw.ts           service worker: offline cache and push notifications
 e2e/                Playwright specs
 supabase/           Supabase config and SQL migrations
 docs/               product brief, ADRs, cloud workflow guide

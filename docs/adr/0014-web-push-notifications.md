@@ -20,6 +20,10 @@ open apps.
   insert. It notifies every household member except the creator and deletes subscriptions the push service reports
   as gone (404/410).
 - A notification says only who added which task ("Ben added Book dentist") and opens the task board.
+- `vite-plugin-pwa` uses `injectManifest` with our own `src/sw.ts` instead of a generated worker: the same precache
+  and `index.html` navigation fallback, updates via `skipWaiting` + `clientsClaim`, plus `push` and
+  `notificationclick` handlers. Push messages are checked by hand (`src/lib/pushNotification.ts`) rather than with
+  Zod, which would grow the worker about fivefold; links must resolve to the app's own origin.
 
 ## Consequences
 

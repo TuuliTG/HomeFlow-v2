@@ -46,7 +46,7 @@ Before this step, tasks lived in memory on one device and there was no notion of
 
 - [x] **3a. Subscriptions storage** — ADR for Web Push (VAPID, Supabase Edge Function, what goes in a notification).
       `push_subscriptions` table (endpoint + keys per device, owner-only RLS) with pgTAP tests.
-- [ ] **3b. Service worker** — switch `vite-plugin-pwa` to `injectManifest` keeping today's caching, and add `push`
+- [x] **3b. Service worker** — switch `vite-plugin-pwa` to `injectManifest` keeping today's caching, and add `push`
       (show notification) and `notificationclick` (open/focus the task board) handlers.
 - [ ] **3c. Turn notifications on** — a settings control that asks permission from a tap, subscribes with the
       public VAPID key (`VITE_VAPID_PUBLIC_KEY`) and saves the subscription; turning off removes it. On iOS, explain
