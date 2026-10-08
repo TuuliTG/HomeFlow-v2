@@ -48,7 +48,7 @@ Before this step, tasks lived in memory on one device and there was no notion of
       `push_subscriptions` table (endpoint + keys per device, owner-only RLS) with pgTAP tests.
 - [x] **3b. Service worker** — switch `vite-plugin-pwa` to `injectManifest` keeping today's caching, and add `push`
       (show notification) and `notificationclick` (open/focus the task board) handlers.
-- [ ] **3c. Turn notifications on** — a settings control that asks permission from a tap, subscribes with the
+- [x] **3c. Turn notifications on** — a settings control that asks permission from a tap, subscribes with the
       public VAPID key (`VITE_VAPID_PUBLIC_KEY`) and saves the subscription; turning off removes it. On iOS, explain
       that HomeFlow must first be added to the home screen.
 - [ ] **3d. Sending** — Edge Function `notify-household` triggered by a Database Webhook on task insert: sends to
