@@ -13,8 +13,8 @@ const supabase = vi.hoisted(() => {
     query,
     client: {
       auth: {
-        signInWithOtp: vi.fn(),
-        verifyOtp: vi.fn(),
+        signInWithPassword: vi.fn(),
+        signUp: vi.fn(),
         signOut: vi.fn(),
         onAuthStateChange: vi.fn(),
       },
@@ -39,27 +39,52 @@ describe('auth api', () => {
     query.eq.mockReturnValue(query);
   });
 
-  it('emails a login code that can create the account', async () => {
-    auth.signInWithOtp.mockResolvedValue({ error: null });
+  it('logs in with email and password', async () => {
+    auth.signInWithPassword.mockResolvedValue({ error: null });
 
-    await api.sendLoginCode('anna@example.com');
+    await api.logIn('anna@example.com', 'secret password');
 
-    expect(auth.signInWithOtp).toHaveBeenCalledWith({
+    expect(auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'anna@example.com',
-      options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/login` },
+      password: 'secret password',
     });
   });
 
-  it('verifies the emailed code', async () => {
-    auth.verifyOtp.mockResolvedValue({ error: null });
+  it('creates an account that is logged in straight away', async () => {
+    auth.signUp.mockResolvedValue({ data: { session: {} }, error: null });
 
-    await api.verifyLoginCode('anna@example.com', '123456');
+    await api.createAccount('anna@example.com', 'secret password');
 
-    expect(auth.verifyOtp).toHaveBeenCalledWith({
+    expect(auth.signUp).toHaveBeenCalledWith({
       email: 'anna@example.com',
-      token: '123456',
-      type: 'email',
+      password: 'secret password',
     });
+  });
+
+  it('reports when Supabase wants the email confirmed before logging in', async () => {
+    auth.signUp.mockResolvedValue({ data: { session: null }, error: null });
+
+    await expect(api.createAccount('anna@example.com', 'secret password')).rejects.toMatchObject({
+      reason: 'needs-email-confirmation',
+    });
+  });
+
+  it.each([
+    ['invalid_credentials', 'wrong-credentials'],
+    ['user_already_exists', 'account-exists'],
+    ['email_exists', 'account-exists'],
+    ['weak_password', 'weak-password'],
+    ['email_not_confirmed', 'needs-email-confirmation'],
+    ['over_request_rate_limit', 'too-many-attempts'],
+    ['validation_failed', 'other'],
+    [undefined, 'other'],
+  ])('explains the Supabase error %s as %s', async (code, reason) => {
+    auth.signInWithPassword.mockResolvedValue({ error: { code, message: 'boom' } });
+    auth.signUp.mockResolvedValue({ data: { session: null }, error: { code, message: 'boom' } });
+
+    const expected = { name: 'LoginError', reason, message: 'boom' };
+    await expect(api.logIn('a@b.c', 'pw')).rejects.toMatchObject(expected);
+    await expect(api.createAccount('a@b.c', 'pw')).rejects.toMatchObject(expected);
   });
 
   it('logs out on this device only', async () => {
@@ -70,14 +95,10 @@ describe('auth api', () => {
     expect(auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
   });
 
-  it.each([
-    ['sendLoginCode', () => api.sendLoginCode('a@b.c'), auth.signInWithOtp],
-    ['verifyLoginCode', () => api.verifyLoginCode('a@b.c', '1'), auth.verifyOtp],
-    ['logOut', () => api.logOut(), auth.signOut],
-  ])('%s passes Supabase errors on', async (_name, call, method) => {
-    method.mockResolvedValue({ error: failure });
+  it('passes log-out errors on', async () => {
+    auth.signOut.mockResolvedValue({ error: failure });
 
-    await expect(call()).rejects.toBe(failure);
+    await expect(api.logOut()).rejects.toBe(failure);
   });
 
   it('reports the logged-in user and stops listening on unsubscribe', () => {

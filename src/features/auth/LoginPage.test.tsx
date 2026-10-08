@@ -2,18 +2,22 @@ import { screen } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { FAKE_LOGIN_CODE, fakeAuthBackend } from '@/test/fakeAuthApi';
+import { FAKE_PASSWORD, fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { renderAppAt } from '@/test/renderWithRouter';
 
-async function requestCode(user: UserEvent, email = 'anna@example.com') {
+async function submitLogin(
+  user: UserEvent,
+  { email = 'anna@example.com', password = FAKE_PASSWORD, button = 'Log in' } = {},
+) {
   await user.type(screen.getByLabelText('Email'), email);
-  await user.click(screen.getByRole('button', { name: 'Send code' }));
+  await user.type(screen.getByLabelText('Password'), password);
+  await user.click(screen.getByRole('button', { name: button }));
 }
 
-async function enterCode(user: UserEvent, code = FAKE_LOGIN_CODE) {
-  await user.type(await screen.findByLabelText('Login code'), code);
-  await user.click(screen.getByRole('button', { name: 'Log in' }));
+async function createAccount(user: UserEvent, options: { email?: string; password?: string } = {}) {
+  await user.click(screen.getByRole('button', { name: 'Create an account' }));
+  await submitLogin(user, { password: 'a long password', ...options, button: 'Create account' });
 }
 
 describe('login', () => {
@@ -26,72 +30,82 @@ describe('login', () => {
     expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument();
   });
 
-  it('emails a login code and asks for it', async () => {
+  it('creates an account, asks for a name, then for a household', async () => {
     const user = userEvent.setup();
     renderAppAt('/login');
 
-    await requestCode(user);
-
-    expect(await screen.findByText(/We sent an email to/)).toHaveTextContent(
-      'We sent an email to anna@example.com',
-    );
-    expect(screen.getByLabelText('Login code')).toHaveFocus();
-  });
-
-  it('rejects an invalid email address before sending', async () => {
-    const user = userEvent.setup();
-    renderAppAt('/login');
-
-    await requestCode(user, 'not-an-email');
-
-    expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid email address.');
-    expect(screen.queryByLabelText('Login code')).not.toBeInTheDocument();
-  });
-
-  it('explains when the code cannot be sent', async () => {
-    fakeAuthBackend.failSendingCodes();
-    const user = userEvent.setup();
-    renderAppAt('/login');
-
-    await requestCode(user);
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      "We couldn't send the code (Email rate limit exceeded).",
-    );
-  });
-
-  it('explains when the code is wrong', async () => {
-    const user = userEvent.setup();
-    renderAppAt('/login');
-
-    await requestCode(user);
-    await enterCode(user, '999999');
-
-    expect(await screen.findByRole('alert')).toHaveTextContent("That code didn't work.");
-  });
-
-  it('lets the user go back and use a different email', async () => {
-    const user = userEvent.setup();
-    renderAppAt('/login');
-
-    await requestCode(user);
-    await user.click(await screen.findByRole('button', { name: 'Use a different email' }));
-
-    expect(screen.getByLabelText('Email')).toHaveValue('anna@example.com');
-  });
-
-  it('asks a first-time user for their name, then to set up a household', async () => {
-    const user = userEvent.setup();
-    renderAppAt('/login');
-
-    await requestCode(user);
-    await enterCode(user);
+    await createAccount(user);
     await user.type(await screen.findByLabelText('Your name'), '  Anna ');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Set up your household' }),
     ).toBeInTheDocument();
+  });
+
+  it('switches to creating an account, telling password managers it is a new password', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/login');
+
+    expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
+    await user.click(screen.getByRole('button', { name: 'Create an account' }));
+    expect(screen.getByRole('form', { name: 'Create your account' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'new-password');
+    await user.click(screen.getByRole('button', { name: 'Log in instead' }));
+    expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument();
+  });
+
+  it('asks for a longer password before creating an account', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/login');
+
+    await createAccount(user, { password: 'short' });
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Use at least 8 characters');
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription(
+      /At least 8 characters\..*Use at least 8 characters for your password\./,
+    );
+  });
+
+  it('explains when an account already exists for the email', async () => {
+    const user = userEvent.setup();
+    fakeAuthBackend.addAccount('anna@example.com', 'Anna');
+    renderAppAt('/login');
+
+    await createAccount(user);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'There is already an account with this email. Log in instead.',
+    );
+  });
+
+  it('rejects an invalid email address before sending', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/login');
+
+    await submitLogin(user, { email: 'not-an-email' });
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid email address.');
+  });
+
+  it('explains when the email or password is wrong', async () => {
+    const user = userEvent.setup();
+    fakeAuthBackend.addAccount('anna@example.com', 'Anna');
+    renderAppAt('/login');
+
+    await submitLogin(user, { password: 'wrong password' });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password.');
+  });
+
+  it('explains when logging in fails for another reason', async () => {
+    const user = userEvent.setup();
+    fakeAuthBackend.failRequests();
+    renderAppAt('/login');
+
+    await submitLogin(user);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("That didn't work.");
   });
 
   it('asks for a name instead of saving an empty one', async () => {
@@ -114,8 +128,7 @@ describe('login', () => {
     unmount();
     renderAppAt('/login');
 
-    await requestCode(user, 'ben@example.com');
-    await enterCode(user);
+    await submitLogin(user, { email: 'ben@example.com' });
 
     expect(await screen.findByText('Hello, Ben')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeInTheDocument();

@@ -3,12 +3,12 @@ import { Navigate } from 'react-router';
 import { paths } from '@/app/paths';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DisplayNameForm } from '@/features/auth/DisplayNameForm';
-import { EmailCodeForm } from '@/features/auth/EmailCodeForm';
+import { PasswordForm } from '@/features/auth/PasswordForm';
 import { useOwnProfile } from '@/features/auth/useOwnProfile';
 import { useAuth } from '@/lib/auth';
 
 /**
- * Log in with an emailed code. A first-time user then picks a display name;
+ * Log in with email and password (or create an account). A first-time user then picks a display name;
  * anyone who already has one is sent on to the app.
  */
 export function LoginPage() {
@@ -23,7 +23,7 @@ export function LoginPage() {
           user ? 'What should we call you?' : 'Share household tasks fairly with your family.'
         }
       />
-      {status === 'ready' && (user ? <ProfileStep userId={user.id} /> : <EmailCodeForm />)}
+      {status === 'ready' && (user ? <ProfileStep userId={user.id} /> : <PasswordForm />)}
     </main>
   );
 }

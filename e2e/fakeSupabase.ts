@@ -57,7 +57,7 @@ function filterIds(filter: string | null): string[] {
 
 /**
  * Answers the Supabase Auth and REST calls the app makes, so e2e tests run without a backend.
- * Any code is accepted for any email. Like Row Level Security, it shows the user only their own
+ * Any email and password are accepted. Like Row Level Security, it shows the user only their own
  * household and its tasks; another household (Ben's, with one task) exists to join with
  * `EXISTING_HOUSEHOLD.inviteCode`.
  */
@@ -156,16 +156,20 @@ export async function fakeSupabase(page: Page) {
     );
   }
 
+  /** Accepts any email and password, for both creating an account and logging in. */
+  function logInWith(route: Route) {
+    return reply(route, 200, {
+      access_token: fakeJwt(user.id),
+      refresh_token: 'e2e-refresh-token',
+      token_type: 'bearer',
+      expires_in: 3600,
+      user,
+    });
+  }
+
   const endpoints: Record<string, (route: Route) => Promise<void>> = {
-    '/auth/v1/otp': (route) => reply(route, 200, {}),
-    '/auth/v1/verify': (route) =>
-      reply(route, 200, {
-        access_token: fakeJwt(user.id),
-        refresh_token: 'e2e-refresh-token',
-        token_type: 'bearer',
-        expires_in: 3600,
-        user,
-      }),
+    '/auth/v1/signup': (route) => logInWith(route),
+    '/auth/v1/token': (route) => logInWith(route),
     '/auth/v1/logout': (route) => reply(route, 204),
     '/rest/v1/profiles': profilesEndpoint,
     '/rest/v1/households': (route) => replyWithRows(route, ownHousehold ? [ownHousehold] : []),
@@ -182,13 +186,13 @@ export async function fakeSupabase(page: Page) {
   });
 }
 
-/** Logs in as Anna from the login page and chooses her display name. */
+/** Creates an account for Anna from the login page and chooses her display name. */
 export async function logInAsNewUser(page: Page) {
   await page.goto('/login');
+  await page.getByRole('button', { name: 'Create an account' }).click();
   await page.getByLabel('Email').fill('anna@example.com');
-  await page.getByRole('button', { name: 'Send code' }).click();
-  await page.getByLabel('Login code').fill('123456');
-  await page.getByRole('button', { name: 'Log in' }).click();
+  await page.getByLabel('Password').fill('a long password');
+  await page.getByRole('button', { name: 'Create account' }).click();
   await page.getByLabel('Your name').fill('Anna');
   await page.getByRole('button', { name: 'Save' }).click();
 }
