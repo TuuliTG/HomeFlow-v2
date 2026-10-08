@@ -4,7 +4,7 @@ alter table public.tasks
   -- Kept when the member deletes their account, like created_by, so the history stays intact.
   add column picked_up_by uuid references auth.users (id) on delete set null,
   add column picked_up_at timestamptz,
-  constraint tasks_picked_up_together check ((picked_up_by is null) = (picked_up_at is null));
+  add constraint tasks_picked_up_together check ((picked_up_by is null) = (picked_up_at is null));
 
 -- Marks an open task in the user's household as picked up by them. Picking up a task they already have is a
 -- no-op. Raises no_data_found (P0002) if the task isn't open in their household, and object_in_use (55006) if
