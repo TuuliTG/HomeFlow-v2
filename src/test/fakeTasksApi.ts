@@ -207,6 +207,30 @@ export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) 
     fakeTasksBackend.completeTaskAs(userId, taskId, completedOn);
   });
 
+export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdCompletedTasks = () => {
+  if (requestsFail) return Promise.reject(new Error('Network error'));
+  const householdId = ownHouseholdId();
+  return Promise.resolve(
+    tasks
+      .flatMap(({ id, title, type, points, householdId: taskHouseholdId, completed }) =>
+        completed && taskHouseholdId === householdId
+          ? [
+              {
+                id,
+                title,
+                type,
+                points,
+                completedAt: completed.at,
+                completedBy: completed.by,
+                completerName: fakeAuthBackend.displayNameOf(completed.by),
+              },
+            ]
+          : [],
+      )
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
+  );
+};
+
 export const fetchTotalPoints: typeof tasksApi.fetchTotalPoints = (userId) => {
   if (requestsFail) return Promise.reject(new Error('Network error'));
   return Promise.resolve(

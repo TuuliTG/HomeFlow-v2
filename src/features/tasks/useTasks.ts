@@ -5,6 +5,7 @@ import {
   completeTask,
   deleteTask,
   fetchCompletedTasks,
+  fetchHouseholdCompletedTasks,
   fetchTasks,
   fetchTotalPoints,
   pickUpTask,
@@ -44,6 +45,14 @@ export function useCompleteTask(userId: string) {
   return useMutation({
     mutationFn: (taskId: string) => completeTask(taskId, today()),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+  });
+}
+
+/** The household's recently done tasks. */
+export function useHouseholdCompletedTasks(userId: string) {
+  return useQuery({
+    queryKey: [...tasksKey(userId), 'household-completed'],
+    queryFn: fetchHouseholdCompletedTasks,
   });
 }
 

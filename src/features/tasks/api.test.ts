@@ -11,6 +11,7 @@ const supabase = vi.hoisted(() => {
     limit: vi.fn(),
     in: vi.fn(),
     insert: vi.fn(),
+    not: vi.fn(),
   };
   const channel = { on: vi.fn(), subscribe: vi.fn() };
   return {
@@ -63,6 +64,7 @@ describe('tasks api', () => {
     query.select.mockReturnValue(query);
     query.is.mockReturnValue(query);
     query.eq.mockReturnValue(query);
+    query.not.mockReturnValue(query);
   });
 
   it('reads open tasks, soonest due first, with the names of who added them', async () => {
@@ -142,6 +144,45 @@ describe('tasks api', () => {
         completedAt: '2026-10-08T12:00:00Z',
       },
     ]);
+  });
+
+  it("reads the household's recently done tasks with who did them", async () => {
+    query.order.mockReturnValueOnce(query);
+    query.limit.mockResolvedValueOnce({
+      data: [
+        {
+          id: 't1',
+          title: 'Vacuum',
+          type: 'physical',
+          points: 3,
+          completed_at: '2026-10-08T12:00:00Z',
+          completed_by: 'u2',
+        },
+      ],
+      error: null,
+    });
+    query.in.mockResolvedValueOnce({ data: [{ id: 'u2', display_name: 'Ben' }], error: null });
+
+    const tasks = await api.fetchHouseholdCompletedTasks();
+
+    expect(query.not).toHaveBeenCalledWith('completed_at', 'is', null);
+    expect(query.order).toHaveBeenCalledWith('completed_at', { ascending: false });
+    expect(query.limit).toHaveBeenCalledWith(30);
+    expect(tasks).toEqual([
+      {
+        id: 't1',
+        title: 'Vacuum',
+        type: 'physical',
+        points: 3,
+        completedAt: '2026-10-08T12:00:00Z',
+        completedBy: 'u2',
+        completerName: 'Ben',
+      },
+    ]);
+
+    query.order.mockReturnValueOnce(query);
+    query.limit.mockResolvedValueOnce({ data: null, error: failure });
+    await expect(api.fetchHouseholdCompletedTasks()).rejects.toBe(failure);
   });
 
   it("adds up the points of the user's completed tasks", async () => {

@@ -12,6 +12,9 @@ export const taskTypeLabels: Record<TaskType, string> = {
 export const TITLE_MAX_LENGTH = 80;
 export const DESCRIPTION_MAX_LENGTH = 500;
 
+/** How many recently done tasks the board shows with "Show completed". */
+export const HOUSEHOLD_COMPLETED_LIMIT = 30;
+
 /** How long after marking a task done the user can undo it; `undo_complete_task()` enforces it. */
 export const UNDO_WINDOW_MS = 60 * 60 * 1000;
 
@@ -76,4 +79,11 @@ export interface CompletedTask {
   points: number;
   /** When it was marked done (ISO timestamp). */
   completedAt: string;
+}
+
+/** A task someone in the household has marked done. */
+export interface HouseholdCompletedTask extends CompletedTask {
+  completedBy: string | null;
+  /** Their display name, if they have chosen one. */
+  completerName: string | null;
 }
