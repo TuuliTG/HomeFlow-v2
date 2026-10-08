@@ -21,7 +21,8 @@ back rather than follow a fixed calendar.
 - `completed_on` is the user's local date; the database accepts only the server's date ± 1 day.
 - **Picking up**: `pick_up_task()` / `put_back_task()` (security definer) set `picked_up_by` / `picked_up_at` on an
   open task. A task someone has picked up can't be taken by another member (55006); only they can put it back. Anyone
-  can still mark any task done (credited to whoever does), so a task left picked up never blocks the family.
+  can still mark any task done (credited to whoever does), so a task left picked up never blocks the family, but
+  the app asks first ("Ben has picked this up. Mark it done anyway?").
 - **Fixing mistakes**: any member can edit (`update_task()`) or delete (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
   the next occurrence it created, unless that one is already done.

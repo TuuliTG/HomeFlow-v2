@@ -52,7 +52,7 @@ describe('picking up tasks', () => {
     expect(within(task).queryByText(/^Picked up by/)).not.toBeInTheDocument();
   });
 
-  it("shows who has picked up a task, which others can't take but can still mark done", async () => {
+  it('shows who has picked up a task, and asks before you mark it done for them', async () => {
     logInAsFamilyMember();
     const ben = addBen();
     addTask(ben.id, 'Book dentist');
@@ -65,6 +65,39 @@ describe('picking up tasks', () => {
     expect(within(task).queryByRole('button', { name: /^(Pick up|Put back)/ })).toBeNull();
 
     await user.click(within(task).getByRole('button', { name: 'Mark done: Book dentist' }));
+    const confirm = within(task).getByRole('group', { name: 'Mark done for Ben?' });
+    expect(confirm).toHaveTextContent('Ben has picked this up. Mark it done anyway?');
+    await user.click(within(confirm).getByRole('button', { name: 'Yes, I did it' }));
+
+    expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
+  });
+
+  it("can be called off, leaving the other member's task as it was", async () => {
+    logInAsFamilyMember();
+    const ben = addBen();
+    addTask(ben.id, 'Book dentist');
+    fakeTasksBackend.pickUpTaskAs(ben.id, 'task:0');
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    const task = await screen.findByRole('listitem', { name: 'Book dentist' });
+    await user.click(within(task).getByRole('button', { name: 'Mark done: Book dentist' }));
+    await user.click(within(task).getByRole('button', { name: 'Cancel' }));
+
+    expect(within(task).queryByRole('group')).not.toBeInTheDocument();
+    expect(within(task).getByText('Picked up by Ben')).toBeInTheDocument();
+  });
+
+  it("doesn't ask before marking done your own or a free task", async () => {
+    const anna = logInAsFamilyMember();
+    addTask(anna.id, 'Vacuum');
+    addTask(anna.id, 'Dust');
+    fakeTasksBackend.pickUpTaskAs(anna.id, 'task:0');
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await user.click(await screen.findByRole('button', { name: 'Mark done: Vacuum' }));
+    await user.click(screen.getByRole('button', { name: 'Mark done: Dust' }));
 
     expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
   });
