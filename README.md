@@ -8,7 +8,8 @@ See [docs/product-brief.md](docs/product-brief.md).
 email and password for now and stores a display name per user ([ADR 0012](docs/adr/0012-email-and-password-login.md)).
 After choosing a name, a user creates a household or joins one with its invite code
 ([ADR 0010](docs/adr/0010-households-and-shared-tasks.md)). The household shares one task board stored in Supabase,
-showing who added each task. The app requires logging in ([ADR 0011](docs/adr/0011-app-requires-login.md)).
+showing who added each task, and updates live while the app is open
+([ADR 0013](docs/adr/0013-live-updates-with-realtime.md)). The app requires logging in ([ADR 0011](docs/adr/0011-app-requires-login.md)).
 Work in progress is tracked in [plan.md](plan.md).
 
 ## Tech stack
