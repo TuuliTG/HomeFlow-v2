@@ -22,15 +22,18 @@ back rather than follow a fixed calendar.
 - **Picking up**: `pick_up_task()` / `put_back_task()` (security definer) set `picked_up_by` / `picked_up_at` on an
   open task. A task someone has picked up can't be taken by another member (55006); only they can put it back. Anyone
   can still mark any task done (credited to whoever does), so a task left picked up never blocks the family.
+- **Fixing mistakes**: any member can edit (`update_task()`) or delete (`delete_task()`) an open task; done tasks
+  stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
+  the next occurrence it created, unless that one is already done.
 - The board shows open tasks, soonest due first and tasks without a due date last (newest first within a date).
 - **Live updates**: `tasks` is in the `supabase_realtime` publication (RLS applies per subscriber). The app
-  subscribes once (`subscribeToTaskChanges`) and refetches through TanStack Query on every insert or update. Tasks
+  subscribes once (`subscribeToTaskChanges`) and refetches through TanStack Query on every insert, update or
+  delete (deletes aren't filtered by RLS, so they only trigger the refetch). Tasks
   others add show a short message ("Ben added Book dentist"); the next occurrence of a repeating task doesn't.
 
 ## Consequences
 
 - Each occurrence is its own row, so history, streaks and statistics come from completed rows.
-- Tasks can't be edited, un-done or deleted yet.
 - Intervals are whole days ("the 1st of every month" isn't possible).
 
 ## Alternatives considered
