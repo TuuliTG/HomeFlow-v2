@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
@@ -9,6 +9,16 @@ import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
 const POINTS_ERROR = 'Points must be a whole number from 1 to 10.';
+
+/** Wednesday 8 October 2026, midday where the test runs. */
+function setToday() {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 8, 12));
+}
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 async function fillInTask(user: UserEvent, title: string, points = '3') {
   await user.type(await screen.findByLabelText('Task'), title);
@@ -158,6 +168,35 @@ describe('creating a task', () => {
     expect(screen.getByLabelText('Task')).toHaveValue('a'.repeat(80));
   });
 
+  it('can repeat and have a due date', async () => {
+    setToday();
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.type(await screen.findByLabelText('Task'), 'Change bed linen');
+    await user.selectOptions(screen.getByLabelText('Repeats'), 'Every 2 weeks');
+    expect(screen.getByLabelText('Repeats')).toHaveAccessibleDescription(
+      "Each time it's done, it comes back 14 days later.",
+    );
+    await user.type(screen.getByLabelText('Due date'), '2026-10-10');
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    const task = await screen.findByRole('listitem', { name: 'Change bed linen' });
+    expect(within(task).getByText('Every 2 weeks')).toBeInTheDocument();
+    expect(within(task).getByText('Due Sat 10 Oct')).toBeInTheDocument();
+  });
+
+  it("doesn't repeat or have a due date unless asked", async () => {
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await fillInTask(user, 'Fix the shelf');
+
+    const task = await screen.findByRole('listitem', { name: 'Fix the shelf' });
+    expect(within(task).queryByText(/^Every/)).not.toBeInTheDocument();
+    expect(within(task).queryByText(/due/i)).not.toBeInTheDocument();
+  });
+
   it('can be cancelled without creating a task', async () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
@@ -166,5 +205,85 @@ describe('creating a task', () => {
     await user.click(screen.getByRole('link', { name: 'Cancel' }));
 
     expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
+  });
+});
+
+describe('marking a task done', () => {
+  it('takes a one-off task off the board', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Fix the shelf', type: 'physical', points: 3 });
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    const task = await screen.findByRole('listitem', { name: 'Fix the shelf' });
+    await user.click(within(task).getByRole('button', { name: 'Mark done: Fix the shelf' }));
+
+    expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
+  });
+
+  it('brings a repeating task back, due that many days after it was done', async () => {
+    setToday();
+    logInAsFamilyMember();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+    // Overdue: the next one is due two weeks from today, not from its old due date.
+    fakeTasksBackend.addTaskAs(ben.id, {
+      title: 'Change bed linen',
+      type: 'physical',
+      points: 4,
+      repeatEveryDays: 14,
+      dueOn: '2026-10-01',
+    });
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    const task = await screen.findByRole('listitem', { name: 'Change bed linen' });
+    expect(within(task).getByText('Was due Thu 1 Oct')).toBeInTheDocument();
+    await user.click(within(task).getByRole('button', { name: /^Mark done/ }));
+
+    expect(await screen.findByText('Due Thu 22 Oct')).toBeInTheDocument();
+    const next = screen.getByRole('listitem', { name: 'Change bed linen' });
+    expect(within(next).getByText('Every 2 weeks')).toBeInTheDocument();
+    expect(within(next).getByText('Added by Ben')).toBeInTheDocument();
+    expect(screen.queryByText('Was due Thu 1 Oct')).not.toBeInTheDocument();
+  });
+
+  it('says when a due date is today or tomorrow', async () => {
+    setToday();
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Vacuum',
+      type: 'physical',
+      points: 3,
+      dueOn: '2026-10-08',
+    });
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Dust',
+      type: 'physical',
+      points: 2,
+      dueOn: '2026-10-09',
+    });
+    renderAppAt('/');
+
+    const vacuum = await screen.findByRole('listitem', { name: 'Vacuum' });
+    expect(within(vacuum).getByText('Due today')).toBeInTheDocument();
+    const dust = screen.getByRole('listitem', { name: 'Dust' });
+    expect(within(dust).getByText('Due tomorrow')).toBeInTheDocument();
+  });
+
+  it('keeps the task and explains when it cannot be marked done', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
+    const user = userEvent.setup();
+    renderAppAt('/');
+    const task = await screen.findByRole('listitem', { name: 'Vacuum' });
+    fakeTasksBackend.failRequests();
+
+    await user.click(within(task).getByRole('button', { name: /^Mark done/ }));
+
+    expect(await within(task).findByRole('alert')).toHaveTextContent(
+      "We couldn't mark the task done.",
+    );
+    expect(screen.getByRole('listitem', { name: 'Vacuum' })).toBeInTheDocument();
   });
 });

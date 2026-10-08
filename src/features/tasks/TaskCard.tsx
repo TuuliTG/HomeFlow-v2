@@ -1,6 +1,8 @@
 import { useId } from 'react';
 
-import { type Task, taskTypeLabels } from '@/features/tasks/task';
+import { describeDueDate, today } from '@/features/tasks/dueDate';
+import { repeatLabel, type Task, taskTypeLabels } from '@/features/tasks/task';
+import { useCompleteTask } from '@/features/tasks/useTasks';
 
 interface TaskCardProps {
   task: Task;
@@ -13,8 +15,11 @@ function creatorLabel({ createdBy, creatorName }: Task, currentUserId: string): 
   return creatorName ?? 'someone';
 }
 
+const tagClassName = 'w-fit rounded-full px-2 py-0.5 text-xs font-medium';
+
 export function TaskCard({ task, currentUserId }: TaskCardProps) {
   const titleId = useId();
+  const completeTask = useCompleteTask(currentUserId);
   const isPlanning = task.type === 'planning';
 
   return (
@@ -26,17 +31,47 @@ export function TaskCard({ task, currentUserId }: TaskCardProps) {
         <h2 id={titleId} className="font-semibold text-slate-900">
           {task.title}
         </h2>
-        <span
-          className={[
-            'w-fit rounded-full px-2 py-0.5 text-xs font-medium',
-            isPlanning ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700',
-          ].join(' ')}
-        >
-          {taskTypeLabels[task.type]}
-        </span>
+        <div className="flex flex-wrap gap-1.5">
+          <span
+            className={[
+              tagClassName,
+              isPlanning ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700',
+            ].join(' ')}
+          >
+            {taskTypeLabels[task.type]}
+          </span>
+          {task.repeatEveryDays !== null && (
+            <span className={`${tagClassName} bg-sky-100 text-sky-800`}>
+              {repeatLabel(task.repeatEveryDays)}
+            </span>
+          )}
+        </div>
+        {task.dueOn !== null && (
+          <span className="text-xs font-medium text-slate-700">
+            {describeDueDate(task.dueOn, today())}
+          </span>
+        )}
         <span className="text-xs text-slate-500">Added by {creatorLabel(task, currentUserId)}</span>
+        {completeTask.isError && (
+          <p role="alert" className="text-xs text-red-700">
+            We couldn&apos;t mark the task done. Try again.
+          </p>
+        )}
       </div>
-      <span className="text-brand-900 shrink-0 text-sm font-semibold">{task.points} points</span>
+      <div className="flex shrink-0 flex-col items-end gap-2">
+        <span className="text-brand-900 text-sm font-semibold">{task.points} points</span>
+        <button
+          type="button"
+          aria-label={`Mark done: ${task.title}`}
+          disabled={completeTask.isPending}
+          onClick={() => {
+            completeTask.mutate(task.id);
+          }}
+          className="border-brand-600 text-brand-900 hover:bg-brand-50 rounded-lg border px-3 py-1.5 text-sm font-semibold disabled:opacity-60"
+        >
+          Mark done
+        </button>
+      </div>
     </li>
   );
 }

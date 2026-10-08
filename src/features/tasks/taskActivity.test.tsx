@@ -65,6 +65,43 @@ describe('live task updates', () => {
     expect(activityMessage()).toBeUndefined();
   });
 
+  it('takes a task off the board when another member marks it done', async () => {
+    logInAsFamilyMember();
+    const ben = addBen();
+    act(() => {
+      fakeTasksBackend.addTaskAs(ben.id, { title: 'Vacuum', type: 'physical', points: 3 });
+    });
+    renderAppAt('/');
+    await screen.findByRole('listitem', { name: 'Vacuum' });
+
+    act(() => {
+      fakeTasksBackend.completeTaskAs(ben.id, 'task:0', '2026-10-08');
+    });
+
+    expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
+  });
+
+  it("shows a repeating task's next occurrence without announcing it as added", async () => {
+    logInAsFamilyMember();
+    const ben = addBen();
+    fakeTasksBackend.addTaskAs(ben.id, {
+      title: 'Water plants',
+      type: 'physical',
+      points: 2,
+      repeatEveryDays: 3,
+    });
+    renderAppAt('/');
+    await screen.findByRole('listitem', { name: 'Water plants' });
+
+    act(() => {
+      fakeTasksBackend.completeTaskAs(ben.id, 'task:0', '2030-01-01');
+    });
+
+    expect(await screen.findByText('Due Fri 4 Jan')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem', { name: 'Water plants' })).toHaveLength(1);
+    expect(activityMessage()).toBeUndefined();
+  });
+
   it("ignores other households' tasks", async () => {
     logInAsFamilyMember();
     const carol = fakeAuthBackend.addProfile('carol@example.com', 'Carol');

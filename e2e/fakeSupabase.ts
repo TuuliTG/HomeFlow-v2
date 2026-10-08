@@ -30,6 +30,9 @@ interface TaskRow {
   type: string;
   points: number;
   created_by: string;
+  repeat_every_days: number | null;
+  due_on: string | null;
+  completed_at: string | null;
 }
 
 async function reply(route: Route, status: number, body?: unknown) {
@@ -85,6 +88,9 @@ export async function fakeSupabase(page: Page) {
       type: 'planning',
       points: 5,
       created_by: 'e2e-ben',
+      repeat_every_days: null,
+      due_on: null,
+      completed_at: null,
     },
   ];
 
@@ -139,12 +145,16 @@ export async function fakeSupabase(page: Page) {
     const request = route.request();
     if (request.method() === 'POST') {
       if (!ownHousehold) return reply(route, 400, { code: '23502', message: 'No household' });
-      const task = request.postDataJSON() as Pick<TaskRow, 'title' | 'type' | 'points'>;
+      const task = request.postDataJSON() as Pick<
+        TaskRow,
+        'title' | 'type' | 'points' | 'repeat_every_days' | 'due_on'
+      >;
       tasks.unshift({
         ...task,
         id: `e2e-task-${String(tasks.length)}`,
         household_id: ownHousehold.id,
         created_by: user.id,
+        completed_at: null,
       });
       return reply(route, 201);
     }
@@ -152,8 +162,35 @@ export async function fakeSupabase(page: Page) {
     return reply(
       route,
       200,
-      tasks.filter((task) => task.household_id === householdId),
+      tasks.filter((task) => task.household_id === householdId && task.completed_at === null),
     );
+  }
+
+  /** Like complete_task(): marks the task done and adds the next occurrence of a repeating task. */
+  async function completeTask(route: Route) {
+    const { task_id, completed_on } = route.request().postDataJSON() as {
+      task_id: string;
+      completed_on: string;
+    };
+    const task = tasks.find(
+      (candidate) =>
+        candidate.id === task_id &&
+        candidate.household_id === ownHousehold?.id &&
+        candidate.completed_at === null,
+    );
+    if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
+    task.completed_at = new Date().toISOString();
+    if (task.repeat_every_days === null) return reply(route, 200, null);
+    const due = new Date(`${completed_on}T00:00:00Z`);
+    due.setUTCDate(due.getUTCDate() + task.repeat_every_days);
+    const next = {
+      ...task,
+      id: `e2e-task-${String(tasks.length)}`,
+      due_on: due.toISOString().slice(0, 10),
+      completed_at: null,
+    };
+    tasks.unshift(next);
+    return reply(route, 200, next.id);
   }
 
   /** Accepts any email and password, for both creating an account and logging in. */
@@ -176,6 +213,7 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/household_members': membersEndpoint,
     '/rest/v1/rpc/create_household': createHousehold,
     '/rest/v1/rpc/join_household': joinHousehold,
+    '/rest/v1/rpc/complete_task': completeTask,
     '/rest/v1/tasks': tasksEndpoint,
   };
 
