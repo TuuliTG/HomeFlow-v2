@@ -30,3 +30,27 @@ test('family member can create a task and see it on the shared task board', asyn
   await page.reload();
   await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
 });
+
+test('family member can mark a repeating task done and see it come back', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(2026, 9, 8, 12));
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Tasks' }).click();
+
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task').fill('Change bed linen');
+  await page.getByLabel('Repeats').selectOption({ label: 'Every 2 weeks' });
+  await page.getByLabel('Due date').fill('2026-10-06');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  const task = page.getByRole('listitem', { name: 'Change bed linen' });
+  await expect(task.getByText('Every 2 weeks')).toBeVisible();
+  await expect(task.getByText('Was due Tue 6 Oct')).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on the task board').toEqual([]);
+
+  await task.getByRole('button', { name: 'Mark done: Change bed linen' }).click();
+
+  await expect(task.getByText('Due Thu 22 Oct')).toBeVisible();
+  await expect(page.getByText('Was due Tue 6 Oct')).toBeHidden();
+});

@@ -9,7 +9,8 @@ email and password for now and stores a display name per user ([ADR 0012](docs/a
 After choosing a name, a user creates a household or joins one with its invite code
 ([ADR 0010](docs/adr/0010-households-and-shared-tasks.md)). The household shares one task board stored in Supabase,
 showing who added each task, and updates live while the app is open
-([ADR 0013](docs/adr/0013-live-updates-with-realtime.md)). The app requires logging in ([ADR 0011](docs/adr/0011-app-requires-login.md)).
+([ADR 0013](docs/adr/0013-live-updates-with-realtime.md)). Tasks can have a due date and be marked done; a repeating
+task comes back a set number of days after it was done ([ADR 0015](docs/adr/0015-repeating-tasks.md)). The app requires logging in ([ADR 0011](docs/adr/0011-app-requires-login.md)).
 Work in progress is tracked in [plan.md](plan.md).
 
 ## Tech stack
@@ -38,6 +39,21 @@ npm run dev
 | `npm run db:start`     | Local Supabase (requires Docker)                                        |
 | `npm run db:migration` | Create a new SQL migration                                              |
 | `npm run db:test`      | Run database tests (RLS) in `supabase/tests` against local Supabase     |
+
+### Running the database tests locally
+
+CI runs these on every PR (job _Database (migrations + RLS)_), so running them yourself is optional. They need
+[Docker](https://docs.docker.com/get-started/get-docker/) running (e.g. Docker Desktop); the Supabase CLI starts
+its own containers, you don't create any.
+
+```sh
+npx supabase db start   # just the database (with all migrations applied), like CI
+npm run db:test         # runs supabase/tests/*.test.sql against it
+npm run db:stop         # when you're done
+```
+
+`npm run db:start` starts the whole local Supabase instead. The first start downloads the Supabase images and takes
+a few minutes. After you add or change a migration, run `npm run db:reset` so the local database picks it up.
 
 ## Project structure
 

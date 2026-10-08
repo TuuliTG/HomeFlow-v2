@@ -11,6 +11,17 @@ export const taskTypeLabels: Record<TaskType, string> = {
 
 export const TITLE_MAX_LENGTH = 80;
 
+/** How often a task can repeat, in days; offered as choices when creating a task. */
+export const repeatChoices = [1, 2, 3, 7, 14, 30] as const;
+
+/** "Every day", "Every 3 days", "Every week", "Every 2 weeks". */
+export function repeatLabel(days: number): string {
+  if (days === 1) return 'Every day';
+  if (days === 7) return 'Every week';
+  if (days % 7 === 0) return `Every ${String(days / 7)} weeks`;
+  return `Every ${String(days)} days`;
+}
+
 export const newTaskSchema = z.object({
   title: z
     .string()
@@ -23,6 +34,10 @@ export const newTaskSchema = z.object({
     .int('Points must be a whole number from 1 to 10.')
     .min(1, 'Points must be a whole number from 1 to 10.')
     .max(10, 'Points must be a whole number from 1 to 10.'),
+  /** Days after it is done that the task comes back; null for a one-off task. */
+  repeatEveryDays: z.number().int().min(1).max(365).nullable(),
+  /** Local date (YYYY-MM-DD) the task should be done by, if any. */
+  dueOn: z.iso.date('Pick a valid due date.').nullable(),
 });
 
 export type NewTask = z.infer<typeof newTaskSchema>;

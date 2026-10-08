@@ -27,13 +27,23 @@ const supabase = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KE
 async function taskById(taskId: string): Promise<TaskAdded | null> {
   const { data, error } = await supabase
     .from('tasks')
-    .select('household_id, title, created_by')
+    .select('household_id, title, created_by, previous_task_id')
     .eq('id', taskId)
     .maybeSingle();
   if (error) throw error;
-  const row = data as { household_id: string; title: string; created_by: string | null } | null;
+  const row = data as {
+    household_id: string;
+    title: string;
+    created_by: string | null;
+    previous_task_id: string | null;
+  } | null;
   return row
-    ? { householdId: row.household_id, title: row.title, createdBy: row.created_by }
+    ? {
+        householdId: row.household_id,
+        title: row.title,
+        createdBy: row.created_by,
+        isRepeat: row.previous_task_id !== null,
+      }
     : null;
 }
 

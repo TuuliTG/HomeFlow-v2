@@ -6,6 +6,8 @@ import { inputClassName } from '@/components/ui/formStyles';
 import { PageHeader } from '@/components/ui/PageHeader';
 import {
   newTaskSchema,
+  repeatChoices,
+  repeatLabel,
   TITLE_MAX_LENGTH,
   type TaskType,
   taskTypeLabels,
@@ -16,10 +18,16 @@ import { useLoggedInUser } from '@/lib/auth';
 
 const DEFAULT_POINTS = '3';
 
+type FieldName = 'title' | 'points' | 'dueOn';
+
 interface FormError {
   /** The field to fix, or null when saving failed. */
-  field: 'title' | 'points' | null;
+  field: FieldName | null;
   message: string;
+}
+
+function fieldOf(path: PropertyKey | undefined): FieldName {
+  return path === 'points' || path === 'dueOn' ? path : 'title';
 }
 
 export function CreateTaskPage() {
@@ -29,24 +37,36 @@ export function CreateTaskPage() {
   const [title, setTitle] = useState('');
   const [type, setType] = useState<TaskType>('physical');
   const [points, setPoints] = useState(DEFAULT_POINTS);
+  /** Days between occurrences, or '' for a one-off task. */
+  const [repeatEveryDays, setRepeatEveryDays] = useState('');
+  const [dueOn, setDueOn] = useState('');
   const [error, setError] = useState<FormError | null>(null);
   const errorId = useId();
+  const repeatHintId = useId();
   const titleRef = useRef<HTMLInputElement>(null);
   const pointsRef = useRef<HTMLInputElement>(null);
+  const dueOnRef = useRef<HTMLInputElement>(null);
+  const fieldRefs = { title: titleRef, points: pointsRef, dueOn: dueOnRef };
 
-  function errorPropsFor(field: 'title' | 'points') {
+  function errorPropsFor(field: FieldName) {
     const hasError = error?.field === field;
     return { 'aria-invalid': hasError, 'aria-describedby': hasError ? errorId : undefined };
   }
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
-    const parsed = newTaskSchema.safeParse({ title, type, points });
+    const parsed = newTaskSchema.safeParse({
+      title,
+      type,
+      points,
+      repeatEveryDays: repeatEveryDays === '' ? null : Number(repeatEveryDays),
+      dueOn: dueOn === '' ? null : dueOn,
+    });
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
-      const field = issue?.path[0] === 'points' ? 'points' : 'title';
+      const field = fieldOf(issue?.path[0]);
       setError({ field, message: issue?.message ?? 'Check the task details.' });
-      (field === 'points' ? pointsRef : titleRef).current?.focus();
+      fieldRefs[field].current?.focus();
       return;
     }
     addTask.mutate(parsed.data, {
@@ -130,6 +150,48 @@ export function CreateTaskPage() {
             className={`${inputClassName} w-24`}
           />
         </label>
+
+        <div className="flex gap-3">
+          <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
+            Repeats
+            <select
+              name="repeatEveryDays"
+              aria-describedby={repeatEveryDays === '' ? undefined : repeatHintId}
+              value={repeatEveryDays}
+              onChange={(event) => {
+                setRepeatEveryDays(event.target.value);
+              }}
+              className={inputClassName}
+            >
+              <option value="">Doesn&apos;t repeat</option>
+              {repeatChoices.map((days) => (
+                <option key={days} value={days}>
+                  {repeatLabel(days)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
+            Due date
+            <input
+              type="date"
+              name="dueOn"
+              ref={dueOnRef}
+              {...errorPropsFor('dueOn')}
+              value={dueOn}
+              onChange={(event) => {
+                setDueOn(event.target.value);
+              }}
+              className={`${inputClassName} min-w-0`}
+            />
+          </label>
+        </div>
+        {repeatEveryDays !== '' && (
+          <p id={repeatHintId} className="-mt-3 text-sm text-slate-600">
+            Each time it&apos;s done, it comes back{' '}
+            {Number(repeatEveryDays) === 1 ? '1 day' : `${repeatEveryDays} days`} later.
+          </p>
+        )}
 
         {error && (
           <p id={errorId} role="alert" className="text-sm text-red-700">

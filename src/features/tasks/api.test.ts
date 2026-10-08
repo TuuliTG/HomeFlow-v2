@@ -3,13 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as tasksApi from '@/features/tasks/api';
 
 const supabase = vi.hoisted(() => {
-  const query = { select: vi.fn(), order: vi.fn(), in: vi.fn(), insert: vi.fn() };
+  const query = { select: vi.fn(), is: vi.fn(), order: vi.fn(), in: vi.fn(), insert: vi.fn() };
   const channel = { on: vi.fn(), subscribe: vi.fn() };
   return {
     query,
     channel,
     client: {
       from: vi.fn(() => query),
+      rpc: vi.fn(),
       channel: vi.fn(() => channel),
       removeChannel: vi.fn(),
     },
@@ -23,15 +24,31 @@ vi.mock('@/lib/supabase', () => ({ getSupabaseClient }));
 const api = await vi.importActual<typeof tasksApi>('@/features/tasks/api');
 const { client, query, channel } = supabase;
 const failure = { message: 'boom' };
-const row = { id: 't1', title: 'Vacuum', type: 'physical', points: 3, created_by: 'u1' };
+const newTask = {
+  title: 'Vacuum',
+  type: 'physical',
+  points: 3,
+  repeatEveryDays: null,
+  dueOn: null,
+} as const;
+const row = {
+  id: 't1',
+  title: 'Vacuum',
+  type: 'physical',
+  points: 3,
+  created_by: 'u1',
+  repeat_every_days: null,
+  due_on: null,
+};
 
 describe('tasks api', () => {
   beforeEach(() => {
     getSupabaseClient.mockReturnValue(client);
     query.select.mockReturnValue(query);
+    query.is.mockReturnValue(query);
   });
 
-  it('reads tasks newest first with the names of who added them', async () => {
+  it('reads open tasks newest first with the names of who added them', async () => {
     query.order.mockResolvedValue({
       data: [row, { ...row, id: 't2', created_by: 'u1' }, { ...row, id: 't3', created_by: null }],
       error: null,
@@ -40,6 +57,7 @@ describe('tasks api', () => {
 
     const tasks = await api.fetchTasks();
 
+    expect(query.is).toHaveBeenCalledWith('completed_at', null);
     expect(query.order).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(query.in).toHaveBeenCalledWith('id', ['u1']);
     expect(tasks.map((task) => [task.id, task.createdBy, task.creatorName])).toEqual([
@@ -47,7 +65,25 @@ describe('tasks api', () => {
       ['t2', 'u1', 'Anna'],
       ['t3', null, null],
     ]);
-    expect(tasks[0]).toMatchObject({ title: 'Vacuum', type: 'physical', points: 3 });
+    expect(tasks[0]).toMatchObject({
+      title: 'Vacuum',
+      type: 'physical',
+      points: 3,
+      repeatEveryDays: null,
+      dueOn: null,
+    });
+  });
+
+  it('reads how often a task repeats and when it is due', async () => {
+    query.order.mockResolvedValue({
+      data: [{ ...row, repeat_every_days: 14, due_on: '2026-10-22' }],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const [task] = await api.fetchTasks();
+
+    expect(task).toMatchObject({ repeatEveryDays: 14, dueOn: '2026-10-22' });
   });
 
   it('skips the name lookup when there are no tasks', async () => {
@@ -75,37 +111,67 @@ describe('tasks api', () => {
   it('adds a task, leaving household and creator to the database', async () => {
     query.insert.mockResolvedValue({ error: null });
 
-    await api.addTask({ title: 'Vacuum', type: 'physical', points: 3 });
+    await api.addTask({ ...newTask, repeatEveryDays: 7, dueOn: '2026-10-10' });
 
     expect(client.from).toHaveBeenCalledWith('tasks');
-    expect(query.insert).toHaveBeenCalledWith({ title: 'Vacuum', type: 'physical', points: 3 });
+    expect(query.insert).toHaveBeenCalledWith({
+      title: 'Vacuum',
+      type: 'physical',
+      points: 3,
+      repeat_every_days: 7,
+      due_on: '2026-10-10',
+    });
   });
 
   it('passes errors on when adding fails', async () => {
     query.insert.mockResolvedValue({ error: failure });
 
-    await expect(api.addTask({ title: 'Vacuum', type: 'physical', points: 3 })).rejects.toBe(
-      failure,
-    );
+    await expect(api.addTask(newTask)).rejects.toBe(failure);
   });
 
-  it('delivers tasks added to the household live, until unsubscribed', () => {
+  it('marks a task done on the given day', async () => {
+    client.rpc.mockResolvedValue({ data: null, error: null });
+
+    await api.completeTask('t1', '2026-10-08');
+
+    expect(client.rpc).toHaveBeenCalledWith('complete_task', {
+      task_id: 't1',
+      completed_on: '2026-10-08',
+    });
+  });
+
+  it('passes errors on when marking done fails', async () => {
+    client.rpc.mockResolvedValue({ data: null, error: failure });
+
+    await expect(api.completeTask('t1', '2026-10-08')).rejects.toBe(failure);
+  });
+
+  it('delivers task changes in the household live, until unsubscribed', () => {
     channel.on.mockReturnValue(channel);
     channel.subscribe.mockReturnValue(channel);
-    const onAdded = vi.fn();
+    const onChange = vi.fn();
 
-    const unsubscribe = api.subscribeToNewTasks(onAdded);
-    const [[event, filter, listener]] = channel.on.mock.calls as [
+    const unsubscribe = api.subscribeToTaskChanges(onChange);
+    const [[event, inserts, onInsert], [, updates, onUpdate]] = channel.on.mock.calls as [
       [string, unknown, (payload: { new: unknown }) => void],
+      [string, unknown, () => void],
     ];
-    listener({ new: { ...row, household_id: 'h1', created_at: '2026-10-08T04:00:00Z' } });
-    listener({ new: { id: 't2' } });
+    const inserted = { ...row, household_id: 'h1', created_at: '2026-10-08T04:00:00Z' };
+    onInsert({ new: { ...inserted, previous_task_id: null } });
+    onInsert({ new: { ...inserted, id: 't2', previous_task_id: 't1' } });
+    onInsert({ new: { id: 't3' } });
+    onUpdate();
     unsubscribe();
 
     expect(client.channel).toHaveBeenCalledWith(expect.stringMatching(/^household-tasks:/));
     expect(event).toBe('postgres_changes');
-    expect(filter).toEqual({ event: 'INSERT', schema: 'public', table: 'tasks' });
-    expect(onAdded).toHaveBeenCalledExactlyOnceWith({ id: 't1', title: 'Vacuum', createdBy: 'u1' });
+    expect(inserts).toEqual({ event: 'INSERT', schema: 'public', table: 'tasks' });
+    expect(updates).toEqual({ event: 'UPDATE', schema: 'public', table: 'tasks' });
+    expect(onChange.mock.calls).toEqual([
+      [{ kind: 'added', id: 't1', title: 'Vacuum', createdBy: 'u1', isRepeat: false }],
+      [{ kind: 'added', id: 't2', title: 'Vacuum', createdBy: 'u1', isRepeat: true }],
+      [{ kind: 'updated' }],
+    ]);
     expect(client.removeChannel).toHaveBeenCalledWith(channel);
   });
 
@@ -114,7 +180,7 @@ describe('tasks api', () => {
     channel.subscribe.mockReturnValue(channel);
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-    api.subscribeToNewTasks(vi.fn());
+    api.subscribeToTaskChanges(vi.fn());
     const [[onStatus]] = channel.subscribe.mock.calls as [
       [(status: string, error?: Error) => void],
     ];

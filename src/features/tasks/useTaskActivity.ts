@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 
-import { fetchTasks, subscribeToNewTasks } from '@/features/tasks/api';
+import { fetchTasks, subscribeToTaskChanges } from '@/features/tasks/api';
 import type { Task } from '@/features/tasks/task';
 import { tasksKey } from '@/features/tasks/useTasks';
 
@@ -15,7 +15,8 @@ export interface TaskActivity {
 
 /**
  * Keeps the task list current while the app is open, and describes tasks other household members
- * add ("Ben added Book dentist"). The user's own tasks refresh the list without a message.
+ * add ("Ben added Book dentist"). The user's own tasks, tasks marked done and the next occurrences of
+ * repeating tasks refresh the list without a message.
  */
 export function useTaskActivity(userId: string) {
   const queryClient = useQueryClient();
@@ -23,20 +24,20 @@ export function useTaskActivity(userId: string) {
 
   useEffect(
     () =>
-      subscribeToNewTasks((added) => {
-        // Refetch (cancelling any fetch that started before the insert), then read the creator's
+      subscribeToTaskChanges((change) => {
+        // Refetch (cancelling any fetch that started before the change), then read the creator's
         // display name from the refreshed list.
         const key = tasksKey(userId);
         const tasks = queryClient
           .invalidateQueries({ queryKey: key })
           .then(() => queryClient.query({ queryKey: key, queryFn: fetchTasks }))
           .catch(() => [] as Task[]);
-        if (added.createdBy === userId) return;
+        if (change.kind !== 'added' || change.isRepeat || change.createdBy === userId) return;
         void tasks.then((list) => {
-          const creatorName = list.find((task) => task.id === added.id)?.creatorName;
+          const creatorName = list.find((task) => task.id === change.id)?.creatorName;
           setActivity({
-            id: added.id,
-            message: `${creatorName ?? 'Someone'} added ${added.title}`,
+            id: change.id,
+            message: `${creatorName ?? 'Someone'} added ${change.title}`,
           });
         });
       }),

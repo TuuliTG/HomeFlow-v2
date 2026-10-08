@@ -19,7 +19,8 @@ to be low effort and must not let anyone add themselves to a family they weren't
   random characters without look-alikes, shared in person or by message.
 - Members can read each other's display names (`profiles`), nothing else about each other.
 - Least privilege: members can only read and add tasks for now; `created_by`/`created_at` always come from defaults.
-  Updates/deletes get their own policies when a feature needs them.
+  Updates/deletes get their own policies when a feature needs them. (Marking a task done goes through
+  `complete_task()` instead, [ADR 0015](0015-repeating-tasks.md).)
 
 ## Consequences
 
