@@ -1,0 +1,235 @@
+import { type SyntheticEvent, useId, useRef, useState } from 'react';
+import { Link } from 'react-router';
+
+import { paths } from '@/app/paths';
+import { inputClassName } from '@/components/ui/formStyles';
+import {
+  type NewTask,
+  newTaskSchema,
+  repeatChoices,
+  repeatLabel,
+  TITLE_MAX_LENGTH,
+  type TaskType,
+  taskTypeLabels,
+  taskTypes,
+} from '@/features/tasks/task';
+
+const DEFAULT_POINTS = '3';
+
+type FieldName = 'title' | 'points' | 'dueOn';
+
+interface FormError {
+  /** The field to fix, or null when saving failed. */
+  field: FieldName | null;
+  message: string;
+}
+
+function fieldOf(path: PropertyKey | undefined): FieldName {
+  return path === 'points' || path === 'dueOn' ? path : 'title';
+}
+
+interface TaskFormProps {
+  /** The task being edited; a new task starts empty. */
+  initial?: NewTask;
+  submitLabel: string;
+  isSaving: boolean;
+  /** Saves the task; a rejection shows "We couldn't save the task." */
+  onSave: (task: NewTask) => Promise<void>;
+}
+
+/** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
+/** The form's field values (strings, as inputs hold them) for a task, or for a new one. */
+function fieldValues(task: NewTask | undefined) {
+  if (!task)
+    return {
+      title: '',
+      type: 'physical' as TaskType,
+      points: DEFAULT_POINTS,
+      repeat: '',
+      dueOn: '',
+    };
+  return {
+    title: task.title,
+    type: task.type,
+    points: String(task.points),
+    repeat: task.repeatEveryDays === null ? '' : String(task.repeatEveryDays),
+    dueOn: task.dueOn ?? '',
+  };
+}
+
+export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormProps) {
+  const [initialValues] = useState(() => fieldValues(initial));
+  const [title, setTitle] = useState(initialValues.title);
+  const [type, setType] = useState<TaskType>(initialValues.type);
+  const [points, setPoints] = useState(initialValues.points);
+  /** Days between occurrences, or '' for a one-off task. */
+  const [repeatEveryDays, setRepeatEveryDays] = useState(initialValues.repeat);
+  const [dueOn, setDueOn] = useState(initialValues.dueOn);
+  const [error, setError] = useState<FormError | null>(null);
+  const errorId = useId();
+  const repeatHintId = useId();
+  const titleRef = useRef<HTMLInputElement>(null);
+  const pointsRef = useRef<HTMLInputElement>(null);
+  const dueOnRef = useRef<HTMLInputElement>(null);
+  const fieldRefs = { title: titleRef, points: pointsRef, dueOn: dueOnRef };
+
+  function errorPropsFor(field: FieldName) {
+    const hasError = error?.field === field;
+    return { 'aria-invalid': hasError, 'aria-describedby': hasError ? errorId : undefined };
+  }
+
+  function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
+    event.preventDefault();
+    const parsed = newTaskSchema.safeParse({
+      title,
+      type,
+      points,
+      repeatEveryDays: repeatEveryDays === '' ? null : Number(repeatEveryDays),
+      dueOn: dueOn === '' ? null : dueOn,
+    });
+    if (!parsed.success) {
+      const [issue] = parsed.error.issues;
+      const field = fieldOf(issue?.path[0]);
+      setError({ field, message: issue?.message ?? 'Check the task details.' });
+      fieldRefs[field].current?.focus();
+      return;
+    }
+    onSave(parsed.data).catch(() => {
+      setError({ field: null, message: "We couldn't save the task. Try again." });
+    });
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      onChange={() => {
+        setError(null);
+      }}
+      className="flex flex-col gap-5"
+      noValidate
+    >
+      <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+        Task
+        <input
+          type="text"
+          name="title"
+          ref={titleRef}
+          maxLength={TITLE_MAX_LENGTH}
+          {...errorPropsFor('title')}
+          placeholder="e.g. Take out the recycling"
+          value={title}
+          onChange={(event) => {
+            setTitle(event.target.value);
+          }}
+          className={inputClassName}
+        />
+      </label>
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 text-sm font-medium text-slate-700">Type</legend>
+        <div className="flex gap-3">
+          {taskTypes.map((option) => (
+            <label
+              key={option}
+              className="has-checked:border-brand-600 has-checked:bg-brand-50 flex flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800"
+            >
+              <input
+                type="radio"
+                name="type"
+                value={option}
+                checked={type === option}
+                onChange={() => {
+                  setType(option);
+                }}
+                className="accent-brand-600"
+              />
+              {taskTypeLabels[option]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+        Points
+        <input
+          type="number"
+          name="points"
+          ref={pointsRef}
+          {...errorPropsFor('points')}
+          inputMode="numeric"
+          min={1}
+          max={10}
+          value={points}
+          onChange={(event) => {
+            setPoints(event.target.value);
+          }}
+          className={`${inputClassName} w-24`}
+        />
+      </label>
+
+      <div className="flex gap-3">
+        <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
+          Repeats
+          <select
+            name="repeatEveryDays"
+            aria-describedby={repeatEveryDays === '' ? undefined : repeatHintId}
+            value={repeatEveryDays}
+            onChange={(event) => {
+              setRepeatEveryDays(event.target.value);
+            }}
+            className={inputClassName}
+          >
+            <option value="">Doesn&apos;t repeat</option>
+            {repeatChoices.map((days) => (
+              <option key={days} value={days}>
+                {repeatLabel(days)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
+          Due date
+          <input
+            type="date"
+            name="dueOn"
+            ref={dueOnRef}
+            {...errorPropsFor('dueOn')}
+            value={dueOn}
+            onChange={(event) => {
+              setDueOn(event.target.value);
+            }}
+            className={`${inputClassName} min-w-0`}
+          />
+        </label>
+      </div>
+      {repeatEveryDays !== '' && (
+        <p id={repeatHintId} className="-mt-3 text-sm text-slate-600">
+          Each time it&apos;s done, it comes back{' '}
+          {Number(repeatEveryDays) === 1 ? '1 day' : `${repeatEveryDays} days`} later.
+        </p>
+      )}
+
+      {error && (
+        <p id={errorId} role="alert" className="text-sm text-red-700">
+          {error.message}
+        </p>
+      )}
+
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={isSaving}
+          className="bg-brand-600 hover:bg-brand-900 flex-1 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+        >
+          {submitLabel}
+        </button>
+        <Link
+          to={paths.tasks}
+          className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-center font-semibold text-slate-700 hover:bg-slate-100"
+        >
+          Cancel
+        </Link>
+      </div>
+    </form>
+  );
+}
