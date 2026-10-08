@@ -8,13 +8,13 @@ import { AuthProvider } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { HouseholdPage } from '@/features/household/HouseholdPage';
 import { HouseholdSetupPage } from '@/features/household/HouseholdSetupPage';
-import { MyTasksPage } from '@/features/my-tasks/MyTasksPage';
 import { NotificationSettings } from '@/features/notifications/NotificationSettings';
 import { turnOffNotificationsOnThisDevice } from '@/features/notifications/usePushNotifications';
 import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { AvailableTasksPage } from '@/features/tasks/AvailableTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
+import { MyTasksPage } from '@/features/tasks/MyTasksPage';
 
 export const routes: RouteObject[] = [
   {

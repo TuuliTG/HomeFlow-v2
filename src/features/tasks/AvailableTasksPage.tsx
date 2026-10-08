@@ -32,8 +32,9 @@ function TaskList() {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
 
-  if (tasks.isPending) return <LoadingMessage />;
-  if (tasks.isError) {
+  // A failed refresh keeps showing the tasks already loaded.
+  if (tasks.data === undefined) {
+    if (!tasks.isError) return <LoadingMessage />;
     return (
       <p role="alert" className="text-sm text-red-700">
         We couldn&apos;t load the tasks. Check your connection and reload the page.

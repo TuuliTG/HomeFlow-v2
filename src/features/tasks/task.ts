@@ -48,4 +48,18 @@ export interface Task extends NewTask {
   createdBy: string | null;
   /** Their display name, if they have chosen one. */
   creatorName: string | null;
+  /** User id of whoever has picked the task up to do it, if anyone. */
+  pickedUpBy: string | null;
+  /** Their display name, if they have chosen one. */
+  pickerName: string | null;
+}
+
+/** A task the user has marked done. */
+export interface CompletedTask {
+  id: string;
+  title: string;
+  type: TaskType;
+  points: number;
+  /** When it was marked done (ISO timestamp). */
+  completedAt: string;
 }
