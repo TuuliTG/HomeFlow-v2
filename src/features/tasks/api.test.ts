@@ -41,6 +41,11 @@ const row = {
   due_on: null,
 };
 
+/** The tasks query's result: it is ordered twice (due date, then newest), then awaited. */
+function respondWithTasks(result: { data: unknown; error: unknown }) {
+  query.order.mockReturnValueOnce(query).mockResolvedValueOnce(result);
+}
+
 describe('tasks api', () => {
   beforeEach(() => {
     getSupabaseClient.mockReturnValue(client);
@@ -48,8 +53,8 @@ describe('tasks api', () => {
     query.is.mockReturnValue(query);
   });
 
-  it('reads open tasks newest first with the names of who added them', async () => {
-    query.order.mockResolvedValue({
+  it('reads open tasks, soonest due first, with the names of who added them', async () => {
+    respondWithTasks({
       data: [row, { ...row, id: 't2', created_by: 'u1' }, { ...row, id: 't3', created_by: null }],
       error: null,
     });
@@ -58,7 +63,10 @@ describe('tasks api', () => {
     const tasks = await api.fetchTasks();
 
     expect(query.is).toHaveBeenCalledWith('completed_at', null);
-    expect(query.order).toHaveBeenCalledWith('created_at', { ascending: false });
+    expect(query.order.mock.calls).toEqual([
+      ['due_on', { ascending: true, nullsFirst: false }],
+      ['created_at', { ascending: false }],
+    ]);
     expect(query.in).toHaveBeenCalledWith('id', ['u1']);
     expect(tasks.map((task) => [task.id, task.createdBy, task.creatorName])).toEqual([
       ['t1', 'u1', 'Anna'],
@@ -75,7 +83,7 @@ describe('tasks api', () => {
   });
 
   it('reads how often a task repeats and when it is due', async () => {
-    query.order.mockResolvedValue({
+    respondWithTasks({
       data: [{ ...row, repeat_every_days: 14, due_on: '2026-10-22' }],
       error: null,
     });
@@ -87,23 +95,23 @@ describe('tasks api', () => {
   });
 
   it('skips the name lookup when there are no tasks', async () => {
-    query.order.mockResolvedValue({ data: [], error: null });
+    respondWithTasks({ data: [], error: null });
 
     await expect(api.fetchTasks()).resolves.toEqual([]);
     expect(query.in).not.toHaveBeenCalled();
   });
 
   it('rejects a malformed task row', async () => {
-    query.order.mockResolvedValue({ data: [{ ...row, type: 'chores' }], error: null });
+    respondWithTasks({ data: [{ ...row, type: 'chores' }], error: null });
 
     await expect(api.fetchTasks()).rejects.toThrow();
   });
 
   it('passes task and name errors on', async () => {
-    query.order.mockResolvedValueOnce({ data: null, error: failure });
+    respondWithTasks({ data: null, error: failure });
     await expect(api.fetchTasks()).rejects.toBe(failure);
 
-    query.order.mockResolvedValueOnce({ data: [row], error: null });
+    respondWithTasks({ data: [row], error: null });
     query.in.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.fetchTasks()).rejects.toBe(failure);
   });

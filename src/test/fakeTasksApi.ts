@@ -17,7 +17,7 @@ interface StoredTask extends NewTask {
 /** A task as tests describe it: repeating and due date are optional. */
 type TaskDetails = Pick<NewTask, 'title' | 'type' | 'points'> & Partial<NewTask>;
 
-/** Oldest first; the api returns them newest first. */
+/** Oldest first; the api returns them soonest due first, then newest first (`byDueDate`). */
 const tasks: StoredTask[] = [];
 let requestsFail = false;
 const listeners = new Set<Parameters<typeof tasksApi.subscribeToTaskChanges>[0]>();
@@ -106,6 +106,14 @@ export const fakeTasksBackend = {
   },
 };
 
+/** Like `order by due_on asc nulls last`; a stable sort keeps newest first within a date. */
+function byDueDate(a: StoredTask, b: StoredTask): number {
+  if (a.dueOn === b.dueOn) return 0;
+  if (a.dueOn === null) return 1;
+  if (b.dueOn === null) return -1;
+  return a.dueOn < b.dueOn ? -1 : 1;
+}
+
 export const fetchTasks: typeof tasksApi.fetchTasks = () => {
   if (requestsFail) return Promise.reject(new Error('Network error'));
   const householdId = ownHouseholdId();
@@ -113,6 +121,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
     tasks
       .filter((task) => task.householdId === householdId && !task.isDone)
       .reverse()
+      .sort(byDueDate)
       .map(({ id, title, type, points, repeatEveryDays, dueOn, createdBy }) => ({
         id,
         title,
