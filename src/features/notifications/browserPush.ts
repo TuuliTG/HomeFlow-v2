@@ -1,3 +1,5 @@
+import { isHomeScreenApp, isIos } from '@/lib/platform';
+
 /**
  * The browser's push APIs, kept behind this module so the rest of the feature (and its tests) don't
  * touch `navigator` directly.
@@ -22,17 +24,7 @@ export function pushSupport(): PushSupport {
   if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
     return 'supported';
   }
-  const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) || isIpadOs();
-  return isIos && !isHomeScreenApp() ? 'needs-home-screen' : 'unsupported';
-}
-
-// iPadOS Safari reports itself as a Mac; touch support gives it away.
-function isIpadOs() {
-  return navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1;
-}
-
-function isHomeScreenApp() {
-  return window.matchMedia('(display-mode: standalone)').matches;
+  return isIos() && !isHomeScreenApp() ? 'needs-home-screen' : 'unsupported';
 }
 
 export function permission(): NotificationPermission {

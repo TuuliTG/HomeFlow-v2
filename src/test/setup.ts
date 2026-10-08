@@ -11,6 +11,12 @@ vi.mock('@/features/auth/api', () => import('@/test/fakeAuthApi'));
 vi.mock('@/features/household/api', () => import('@/test/fakeHouseholdApi'));
 vi.mock('@/features/tasks/api', () => import('@/test/fakeTasksApi'));
 
+// jsdom has no matchMedia; behave like a browser tab where no media query matches.
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({ matches: false, media: query }),
+});
+
 afterEach(() => {
   cleanup();
   localStorage.clear();
