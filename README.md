@@ -67,7 +67,10 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
    - **Auth → Sign In / Providers → Email:** keep it enabled and turn **off** _Confirm email_ (the app sends no
      email yet, [ADR 0012](docs/adr/0012-email-and-password-login.md)). Set the minimum password length to 8.
    - **Auth → URL Configuration:** set the Site URL to the production URL.
-   - Forgotten password: reset it under **Auth → Users** (there is no reset email yet).
+   - **Setting a password** (accounts created with the earlier emailed-code login have none, and there is no reset
+     email yet): in the **SQL Editor** run
+     `update auth.users set encrypted_password = extensions.crypt('new password', extensions.gen_salt('bf')) where email = 'you@example.com';`
+     and share the new password with its owner, who can then log in with it.
    - Accept Supabase's DPA (Organization → Legal documents).
 2. **Vercel:** import the GitHub repo and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (real values, for
    both Production and Preview; redeploy after changing them). Build settings and SPA routing come from `vercel.json`.

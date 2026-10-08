@@ -23,7 +23,10 @@ Safari, not the home-screen app, so the installed app could not be logged into. 
 - Works inside the installed PWA; iOS can save the password in the Keychain. No third party added.
 - Email addresses are not verified: someone could sign up with an address that isn't theirs. Family data stays
   protected by household invite codes and RLS.
-- No password reset by email: a forgotten password is reset by the project owner in the Supabase dashboard.
+- Creating an account reveals whether an email is already registered; without email confirmation Supabase can't
+  hide this. Accepted for a family app; revisit with email confirmation.
+- No password reset by email: the project owner sets a new password with SQL (README). Accounts created with
+  emailed codes have no password and need one set the same way.
 - Moving back to codes (or adding reset emails) needs custom SMTP; the code template is in git history
   (`supabase/templates/login_code.html`).
 
