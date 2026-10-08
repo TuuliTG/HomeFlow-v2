@@ -5,7 +5,12 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { formatShortDate } from '@/features/tasks/dueDate';
 import { TaskCard } from '@/features/tasks/TaskCard';
 import { type CompletedTask, UNDO_WINDOW_MS } from '@/features/tasks/task';
-import { useCompletedTasks, useTasks, useUndoCompleteTask } from '@/features/tasks/useTasks';
+import {
+  useCompletedTasks,
+  useTasks,
+  useTotalPoints,
+  useUndoCompleteTask,
+} from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 
 const emptyClassName =
@@ -20,6 +25,7 @@ export function MyTasksPage() {
         description="Things you've picked up and completed."
       />
       <div className="flex flex-col gap-8">
+        <PointsTotal />
         <section aria-labelledby="to-do-heading" className="flex flex-col gap-3">
           <h2 id="to-do-heading" className="text-lg font-semibold text-slate-900">
             To do
@@ -34,6 +40,31 @@ export function MyTasksPage() {
         </section>
       </div>
     </>
+  );
+}
+
+function PointsTotal() {
+  const user = useLoggedInUser();
+  const points = useTotalPoints(user.id);
+
+  return (
+    <section
+      aria-labelledby="points-heading"
+      className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4"
+    >
+      <h2 id="points-heading" className="text-sm font-medium text-slate-600">
+        Points earned
+      </h2>
+      {points.data !== undefined ? (
+        <span className="text-brand-900 text-3xl font-bold">{points.data}</span>
+      ) : points.isError ? (
+        <p role="alert" className="text-sm text-red-700">
+          We couldn&apos;t load your points.
+        </p>
+      ) : (
+        <LoadingMessage />
+      )}
+    </section>
   );
 }
 

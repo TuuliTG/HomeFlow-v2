@@ -25,6 +25,8 @@ back rather than follow a fixed calendar.
 - **Fixing mistakes**: any member can edit (`update_task()`) or delete (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
   the next occurrence it created, unless that one is already done.
+- **Points**: the Me screen shows the total points of every task the user has marked done, summed when read
+  (`fetchTotalPoints`), not stored. Adding tasks earns nothing yet; points per period come later.
 - The board shows open tasks, soonest due first and tasks without a due date last (newest first within a date).
 - **Live updates**: `tasks` is in the `supabase_realtime` publication (RLS applies per subscriber). The app
   subscribes once (`subscribeToTaskChanges`) and refetches through TanStack Query on every insert, update or

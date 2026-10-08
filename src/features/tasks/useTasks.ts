@@ -6,6 +6,7 @@ import {
   deleteTask,
   fetchCompletedTasks,
   fetchTasks,
+  fetchTotalPoints,
   pickUpTask,
   putBackTask,
   undoCompleteTask,
@@ -43,6 +44,14 @@ export function useCompleteTask(userId: string) {
   return useMutation({
     mutationFn: (taskId: string) => completeTask(taskId, today()),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+  });
+}
+
+/** The user's points from all the tasks they've done. Under `tasksKey`, so it refreshes with the board. */
+export function useTotalPoints(userId: string) {
+  return useQuery({
+    queryKey: [...tasksKey(userId), 'points'],
+    queryFn: () => fetchTotalPoints(userId),
   });
 }
 

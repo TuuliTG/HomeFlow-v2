@@ -117,6 +117,52 @@ describe('picking up tasks', () => {
 });
 
 describe('Me screen', () => {
+  it("shows the total points you've earned from all the tasks you've done", async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    for (const [title, points] of [
+      ['Vacuum', 3],
+      ['Dust', 2],
+      ['Book dentist', 5],
+    ] as const) {
+      fakeTasksBackend.addTaskAs(anna.id, { title, type: 'physical', points });
+    }
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:0', '2026-10-08');
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:1', '2026-10-08');
+    fakeTasksBackend.completeTaskAs(ben.id, 'task:2', '2026-10-08');
+    renderAppAt('/me');
+
+    const total = await screen.findByRole('region', { name: 'Points earned' });
+    expect(await within(total).findByText('5')).toBeInTheDocument();
+  });
+
+  it('counts a task as soon as you mark it done, and stops counting it if you undo', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
+    fakeTasksBackend.pickUpTaskAs(anna.id, 'task:0');
+    const user = userEvent.setup();
+    renderAppAt('/me');
+    const total = await screen.findByRole('region', { name: 'Points earned' });
+    expect(await within(total).findByText('0')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: 'Mark done: Vacuum' }));
+    expect(await within(total).findByText('3')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: 'Undo: Vacuum' }));
+    expect(await within(total).findByText('0')).toBeInTheDocument();
+  });
+
+  it('explains when the points cannot be loaded', async () => {
+    logInAsFamilyMember();
+    fakeTasksBackend.failRequests();
+    renderAppAt('/me');
+
+    const total = await screen.findByRole('region', { name: 'Points earned' });
+    expect(await within(total).findByRole('alert')).toHaveTextContent(
+      "We couldn't load your points.",
+    );
+  });
+
   it("lists only the tasks you've picked up under To do", async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();

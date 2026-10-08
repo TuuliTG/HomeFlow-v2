@@ -193,6 +193,13 @@ export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) 
     fakeTasksBackend.completeTaskAs(userId, taskId, completedOn);
   });
 
+export const fetchTotalPoints: typeof tasksApi.fetchTotalPoints = (userId) => {
+  if (requestsFail) return Promise.reject(new Error('Network error'));
+  return Promise.resolve(
+    tasks.reduce((total, task) => total + (task.completed?.by === userId ? task.points : 0), 0),
+  );
+};
+
 /** Runs `change` as the logged-in user; rejects, like the database, if it throws. */
 function asCurrentUser(change: (userId: string) => void): Promise<void> {
   const user = fakeAuthBackend.currentUser();

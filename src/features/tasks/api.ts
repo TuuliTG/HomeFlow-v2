@@ -88,6 +88,18 @@ export async function fetchCompletedTasks(userId: string): Promise<CompletedTask
     .map(({ completed_at, ...task }) => ({ ...task, completedAt: completed_at }));
 }
 
+const pointsRowsSchema = z.array(z.object({ points: z.number() }));
+
+/** All the points `userId` has earned by marking tasks done. */
+export async function fetchTotalPoints(userId: string): Promise<number> {
+  const { data, error } = await getSupabaseClient()
+    .from('tasks')
+    .select('points')
+    .eq('completed_by', userId);
+  if (error) throw error;
+  return pointsRowsSchema.parse(data).reduce((total, row) => total + row.points, 0);
+}
+
 /** Adds a task to the user's household; the database fills in the household and the creator. */
 export async function addTask({ repeatEveryDays, dueOn, ...task }: NewTask): Promise<void> {
   const { error } = await getSupabaseClient()
