@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router';
 
+import { InstallHint } from '@/app/InstallHint';
 import { MainNav } from '@/app/MainNav';
 import { AccountStatus } from '@/features/auth/AccountStatus';
 import { HouseholdLink } from '@/features/household/HouseholdLink';
@@ -18,6 +19,7 @@ export function AppShell() {
           <HouseholdLink />
           <AccountStatus />
         </div>
+        <InstallHint />
         <Outlet />
       </main>
       <TaskActivityToast />
