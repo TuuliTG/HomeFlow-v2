@@ -8,7 +8,8 @@ create table public.push_subscriptions (
   -- Keys the browser created for encrypting messages to this device (base64url).
   p256dh text not null check (char_length(p256dh) between 1 and 200),
   auth text not null check (char_length(auth) between 1 and 100),
-  created_at timestamptz not null default now()
+  -- When the device last saved its subscription.
+  saved_at timestamptz not null default now()
 );
 create index push_subscriptions_user_id_idx on public.push_subscriptions (user_id);
 
@@ -45,7 +46,7 @@ begin
   values ((select auth.uid()), push_endpoint, push_p256dh, push_auth)
   on conflict on constraint push_subscriptions_endpoint_key do update
     set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth,
-        created_at = now();
+        saved_at = now();
 end;
 $$;
 

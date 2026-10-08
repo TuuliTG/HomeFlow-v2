@@ -1,7 +1,7 @@
 -- Push subscriptions belong to one user each. Run with `npm run db:test` (needs Docker).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(10);
+select plan(13);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -30,6 +30,11 @@ select throws_ok(
   'subscriptions are saved only through save_push_subscription()'
 );
 select throws_ok(
+  $$ update public.push_subscriptions set p256dh = 'changed' $$,
+  '42501', null,
+  'subscriptions cannot be edited directly'
+);
+select throws_ok(
   $$ select public.save_push_subscription('http://push.example.com/insecure', 'k', 'a') $$,
   '23514', null,
   'only https push endpoints are accepted'
@@ -38,7 +43,8 @@ select throws_ok(
 -- Ben must not see or remove Anna's device; when he uses her phone, it becomes his.
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select is_empty($$ select 1 from public.push_subscriptions $$, 'another user''s devices are invisible');
-delete from public.push_subscriptions;
+with deleted as (delete from public.push_subscriptions returning 1)
+select is((select count(*)::int from deleted), 0, 'another user''s devices cannot be removed');
 select lives_ok(
   $$ select public.save_push_subscription('https://push.example.com/anna-phone', 'key-3', 'auth-3') $$,
   'a device a previous user subscribed can be saved by the user logged in now'
@@ -48,7 +54,14 @@ select results_eq(
   $$ values ('https://push.example.com/anna-phone') $$,
   'the device now belongs to the current user'
 );
-select lives_ok($$ delete from public.push_subscriptions $$, 'a user can remove their own device');
+
+-- Anna no longer has the device, so it won't get her notifications.
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select is_empty($$ select 1 from public.push_subscriptions $$, 'the device left the previous user');
+
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+with deleted as (delete from public.push_subscriptions returning 1)
+select is((select count(*)::int from deleted), 1, 'a user can remove their own device');
 
 -- Visitors who are not logged in.
 set local role anon;
