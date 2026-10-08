@@ -1,86 +1,114 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 
 import { deleteSubscription, saveSubscription } from '@/features/notifications/api';
 import {
+  getDeviceEndpoint,
   getDeviceSubscription,
   permission,
   pushSupport,
+  requestPermission,
   subscribeDevice,
   unsubscribeDevice,
 } from '@/features/notifications/browserPush';
+import { useLoggedInUser } from '@/lib/auth';
 import { readVapidPublicKey } from '@/lib/env';
 
 export type NotificationStatus =
   'not-set-up' | 'unsupported' | 'needs-home-screen' | 'checking' | 'blocked' | 'off' | 'on';
 
-const deviceKey = ['push-subscription'] as const;
+const deviceKey = (userId: string) => ['push-subscription', userId] as const;
 
-/** Turns this device's push notifications off and forgets it; used on log-out. Never throws. */
+/** Forgets this device and unsubscribes it; used on log-out. Never throws. */
 export async function turnOffNotificationsOnThisDevice(): Promise<void> {
+  if (pushSupport() !== 'supported') return;
   try {
-    if (pushSupport() !== 'supported') return;
-    const endpoint = await unsubscribeDevice();
+    const endpoint = await getDeviceEndpoint();
     if (endpoint) await deleteSubscription(endpoint);
   } catch {
-    // Logging out must not fail because of notifications; the endpoint is gone from the browser anyway.
+    // Logging out must not fail because of notifications; the push service drops the row later.
+  } finally {
+    await unsubscribeDevice().catch(() => undefined);
   }
 }
 
-/** Whether this device gets push notifications, and turning them on (from a tap) or off. */
+/**
+ * Whether this device gets push notifications, and turning them on (from a tap) or off. Each load
+ * re-saves an existing subscription, so the database matches the browser and the device belongs
+ * to whoever is logged in now (ADR 0014).
+ */
 export function usePushNotifications() {
+  const user = useLoggedInUser();
   const queryClient = useQueryClient();
   const vapidPublicKey = readVapidPublicKey(import.meta.env);
   const support = pushSupport();
-  const [declined, setDeclined] = useState(false);
+  const key = deviceKey(user.id);
 
   const device = useQuery({
-    queryKey: deviceKey,
-    queryFn: async () => (await getDeviceSubscription()) !== null,
+    queryKey: key,
+    queryFn: async () => {
+      if (!vapidPublicKey) return false;
+      const subscription = await getDeviceSubscription(vapidPublicKey);
+      if (subscription) await saveSubscription(subscription);
+      return subscription !== null;
+    },
     enabled: vapidPublicKey !== null && support === 'supported',
   });
 
   const turnOn = useMutation({
-    mutationFn: async () => {
-      if (!vapidPublicKey) throw new Error('Push notifications are not set up');
+    // The permission prompt is already open; don't let an "offline" guess pause the rest.
+    networkMode: 'always',
+    mutationFn: async (asked: Promise<NotificationPermission>) => {
+      if ((await asked) !== 'granted' || !vapidPublicKey) return false;
       const subscription = await subscribeDevice(vapidPublicKey);
-      if (!subscription) return false;
-      await saveSubscription(subscription);
+      try {
+        await saveSubscription(subscription);
+      } catch (error) {
+        await unsubscribeDevice();
+        throw error;
+      }
       return true;
     },
+    onMutate: () => {
+      turnOff.reset();
+    },
     onSuccess: (isOn) => {
-      setDeclined(!isOn);
-      queryClient.setQueryData(deviceKey, isOn);
+      queryClient.setQueryData(key, isOn);
     },
   });
 
   const turnOff = useMutation({
+    networkMode: 'always',
     mutationFn: async () => {
-      const endpoint = await unsubscribeDevice();
+      const endpoint = await getDeviceEndpoint();
       if (endpoint) await deleteSubscription(endpoint);
+      await unsubscribeDevice();
+    },
+    onMutate: () => {
+      turnOn.reset();
     },
     onSuccess: () => {
-      queryClient.setQueryData(deviceKey, false);
+      queryClient.setQueryData(key, false);
     },
   });
 
   function status(): NotificationStatus {
     if (!vapidPublicKey) return 'not-set-up';
     if (support !== 'supported') return support;
+    if (permission() === 'denied') return 'blocked';
     if (device.data) return 'on';
-    if (declined || permission() === 'denied') return 'blocked';
     return device.isPending ? 'checking' : 'off';
   }
 
   return {
     status: status(),
+    // Ask for permission synchronously in the tap handler; the rest can wait for the answer.
     turnOn: () => {
-      turnOn.mutate();
+      turnOn.mutate(requestPermission());
     },
     turnOff: () => {
       turnOff.mutate();
     },
     isChanging: turnOn.isPending || turnOff.isPending,
-    failed: turnOn.isError || turnOff.isError,
+    failed: turnOn.isError || turnOff.isError || device.isError,
   };
 }

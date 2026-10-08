@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,7 +8,9 @@ import { logInAsFamilyMember } from '@/test/session';
 const browser = vi.hoisted(() => ({
   pushSupport: vi.fn(),
   permission: vi.fn(),
+  requestPermission: vi.fn(),
   getDeviceSubscription: vi.fn(),
+  getDeviceEndpoint: vi.fn(),
   subscribeDevice: vi.fn(),
   unsubscribeDevice: vi.fn(),
 }));
@@ -24,73 +26,134 @@ function settings() {
   return screen.findByRole('region', { name: 'Notifications' });
 }
 
+function toggle(name: 'Turn on notifications' | 'Turn off notifications') {
+  return screen.findByRole('button', { name });
+}
+
 describe('notification settings', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_VAPID_PUBLIC_KEY', VAPID_KEY);
     browser.pushSupport.mockReturnValue('supported');
     browser.permission.mockReturnValue('default');
+    browser.requestPermission.mockResolvedValue('granted');
     browser.getDeviceSubscription.mockResolvedValue(null);
+    browser.getDeviceEndpoint.mockResolvedValue(device.endpoint);
     browser.subscribeDevice.mockResolvedValue(device);
-    browser.unsubscribeDevice.mockResolvedValue(device.endpoint);
+    browser.unsubscribeDevice.mockResolvedValue(undefined);
     api.saveSubscription.mockResolvedValue(undefined);
     api.deleteSubscription.mockResolvedValue(undefined);
     logInAsFamilyMember();
   });
 
-  it('turns notifications on from a tap and saves this device', async () => {
+  it('asks permission in the tap, then subscribes and saves this device', async () => {
     const user = userEvent.setup();
     renderAppAt('/me');
 
-    await user.click(await screen.findByRole('button', { name: 'Turn on notifications' }));
+    const button = await toggle('Turn on notifications');
+    await user.click(button);
 
+    expect(browser.requestPermission).toHaveBeenCalled();
     expect(browser.subscribeDevice).toHaveBeenCalledWith(VAPID_KEY);
     expect(api.saveSubscription).toHaveBeenCalledWith(device);
-    expect(
-      await screen.findByRole('button', { name: 'Turn off notifications' }),
-    ).toBeInTheDocument();
+    expect(await toggle('Turn off notifications')).toBe(button);
+    expect(button).toHaveFocus();
   });
 
-  it('turns notifications off and forgets this device', async () => {
+  it('turns notifications off: forgets this device, then unsubscribes it', async () => {
     const user = userEvent.setup();
     browser.getDeviceSubscription.mockResolvedValue(device);
     renderAppAt('/me');
 
-    await user.click(await screen.findByRole('button', { name: 'Turn off notifications' }));
+    await user.click(await toggle('Turn off notifications'));
 
     expect(api.deleteSubscription).toHaveBeenCalledWith(device.endpoint);
-    expect(
-      await screen.findByRole('button', { name: 'Turn on notifications' }),
-    ).toBeInTheDocument();
+    expect(browser.unsubscribeDevice).toHaveBeenCalled();
+    expect(await toggle('Turn on notifications')).toBeInTheDocument();
   });
 
-  it('explains how to unblock notifications when the user says no', async () => {
+  it('re-saves an existing subscription on load, so it belongs to the current user', async () => {
+    browser.getDeviceSubscription.mockResolvedValue(device);
+    renderAppAt('/me');
+
+    expect(await toggle('Turn off notifications')).toBeInTheDocument();
+    expect(browser.getDeviceSubscription).toHaveBeenCalledWith(VAPID_KEY);
+    expect(api.saveSubscription).toHaveBeenCalledWith(device);
+  });
+
+  it('keeps offering to turn on when the user dismisses the prompt', async () => {
     const user = userEvent.setup();
-    browser.subscribeDevice.mockResolvedValue(null);
+    browser.requestPermission.mockResolvedValue('default');
     renderAppAt('/me');
 
-    await user.click(await screen.findByRole('button', { name: 'Turn on notifications' }));
+    await user.click(await toggle('Turn on notifications'));
 
-    expect(await settings()).toHaveTextContent('Notifications are blocked for HomeFlow.');
-    expect(api.saveSubscription).not.toHaveBeenCalled();
+    expect(browser.subscribeDevice).not.toHaveBeenCalled();
+    expect(await toggle('Turn on notifications')).toBeInTheDocument();
   });
 
-  it('explains when notifications are already blocked', async () => {
-    browser.permission.mockReturnValue('denied');
+  it('explains how to unblock notifications when they are denied', async () => {
+    const user = userEvent.setup();
+    browser.requestPermission.mockImplementation(() => {
+      browser.permission.mockReturnValue('denied');
+      return Promise.resolve('denied');
+    });
     renderAppAt('/me');
+
+    await user.click(await toggle('Turn on notifications'));
 
     const region = await settings();
     expect(await within(region).findByText(/Notifications are blocked/)).toBeInTheDocument();
     expect(within(region).queryByRole('button')).not.toBeInTheDocument();
+    expect(api.saveSubscription).not.toHaveBeenCalled();
   });
 
-  it('explains when turning notifications on fails', async () => {
+  it('unsubscribes again when the device cannot be saved', async () => {
     const user = userEvent.setup();
     api.saveSubscription.mockRejectedValue(new Error('Network error'));
     renderAppAt('/me');
 
-    await user.click(await screen.findByRole('button', { name: 'Turn on notifications' }));
+    await user.click(await toggle('Turn on notifications'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't change notifications.");
+    expect(browser.unsubscribeDevice).toHaveBeenCalled();
+    expect(await toggle('Turn on notifications')).toBeInTheDocument();
+  });
+
+  it('explains when turning off fails, and clears the error after a later success', async () => {
+    const user = userEvent.setup();
+    browser.getDeviceSubscription.mockResolvedValue(device);
+    api.deleteSubscription.mockRejectedValueOnce(new Error('Network error'));
+    renderAppAt('/me');
+
+    await user.click(await toggle('Turn off notifications'));
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't change notifications.");
+    expect(browser.unsubscribeDevice).not.toHaveBeenCalled();
+
+    await user.click(await toggle('Turn off notifications'));
+    expect(await toggle('Turn on notifications')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('ignores taps while a change is in progress', async () => {
+    const user = userEvent.setup();
+    let finishSaving = () => undefined as unknown;
+    api.saveSubscription.mockReturnValue(
+      new Promise<void>((resolve) => {
+        finishSaving = resolve;
+      }),
+    );
+    renderAppAt('/me');
+
+    const button = await toggle('Turn on notifications');
+    await user.click(button);
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    await user.click(button);
+    await act(async () => {
+      finishSaving();
+      await Promise.resolve();
+    });
+
+    expect(browser.subscribeDevice).toHaveBeenCalledOnce();
   });
 
   it('tells iPhone users to add HomeFlow to the Home Screen first', async () => {
@@ -123,13 +186,13 @@ describe('notification settings', () => {
     await user.click(await screen.findByRole('button', { name: 'Log out' }));
 
     await screen.findByRole('heading', { level: 1, name: 'Log in to HomeFlow' });
-    expect(browser.unsubscribeDevice).toHaveBeenCalled();
     expect(api.deleteSubscription).toHaveBeenCalledWith(device.endpoint);
+    expect(browser.unsubscribeDevice).toHaveBeenCalled();
   });
 
-  it('still logs out when stopping notifications fails', async () => {
+  it('still unsubscribes and logs out when forgetting the device fails', async () => {
     const user = userEvent.setup();
-    browser.unsubscribeDevice.mockRejectedValue(new Error('No service worker'));
+    api.deleteSubscription.mockRejectedValue(new Error('Network error'));
     renderAppAt('/me');
 
     await user.click(await screen.findByRole('button', { name: 'Log out' }));
@@ -137,5 +200,6 @@ describe('notification settings', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Log in to HomeFlow' }),
     ).toBeInTheDocument();
+    expect(browser.unsubscribeDevice).toHaveBeenCalled();
   });
 });

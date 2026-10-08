@@ -11,13 +11,19 @@ export interface DeviceSubscription {
   auth: string;
 }
 
-/** Push needs a service worker and the Push API; iPhones only offer it to home-screen apps. */
+/** How long turning notifications on waits for a freshly installed service worker. */
+const SERVICE_WORKER_WAIT_MS = 10_000;
+
+/**
+ * Push needs a service worker and the Push API. iPhones (iOS 16.4+) only offer it to apps opened
+ * from the Home Screen; an iPhone that is already there but lacks it is too old.
+ */
 export function pushSupport(): PushSupport {
   if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
     return 'supported';
   }
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) || isIpadOs();
-  return isIos ? 'needs-home-screen' : 'unsupported';
+  return isIos && !isHomeScreenApp() ? 'needs-home-screen' : 'unsupported';
 }
 
 // iPadOS Safari reports itself as a Mac; touch support gives it away.
@@ -25,8 +31,17 @@ function isIpadOs() {
   return navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1;
 }
 
+function isHomeScreenApp() {
+  return window.matchMedia('(display-mode: standalone)').matches;
+}
+
 export function permission(): NotificationPermission {
   return Notification.permission;
+}
+
+/** Shows the browser's permission prompt. Call it straight from a tap: Safari requires that. */
+export function requestPermission(): Promise<NotificationPermission> {
+  return Notification.requestPermission();
 }
 
 // getRegistration() rather than `ready`: `ready` never settles when no service worker is installed,
@@ -36,20 +51,30 @@ async function currentSubscription(): Promise<PushSubscription | null> {
   return registration ? registration.pushManager.getSubscription() : null;
 }
 
-/** This device's push subscription, if notifications are on. */
-export async function getDeviceSubscription(): Promise<DeviceSubscription | null> {
+/**
+ * This device's subscription if it was made with `vapidPublicKey`. One made with another key can't
+ * receive our notifications any more, so it is dropped.
+ */
+export async function getDeviceSubscription(
+  vapidPublicKey: string,
+): Promise<DeviceSubscription | null> {
   const subscription = await currentSubscription();
-  return subscription ? toDeviceSubscription(subscription) : null;
+  if (!subscription) return null;
+  if (!sameKey(subscription.options.applicationServerKey, base64UrlToBytes(vapidPublicKey))) {
+    await subscription.unsubscribe();
+    return null;
+  }
+  return toDeviceSubscription(subscription);
 }
 
-/**
- * Asks for permission (must run from a tap) and subscribes this device. Returns null if the user
- * doesn't allow notifications.
- */
-export async function subscribeDevice(vapidPublicKey: string): Promise<DeviceSubscription | null> {
-  if ((await Notification.requestPermission()) !== 'granted') return null;
-  const registration = await navigator.serviceWorker.getRegistration();
-  if (!registration) throw new Error('HomeFlow has no service worker yet; reload and try again');
+/** The endpoint of this device's subscription, whatever key it was made with. */
+export async function getDeviceEndpoint(): Promise<string | null> {
+  return (await currentSubscription())?.endpoint ?? null;
+}
+
+/** Subscribes this device. Needs notification permission already granted. */
+export async function subscribeDevice(vapidPublicKey: string): Promise<DeviceSubscription> {
+  const registration = await activeRegistration();
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: base64UrlToBytes(vapidPublicKey),
@@ -57,12 +82,21 @@ export async function subscribeDevice(vapidPublicKey: string): Promise<DeviceSub
   return toDeviceSubscription(subscription);
 }
 
-/** Unsubscribes this device; returns the endpoint it had, if any. */
-export async function unsubscribeDevice(): Promise<string | null> {
-  const subscription = await currentSubscription();
-  if (!subscription) return null;
-  await subscription.unsubscribe();
-  return subscription.endpoint;
+/** Unsubscribes this device, if it is subscribed. */
+export async function unsubscribeDevice(): Promise<void> {
+  await (await currentSubscription())?.unsubscribe();
+}
+
+// Subscribing needs an active worker; on a first visit it may still be installing.
+function activeRegistration(): Promise<ServiceWorkerRegistration> {
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_resolve, reject) => {
+      setTimeout(() => {
+        reject(new Error('HomeFlow has no service worker yet; reload and try again'));
+      }, SERVICE_WORKER_WAIT_MS);
+    }),
+  ]);
 }
 
 function toDeviceSubscription(subscription: PushSubscription): DeviceSubscription {
@@ -71,6 +105,12 @@ function toDeviceSubscription(subscription: PushSubscription): DeviceSubscriptio
     throw new Error('The browser returned an incomplete push subscription');
   }
   return { endpoint, p256dh: keys.p256dh, auth: keys.auth };
+}
+
+function sameKey(serverKey: ArrayBuffer | null, expected: Uint8Array): boolean {
+  if (!serverKey) return false;
+  const actual = new Uint8Array(serverKey);
+  return actual.length === expected.length && actual.every((byte, i) => byte === expected[i]);
 }
 
 function base64UrlToBytes(base64Url: string): Uint8Array<ArrayBuffer> {

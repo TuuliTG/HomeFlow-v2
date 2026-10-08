@@ -3,7 +3,9 @@ import {
   usePushNotifications,
 } from '@/features/notifications/usePushNotifications';
 
-const explanations: Record<Exclude<NotificationStatus, 'not-set-up'>, string> = {
+type ShownStatus = Exclude<NotificationStatus, 'not-set-up'>;
+
+const explanations: Record<ShownStatus, string> = {
   unsupported: "This browser can't show notifications from HomeFlow.",
   'needs-home-screen':
     'On iPhone, notifications work once HomeFlow is on your Home Screen: tap Share, then “Add to Home Screen”. Open HomeFlow from there and turn notifications on.',
@@ -14,13 +16,14 @@ const explanations: Record<Exclude<NotificationStatus, 'not-set-up'>, string> = 
   on: 'You get a notification on this device when someone in your household adds a task.',
 };
 
-const buttonClassName = 'w-fit rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-60';
-
 /** Turns push notifications on or off for this device (ADR 0014). Hidden until push is set up. */
 export function NotificationSettings() {
   const { status, turnOn, turnOff, isChanging, failed } = usePushNotifications();
 
   if (status === 'not-set-up') return null;
+  const isOn = status === 'on';
+  // One button that stays mounted while toggling, so keyboard and screen-reader focus stays put.
+  const canToggle = status === 'on' || status === 'off';
 
   return (
     <section
@@ -30,25 +33,26 @@ export function NotificationSettings() {
       <h2 id="notification-settings" className="font-semibold text-slate-900">
         Notifications
       </h2>
-      <p className="text-sm text-slate-600">{explanations[status]}</p>
-      {status === 'off' && (
+      <p aria-live="polite" className="text-sm text-slate-600">
+        {explanations[status]}
+      </p>
+      {canToggle && (
         <button
           type="button"
-          onClick={turnOn}
-          disabled={isChanging}
-          className={`bg-brand-600 hover:bg-brand-900 text-white ${buttonClassName}`}
+          aria-disabled={isChanging}
+          onClick={() => {
+            if (isChanging) return;
+            if (isOn) turnOff();
+            else turnOn();
+          }}
+          className={[
+            'w-fit rounded-lg px-4 py-2 text-sm font-semibold aria-disabled:opacity-60',
+            isOn
+              ? 'border border-slate-300 text-slate-700 hover:bg-slate-100'
+              : 'bg-brand-600 hover:bg-brand-900 text-white',
+          ].join(' ')}
         >
-          Turn on notifications
-        </button>
-      )}
-      {status === 'on' && (
-        <button
-          type="button"
-          onClick={turnOff}
-          disabled={isChanging}
-          className={`border border-slate-300 text-slate-700 hover:bg-slate-100 ${buttonClassName}`}
-        >
-          Turn off notifications
+          {isOn ? 'Turn off notifications' : 'Turn on notifications'}
         </button>
       )}
       {failed && (
