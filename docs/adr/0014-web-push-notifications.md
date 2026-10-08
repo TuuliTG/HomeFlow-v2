@@ -19,6 +19,9 @@ open apps.
 - Notifications are sent by a Supabase Edge Function (`notify-household`), triggered by a Database Webhook on task
   insert. It notifies every household member except the creator and deletes subscriptions the push service reports
   as gone (404/410).
+- Notifications are turned on per device from the Me screen (permission is asked from the tap). Each app load
+  re-saves an existing subscription, so the database matches the browser and the device belongs to whoever is
+  logged in; a subscription made with an old VAPID key is dropped. Logging out forgets and unsubscribes the device.
 - A notification says only who added which task ("Ben added Book dentist") and opens the task board.
 - `vite-plugin-pwa` uses `injectManifest` with our own `src/sw.ts` instead of a generated worker: the same precache
   and `index.html` navigation fallback, updates via `skipWaiting` + `clientsClaim`, plus `push` and

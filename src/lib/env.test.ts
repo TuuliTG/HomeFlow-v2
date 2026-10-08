@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseEnv } from '@/lib/env';
+import { parseEnv, readVapidPublicKey } from '@/lib/env';
 
 describe('parseEnv', () => {
   it('returns the validated variables', () => {
@@ -25,5 +25,22 @@ describe('parseEnv', () => {
         VITE_SUPABASE_ANON_KEY: 'your-anon-key',
       }),
     ).toThrow(/VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY/);
+  });
+});
+
+describe('readVapidPublicKey', () => {
+  const key = `B${'a'.repeat(86)}`;
+
+  it('returns a well-formed public key', () => {
+    expect(readVapidPublicKey({ VITE_VAPID_PUBLIC_KEY: key })).toBe(key);
+  });
+
+  it.each([
+    ['missing', undefined],
+    ['empty', ''],
+    ['too short', 'abc'],
+    ['not base64url', `${key.slice(0, 86)}=`],
+  ])('treats a %s key as push notifications not being set up', (_case, value) => {
+    expect(readVapidPublicKey({ VITE_VAPID_PUBLIC_KEY: value })).toBeNull();
   });
 });

@@ -10,6 +10,18 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
+// VAPID public keys are uncompressed P-256 points: 65 bytes, 87 characters in base64url.
+const vapidPublicKeySchema = z.string().regex(/^[A-Za-z0-9_-]{87}$/);
+
+/**
+ * The public VAPID key push subscriptions are made with (ADR 0014), or null when push
+ * notifications aren't set up for this deployment. Unlike the Supabase variables it is optional.
+ */
+export function readVapidPublicKey(source: Record<string, unknown>): string | null {
+  const parsed = vapidPublicKeySchema.safeParse(source.VITE_VAPID_PUBLIC_KEY);
+  return parsed.success ? parsed.data : null;
+}
+
 /**
  * Validates environment variables so misconfiguration fails fast with a clear message
  * instead of surfacing later as an obscure network error.
