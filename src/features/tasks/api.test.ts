@@ -34,6 +34,7 @@ const { client, query, channel } = supabase;
 const failure = { message: 'boom' };
 const newTask = {
   title: 'Vacuum',
+  description: null,
   type: 'physical',
   points: 3,
   repeatEveryDays: null,
@@ -42,6 +43,7 @@ const newTask = {
 const row = {
   id: 't1',
   title: 'Vacuum',
+  description: null,
   type: 'physical',
   points: 3,
   created_by: 'u1',
@@ -177,11 +179,17 @@ describe('tasks api', () => {
   it("replaces a task's details", async () => {
     client.rpc.mockResolvedValueOnce({ data: null, error: null });
 
-    await api.updateTask('t1', { ...newTask, repeatEveryDays: 7, dueOn: '2026-10-10' });
+    await api.updateTask('t1', {
+      ...newTask,
+      description: 'Use the small nozzle.',
+      repeatEveryDays: 7,
+      dueOn: '2026-10-10',
+    });
 
     expect(client.rpc).toHaveBeenCalledWith('update_task', {
       task_id: 't1',
       task_title: 'Vacuum',
+      task_description: 'Use the small nozzle.',
       task_type: 'physical',
       task_points: 3,
       task_due_on: '2026-10-10',
@@ -233,6 +241,7 @@ describe('tasks api', () => {
     expect(client.from).toHaveBeenCalledWith('tasks');
     expect(query.insert).toHaveBeenCalledWith({
       title: 'Vacuum',
+      description: null,
       type: 'physical',
       points: 3,
       repeat_every_days: 7,

@@ -208,6 +208,21 @@ describe('creating a task', () => {
     expect(within(task).getByText('Due Sat 10 Oct')).toBeInTheDocument();
   });
 
+  it('can have a description that shows on the board', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.type(await screen.findByLabelText('Task'), 'Take out the trash');
+    await user.type(
+      screen.getByLabelText('Description (optional)'),
+      '  The bins are behind the garage.  ',
+    );
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    const task = await screen.findByRole('listitem', { name: 'Take out the trash' });
+    expect(within(task).getByText('The bins are behind the garage.')).toBeInTheDocument();
+  });
+
   it("doesn't repeat or have a due date unless asked", async () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
@@ -217,6 +232,7 @@ describe('creating a task', () => {
     const task = await screen.findByRole('listitem', { name: 'Fix the shelf' });
     expect(within(task).queryByText(/^Every/)).not.toBeInTheDocument();
     expect(within(task).queryByText(/due/i)).not.toBeInTheDocument();
+    expect(within(task).queryByRole('paragraph')).not.toBeInTheDocument();
   });
 
   it('can be cancelled without creating a task', async () => {

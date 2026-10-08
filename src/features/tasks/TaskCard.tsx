@@ -44,6 +44,9 @@ function TaskDetails({ task, currentUserId, titleId }: TaskCardProps & { titleId
       <h2 id={titleId} className="font-semibold text-slate-900">
         {task.title}
       </h2>
+      {task.description !== null && (
+        <p className="text-sm whitespace-pre-line text-slate-600">{task.description}</p>
+      )}
       <div className="flex flex-wrap gap-1.5">
         <span
           className={[
