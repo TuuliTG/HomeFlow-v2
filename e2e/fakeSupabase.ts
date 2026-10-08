@@ -32,7 +32,9 @@ interface TaskRow {
   created_by: string;
   repeat_every_days: number | null;
   due_on: string | null;
+  picked_up_by: string | null;
   completed_at: string | null;
+  completed_by: string | null;
 }
 
 async function reply(route: Route, status: number, body?: unknown) {
@@ -90,7 +92,9 @@ export async function fakeSupabase(page: Page) {
       created_by: 'e2e-ben',
       repeat_every_days: null,
       due_on: null,
+      picked_up_by: null,
       completed_at: null,
+      completed_by: null,
     },
   ];
 
@@ -154,11 +158,23 @@ export async function fakeSupabase(page: Page) {
         id: `e2e-task-${String(tasks.length)}`,
         household_id: ownHousehold.id,
         created_by: user.id,
+        picked_up_by: null,
         completed_at: null,
+        completed_by: null,
       });
       return reply(route, 201);
     }
     const householdId = ownHousehold?.id;
+    // The Me screen asks for the user's completed tasks (`completed_by=eq.<id>`), newest first.
+    const completedBy = new URL(request.url()).searchParams.get('completed_by');
+    if (completedBy) {
+      const done = tasks.filter((task) => `eq.${String(task.completed_by)}` === completedBy);
+      return reply(
+        route,
+        200,
+        done.sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at))),
+      );
+    }
     return reply(
       route,
       200,
@@ -183,6 +199,7 @@ export async function fakeSupabase(page: Page) {
     );
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
     task.completed_at = new Date().toISOString();
+    task.completed_by = user.id;
     if (task.repeat_every_days === null) return reply(route, 200, null);
     const due = new Date(`${completed_on}T00:00:00Z`);
     due.setUTCDate(due.getUTCDate() + task.repeat_every_days);
@@ -190,10 +207,25 @@ export async function fakeSupabase(page: Page) {
       ...task,
       id: `e2e-task-${String(tasks.length)}`,
       due_on: due.toISOString().slice(0, 10),
+      picked_up_by: null,
       completed_at: null,
+      completed_by: null,
     };
     tasks.unshift(next);
     return reply(route, 200, next.id);
+  }
+
+  /** Like pick_up_task() and put_back_task(): `pickedUpBy` is who has the task afterwards. */
+  function setPickedUp(pickedUpBy: string | null) {
+    return async (route: Route) => {
+      const { task_id } = route.request().postDataJSON() as { task_id: string };
+      const task = tasks.find(
+        (candidate) => candidate.id === task_id && candidate.household_id === ownHousehold?.id,
+      );
+      if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
+      task.picked_up_by = pickedUpBy;
+      return reply(route, 204);
+    };
   }
 
   /** Accepts any email and password, for both creating an account and logging in. */
@@ -217,6 +249,8 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/create_household': createHousehold,
     '/rest/v1/rpc/join_household': joinHousehold,
     '/rest/v1/rpc/complete_task': completeTask,
+    '/rest/v1/rpc/pick_up_task': setPickedUp(user.id),
+    '/rest/v1/rpc/put_back_task': setPickedUp(null),
     '/rest/v1/tasks': tasksEndpoint,
   };
 

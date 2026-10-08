@@ -3,7 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as tasksApi from '@/features/tasks/api';
 
 const supabase = vi.hoisted(() => {
-  const query = { select: vi.fn(), is: vi.fn(), order: vi.fn(), in: vi.fn(), insert: vi.fn() };
+  const query = {
+    select: vi.fn(),
+    is: vi.fn(),
+    eq: vi.fn(),
+    order: vi.fn(),
+    limit: vi.fn(),
+    in: vi.fn(),
+    insert: vi.fn(),
+  };
   const channel = { on: vi.fn(), subscribe: vi.fn() };
   return {
     query,
@@ -39,6 +47,7 @@ const row = {
   created_by: 'u1',
   repeat_every_days: null,
   due_on: null,
+  picked_up_by: null,
 };
 
 /** The tasks query's result: it is ordered twice (due date, then newest), then awaited. */
@@ -51,6 +60,7 @@ describe('tasks api', () => {
     getSupabaseClient.mockReturnValue(client);
     query.select.mockReturnValue(query);
     query.is.mockReturnValue(query);
+    query.eq.mockReturnValue(query);
   });
 
   it('reads open tasks, soonest due first, with the names of who added them', async () => {
@@ -80,6 +90,75 @@ describe('tasks api', () => {
       repeatEveryDays: null,
       dueOn: null,
     });
+  });
+
+  it('reads who has picked up each task, with their names', async () => {
+    respondWithTasks({
+      data: [
+        { ...row, picked_up_by: 'u2' },
+        { ...row, id: 't2', created_by: 'u2' },
+      ],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [{ id: 'u2', display_name: 'Ben' }], error: null });
+
+    const tasks = await api.fetchTasks();
+
+    expect(query.in).toHaveBeenCalledWith('id', ['u1', 'u2']);
+    expect(tasks.map((task) => [task.pickedUpBy, task.pickerName])).toEqual([
+      ['u2', 'Ben'],
+      [null, null],
+    ]);
+  });
+
+  it("reads the user's completed tasks, newest first", async () => {
+    query.order.mockReturnValueOnce(query);
+    query.limit.mockResolvedValueOnce({
+      data: [
+        {
+          id: 't1',
+          title: 'Vacuum',
+          type: 'physical',
+          points: 3,
+          completed_at: '2026-10-08T12:00:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const tasks = await api.fetchCompletedTasks('u1');
+
+    expect(query.eq).toHaveBeenCalledWith('completed_by', 'u1');
+    expect(query.order).toHaveBeenCalledWith('completed_at', { ascending: false });
+    expect(query.limit).toHaveBeenCalledWith(20);
+    expect(tasks).toEqual([
+      {
+        id: 't1',
+        title: 'Vacuum',
+        type: 'physical',
+        points: 3,
+        completedAt: '2026-10-08T12:00:00Z',
+      },
+    ]);
+  });
+
+  it('passes errors on when completed tasks cannot be read', async () => {
+    query.order.mockReturnValueOnce(query);
+    query.limit.mockResolvedValueOnce({ data: null, error: failure });
+
+    await expect(api.fetchCompletedTasks('u1')).rejects.toBe(failure);
+  });
+
+  it.each([
+    ['pickUpTask', 'pick_up_task'],
+    ['putBackTask', 'put_back_task'],
+  ] as const)('%s calls %s and passes errors on', async (name, rpc) => {
+    client.rpc.mockResolvedValueOnce({ data: null, error: null });
+    await api[name]('t1');
+    expect(client.rpc).toHaveBeenCalledWith(rpc, { task_id: 't1' });
+
+    client.rpc.mockResolvedValueOnce({ data: null, error: failure });
+    await expect(api[name]('t1')).rejects.toBe(failure);
   });
 
   it('reads how often a task repeats and when it is due', async () => {

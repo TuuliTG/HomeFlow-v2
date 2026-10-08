@@ -54,3 +54,31 @@ test('family member can mark a repeating task done and see it come back', async 
   await expect(task.getByText('Due Thu 22 Oct')).toBeVisible();
   await expect(page.getByText('Was due Tue 6 Oct')).toBeHidden();
 });
+
+test('family member can pick up a task, find it on the Me screen and mark it done there', async ({
+  page,
+}) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task').fill('Vacuum');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  const task = page.getByRole('listitem', { name: 'Vacuum' });
+  await task.getByRole('button', { name: 'Pick up: Vacuum' }).click();
+  await expect(task.getByText('Picked up by you')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Me' }).click();
+  const toDo = page.getByRole('region', { name: 'To do' });
+  await expect(toDo.getByRole('listitem', { name: 'Vacuum' })).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on the Me screen').toEqual([]);
+
+  await toDo.getByRole('button', { name: 'Mark done: Vacuum' }).click();
+
+  await expect(toDo.getByText('Nothing picked up yet. Pick a task on the board.')).toBeVisible();
+  await expect(
+    page.getByRole('list', { name: 'Completed tasks' }).getByText('Vacuum'),
+  ).toBeVisible();
+});

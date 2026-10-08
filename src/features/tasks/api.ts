@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { type NewTask, type Task, taskTypes } from '@/features/tasks/task';
+import { type CompletedTask, type NewTask, type Task, taskTypes } from '@/features/tasks/task';
 import { getSupabaseClient } from '@/lib/supabase';
 
 const taskRowsSchema = z.array(
@@ -12,8 +12,20 @@ const taskRowsSchema = z.array(
     created_by: z.string().nullable(),
     repeat_every_days: z.number().nullable(),
     due_on: z.string().nullable(),
+    picked_up_by: z.string().nullable(),
   }),
 );
+const completedTaskRowsSchema = z.array(
+  z.object({
+    id: z.string(),
+    title: z.string(),
+    type: z.enum(taskTypes),
+    points: z.number(),
+    completed_at: z.string(),
+  }),
+);
+/** How many of the user's completed tasks the Me screen shows. */
+const COMPLETED_TASKS_LIMIT = 20;
 const newTaskRowSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -39,22 +51,41 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
 export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
-    .select('id, title, type, points, created_by, repeat_every_days, due_on')
+    .select('id, title, type, points, created_by, repeat_every_days, due_on, picked_up_by')
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
   if (error) throw error;
   const rows = taskRowsSchema.parse(data);
 
-  const creatorIds = [...new Set(rows.flatMap((row) => (row.created_by ? [row.created_by] : [])))];
-  const names = await fetchDisplayNames(creatorIds);
-  return rows.map(({ created_by, repeat_every_days, due_on, ...task }) => ({
+  const userIds = rows.flatMap((row) => [row.created_by, row.picked_up_by]);
+  const names = await fetchDisplayNames([
+    ...new Set(userIds.filter((id): id is string => id !== null)),
+  ]);
+  const nameOf = (userId: string | null) => (userId ? (names.get(userId) ?? null) : null);
+  return rows.map(({ created_by, repeat_every_days, due_on, picked_up_by, ...task }) => ({
     ...task,
     repeatEveryDays: repeat_every_days,
     dueOn: due_on,
     createdBy: created_by,
-    creatorName: created_by ? (names.get(created_by) ?? null) : null,
+    creatorName: nameOf(created_by),
+    pickedUpBy: picked_up_by,
+    pickerName: nameOf(picked_up_by),
   }));
+}
+
+/** The tasks `userId` has marked done most recently, newest first. */
+export async function fetchCompletedTasks(userId: string): Promise<CompletedTask[]> {
+  const { data, error } = await getSupabaseClient()
+    .from('tasks')
+    .select('id, title, type, points, completed_at')
+    .eq('completed_by', userId)
+    .order('completed_at', { ascending: false })
+    .limit(COMPLETED_TASKS_LIMIT);
+  if (error) throw error;
+  return completedTaskRowsSchema
+    .parse(data)
+    .map(({ completed_at, ...task }) => ({ ...task, completedAt: completed_at }));
 }
 
 /** Adds a task to the user's household; the database fills in the household and the creator. */
@@ -74,6 +105,18 @@ export async function completeTask(taskId: string, completedOn: string): Promise
     task_id: taskId,
     completed_on: completedOn,
   });
+  if (error) throw error;
+}
+
+/** Takes an open task for the user to do. Fails if someone else has already picked it up. */
+export async function pickUpTask(taskId: string): Promise<void> {
+  const { error } = await getSupabaseClient().rpc('pick_up_task', { task_id: taskId });
+  if (error) throw error;
+}
+
+/** Gives back a task the user picked up, so anyone can pick it up. */
+export async function putBackTask(taskId: string): Promise<void> {
+  const { error } = await getSupabaseClient().rpc('put_back_task', { task_id: taskId });
   if (error) throw error;
 }
 

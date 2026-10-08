@@ -26,11 +26,15 @@ function addDays(isoDate: string, days: number): string {
   return toIsoDate(date);
 }
 
+/** "Thu 8 Oct". */
+export function formatShortDate(date: Date): string {
+  return `${weekdays[date.getDay()] ?? ''} ${String(date.getDate())} ${months[date.getMonth()] ?? ''}`;
+}
+
 /** "Due today", "Due tomorrow", "Due Fri 17 Oct", or "Was due Mon 6 Oct" once it has passed. */
 export function describeDueDate(dueOn: string, todayDate: string): string {
   if (dueOn === todayDate) return 'Due today';
   if (dueOn === addDays(todayDate, 1)) return 'Due tomorrow';
-  const date = fromIsoDate(dueOn);
-  const formatted = `${weekdays[date.getDay()] ?? ''} ${String(date.getDate())} ${months[date.getMonth()] ?? ''}`;
+  const formatted = formatShortDate(fromIsoDate(dueOn));
   return dueOn < todayDate ? `Was due ${formatted}` : `Due ${formatted}`;
 }

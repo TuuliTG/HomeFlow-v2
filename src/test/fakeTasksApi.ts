@@ -11,7 +11,9 @@ interface StoredTask extends NewTask {
   id: string;
   householdId: string;
   createdBy: string;
-  isDone: boolean;
+  pickedUpBy: string | null;
+  /** Who marked it done and when (ISO timestamp); null while open. */
+  completed: { by: string; at: string } | null;
 }
 
 /** A task as tests describe it: repeating and due date are optional. */
@@ -52,6 +54,17 @@ function addDays(isoDate: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
+function openTaskOf(userId: string, taskId: string): StoredTask {
+  const task = tasks.find(
+    (candidate) =>
+      candidate.id === taskId &&
+      !candidate.completed &&
+      candidate.householdId === fakeHouseholdBackend.householdIdOf(userId),
+  );
+  if (!task) throw new Error(`No open task ${taskId} in ${userId}'s household`);
+  return task;
+}
+
 export const fakeTasksBackend = {
   reset() {
     tasks.length = 0;
@@ -70,24 +83,31 @@ export const fakeTasksBackend = {
         id: `task:${String(tasks.length)}`,
         householdId,
         createdBy: userId,
-        isDone: false,
+        pickedUpBy: null,
+        completed: null,
       },
       false,
     );
+  },
+  /** Picks up an open task for `userId`, like `pick_up_task()`, and delivers the change live. */
+  pickUpTaskAs(userId: string, taskId: string) {
+    const task = openTaskOf(userId, taskId);
+    if (task.pickedUpBy === userId) return;
+    if (task.pickedUpBy) throw new Error('Someone else has picked up this task');
+    task.pickedUpBy = userId;
+    deliver(task.householdId, { kind: 'updated' });
   },
   /**
    * Marks an open task in `userId`'s household done on `completedOn`, adding the next occurrence of
    * a repeating task like `complete_task()` does, and delivers the changes live.
    */
   completeTaskAs(userId: string, taskId: string, completedOn: string) {
-    const task = tasks.find(
-      (candidate) =>
-        candidate.id === taskId &&
-        !candidate.isDone &&
-        candidate.householdId === fakeHouseholdBackend.householdIdOf(userId),
-    );
-    if (!task) throw new Error(`No open task ${taskId} in ${userId}'s household`);
-    task.isDone = true;
+    const task = openTaskOf(userId, taskId);
+    // Spread over time, so the newest completion sorts first.
+    task.completed = {
+      by: userId,
+      at: new Date(Date.UTC(2026, 0, 1, 0, tasks.length)).toISOString(),
+    };
     deliver(task.householdId, { kind: 'updated' });
     if (task.repeatEveryDays === null) return;
     store(
@@ -95,12 +115,13 @@ export const fakeTasksBackend = {
         ...task,
         id: `task:${String(tasks.length)}`,
         dueOn: addDays(completedOn, task.repeatEveryDays),
-        isDone: false,
+        pickedUpBy: null,
+        completed: null,
       },
       true,
     );
   },
-  /** Makes loading, adding and completing tasks fail, like a network error. */
+  /** Makes every request fail, like a network error. */
   failRequests() {
     requestsFail = true;
   },
@@ -119,10 +140,10 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
   const householdId = ownHouseholdId();
   return Promise.resolve(
     tasks
-      .filter((task) => task.householdId === householdId && !task.isDone)
+      .filter((task) => task.householdId === householdId && !task.completed)
       .reverse()
       .sort(byDueDate)
-      .map(({ id, title, type, points, repeatEveryDays, dueOn, createdBy }) => ({
+      .map(({ id, title, type, points, repeatEveryDays, dueOn, createdBy, pickedUpBy }) => ({
         id,
         title,
         type,
@@ -131,7 +152,20 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
         dueOn,
         createdBy,
         creatorName: fakeAuthBackend.displayNameOf(createdBy),
+        pickedUpBy,
+        pickerName: pickedUpBy ? fakeAuthBackend.displayNameOf(pickedUpBy) : null,
       })),
+  );
+};
+
+export const fetchCompletedTasks: typeof tasksApi.fetchCompletedTasks = (userId) => {
+  if (requestsFail) return Promise.reject(new Error('Network error'));
+  return Promise.resolve(
+    tasks
+      .flatMap(({ id, title, type, points, completed }) =>
+        completed?.by === userId ? [{ id, title, type, points, completedAt: completed.at }] : [],
+      )
+      .reverse(),
   );
 };
 
@@ -142,14 +176,32 @@ export const addTask: typeof tasksApi.addTask = (task) => {
   return Promise.resolve();
 };
 
-export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) => {
+export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) =>
+  asCurrentUser((userId) => {
+    fakeTasksBackend.completeTaskAs(userId, taskId, completedOn);
+  });
+
+/** Runs `change` as the logged-in user; rejects, like the database, if it throws. */
+function asCurrentUser(change: (userId: string) => void): Promise<void> {
   const user = fakeAuthBackend.currentUser();
   if (requestsFail || !user) return Promise.reject(new Error('Network error'));
-  // Rejects, like the database, if the task is no longer open.
   return Promise.resolve().then(() => {
-    fakeTasksBackend.completeTaskAs(user.id, taskId, completedOn);
+    change(user.id);
   });
-};
+}
+
+export const pickUpTask: typeof tasksApi.pickUpTask = (taskId) =>
+  asCurrentUser((userId) => {
+    fakeTasksBackend.pickUpTaskAs(userId, taskId);
+  });
+
+export const putBackTask: typeof tasksApi.putBackTask = (taskId) =>
+  asCurrentUser((userId) => {
+    const task = openTaskOf(userId, taskId);
+    if (task.pickedUpBy !== userId) throw new Error('You have not picked up this task');
+    task.pickedUpBy = null;
+    deliver(task.householdId, { kind: 'updated' });
+  });
 
 export const subscribeToTaskChanges: typeof tasksApi.subscribeToTaskChanges = (onChange) => {
   listeners.add(onChange);
