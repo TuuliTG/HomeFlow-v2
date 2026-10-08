@@ -33,7 +33,7 @@ export async function logIn(email: string, password: string): Promise<void> {
   if (error) throw toLoginError(error);
 }
 
-/** Creates an account and logs it in. Needs "Confirm email" turned off in Supabase (ADR 0012). */
+/** Creates an account and logs it in. Needs "Confirm email" turned off in Supabase (ADR 0003). */
 export async function createAccount(email: string, password: string): Promise<void> {
   const { data, error } = await getSupabaseClient().auth.signUp({ email, password });
   if (error) throw toLoginError(error);

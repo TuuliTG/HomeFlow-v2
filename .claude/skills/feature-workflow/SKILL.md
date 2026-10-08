@@ -9,10 +9,10 @@ Follow these steps in order. Do not skip steps; say explicitly if one does not a
 
 1. **Understand** — Read `AGENTS.md`, `docs/product-brief.md` (for features) and relevant ADRs in `docs/adr/`.
    Find existing code to reuse before writing new code.
-2. **Branch** — `git switch -c <type>/<short-kebab-name>` from an up-to-date `main`
-   (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`). Never commit on `main`.
+2. **Branch** — `git switch -c <what-the-change-does>` from an up-to-date `main`: kebab-case, descriptive, no
+   type prefix (`sort-tasks-by-due-date`, `fix-login-on-ios`). Never commit on `main`.
 3. **Plan** — List the smallest set of changes. If it involves a new dependency, schema, security model or
-   cross-cutting pattern, plan an ADR (`adr` skill).
+   cross-cutting pattern, plan the ADR update (`adr` skill).
 4. **Test first** — Write or update a failing test that describes the behaviour (`testing` skill).
 5. **Implement** — Small steps, keeping tests green. Apply the `clean-code` and `security` skills.
    Commit with Conventional Commits (`feat: add task pick-up button`).

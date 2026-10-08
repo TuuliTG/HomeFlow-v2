@@ -1,6 +1,6 @@
 ---
 name: housekeeping
-description: Mandatory post-change checklist before every PR — update README and AGENTS.md, add/supersede ADRs, remove outdated comments and dead code, and handle refactoring needs. Use after implementing any change and before opening a PR.
+description: Mandatory post-change checklist before every PR — update README and AGENTS.md, update the topic ADRs, remove outdated comments and dead code, and handle refactoring needs. Use after implementing any change and before opening a PR.
 ---
 
 # Housekeeping
@@ -13,7 +13,8 @@ Run after the change works and before review. Look at the diff (`git diff main..
 - **AGENTS.md** — update if commands, conventions, folder structure or workflow changed. Keep it concise; it is
   loaded into every agent session.
 - **ADR** — if the change made an architectural decision (new dependency/framework, data model, auth/RLS approach,
-  cross-cutting pattern, changed convention), write one with the `adr` skill. If it reverses an earlier ADR, supersede it.
+  cross-cutting pattern, changed convention), update the ADR for its topic with the `adr` skill, replacing anything
+  it reverses. Keep ADRs short; summarise or merge when they grow.
 - `docs/product-brief.md` — update only if product behaviour deviates from it deliberately.
 
 ## 2. Comments

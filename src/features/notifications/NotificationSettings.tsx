@@ -16,7 +16,7 @@ const explanations: Record<ShownStatus, string> = {
   on: 'You get a notification on this device when someone in your household adds a task.',
 };
 
-/** Turns push notifications on or off for this device (ADR 0014). Hidden until push is set up. */
+/** Turns push notifications on or off for this device (ADR 0005). Hidden until push is set up. */
 export function NotificationSettings() {
   const { status, turnOn, turnOff, isChanging, failed } = usePushNotifications();
 

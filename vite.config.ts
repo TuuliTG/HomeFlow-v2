@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      // Our own service worker (src/sw.ts) so it can show push notifications (ADR 0014).
+      // Our own service worker (src/sw.ts) so it can show push notifications (ADR 0005).
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',

@@ -39,7 +39,7 @@ const copy: Record<
   },
 };
 
-/** Log in with email and password, or create an account (ADR 0012). */
+/** Log in with email and password, or create an account (ADR 0003). */
 export function PasswordForm() {
   const [mode, setMode] = useState<Mode>('log-in');
   const [email, setEmail] = useState('');

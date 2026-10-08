@@ -28,7 +28,7 @@ description: Clean code standards for HomeFlow TypeScript/React code — naming,
 
 ## Structure
 
-- Follow `docs/adr/0007-feature-folder-architecture.md`. Co-locate tests with code.
+- Follow `docs/adr/0002-stack-and-architecture.md`. Co-locate tests with code.
 - DRY sensibly: extract on the third repetition, or the second if the logic is a business rule.
 - Comments explain _why_, not _what_. Delete dead and commented-out code.
 

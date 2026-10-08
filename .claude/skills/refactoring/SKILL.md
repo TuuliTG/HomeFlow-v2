@@ -13,7 +13,7 @@ description: Safe refactoring procedure — behaviour-preserving changes in smal
    note it and fix it in a separate `fix:` commit.
 4. **Separate commits** — `refactor: extract TaskCard from AvailableTasksPage`. Never mix with `feat:`/`fix:` in one commit.
 5. **Finish cleanly** — remove now-unused code (`npm run knip`), update comments and imports, run `npm run verify`.
-6. **Scope** — stay within the area you're working in. Larger restructurings get their own branch (`refactor/…`) and,
+6. **Scope** — stay within the area you're working in. Larger restructurings get their own branch (e.g. `split-task-card`) and,
    if they change conventions, an ADR.
 
 Common smells to act on: duplicated logic, long component with several responsibilities, prop drilling > 2 levels,

@@ -1,5 +1,5 @@
 /**
- * What the notify-household Edge Function does (ADR 0014), without Deno, Supabase or web-push, so
+ * What the notify-household Edge Function does (ADR 0005), without Deno, Supabase or web-push, so
  * it can be unit-tested with Vitest. index.ts supplies the real dependencies.
  */
 
