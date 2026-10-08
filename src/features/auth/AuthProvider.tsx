@@ -6,6 +6,8 @@ import { AuthContext, type AuthState, type AuthUser } from '@/lib/auth';
 
 interface AuthProviderProps {
   children: ReactNode;
+  /** Runs while still logged in, just before logging out (e.g. to stop this device's notifications). */
+  beforeLogOut?: () => Promise<void>;
 }
 
 interface Session {
@@ -13,7 +15,7 @@ interface Session {
   user: AuthUser | null;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ children, beforeLogOut }: AuthProviderProps) {
   const queryClient = useQueryClient();
   const [session, setSession] = useState<Session>({ status: 'loading', user: null });
 
@@ -29,12 +31,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     () => ({
       ...session,
       logOut: async () => {
+        await beforeLogOut?.();
         await logOut();
         // Don't leave the previous user's data cached on a shared device.
         queryClient.clear();
       },
     }),
-    [session, queryClient],
+    [session, queryClient, beforeLogOut],
   );
 
   return <AuthContext value={auth}>{children}</AuthContext>;
