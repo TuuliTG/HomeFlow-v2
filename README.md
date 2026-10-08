@@ -5,7 +5,7 @@ invisible planning work visible, and motivates through shared goals instead of c
 See [docs/product-brief.md](docs/product-brief.md).
 
 **Status:** development foundation in place (app shell, CI/CD, agent tooling). Log-in uses Supabase Auth with
-emailed one-time codes and stores a display name per user ([ADR 0009](docs/adr/0009-passwordless-email-login.md)).
+email and password for now and stores a display name per user ([ADR 0012](docs/adr/0012-email-and-password-login.md)).
 After choosing a name, a user creates a household or joins one with its invite code
 ([ADR 0010](docs/adr/0010-households-and-shared-tasks.md)). The household shares one task board stored in Supabase,
 showing who added each task. The app requires logging in ([ADR 0011](docs/adr/0011-app-requires-login.md)).
@@ -64,13 +64,10 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
 1. **Supabase:** create a project in an **EU region** and copy the Project URL and anon key into `.env.local` and
    Vercel. Then:
    - Apply the migrations: `npx supabase link --project-ref <ref>` and `npx supabase db push`.
-   - **Auth → URL Configuration:** set the Site URL to the production URL and add `https://homeflow-v2-*-tuuli1.vercel.app/**`
-     (previews) and `http://localhost:5173/login` to the redirect URLs.
-   - **Auth → SMTP:** the built-in sender only emails project members and is rate-limited, and on the free plan
-     email templates can't be edited without custom SMTP. Add one (e.g. Brevo, EU-based) before inviting others.
-     Until then the default email has only a login link, which the app also accepts.
-   - **Auth → Emails → Templates** (after SMTP): paste `supabase/templates/login_code.html` into both
-     _Confirm signup_ and _Magic Link_, so the email also shows the login code.
+   - **Auth → Sign In / Providers → Email:** keep it enabled and turn **off** _Confirm email_ (the app sends no
+     email yet, [ADR 0012](docs/adr/0012-email-and-password-login.md)). Set the minimum password length to 8.
+   - **Auth → URL Configuration:** set the Site URL to the production URL.
+   - Forgotten password: reset it under **Auth → Users** (there is no reset email yet).
    - Accept Supabase's DPA (Organization → Legal documents).
 2. **Vercel:** import the GitHub repo and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (real values, for
    both Production and Preview; redeploy after changing them). Build settings and SPA routing come from `vercel.json`.
