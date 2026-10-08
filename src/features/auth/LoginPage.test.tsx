@@ -43,12 +43,13 @@ describe('login', () => {
     ).toBeInTheDocument();
   });
 
-  it('lets the password manager tell logging in from a new password', async () => {
+  it('switches to creating an account, telling password managers it is a new password', async () => {
     const user = userEvent.setup();
     renderAppAt('/login');
 
     expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
     await user.click(screen.getByRole('button', { name: 'Create an account' }));
+    expect(screen.getByRole('form', { name: 'Create your account' })).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'new-password');
     await user.click(screen.getByRole('button', { name: 'Log in instead' }));
     expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument();
@@ -62,7 +63,7 @@ describe('login', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Use at least 8 characters');
     expect(screen.getByLabelText('Password')).toHaveAccessibleDescription(
-      'Use at least 8 characters for your password.',
+      /At least 8 characters\..*Use at least 8 characters for your password\./,
     );
   });
 

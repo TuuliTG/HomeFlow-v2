@@ -7,25 +7,32 @@ import { LoginError, type LoginFailureReason } from '@/features/auth/loginError'
 import { emailSchema, PASSWORD_MIN_LENGTH, passwordSchema } from '@/features/auth/validation';
 
 const errorId = 'login-error';
+const hintId = 'password-hint';
 
 type Mode = 'log-in' | 'create-account';
 
 const failureMessages: Record<LoginFailureReason, string> = {
   'wrong-credentials': 'Wrong email or password.',
   'account-exists': 'There is already an account with this email. Log in instead.',
-  'weak-password': `Choose a stronger password: at least ${PASSWORD_MIN_LENGTH} characters.`,
+  'weak-password': `Choose a stronger password (at least ${PASSWORD_MIN_LENGTH} characters).`,
   'needs-email-confirmation':
     'HomeFlow is set up to confirm emails, which it can’t send yet. Ask the person who runs HomeFlow to turn off “Confirm email” in Supabase.',
-  other: "That didn't work. Check your connection and try again.",
+  'too-many-attempts': 'Too many attempts. Wait a few minutes and try again.',
+  other: "That didn't work. Try again in a moment.",
 };
 
-const copy: Record<Mode, { submit: string; switchPrompt: string; switchLabel: string }> = {
+const copy: Record<
+  Mode,
+  { heading: string; submit: string; switchPrompt: string; switchLabel: string }
+> = {
   'log-in': {
+    heading: 'Log in',
     submit: 'Log in',
     switchPrompt: 'New to HomeFlow?',
     switchLabel: 'Create an account',
   },
   'create-account': {
+    heading: 'Create your account',
     submit: 'Create account',
     switchPrompt: 'Already have an account?',
     switchLabel: 'Log in instead',
@@ -38,6 +45,7 @@ export function PasswordForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const isCreating = mode === 'create-account';
 
   const submit = useMutation({
     mutationFn: (input: { email: string; password: string }) =>
@@ -56,7 +64,7 @@ export function PasswordForm() {
       setError('Enter a valid email address.');
       return;
     }
-    if (mode === 'create-account' && !passwordSchema.safeParse(password).success) {
+    if (isCreating && !passwordSchema.safeParse(password).success) {
       setError(`Use at least ${PASSWORD_MIN_LENGTH} characters for your password.`);
       return;
     }
@@ -69,13 +77,18 @@ export function PasswordForm() {
     setError(null);
   }
 
-  const fieldErrorProps = {
-    'aria-invalid': error !== null,
-    'aria-describedby': error ? errorId : undefined,
-  };
+  const describedBy = (...ids: (string | false)[]) => ids.filter(Boolean).join(' ') || undefined;
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+    <form
+      onSubmit={handleSubmit}
+      aria-labelledby="login-form-heading"
+      className="flex flex-col gap-4"
+      noValidate
+    >
+      <h2 id="login-form-heading" className="font-semibold text-slate-900">
+        {copy[mode].heading}
+      </h2>
       <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
         Email
         <input
@@ -86,24 +99,33 @@ export function PasswordForm() {
           onChange={(event) => {
             setEmail(event.target.value);
           }}
-          {...fieldErrorProps}
+          aria-invalid={error !== null}
+          aria-describedby={describedBy(error !== null && errorId)}
           className={inputClassName}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-        Password
-        <input
-          type="password"
-          name="password"
-          autoComplete={mode === 'log-in' ? 'current-password' : 'new-password'}
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value);
-          }}
-          {...fieldErrorProps}
-          className={inputClassName}
-        />
-      </label>
+      <div className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+          Password
+          <input
+            type="password"
+            name="password"
+            autoComplete={mode === 'log-in' ? 'current-password' : 'new-password'}
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+            }}
+            aria-invalid={error !== null}
+            aria-describedby={describedBy(isCreating && hintId, error !== null && errorId)}
+            className={inputClassName}
+          />
+        </label>
+        {isCreating && (
+          <p id={hintId} className="text-xs text-slate-500">
+            At least {PASSWORD_MIN_LENGTH} characters. Your browser or phone can save it for you.
+          </p>
+        )}
+      </div>
       {error && (
         <p id={errorId} role="alert" className="text-sm text-red-700">
           {error}
@@ -116,11 +138,6 @@ export function PasswordForm() {
       >
         {copy[mode].submit}
       </button>
-      {mode === 'create-account' && (
-        <p className="text-xs text-slate-500">
-          At least {PASSWORD_MIN_LENGTH} characters. Your browser or phone can save it for you.
-        </p>
-      )}
       <p className="text-center text-sm text-slate-600">
         {copy[mode].switchPrompt}{' '}
         <button type="button" onClick={switchMode} className="text-brand-600 font-medium underline">

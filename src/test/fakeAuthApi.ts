@@ -3,10 +3,9 @@ import type { Profile } from '@/features/auth/api';
 import { LoginError } from '@/features/auth/loginError';
 import type { AuthUser } from '@/lib/auth';
 
-/**
- * In-memory stand-in for `@/features/auth/api`, installed for every unit test in `setup.ts`.
- * The "backend" lives in module state, so it survives unmounting the app like a real session.
- */
+// In-memory stand-in for `@/features/auth/api`, installed for every unit test in `setup.ts`.
+// The "backend" lives in module state, so it survives unmounting the app like a real session.
+
 /** Password of every account created with `logInAs` or `addAccount`. */
 export const FAKE_PASSWORD = 'correct horse';
 

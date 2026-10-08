@@ -21,6 +21,7 @@ const reasonsByCode: Partial<Record<string, LoginFailureReason>> = {
   email_exists: 'account-exists',
   weak_password: 'weak-password',
   email_not_confirmed: 'needs-email-confirmation',
+  over_request_rate_limit: 'too-many-attempts',
 };
 
 function toLoginError(error: { code?: string | undefined; message: string }): LoginError {

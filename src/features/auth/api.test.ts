@@ -75,7 +75,8 @@ describe('auth api', () => {
     ['email_exists', 'account-exists'],
     ['weak_password', 'weak-password'],
     ['email_not_confirmed', 'needs-email-confirmation'],
-    ['over_request_rate_limit', 'other'],
+    ['over_request_rate_limit', 'too-many-attempts'],
+    ['validation_failed', 'other'],
     [undefined, 'other'],
   ])('explains the Supabase error %s as %s', async (code, reason) => {
     auth.signInWithPassword.mockResolvedValue({ error: { code, message: 'boom' } });
