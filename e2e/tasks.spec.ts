@@ -109,3 +109,29 @@ test('family member can fix a task and then delete it', async ({ page }) => {
 
   await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
 });
+
+test('family member can fix a task and then delete it', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task').fill('Vacum');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  await page.getByRole('link', { name: 'Edit: Vacum' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Edit task' })).toBeVisible();
+  await page.getByLabel('Task').fill('Vacuum');
+  await page.getByLabel('Points').fill('4');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+
+  const task = page.getByRole('listitem', { name: 'Vacuum' });
+  await expect(task.getByText('4 points')).toBeVisible();
+
+  await task.getByRole('link', { name: 'Edit: Vacuum' }).click();
+  await page.getByRole('button', { name: 'Delete task' }).click();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on the edit page').toEqual([]);
+  await page.getByRole('button', { name: 'Yes, delete' }).click();
+
+  await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
+});
