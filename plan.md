@@ -59,7 +59,7 @@ Before this step, tasks lived in memory on one device and there was no notion of
 
 ### 4. iPhone polish
 
-- [ ] One-time "Add to Home Screen" hint on iOS Safari when not running standalone; status bar style and launch
+- [x] One-time "Add to Home Screen" hint on iOS Safari when not running standalone; status bar style and launch
       screen meta tags.
 
 ## Open questions
