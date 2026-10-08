@@ -13,11 +13,15 @@ back rather than follow a fixed calendar.
 - `tasks` belong to a household: title, type (`physical`/`planning`), points (1–10), `created_by` (from the default,
   never the client), optional `due_on`, `repeat_every_days` (1–365), `completed_at`/`completed_by` and
   `previous_task_id`. New tasks default to the creator's household.
-- **Least privilege**: members can read and insert tasks, nothing else. Marking a task done goes only through
+- **Least privilege**: members can read and insert tasks; every change goes through a function. Marking done uses
   `complete_task(task_id, completed_on)` (security definer). In one transaction it marks an open task in the
-  caller's household done and, if it repeats, inserts the **next occurrence**, due `completed_on +
-repeat_every_days`, keeping the original creator. `previous_task_id` is unique: one next occurrence per task.
+  caller's household done and, if it repeats, inserts the **next occurrence**, due
+  `completed_on + repeat_every_days`, keeping the original creator. `previous_task_id` is unique: one next
+  occurrence per task.
 - `completed_on` is the user's local date; the database accepts only the server's date ± 1 day.
+- **Picking up**: `pick_up_task()` / `put_back_task()` (security definer) set `picked_up_by` / `picked_up_at` on an
+  open task. A task someone has picked up can't be taken by another member (55006); only they can put it back. Anyone
+  can still mark any task done (credited to whoever does), so a task left picked up never blocks the family.
 - The board shows open tasks, soonest due first and tasks without a due date last (newest first within a date).
 - **Live updates**: `tasks` is in the `supabase_realtime` publication (RLS applies per subscriber). The app
   subscribes once (`subscribeToTaskChanges`) and refetches through TanStack Query on every insert or update. Tasks
@@ -26,7 +30,7 @@ repeat_every_days`, keeping the original creator. `previous_task_id` is unique: 
 ## Consequences
 
 - Each occurrence is its own row, so history, streaks and statistics come from completed rows.
-- Anyone in the household can mark any task done; tasks can't be edited, un-done or deleted yet.
+- Tasks can't be edited, un-done or deleted yet.
 - Intervals are whole days ("the 1st of every month" isn't possible).
 
 ## Alternatives considered
