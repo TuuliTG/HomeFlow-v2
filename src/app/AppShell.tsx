@@ -3,6 +3,7 @@ import { Outlet } from 'react-router';
 import { MainNav } from '@/app/MainNav';
 import { AccountStatus } from '@/features/auth/AccountStatus';
 import { HouseholdLink } from '@/features/household/HouseholdLink';
+import { TaskActivityToast } from '@/features/tasks/TaskActivityToast';
 
 /**
  * Mobile-first layout: content plus a bottom tab bar on phones,
@@ -19,6 +20,7 @@ export function AppShell() {
         </div>
         <Outlet />
       </main>
+      <TaskActivityToast />
     </div>
   );
 }

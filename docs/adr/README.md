@@ -17,3 +17,4 @@ Never edit an accepted ADR's decision — supersede it with a new one and update
 | [0010](0010-households-and-shared-tasks.md)   | Households and shared tasks                    | Accepted           |
 | [0011](0011-app-requires-login.md)            | The app requires logging in                    | Accepted           |
 | [0012](0012-email-and-password-login.md)      | Email and password login (for now)             | Accepted           |
+| [0013](0013-live-updates-with-realtime.md)    | Live updates with Supabase Realtime            | Accepted           |

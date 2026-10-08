@@ -4,7 +4,16 @@ import type * as tasksApi from '@/features/tasks/api';
 
 const supabase = vi.hoisted(() => {
   const query = { select: vi.fn(), order: vi.fn(), in: vi.fn(), insert: vi.fn() };
-  return { query, client: { from: vi.fn(() => query) } };
+  const channel = { on: vi.fn(), subscribe: vi.fn() };
+  return {
+    query,
+    channel,
+    client: {
+      from: vi.fn(() => query),
+      channel: vi.fn(() => channel),
+      removeChannel: vi.fn(),
+    },
+  };
 });
 
 const getSupabaseClient = vi.hoisted(() => vi.fn());
@@ -12,7 +21,7 @@ vi.mock('@/lib/supabase', () => ({ getSupabaseClient }));
 
 // setup.ts replaces the tasks api with a fake for every test; this file tests the real one.
 const api = await vi.importActual<typeof tasksApi>('@/features/tasks/api');
-const { client, query } = supabase;
+const { client, query, channel } = supabase;
 const failure = { message: 'boom' };
 const row = { id: 't1', title: 'Vacuum', type: 'physical', points: 3, created_by: 'u1' };
 
@@ -77,6 +86,45 @@ describe('tasks api', () => {
 
     await expect(api.addTask({ title: 'Vacuum', type: 'physical', points: 3 })).rejects.toBe(
       failure,
+    );
+  });
+
+  it('delivers tasks added to the household live, until unsubscribed', () => {
+    channel.on.mockReturnValue(channel);
+    channel.subscribe.mockReturnValue(channel);
+    const onAdded = vi.fn();
+
+    const unsubscribe = api.subscribeToNewTasks(onAdded);
+    const [[event, filter, listener]] = channel.on.mock.calls as [
+      [string, unknown, (payload: { new: unknown }) => void],
+    ];
+    listener({ new: { ...row, household_id: 'h1', created_at: '2026-10-08T04:00:00Z' } });
+    listener({ new: { id: 't2' } });
+    unsubscribe();
+
+    expect(client.channel).toHaveBeenCalledWith(expect.stringMatching(/^household-tasks:/));
+    expect(event).toBe('postgres_changes');
+    expect(filter).toEqual({ event: 'INSERT', schema: 'public', table: 'tasks' });
+    expect(onAdded).toHaveBeenCalledExactlyOnceWith({ id: 't1', title: 'Vacuum', createdBy: 'u1' });
+    expect(client.removeChannel).toHaveBeenCalledWith(channel);
+  });
+
+  it('warns when live updates cannot connect', () => {
+    channel.on.mockReturnValue(channel);
+    channel.subscribe.mockReturnValue(channel);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    api.subscribeToNewTasks(vi.fn());
+    const [[onStatus]] = channel.subscribe.mock.calls as [
+      [(status: string, error?: Error) => void],
+    ];
+    onStatus('SUBSCRIBED');
+    onStatus('CHANNEL_ERROR', new Error('boom'));
+
+    expect(warn).toHaveBeenCalledExactlyOnceWith(
+      'Live task updates are unavailable',
+      'CHANNEL_ERROR',
+      new Error('boom'),
     );
   });
 });

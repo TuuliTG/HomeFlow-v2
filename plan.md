@@ -37,9 +37,10 @@ Before this step, tasks lived in memory on one device and there was no notion of
 
 ### 2. Live updates while the app is open
 
-- [ ] Enable Supabase Realtime for `tasks` (migration adding it to the `supabase_realtime` publication; RLS still
+- [x] Enable Supabase Realtime for `tasks` (migration adding it to the `supabase_realtime` publication; RLS still
       applies). A hook subscribes to inserts for the user's household and refreshes the task list, with a short
       non-intrusive message ("Anna added _Book dentist_"). Tests with a faked subscription.
+      ([ADR 0013](docs/adr/0013-live-updates-with-realtime.md))
 
 ### 3. Push notifications when the app is closed (Web Push)
 
