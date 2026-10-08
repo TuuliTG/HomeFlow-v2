@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { LoginError, type LoginFailureReason } from '@/features/auth/loginError';
 import type { AuthUser } from '@/lib/auth';
 import { getSupabaseClient } from '@/lib/supabase';
 
@@ -13,21 +14,34 @@ function toAuthUser(user: { id: string; email?: string }): AuthUser {
   return { id: user.id, email: user.email ?? '' };
 }
 
-/**
- * Emails a one-time login code (the email also carries a link back to /login).
- * The account is created on first use, so there is no separate sign-up.
- */
-export async function sendLoginCode(email: string): Promise<void> {
-  const { error } = await getSupabaseClient().auth.signInWithOtp({
-    email,
-    options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/login` },
-  });
-  if (error) throw error;
+// Supabase Auth error codes the login form explains; anything else is shown as a generic failure.
+const reasonsByCode: Partial<Record<string, LoginFailureReason>> = {
+  invalid_credentials: 'wrong-credentials',
+  user_already_exists: 'account-exists',
+  email_exists: 'account-exists',
+  weak_password: 'weak-password',
+  email_not_confirmed: 'needs-email-confirmation',
+};
+
+function toLoginError(error: { code?: string | undefined; message: string }): LoginError {
+  return new LoginError(reasonsByCode[error.code ?? ''] ?? 'other', error.message);
 }
 
-export async function verifyLoginCode(email: string, code: string): Promise<void> {
-  const { error } = await getSupabaseClient().auth.verifyOtp({ email, token: code, type: 'email' });
-  if (error) throw error;
+export async function logIn(email: string, password: string): Promise<void> {
+  const { error } = await getSupabaseClient().auth.signInWithPassword({ email, password });
+  if (error) throw toLoginError(error);
+}
+
+/** Creates an account and logs it in. Needs "Confirm email" turned off in Supabase (ADR 0012). */
+export async function createAccount(email: string, password: string): Promise<void> {
+  const { data, error } = await getSupabaseClient().auth.signUp({ email, password });
+  if (error) throw toLoginError(error);
+  if (!data.session) {
+    throw new LoginError(
+      'needs-email-confirmation',
+      'Supabase asks new users to confirm their email',
+    );
+  }
 }
 
 /** Logs out on this device only. */

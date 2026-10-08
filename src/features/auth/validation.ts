@@ -2,8 +2,9 @@ import { z } from 'zod';
 
 export const emailSchema = z.email();
 
-/** Supabase email codes are 6 digits by default and can be configured up to 10. */
-export const loginCodeSchema = z.string().regex(/^\d{6,10}$/);
+/** Keep in sync with Supabase Auth's minimum password length (`supabase/config.toml` and the dashboard). */
+export const PASSWORD_MIN_LENGTH = 8;
+export const passwordSchema = z.string().min(PASSWORD_MIN_LENGTH);
 
 /** Matches the `profiles.display_name` check constraint in the database. */
 export const DISPLAY_NAME_MAX_LENGTH = 50;
