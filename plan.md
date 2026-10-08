@@ -44,7 +44,7 @@ Before this step, tasks lived in memory on one device and there was no notion of
 
 ### 3. Push notifications when the app is closed (Web Push)
 
-- [ ] **3a. Subscriptions storage** — ADR for Web Push (VAPID, Supabase Edge Function, what goes in a notification).
+- [x] **3a. Subscriptions storage** — ADR for Web Push (VAPID, Supabase Edge Function, what goes in a notification).
       `push_subscriptions` table (endpoint + keys per device, owner-only RLS) with pgTAP tests.
 - [ ] **3b. Service worker** — switch `vite-plugin-pwa` to `injectManifest` keeping today's caching, and add `push`
       (show notification) and `notificationclick` (open/focus the task board) handlers.
