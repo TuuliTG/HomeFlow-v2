@@ -14,6 +14,7 @@ import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { AvailableTasksPage } from '@/features/tasks/AvailableTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
+import { EditTaskPage } from '@/features/tasks/EditTaskPage';
 import { MyTasksPage } from '@/features/tasks/MyTasksPage';
 
 export const routes: RouteObject[] = [
@@ -35,6 +36,7 @@ export const routes: RouteObject[] = [
         children: [
           { path: paths.tasks, element: <AvailableTasksPage /> },
           { path: paths.newTask, element: <CreateTaskPage /> },
+          { path: paths.editTask(':taskId'), element: <EditTaskPage /> },
           {
             path: paths.me,
             element: (

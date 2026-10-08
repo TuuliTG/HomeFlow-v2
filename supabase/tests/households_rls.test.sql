@@ -138,12 +138,12 @@ select results_eq(
 select throws_ok(
   $$ update public.tasks set points = 10 $$,
   '42501', null,
-  'tasks cannot be edited yet'
+  'tasks cannot be edited directly'
 );
 select throws_ok(
   $$ delete from public.tasks $$,
   '42501', null,
-  'tasks cannot be deleted yet'
+  'tasks cannot be deleted directly'
 );
 select throws_ok(
   $$ update public.households set name = 'Hacked' $$,

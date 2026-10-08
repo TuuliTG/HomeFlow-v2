@@ -228,6 +228,44 @@ export async function fakeSupabase(page: Page) {
     };
   }
 
+  function ownOpenTask(taskId: string) {
+    return tasks.find(
+      (task) =>
+        task.id === taskId && task.household_id === ownHousehold?.id && task.completed_at === null,
+    );
+  }
+
+  /** Like update_task(). */
+  async function updateTask(route: Route) {
+    const body = route.request().postDataJSON() as {
+      task_id: string;
+      task_title: string;
+      task_type: string;
+      task_points: number;
+      task_due_on: string | null;
+      task_repeat_every_days: number | null;
+    };
+    const task = ownOpenTask(body.task_id);
+    if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
+    Object.assign(task, {
+      title: body.task_title,
+      type: body.task_type,
+      points: body.task_points,
+      due_on: body.task_due_on,
+      repeat_every_days: body.task_repeat_every_days,
+    });
+    return reply(route, 204);
+  }
+
+  /** Like delete_task(). */
+  async function deleteTask(route: Route) {
+    const { task_id } = route.request().postDataJSON() as { task_id: string };
+    const task = ownOpenTask(task_id);
+    if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
+    tasks.splice(tasks.indexOf(task), 1);
+    return reply(route, 204);
+  }
+
   /** Accepts any email and password, for both creating an account and logging in. */
   function logInWith(route: Route) {
     return reply(route, 200, {
@@ -251,6 +289,8 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/complete_task': completeTask,
     '/rest/v1/rpc/pick_up_task': setPickedUp(user.id),
     '/rest/v1/rpc/put_back_task': setPickedUp(null),
+    '/rest/v1/rpc/update_task': updateTask,
+    '/rest/v1/rpc/delete_task': deleteTask,
     '/rest/v1/tasks': tasksEndpoint,
   };
 

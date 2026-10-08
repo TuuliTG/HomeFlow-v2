@@ -1,4 +1,7 @@
 import { useId } from 'react';
+import { Link } from 'react-router';
+
+import { paths } from '@/app/paths';
 
 import { describeDueDate, today } from '@/features/tasks/dueDate';
 import { repeatLabel, type Task, taskTypeLabels } from '@/features/tasks/task';
@@ -106,7 +109,14 @@ function TaskActions({ task, currentUserId }: TaskCardProps) {
           {failure}
         </p>
       )}
-      <div className="flex justify-end gap-2">
+      <div className="flex items-center justify-end gap-2">
+        <Link
+          to={paths.editTask(task.id)}
+          aria-label={`Edit: ${task.title}`}
+          className="text-brand-900 mr-auto rounded-lg px-1 py-1.5 text-sm font-semibold underline-offset-2 hover:underline"
+        >
+          Edit
+        </Link>
         {task.pickedUpBy === currentUserId &&
           button(
             'Put back',

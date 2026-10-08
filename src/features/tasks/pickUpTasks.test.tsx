@@ -149,7 +149,7 @@ describe('Me screen', () => {
         .getAllByRole('listitem')
         .map((item) => item.textContent),
     ).toEqual([
-      expect.stringMatching(/^Water plantsDone .* · 3 points$/),
+      expect.stringMatching(/^Water plantsDone .* · 3 pointsUndo$/),
       expect.stringMatching(/^VacuumDone /),
     ]);
   });

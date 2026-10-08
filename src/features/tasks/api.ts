@@ -120,6 +120,34 @@ export async function putBackTask(taskId: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Replaces an open task's details. Any member of the household can edit it. */
+export async function updateTask(
+  taskId: string,
+  { title, type, points, dueOn, repeatEveryDays }: NewTask,
+): Promise<void> {
+  const { error } = await getSupabaseClient().rpc('update_task', {
+    task_id: taskId,
+    task_title: title,
+    task_type: type,
+    task_points: points,
+    task_due_on: dueOn,
+    task_repeat_every_days: repeatEveryDays,
+  });
+  if (error) throw error;
+}
+
+/** Deletes an open task. Any member of the household can delete it. */
+export async function deleteTask(taskId: string): Promise<void> {
+  const { error } = await getSupabaseClient().rpc('delete_task', { task_id: taskId });
+  if (error) throw error;
+}
+
+/** Reopens a task the user marked done in the last hour, removing the next occurrence it created. */
+export async function undoCompleteTask(taskId: string): Promise<void> {
+  const { error } = await getSupabaseClient().rpc('undo_complete_task', { task_id: taskId });
+  if (error) throw error;
+}
+
 /** A change to the household's tasks, as delivered live. */
 export type TaskChange =
   | {
@@ -130,11 +158,13 @@ export type TaskChange =
       /** Added automatically as the next occurrence of a repeating task that was just done. */
       isRepeat: boolean;
     }
-  | { kind: 'updated' };
+  /** A task was changed or deleted. */
+  | { kind: 'changed' };
 
 /**
- * Calls `onChange` for each task added to or changed in the household while subscribed (Supabase
- * Realtime, which applies Row Level Security per subscriber). Returns an unsubscribe function.
+ * Calls `onChange` for each task added to, changed in or deleted from the household while subscribed
+ * (Supabase Realtime, which applies Row Level Security per subscriber except to deletes). Returns an
+ * unsubscribe function.
  */
 export function subscribeToTaskChanges(onChange: (change: TaskChange) => void): () => void {
   const client = getSupabaseClient();
@@ -154,7 +184,12 @@ export function subscribeToTaskChanges(onChange: (change: TaskChange) => void): 
       }
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tasks' }, () => {
-      onChange({ kind: 'updated' });
+      onChange({ kind: 'changed' });
+    })
+    // Realtime can't apply Row Level Security to deletes, so these come from every household and
+    // carry only the id. They only trigger a refetch, which RLS does scope.
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'tasks' }, () => {
+      onChange({ kind: 'changed' });
     })
     .subscribe((status, error) => {
       if ((['CHANNEL_ERROR', 'TIMED_OUT'] as string[]).includes(status)) {

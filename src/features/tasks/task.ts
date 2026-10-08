@@ -11,6 +11,9 @@ export const taskTypeLabels: Record<TaskType, string> = {
 
 export const TITLE_MAX_LENGTH = 80;
 
+/** How long after marking a task done the user can undo it; `undo_complete_task()` enforces it. */
+export const UNDO_WINDOW_MS = 60 * 60 * 1000;
+
 /** How often a task can repeat, in days; offered as choices when creating a task. */
 export const repeatChoices = [1, 2, 3, 7, 14, 30] as const;
 
