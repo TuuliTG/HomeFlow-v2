@@ -1,4 +1,4 @@
-// notify-household Edge Function (ADR 0014): a Database Webhook calls it for each new task; it sends
+// notify-household Edge Function (ADR 0005): a Database Webhook calls it for each new task; it sends
 // a push notification to the other household members' devices. The logic lives in notify.ts.
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
 import webpush from 'npm:web-push@3.6.7';

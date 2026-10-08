@@ -1,7 +1,7 @@
 import type { DeviceSubscription } from '@/features/notifications/browserPush';
 import { getSupabaseClient } from '@/lib/supabase';
 
-/** Saves this device's subscription for the logged-in user (ADR 0014). */
+/** Saves this device's subscription for the logged-in user (ADR 0005). */
 export async function saveSubscription(subscription: DeviceSubscription): Promise<void> {
   const { error } = await getSupabaseClient().rpc('save_push_subscription', {
     push_endpoint: subscription.endpoint,

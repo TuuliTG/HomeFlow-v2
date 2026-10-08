@@ -34,7 +34,7 @@ export async function turnOffNotificationsOnThisDevice(): Promise<void> {
 /**
  * Whether this device gets push notifications, and turning them on (from a tap) or off. Each load
  * re-saves an existing subscription, so the database matches the browser and the device belongs
- * to whoever is logged in now (ADR 0014).
+ * to whoever is logged in now (ADR 0005).
  */
 export function usePushNotifications() {
   const user = useLoggedInUser();

@@ -1,4 +1,4 @@
-// PreToolUse hook: keeps agents off `main` (see docs/adr/0008-branch-pr-workflow.md).
+// PreToolUse hook: keeps agents off `main` (see docs/adr/0001-how-we-work.md).
 // Exit code 2 blocks the tool call and shows stderr to the agent.
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -15,7 +15,9 @@ function currentBranch() {
 }
 
 function block(reason) {
-  console.error(`${reason} Create a branch (git switch -c feat/<name>) and open a PR instead.`);
+  console.error(
+    `${reason} Create a branch named after the change (git switch -c sort-tasks-by-due-date) and open a PR instead.`,
+  );
   process.exit(2);
 }
 

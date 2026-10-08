@@ -4,13 +4,10 @@ A mobile-first web app (PWA) that helps families share household tasks fairly. I
 invisible planning work visible, and motivates through shared goals instead of control.
 See [docs/product-brief.md](docs/product-brief.md).
 
-**Status:** development foundation in place (app shell, CI/CD, agent tooling). Log-in uses Supabase Auth with
-email and password for now and stores a display name per user ([ADR 0012](docs/adr/0012-email-and-password-login.md)).
-After choosing a name, a user creates a household or joins one with its invite code
-([ADR 0010](docs/adr/0010-households-and-shared-tasks.md)). The household shares one task board stored in Supabase,
-showing who added each task, and updates live while the app is open
-([ADR 0013](docs/adr/0013-live-updates-with-realtime.md)). Tasks can have a due date and be marked done; a repeating
-task comes back a set number of days after it was done ([ADR 0015](docs/adr/0015-repeating-tasks.md)). The app requires logging in ([ADR 0011](docs/adr/0011-app-requires-login.md)).
+**Status:** a family logs in with email and password, creates or joins a household with an invite code and shares
+one task board ([ADR 0003](docs/adr/0003-accounts-and-households.md)). Tasks can have a due date, be marked done and
+repeat a set number of days after they were done; the board updates live and members can get push notifications
+([ADR 0004](docs/adr/0004-tasks.md), [ADR 0005](docs/adr/0005-push-notifications.md)).
 Work in progress is tracked in [plan.md](plan.md).
 
 ## Tech stack
@@ -72,7 +69,7 @@ docs/               product brief, ADRs, cloud workflow guide
 ## Workflow
 
 All changes go through a branch and a PR. `main` only receives changes after CI passes, and Vercel deploys `main` to
-production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) and [ADR 0008](docs/adr/0008-branch-pr-workflow.md).
+production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) and [ADR 0001](docs/adr/0001-how-we-work.md).
 
 - **AI agents:** `AGENTS.md` (loaded by Claude Code through `CLAUDE.md`) plus the skills in `.claude/skills/`.
 - **From your phone:** [docs/claude-cloud.md](docs/claude-cloud.md).
@@ -83,7 +80,7 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
    Vercel. Then:
    - Apply the migrations: `npx supabase link --project-ref <ref>` and `npx supabase db push`.
    - **Auth → Sign In / Providers → Email:** keep it enabled and turn **off** _Confirm email_ (the app sends no
-     email yet, [ADR 0012](docs/adr/0012-email-and-password-login.md)). Set the minimum password length to 8.
+     email yet, [ADR 0003](docs/adr/0003-accounts-and-households.md)). Set the minimum password length to 8.
    - **Auth → URL Configuration:** set the Site URL to the production URL.
    - **Setting a password** (accounts created with the earlier emailed-code login have none, and there is no reset
      email yet): in the **SQL Editor** run
@@ -92,12 +89,12 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
    - Accept Supabase's DPA (Organization → Legal documents).
 2. **Vercel:** import the GitHub repo and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (real values, for
    both Production and Preview; redeploy after changing them). Optionally add `VITE_VAPID_PUBLIC_KEY` to show the
-   notifications setting ([ADR 0014](docs/adr/0014-web-push-notifications.md)); sending also needs step 4. Build
+   notifications setting ([ADR 0005](docs/adr/0005-push-notifications.md)); sending also needs step 4. Build
    settings and SPA routing come from `vercel.json`.
 3. **GitHub → Settings → Branches:** add a protection rule for `main`. Require a pull request, and require these
    status checks to pass: _Lint, format, types, dead code_, _Unit tests_, _Build_, _E2E (Playwright)_,
    _Dependency security_, _Analyze_. Block force pushes.
-4. **Push notifications** (optional, [ADR 0014](docs/adr/0014-web-push-notifications.md)):
+4. **Push notifications** (optional, [ADR 0005](docs/adr/0005-push-notifications.md)):
    1. Create a VAPID key pair on your own computer: `npx web-push@3.6.7 generate-vapid-keys`. Keep the private key secret.
    2. **Vercel:** set `VITE_VAPID_PUBLIC_KEY` to the public key and redeploy.
    3. **Supabase → Edge Functions → Secrets:** add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`

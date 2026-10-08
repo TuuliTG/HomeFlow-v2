@@ -14,7 +14,7 @@ export type Env = z.infer<typeof envSchema>;
 const vapidPublicKeySchema = z.string().regex(/^[A-Za-z0-9_-]{87}$/);
 
 /**
- * The public VAPID key push subscriptions are made with (ADR 0014), or null when push
+ * The public VAPID key push subscriptions are made with (ADR 0005), or null when push
  * notifications aren't set up for this deployment. Unlike the Supabase variables it is optional.
  */
 export function readVapidPublicKey(source: Record<string, unknown>): string | null {

@@ -28,24 +28,26 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node ≥ 22.12 (`.
 - Feature folders: `src/features/<feature>/` holds its components, hooks, `api.ts` and tests side by side.
   `src/app` = shell/routing/providers, `src/components/ui` = shared presentational components, `src/lib` = infrastructure.
 - Features must not import other features' internals; promote shared code to `components/ui` or `lib`. Read the
-  logged-in user with `useAuth()` from `@/lib/auth` (`useLoggedInUser()` on screens behind the login, ADR 0011).
+  logged-in user with `useAuth()` from `@/lib/auth` (`useLoggedInUser()` on screens behind the login, ADR 0003).
   Cross-feature composition (e.g. `OnboardingGate`) lives in `src/app`.
-- `src/sw.ts` is the service worker (ADR 0014): WebWorker types via `tsconfig.sw.json`, no React or DOM. It may
+- `src/sw.ts` is the service worker (ADR 0005): WebWorker types via `tsconfig.sw.json`, no React or DOM. It may
   import only `src/lib` modules that don't touch the DOM; put its logic there so it can be unit-tested.
 - Data access: components → hooks (TanStack Query) → feature `api.ts` → `getSupabaseClient()`. Never call Supabase
   from components (ESLint enforces the import ban). Validate external data with Zod.
 - Every Supabase table has Row Level Security enabled with explicit policies. Scope family data with
-  `household_id = (select private.current_household_id())` ([ADR 0010](docs/adr/0010-households-and-shared-tasks.md)).
+  `household_id = (select private.current_household_id())` ([ADR 0003](docs/adr/0003-accounts-and-households.md)).
 - Mobile first: design for ~390px wide, then enhance with `md:` breakpoints. Accessible by default (roles, labels, contrast).
 - Import with the `@/` alias. Add dependencies with `npm install <pkg>` (exact versions are saved automatically).
 
 ## Workflow (always)
 
-1. **Never work on `main`.** Create a branch: `feat/…`, `fix/…`, `refactor/…`, `chore/…`, `docs/…`.
+1. **Never work on `main`.** Create a branch named in kebab-case after the change, without a type prefix:
+   `sort-tasks-by-due-date`, `fix-login-on-ios`.
 2. Plan briefly; write or update tests first where practical.
 3. Implement in small Conventional Commits (`feat: …`, `fix: …`, `refactor: …`). Keep refactors in separate commits from behaviour changes.
 4. Run `npm run verify` (and `npm run e2e` when UI flows change). Fix, don't skip or weaken checks.
 5. Run the **housekeeping** skill: README, AGENTS.md, ADRs, stale comments, dead code, refactoring needs.
+   Decisions go into the few topic ADRs in `docs/adr/` (update the matching one; see its README), kept short.
 6. Self-review with the **code-review** skill / `code-reviewer` agent, then push and open a PR using the template.
 7. Merge only when CI is green (branch protection enforces this).
 
@@ -55,5 +57,5 @@ Skills in `.claude/skills/`: `feature-workflow`, `housekeeping`, `adr`, `clean-c
 ## Don'ts
 
 - Don't commit secrets or `.env*` files (only `.env.example`). The Supabase anon key is public; the service role key never goes in the client.
-- Don't disable lint rules, lower coverage thresholds, or use `any`/`@ts-ignore` to get green. If a rule truly doesn't fit, explain in the PR and add an ADR.
+- Don't disable lint rules, lower coverage thresholds, or use `any`/`@ts-ignore` to get green. If a rule truly doesn't fit, explain in the PR and record it in the matching ADR.
 - Don't leave commented-out code, TODOs without an issue, or unused exports.

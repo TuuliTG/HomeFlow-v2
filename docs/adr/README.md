@@ -1,22 +1,24 @@
 # Architecture Decision Records
 
-Short records of significant decisions. Copy `0000-template.md`, use the next number, keep it under ~30 lines.
-Never edit an accepted ADR's decision — supersede it with a new one and update the status line of the old one.
+The decisions that shape HomeFlow and why, grouped by topic. Read the ones your change touches before starting.
 
-| #                                             | Decision                                       | Status             |
-| --------------------------------------------- | ---------------------------------------------- | ------------------ |
-| [0001](0001-record-architecture-decisions.md) | Record architecture decisions                  | Accepted           |
-| [0002](0002-vite-react-typescript.md)         | Vite + React + TypeScript (strict)             | Accepted           |
-| [0003](0003-supabase-backend.md)              | Supabase as backend                            | Accepted           |
-| [0004](0004-vercel-hosting-and-ci-gate.md)    | Vercel hosting, GitHub Actions as quality gate | Accepted           |
-| [0005](0005-progressive-web-app.md)           | Progressive Web App                            | Accepted           |
-| [0006](0006-testing-strategy.md)              | Testing strategy                               | Accepted           |
-| [0007](0007-feature-folder-architecture.md)   | Feature-folder architecture                    | Accepted           |
-| [0008](0008-branch-pr-workflow.md)            | Branch → PR → main workflow                    | Accepted           |
-| [0009](0009-passwordless-email-login.md)      | Passwordless email login, minimal profile      | Superseded by 0012 |
-| [0010](0010-households-and-shared-tasks.md)   | Households and shared tasks                    | Accepted           |
-| [0011](0011-app-requires-login.md)            | The app requires logging in                    | Accepted           |
-| [0012](0012-email-and-password-login.md)      | Email and password login (for now)             | Accepted           |
-| [0013](0013-live-updates-with-realtime.md)    | Live updates with Supabase Realtime            | Accepted           |
-| [0014](0014-web-push-notifications.md)        | Push notifications with Web Push               | Accepted           |
-| [0015](0015-repeating-tasks.md)               | Due dates, marking tasks done and repeating    | Accepted           |
+| ADR                                     | Topic                                                            |
+| --------------------------------------- | ---------------------------------------------------------------- |
+| [0001](0001-how-we-work.md)             | Decision records, branches, PRs, CI and tests                    |
+| [0002](0002-stack-and-architecture.md)  | Tech stack, Supabase, folder structure, PWA, hosting             |
+| [0003](0003-accounts-and-households.md) | Login, personal data, households, invite codes, RLS scoping      |
+| [0004](0004-tasks.md)                   | Task data, marking done, repeating tasks, ordering, live updates |
+| [0005](0005-push-notifications.md)      | Web Push, device subscriptions, the notify-household function    |
+
+## Guidelines
+
+- **One ADR per topic, few topics.** A new or changed decision updates the ADR for its topic in the same PR:
+  add or edit a bullet and bump the `Updated` date. Git history keeps earlier versions; don't keep superseded
+  text around.
+- **A new ADR only for a new area** that fits none of the above (e.g. points and fairness). If a topic grows past
+  ~40 lines, summarise it or split it in two; if two get small, merge them. Aim for no more than about eight.
+- **Short and concrete**: Context (2–3 sentences), Decisions (bullets someone can follow without reading the PR),
+  Consequences, and Alternatives in one or two lines if worth it. Name tables, functions and files.
+- **Record decisions, not features.** A routine feature that follows existing decisions needs no ADR change.
+- Numbers are just stable names; code comments may cite them (`ADR 0004`). Migrations written before
+  2026-10-08 cite the old one-decision-per-file numbers (0009–0015), which are in git history.

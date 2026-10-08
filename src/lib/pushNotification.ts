@@ -1,7 +1,7 @@
 /**
- * What a push message carries (ADR 0014): who added which task, and where tapping it leads.
+ * What a push message carries (ADR 0005): who added which task, and where tapping it leads.
  * The service worker shows it; the notify-household Edge Function sends it. Checked by hand rather
- * than with Zod to keep the service worker small (ADR 0014).
+ * than with Zod to keep the service worker small (ADR 0005).
  */
 export interface PushNotification {
   title: string;
