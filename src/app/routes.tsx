@@ -9,6 +9,8 @@ import { LoginPage } from '@/features/auth/LoginPage';
 import { HouseholdPage } from '@/features/household/HouseholdPage';
 import { HouseholdSetupPage } from '@/features/household/HouseholdSetupPage';
 import { MyTasksPage } from '@/features/my-tasks/MyTasksPage';
+import { NotificationSettings } from '@/features/notifications/NotificationSettings';
+import { turnOffNotificationsOnThisDevice } from '@/features/notifications/usePushNotifications';
 import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { AvailableTasksPage } from '@/features/tasks/AvailableTasksPage';
@@ -17,7 +19,7 @@ import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
 export const routes: RouteObject[] = [
   {
     element: (
-      <AuthProvider>
+      <AuthProvider beforeLogOut={turnOffNotificationsOnThisDevice}>
         <Outlet />
       </AuthProvider>
     ),
@@ -33,7 +35,15 @@ export const routes: RouteObject[] = [
         children: [
           { path: paths.tasks, element: <AvailableTasksPage /> },
           { path: paths.newTask, element: <CreateTaskPage /> },
-          { path: paths.me, element: <MyTasksPage /> },
+          {
+            path: paths.me,
+            element: (
+              <>
+                <MyTasksPage />
+                <NotificationSettings />
+              </>
+            ),
+          },
           { path: paths.rewards, element: <RewardsPage /> },
           { path: paths.statistics, element: <StatisticsPage /> },
           { path: paths.household, element: <HouseholdPage /> },
