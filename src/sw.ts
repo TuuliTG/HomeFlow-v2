@@ -7,11 +7,12 @@ import {
 } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 
-import { findAppWindow, notificationPath, parsePushPayload } from '@/lib/pushNotification';
+import { notificationPath, openApp, parsePushPayload } from '@/lib/pushNotification';
 
 declare const self: ServiceWorkerGlobalScope;
 
-// Offline app shell, as before ADR 0014: precache the build and serve index.html for navigations.
+// The same offline app shell the generated worker had: precache the build and serve index.html for
+// navigations.
 // New versions take over straight away (registerType: 'autoUpdate').
 void self.skipWaiting();
 clientsClaim();
@@ -25,7 +26,6 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(notification.title, {
       body: notification.body,
       icon: '/pwa-192x192.png',
-      badge: '/pwa-64x64.png',
       data: notification.url,
     }),
   );
@@ -34,7 +34,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = new URL(notificationPath(event.notification.data), self.location.origin).href;
-  event.waitUntil(openApp(url));
+  event.waitUntil(openApp(self.clients, url));
 });
 
 function readJson(data: PushMessageData | null): unknown {
@@ -43,15 +43,4 @@ function readJson(data: PushMessageData | null): unknown {
   } catch {
     return undefined;
   }
-}
-
-async function openApp(url: string) {
-  const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-  const appWindow = findAppWindow(windows, self.location.origin);
-  if (!appWindow) {
-    await self.clients.openWindow(url);
-    return;
-  }
-  const focused = await appWindow.focus();
-  if (focused.url !== url) await focused.navigate(url);
 }
