@@ -3,7 +3,7 @@
  * it can be unit-tested with Vitest. index.ts supplies the real dependencies.
  */
 
-/** A new task, as delivered by the Database Webhook on `public.tasks` inserts. */
+/** A newly added task, as read from the database. */
 export interface TaskAdded {
   householdId: string;
   title: string;
@@ -18,13 +18,15 @@ export interface DeviceSubscription {
 }
 
 /** The push message the service worker shows (`src/lib/pushNotification.ts`). */
-export interface PushMessage {
+interface PushMessage {
   title: string;
   body: string;
   url: string;
 }
 
 export interface NotifyDependencies {
+  /** The task, read from the database rather than trusted from the webhook payload. */
+  taskById: (taskId: string) => Promise<TaskAdded | null>;
   /** User ids of everyone in the household. */
   membersOf: (householdId: string) => Promise<string[]>;
   displayNameOf: (userId: string) => Promise<string | null>;
@@ -45,18 +47,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-/** Reads a Database Webhook payload; null for anything but a task insert. */
-export function parseTaskAdded(payload: unknown): TaskAdded | null {
+/**
+ * The id of the task a Database Webhook payload reports as inserted; null for anything else. Only
+ * the id is used: the task itself is read from the database, so a forged payload can't choose the
+ * household or the text.
+ */
+export function parseAddedTaskId(payload: unknown): string | null {
   if (!isRecord(payload) || payload.type !== 'INSERT' || payload.table !== 'tasks') return null;
   const { record } = payload;
-  if (!isRecord(record)) return null;
-  const { household_id: householdId, title, created_by: createdBy } = record;
-  if (typeof householdId !== 'string' || typeof title !== 'string') return null;
-  return {
-    householdId,
-    title,
-    createdBy: typeof createdBy === 'string' ? createdBy : null,
-  };
+  return isRecord(record) && typeof record.id === 'string' ? record.id : null;
 }
 
 /** Whether the request carries the shared secret the webhook is configured with. */
@@ -70,23 +69,25 @@ export function isAuthorized(provided: string | null, secret: string | undefined
   return difference === 0;
 }
 
-export function messageFor(creatorName: string | null, taskTitle: string): PushMessage {
+function messageFor(creatorName: string | null, taskTitle: string): PushMessage {
   return { title: 'HomeFlow', body: `${creatorName ?? 'Someone'} added ${taskTitle}`, url: '/' };
 }
 
 /** 404 and 410 mean the subscription has expired or was revoked and should be forgotten. */
-export function isGone(status: number): boolean {
+function isGone(status: number): boolean {
   return status === 404 || status === 410;
 }
 
 /** Notifies every household member except whoever added the task, and forgets dead devices. */
 export async function notifyHousehold(
-  task: TaskAdded,
+  taskId: string,
   deps: NotifyDependencies,
 ): Promise<NotifyResult> {
+  const result: NotifyResult = { sent: 0, removed: 0, failed: 0 };
+  const task = await deps.taskById(taskId);
+  if (!task) return result;
   const members = await deps.membersOf(task.householdId);
   const recipients = members.filter((userId) => userId !== task.createdBy);
-  const result: NotifyResult = { sent: 0, removed: 0, failed: 0 };
   if (recipients.length === 0) return result;
 
   const [subscriptions, creatorName] = await Promise.all([
@@ -101,8 +102,11 @@ export async function notifyHousehold(
       if (status >= 200 && status < 300) {
         result.sent += 1;
       } else if (isGone(status)) {
-        await deps.forget(subscription.endpoint);
-        result.removed += 1;
+        // A database hiccup here must not lose the counts of the other devices.
+        await deps.forget(subscription.endpoint).then(
+          () => (result.removed += 1),
+          () => (result.failed += 1),
+        );
       } else {
         result.failed += 1;
       }

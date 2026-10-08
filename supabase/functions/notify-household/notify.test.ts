@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { parsePushPayload } from '@/lib/pushNotification';
+
 import {
   type DeviceSubscription,
   isAuthorized,
   type NotifyDependencies,
   notifyHousehold,
-  parseTaskAdded,
+  parseAddedTaskId,
 } from './notify';
 
 const task = { householdId: 'h1', title: 'Book dentist', createdBy: 'anna' };
@@ -24,6 +26,7 @@ function fakeDeps(overrides: Partial<NotifyDependencies> = {}) {
     carol: [],
   };
   return {
+    taskById: vi.fn((taskId: string) => Promise.resolve(taskId === 't1' ? task : null)),
     membersOf: vi.fn(() => Promise.resolve(['anna', 'ben', 'carol'])),
     displayNameOf: vi.fn((userId: string) => Promise.resolve(userId === 'anna' ? 'Anna' : null)),
     subscriptionsOf: vi.fn((userIds: string[]) =>
@@ -39,7 +42,7 @@ describe('notify household', () => {
   it("tells every other member's devices who added which task", async () => {
     const deps = fakeDeps();
 
-    await expect(notifyHousehold(task, deps)).resolves.toEqual({ sent: 2, removed: 0, failed: 0 });
+    await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 2, removed: 0, failed: 0 });
 
     expect(deps.subscriptionsOf).toHaveBeenCalledWith(['ben', 'carol']);
     expect(deps.send).toHaveBeenCalledTimes(2);
@@ -50,17 +53,43 @@ describe('notify household', () => {
     });
   });
 
+  it('sends a message the service worker shows as is', async () => {
+    const deps = fakeDeps();
+    vi.mocked(deps.taskById).mockResolvedValue({ ...task, title: 'x'.repeat(80) });
+    vi.mocked(deps.displayNameOf).mockResolvedValue('y'.repeat(50));
+
+    await notifyHousehold('t1', deps);
+
+    const [[, message]] = vi.mocked(deps.send).mock.calls as unknown as [
+      [DeviceSubscription, unknown],
+    ];
+    expect(parsePushPayload(message)).toEqual(message);
+  });
+
+  it('does nothing for a task that no longer exists', async () => {
+    const deps = fakeDeps();
+
+    await expect(notifyHousehold('unknown', deps)).resolves.toEqual({
+      sent: 0,
+      removed: 0,
+      failed: 0,
+    });
+    expect(deps.membersOf).not.toHaveBeenCalled();
+  });
+
   it("doesn't notify anyone when the creator is alone in the household", async () => {
     const deps = fakeDeps({ membersOf: () => Promise.resolve(['anna']) });
 
-    await expect(notifyHousehold(task, deps)).resolves.toEqual({ sent: 0, removed: 0, failed: 0 });
+    await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 0, removed: 0, failed: 0 });
     expect(deps.subscriptionsOf).not.toHaveBeenCalled();
   });
 
   it('credits "Someone" when the creator has no name or no account any more', async () => {
     const deps = fakeDeps();
 
-    await notifyHousehold({ ...task, createdBy: null }, deps);
+    vi.mocked(deps.taskById).mockResolvedValue({ ...task, createdBy: null });
+
+    await notifyHousehold('t1', deps);
 
     expect(deps.displayNameOf).not.toHaveBeenCalled();
     expect(deps.send).toHaveBeenCalledWith(
@@ -76,9 +105,20 @@ describe('notify household', () => {
       ),
     });
 
-    await expect(notifyHousehold(task, deps)).resolves.toEqual({ sent: 0, removed: 2, failed: 0 });
+    await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 0, removed: 2, failed: 0 });
     expect(deps.forget).toHaveBeenCalledWith('https://push.example.com/ben-phone');
     expect(deps.forget).toHaveBeenCalledWith('https://push.example.com/ben-tablet');
+  });
+
+  it('counts a gone device it could not forget as failed, and still reports the rest', async () => {
+    const deps = fakeDeps({
+      send: vi.fn((subscription: DeviceSubscription) =>
+        Promise.resolve(subscription.endpoint.endsWith('phone') ? 410 : 201),
+      ),
+      forget: () => Promise.reject(new Error('database unavailable')),
+    });
+
+    await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 1, removed: 0, failed: 1 });
   });
 
   it('keeps going when one device fails for another reason', async () => {
@@ -91,7 +131,7 @@ describe('notify household', () => {
       subscriptionsOf: () => Promise.resolve([device('ben'), device('carol'), device('dave')]),
     });
 
-    await expect(notifyHousehold(task, deps)).resolves.toEqual({ sent: 1, removed: 0, failed: 2 });
+    await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 1, removed: 0, failed: 2 });
     expect(deps.forget).not.toHaveBeenCalled();
   });
 });
@@ -99,14 +139,8 @@ describe('notify household', () => {
 describe('webhook payload', () => {
   const record = { id: 't1', household_id: 'h1', title: 'Book dentist', created_by: 'anna' };
 
-  it('reads a task insert', () => {
-    expect(parseTaskAdded({ type: 'INSERT', table: 'tasks', record })).toEqual(task);
-  });
-
-  it('reads a task whose creator deleted their account', () => {
-    expect(
-      parseTaskAdded({ type: 'INSERT', table: 'tasks', record: { ...record, created_by: null } }),
-    ).toEqual({ ...task, createdBy: null });
+  it('reads only the id of an inserted task', () => {
+    expect(parseAddedTaskId({ type: 'INSERT', table: 'tasks', record })).toBe('t1');
   });
 
   it.each([
@@ -114,9 +148,9 @@ describe('webhook payload', () => {
     ['an update', { type: 'UPDATE', table: 'tasks', record }],
     ['another table', { type: 'INSERT', table: 'profiles', record }],
     ['no record', { type: 'INSERT', table: 'tasks' }],
-    ['a record without a household', { type: 'INSERT', table: 'tasks', record: { title: 'x' } }],
+    ['a record without an id', { type: 'INSERT', table: 'tasks', record: { title: 'x' } }],
   ])('ignores %s', (_case, payload) => {
-    expect(parseTaskAdded(payload)).toBeNull();
+    expect(parseAddedTaskId(payload)).toBeNull();
   });
 });
 
