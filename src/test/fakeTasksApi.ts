@@ -16,6 +16,7 @@ interface StoredTask extends NewTask {
 /** Oldest first; the api returns them newest first. */
 const tasks: StoredTask[] = [];
 let requestsFail = false;
+const listeners = new Set<Parameters<typeof tasksApi.subscribeToNewTasks>[0]>();
 
 function ownHouseholdId(): string | null {
   const user = fakeAuthBackend.currentUser();
@@ -26,12 +27,21 @@ export const fakeTasksBackend = {
   reset() {
     tasks.length = 0;
     requestsFail = false;
+    listeners.clear();
   },
-  /** Stores a task as if `userId` had added it to their household. */
+  /**
+   * Stores a task as if `userId` had added it to their household, and delivers it live to the
+   * logged-in user if they are in the same household (like Realtime with Row Level Security).
+   */
   addTaskAs(userId: string, task: NewTask) {
     const householdId = fakeHouseholdBackend.householdIdOf(userId);
     if (!householdId) throw new Error(`${userId} is not in a household`);
-    tasks.push({ ...task, id: `task:${String(tasks.length)}`, householdId, createdBy: userId });
+    const id = `task:${String(tasks.length)}`;
+    tasks.push({ ...task, id, householdId, createdBy: userId });
+    if (householdId !== ownHouseholdId()) return;
+    listeners.forEach((listener) => {
+      listener({ id, title: task.title, createdBy: userId });
+    });
   },
   /** Makes loading and adding tasks fail, like a network error. */
   failRequests() {
@@ -62,4 +72,11 @@ export const addTask: typeof tasksApi.addTask = (task) => {
   if (requestsFail || !user) return Promise.reject(new Error('Network error'));
   fakeTasksBackend.addTaskAs(user.id, task);
   return Promise.resolve();
+};
+
+export const subscribeToNewTasks: typeof tasksApi.subscribeToNewTasks = (onAdded) => {
+  listeners.add(onAdded);
+  return () => {
+    listeners.delete(onAdded);
+  };
 };

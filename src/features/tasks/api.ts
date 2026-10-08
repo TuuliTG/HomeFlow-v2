@@ -12,6 +12,11 @@ const taskRowsSchema = z.array(
     created_by: z.string().nullable(),
   }),
 );
+const newTaskRowSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  created_by: z.string().nullable(),
+});
 const profileRowsSchema = z.array(z.object({ id: z.string(), display_name: z.string() }));
 
 async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>> {
@@ -46,4 +51,31 @@ export async function fetchTasks(): Promise<Task[]> {
 export async function addTask(task: NewTask): Promise<void> {
   const { error } = await getSupabaseClient().from('tasks').insert(task);
   if (error) throw error;
+}
+
+/** A task someone in the household just added, as delivered live. */
+export interface NewTaskEvent {
+  id: string;
+  title: string;
+  createdBy: string | null;
+}
+
+/**
+ * Calls `onAdded` for each task added to the household while subscribed (Supabase Realtime, which
+ * applies Row Level Security per subscriber). Returns an unsubscribe function.
+ */
+export function subscribeToNewTasks(onAdded: (task: NewTaskEvent) => void): () => void {
+  const client = getSupabaseClient();
+  const channel = client
+    .channel('household-tasks')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload) => {
+      const row = newTaskRowSchema.safeParse(payload.new);
+      if (row.success) {
+        onAdded({ id: row.data.id, title: row.data.title, createdBy: row.data.created_by });
+      }
+    })
+    .subscribe();
+  return () => {
+    void client.removeChannel(channel);
+  };
 }

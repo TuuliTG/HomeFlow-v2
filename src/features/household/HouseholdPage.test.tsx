@@ -1,10 +1,14 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { renderAppAt } from '@/test/renderWithRouter';
+
+function copyStatus() {
+  return within(screen.getByRole('region', { name: 'Invite your family' })).getByRole('status');
+}
 
 function logInWithHousehold() {
   const anna = fakeAuthBackend.logInAs('anna@example.com', 'Anna');
@@ -30,7 +34,9 @@ describe('household page', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Copy code' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Copied');
+    await vi.waitFor(() => {
+      expect(copyStatus()).toHaveTextContent('Copied');
+    });
     await expect(navigator.clipboard.readText()).resolves.toBe(inviteCode);
   });
 
@@ -42,7 +48,9 @@ describe('household page', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Copy code' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent("Couldn't copy.");
+    await vi.waitFor(() => {
+      expect(copyStatus()).toHaveTextContent("Couldn't copy.");
+    });
   });
 
   it('says so when the browser offers no clipboard', async () => {
@@ -53,7 +61,9 @@ describe('household page', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Copy code' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent("Couldn't copy.");
+    await vi.waitFor(() => {
+      expect(copyStatus()).toHaveTextContent("Couldn't copy.");
+    });
   });
 
   it('lists members who have not chosen a name yet', async () => {
