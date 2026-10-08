@@ -47,6 +47,28 @@ describe('task board', () => {
     ]);
   });
 
+  it('lists the soonest due tasks first, and tasks without a due date last', async () => {
+    const anna = logInAsFamilyMember();
+    const add = (title: string, dueOn: string | null) => {
+      fakeTasksBackend.addTaskAs(anna.id, { title, type: 'physical', points: 1, dueOn });
+    };
+    add('Dust', null);
+    add('Change bed linen', '2026-10-22');
+    add('Vacuum', '2026-10-06');
+    add('Water plants', null);
+    add('Take out recycling', '2026-10-09');
+    renderAppAt('/');
+
+    await screen.findByRole('listitem', { name: 'Vacuum' });
+    expect(screen.getAllByRole('heading', { level: 2 }).map((title) => title.textContent)).toEqual([
+      'Vacuum',
+      'Take out recycling',
+      'Change bed linen',
+      'Water plants',
+      'Dust',
+    ]);
+  });
+
   it('credits members without a name as someone', async () => {
     logInAsFamilyMember();
     fakeHouseholdBackend.addMember('user:ben@example.com', 'The Virtanens');

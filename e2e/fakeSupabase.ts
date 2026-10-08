@@ -79,7 +79,7 @@ export async function fakeSupabase(page: Page) {
   };
   const members = new Map([[existing.id, ['e2e-ben']]]);
   let ownHousehold: HouseholdRow | null = null;
-  // Newest first, like the app asks for.
+  // Newest first; the GET answer then puts the soonest due first, like the app asks for.
   const tasks: TaskRow[] = [
     {
       id: 'e2e-ben-task',
@@ -162,7 +162,10 @@ export async function fakeSupabase(page: Page) {
     return reply(
       route,
       200,
-      tasks.filter((task) => task.household_id === householdId && task.completed_at === null),
+      tasks
+        .filter((task) => task.household_id === householdId && task.completed_at === null)
+        // Stable sort, so tasks with the same due date (or none) stay newest first.
+        .sort((a, b) => (a.due_on ?? '9999-12-31').localeCompare(b.due_on ?? '9999-12-31')),
     );
   }
 

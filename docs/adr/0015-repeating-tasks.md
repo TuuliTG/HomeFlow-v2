@@ -13,7 +13,8 @@ before this, so completing a task is part of this decision.
 ## Decision
 
 - `tasks` gets `repeat_every_days` (1–365, null for a one-off task), an optional `due_on` date, `completed_at`,
-  `completed_by` and `previous_task_id`. The board shows open tasks only.
+  `completed_by` and `previous_task_id`. The board shows open tasks only, soonest
+  due first; tasks without a due date come last, newest first.
 - A task is marked done only through `complete_task(task_id, completed_on)` (security definer). Members still have
   no `update` grant. In one transaction it marks an open task in the caller's household done and, if the task
   repeats, inserts its **next occurrence**: same title, type, points and interval, due `completed_on +

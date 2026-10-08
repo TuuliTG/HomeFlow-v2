@@ -33,14 +33,15 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
 }
 
 /**
- * The household's open tasks (not yet done), newest first. Row Level Security limits them to the
- * user's household.
+ * The household's open tasks (not yet done): soonest due first, then those without a due date, each
+ * newest first. Row Level Security limits them to the user's household.
  */
 export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select('id, title, type, points, created_by, repeat_every_days, due_on')
     .is('completed_at', null)
+    .order('due_on', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
   if (error) throw error;
   const rows = taskRowsSchema.parse(data);
