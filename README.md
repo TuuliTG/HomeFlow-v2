@@ -75,7 +75,9 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
      and share the new password with its owner, who can then log in with it.
    - Accept Supabase's DPA (Organization → Legal documents).
 2. **Vercel:** import the GitHub repo and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (real values, for
-   both Production and Preview; redeploy after changing them). Build settings and SPA routing come from `vercel.json`.
+   both Production and Preview; redeploy after changing them). Optionally add `VITE_VAPID_PUBLIC_KEY` to show the
+   notifications setting ([ADR 0014](docs/adr/0014-web-push-notifications.md)); sending also needs the steps for
+   push notifications. Build settings and SPA routing come from `vercel.json`.
 3. **GitHub → Settings → Branches:** add a protection rule for `main`. Require a pull request, and require these
    status checks to pass: _Lint, format, types, dead code_, _Unit tests_, _Build_, _E2E (Playwright)_,
    _Dependency security_, _Analyze_. Block force pushes.
