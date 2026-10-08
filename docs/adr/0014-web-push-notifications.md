@@ -24,7 +24,8 @@ open apps.
 - Notifications are turned on per device from the Me screen (permission is asked from the tap). Each app load
   re-saves an existing subscription, so the database matches the browser and the device belongs to whoever is
   logged in; a subscription made with an old VAPID key is dropped. Logging out forgets and unsubscribes the device.
-- A notification says only who added which task ("Ben added Book dentist") and opens the task board.
+- A notification says only who added which task ("Ben added Book dentist") and opens the task board. The next
+  occurrence of a repeating task isn't notified ([ADR 0015](0015-repeating-tasks.md)).
 - `vite-plugin-pwa` uses `injectManifest` with our own `src/sw.ts` instead of a generated worker: the same precache
   and `index.html` navigation fallback, updates via `skipWaiting` + `clientsClaim`, plus `push` and
   `notificationclick` handlers. Push messages are checked by hand (`src/lib/pushNotification.ts`) rather than with

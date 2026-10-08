@@ -19,3 +19,4 @@ Never edit an accepted ADR's decision — supersede it with a new one and update
 | [0012](0012-email-and-password-login.md)      | Email and password login (for now)             | Accepted           |
 | [0013](0013-live-updates-with-realtime.md)    | Live updates with Supabase Realtime            | Accepted           |
 | [0014](0014-web-push-notifications.md)        | Push notifications with Web Push               | Accepted           |
+| [0015](0015-repeating-tasks.md)               | Due dates, marking tasks done and repeating    | Accepted           |
