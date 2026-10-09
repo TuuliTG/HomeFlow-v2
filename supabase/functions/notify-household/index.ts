@@ -27,7 +27,7 @@ const supabase = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KE
 async function taskById(taskId: string): Promise<TaskAdded | null> {
   const { data, error } = await supabase
     .from('tasks')
-    .select('household_id, title, created_by, previous_task_id')
+    .select('household_id, title, created_by, previous_task_id, is_private')
     .eq('id', taskId)
     .maybeSingle();
   if (error) throw error;
@@ -36,6 +36,7 @@ async function taskById(taskId: string): Promise<TaskAdded | null> {
     title: string;
     created_by: string | null;
     previous_task_id: string | null;
+    is_private: boolean;
   } | null;
   return row
     ? {
@@ -43,6 +44,7 @@ async function taskById(taskId: string): Promise<TaskAdded | null> {
         title: row.title,
         createdBy: row.created_by,
         isRepeat: row.previous_task_id !== null,
+        isPrivate: row.is_private,
       }
     : null;
 }

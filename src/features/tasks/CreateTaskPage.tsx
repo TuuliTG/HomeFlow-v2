@@ -16,7 +16,7 @@ export function CreateTaskPage() {
       <PageHeader
         eyebrow="Tasks"
         title="New task"
-        description="Adding a task is planning work, and it counts."
+        description="Adding a task is meta work, and it counts."
       />
       <TaskForm
         submitLabel="Create task"

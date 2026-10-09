@@ -48,7 +48,7 @@ select throws_ok(
 );
 select lives_ok(
   $$ insert into public.tasks (household_id, title, type, points)
-     select id, 'Book dentist', 'planning', 5 from public.households $$,
+     select id, 'Book dentist', 'meta', 5 from public.households $$,
   'a member can add a task to their household'
 );
 select results_eq(

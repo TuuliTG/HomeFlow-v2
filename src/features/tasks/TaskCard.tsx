@@ -30,7 +30,11 @@ export function TaskCard({ task, currentUserId }: TaskCardProps) {
     >
       <div className="flex items-start justify-between gap-4">
         <TaskDetails task={task} currentUserId={currentUserId} titleId={titleId} />
-        <span className="text-brand-900 shrink-0 text-sm font-semibold">{task.points} points</span>
+        {task.points !== null && (
+          <span className="text-brand-900 shrink-0 text-sm font-semibold">
+            {task.points} points
+          </span>
+        )}
       </div>
       <TaskActions task={task} currentUserId={currentUserId} />
     </li>
@@ -38,7 +42,7 @@ export function TaskCard({ task, currentUserId }: TaskCardProps) {
 }
 
 function TaskDetails({ task, currentUserId, titleId }: TaskCardProps & { titleId: string }) {
-  const isPlanning = task.type === 'planning';
+  const isMeta = task.type === 'meta';
   return (
     <div className="flex flex-col gap-1">
       <h2 id={titleId} className="font-semibold text-slate-900">
@@ -51,11 +55,14 @@ function TaskDetails({ task, currentUserId, titleId }: TaskCardProps & { titleId
         <span
           className={[
             tagClassName,
-            isPlanning ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700',
+            isMeta ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700',
           ].join(' ')}
         >
           {taskTypeLabels[task.type]}
         </span>
+        {task.isPrivate && (
+          <span className={`${tagClassName} bg-amber-100 text-amber-900`}>Private</span>
+        )}
         {task.repeatEveryDays !== null && (
           <span className={`${tagClassName} bg-sky-100 text-sky-800`}>
             {repeatLabel(task.repeatEveryDays)}

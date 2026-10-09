@@ -19,7 +19,7 @@ export default defineConfig({
       manifest: {
         name: 'HomeFlow',
         short_name: 'HomeFlow',
-        description: 'Share household tasks fairly — and make planning work visible.',
+        description: 'Share household tasks fairly — and make meta work visible.',
         theme_color: '#312e81',
         background_color: '#f8fafc',
         display: 'standalone',

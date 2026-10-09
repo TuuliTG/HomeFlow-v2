@@ -16,11 +16,12 @@ const taskRowsSchema = z.array(
     title: z.string(),
     description: z.string().nullable(),
     type: z.enum(taskTypes),
-    points: z.number(),
+    points: z.number().nullable(),
     created_by: z.string().nullable(),
     repeat_every_days: z.number().nullable(),
     due_on: z.string().nullable(),
     picked_up_by: z.string().nullable(),
+    is_private: z.boolean(),
   }),
 );
 const completedTaskRowsSchema = z.array(
@@ -28,7 +29,7 @@ const completedTaskRowsSchema = z.array(
     id: z.string(),
     title: z.string(),
     type: z.enum(taskTypes),
-    points: z.number(),
+    points: z.number().nullable(),
     completed_at: z.string(),
   }),
 );
@@ -54,13 +55,14 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
 
 /**
  * The household's open tasks (not yet done): soonest due first, then those without a due date, each
- * newest first. Row Level Security limits them to the user's household.
+ * newest first. Row Level Security limits them to the user's household, and private tasks to whoever
+ * added them.
  */
 export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -73,15 +75,18 @@ export async function fetchTasks(): Promise<Task[]> {
     ...new Set(userIds.filter((id): id is string => id !== null)),
   ]);
   const nameOf = (userId: string | null) => (userId ? (names.get(userId) ?? null) : null);
-  return rows.map(({ created_by, repeat_every_days, due_on, picked_up_by, ...task }) => ({
-    ...task,
-    repeatEveryDays: repeat_every_days,
-    dueOn: due_on,
-    createdBy: created_by,
-    creatorName: nameOf(created_by),
-    pickedUpBy: picked_up_by,
-    pickerName: nameOf(picked_up_by),
-  }));
+  return rows.map(
+    ({ created_by, repeat_every_days, due_on, picked_up_by, is_private, ...task }) => ({
+      ...task,
+      isPrivate: is_private,
+      repeatEveryDays: repeat_every_days,
+      dueOn: due_on,
+      createdBy: created_by,
+      creatorName: nameOf(created_by),
+      pickedUpBy: picked_up_by,
+      pickerName: nameOf(picked_up_by),
+    }),
+  );
 }
 
 /** The tasks `userId` has marked done most recently, newest first. */
@@ -103,7 +108,7 @@ const householdCompletedRowsSchema = z.array(
     id: z.string(),
     title: z.string(),
     type: z.enum(taskTypes),
-    points: z.number(),
+    points: z.number().nullable(),
     completed_at: z.string(),
     completed_by: z.string().nullable(),
   }),
@@ -131,21 +136,27 @@ export async function fetchHouseholdCompletedTasks(): Promise<HouseholdCompleted
 
 const pointsRowsSchema = z.array(z.object({ points: z.number() }));
 
-/** All the points `userId` has earned by marking tasks done. */
+/** All the points `userId` has earned by marking shared tasks done; private tasks have none. */
 export async function fetchTotalPoints(userId: string): Promise<number> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select('points')
-    .eq('completed_by', userId);
+    .eq('completed_by', userId)
+    .eq('is_private', false);
   if (error) throw error;
   return pointsRowsSchema.parse(data).reduce((total, row) => total + row.points, 0);
 }
 
 /** Adds a task to the user's household; the database fills in the household and the creator. */
-export async function addTask({ repeatEveryDays, dueOn, ...task }: NewTask): Promise<void> {
+export async function addTask({
+  repeatEveryDays,
+  dueOn,
+  isPrivate,
+  ...task
+}: NewTask): Promise<void> {
   const { error } = await getSupabaseClient()
     .from('tasks')
-    .insert({ ...task, repeat_every_days: repeatEveryDays, due_on: dueOn });
+    .insert({ ...task, repeat_every_days: repeatEveryDays, due_on: dueOn, is_private: isPrivate });
   if (error) throw error;
 }
 
@@ -173,7 +184,10 @@ export async function putBackTask(taskId: string): Promise<void> {
   if (error) throw error;
 }
 
-/** Replaces an open task's details. Any member of the household can edit it. */
+/**
+ * Replaces an open task's details. Any member of the household can edit a shared task; whether it is
+ * private stays as it was when it was added.
+ */
 export async function updateTask(
   taskId: string,
   { title, description, type, points, dueOn, repeatEveryDays }: NewTask,

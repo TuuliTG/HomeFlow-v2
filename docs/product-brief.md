@@ -19,15 +19,16 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 ## Screens (mid-fi prototype, mobile, bottom tab bar: Me · Tasks · Rewards · Statistics)
 
 - **Available tasks** — "Fairness this week" stacked bar per member; filter; task cards with points, tags
-  (frequency, type physical/planning), bonus points (e.g. "new for you", fairness boost), "last done by …";
+  (frequency, type physical/meta), bonus points (e.g. "new for you", fairness boost), "last done by …";
   **Pick up task** button; **+** to create a task.
 - **Create / edit task** — reuse a previous task or type a new one; points, type, assignees (adults default, children
-  opt-in). Creating a task awards points with positive feedback.
-- **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); planning tasks highlighted in purple.
+  opt-in); a **private** check mark keeps a task to yourself, without points. Creating a task awards points with
+  positive feedback.
+- **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
 - **Rewards** — points per member, personal rewards/collectibles, shared family goal progress. Must make clear how
   points are earned and how shared goals accumulate.
 - **Statistics** — weekly/period selector, fairness score (0–100, e.g. "Balanced"), leaderboard showing _done_ vs
-  _created_ counts per member, contribution over time.
+  _created_ counts per member, contribution over time. Only shared tasks count; private tasks never do.
 
 ## Design principles from evaluation
 

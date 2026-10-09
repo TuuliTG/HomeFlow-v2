@@ -18,7 +18,7 @@ as their PRs merge.
 
 ## Backlog (not in this iteration)
 
-- Points for planning, a "Fairness this week" bar, and the Statistics screen.
+- Points for meta work, a "Fairness this week" bar, and the Statistics screen (shared tasks only, never private ones).
 - Shared family goals and personal rewards (Rewards screen).
 - Fewer notifications: batch several new tasks into one, per-user preferences.
 - Reuse a previous task when creating one; "last done by …" on cards.

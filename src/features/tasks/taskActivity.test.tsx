@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TASK_ACTIVITY_DURATION_MS } from '@/features/tasks/useTaskActivity';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
-import { fakeTasksBackend } from '@/test/fakeTasksApi';
+import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
@@ -31,7 +31,7 @@ describe('live task updates', () => {
     await screen.findByText('No tasks yet. Create the first one!');
 
     act(() => {
-      fakeTasksBackend.addTaskAs(ben.id, { title: 'Book dentist', type: 'planning', points: 5 });
+      fakeTasksBackend.addTaskAs(ben.id, { title: 'Book dentist', type: 'meta', points: 5 });
     });
 
     const task = await screen.findByRole('listitem', { name: 'Book dentist' });
