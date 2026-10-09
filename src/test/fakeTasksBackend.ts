@@ -24,7 +24,10 @@ type TaskDetails = Pick<NewTask, 'title' | 'type' | 'points'> & Partial<NewTask>
 
 /** Oldest first; the api returns them soonest due first, then newest first (`byDueDate`). */
 export const tasks: StoredTask[] = [];
+/** Reminders by user id, then task id (ISO timestamps). */
+export const reminders = new Map<string, Map<string, string>>();
 let requestsFail = false;
+let reminderRequestsFail = false;
 let completions = 0;
 export const listeners = new Set<Parameters<typeof tasksApi.subscribeToTaskChanges>[0]>();
 
@@ -78,6 +81,16 @@ export function openTaskOf(userId: string, taskId: string): StoredTask {
   return task;
 }
 
+/** Whether the open task is `userId`'s to do, so they can set a reminder for it (`set_task_reminder()`). */
+function isToDoBy(task: StoredTask, userId: string): boolean {
+  return (task.isPrivate && task.createdBy === userId) || task.pickedUpBy === userId;
+}
+
+/** Whether loading reminders fails (`fakeTasksBackend.failReminderRequests()`). */
+export function reminderRequestsFailing(): boolean {
+  return requestsFail || reminderRequestsFail;
+}
+
 /** Whether requests fail, like a network error (`fakeTasksBackend.failRequests()`). */
 export function requestsFailing(): boolean {
   return requestsFail;
@@ -86,7 +99,9 @@ export function requestsFailing(): boolean {
 export const fakeTasksBackend = {
   reset() {
     tasks.length = 0;
+    reminders.clear();
     requestsFail = false;
+    reminderRequestsFail = false;
     completions = 0;
     listeners.clear();
   },
@@ -160,6 +175,33 @@ export const fakeTasksBackend = {
       task.createdAt = earlier(task.createdAt);
       if (task.completed) task.completed.at = earlier(task.completed.at);
     }
+  },
+  /** Sets `userId`'s reminder for an open task that is theirs to do, like `set_task_reminder()`. */
+  setReminderAs(userId: string, taskId: string, remindAt: string) {
+    const task = openTaskOf(userId, taskId);
+    if (!isToDoBy(task, userId)) throw new Error(`${taskId} is not ${userId}'s to do`);
+    if (new Date(remindAt).getTime() < Date.now())
+      throw new Error('A reminder must be in the future');
+    reminders.set(userId, new Map(reminders.get(userId)).set(taskId, remindAt));
+  },
+  clearReminderAs(userId: string, taskId: string) {
+    reminders.get(userId)?.delete(taskId);
+  },
+  /** `userId`'s reminder for the task (ISO timestamp), or null. */
+  reminderOf(userId: string, taskId: string): string | null {
+    return reminders.get(userId)?.get(taskId) ?? null;
+  },
+  /** Moves every reminder `ms` into the past, e.g. beyond its time. */
+  ageReminders(ms: number) {
+    for (const byTask of reminders.values()) {
+      for (const [taskId, remindAt] of byTask) {
+        byTask.set(taskId, new Date(new Date(remindAt).getTime() - ms).toISOString());
+      }
+    }
+  },
+  /** Makes loading reminders fail, while tasks still load. */
+  failReminderRequests() {
+    reminderRequestsFail = true;
   },
   /** Makes every request fail, like a network error. */
   failRequests() {

@@ -57,6 +57,7 @@ export default defineConfig({
         'src/main.tsx',
         'src/sw.ts',
         'supabase/functions/**/index.ts',
+        'supabase/functions/_shared/deno/**',
         'src/**/*.d.ts',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },

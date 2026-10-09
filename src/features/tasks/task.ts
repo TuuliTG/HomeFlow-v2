@@ -83,6 +83,14 @@ export interface Task extends NewTask {
   pickerName: string | null;
 }
 
+/**
+ * Whether the open task is the user's to do: one they picked up, or a private task (only its creator
+ * sees those). They list it in My tasks and can set a reminder for it.
+ */
+export function isToDoBy(task: Task, userId: string): boolean {
+  return task.isPrivate || task.pickedUpBy === userId;
+}
+
 /** A task the household has added before, to add again with the same details (`task_suggestions()`). */
 export interface TaskSuggestion extends Omit<NewTask, 'dueOn'> {
   /** How many times members have added it; repeats a task adds itself don't count. */
@@ -107,4 +115,11 @@ export interface HouseholdCompletedTask extends CompletedTask {
   completedBy: string | null;
   /** Their display name, if they have chosen one. */
   completerName: string | null;
+}
+
+/** When the user wants to be reminded of a task that is theirs to do (`set_task_reminder()`). */
+export interface TaskReminder {
+  taskId: string;
+  /** ISO timestamp. */
+  remindAt: string;
 }

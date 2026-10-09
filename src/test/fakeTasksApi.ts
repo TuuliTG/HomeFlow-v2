@@ -151,7 +151,7 @@ export const fetchTotalPoints: typeof tasksApi.fetchTotalPoints = (userId) => {
 };
 
 /** Runs `change` as the logged-in user; rejects, like the database, if it throws. */
-function asCurrentUser(change: (userId: string) => void): Promise<void> {
+export function asCurrentUser(change: (userId: string) => void): Promise<void> {
   const user = fakeAuthBackend.currentUser();
   if (requestsFailing() || !user) return Promise.reject(new Error('Network error'));
   return Promise.resolve().then(() => {
@@ -169,6 +169,7 @@ export const putBackTask: typeof tasksApi.putBackTask = (taskId) =>
     const task = openTaskOf(userId, taskId);
     if (task.pickedUpBy !== userId) throw new Error('You have not picked up this task');
     task.pickedUpBy = null;
+    fakeTasksBackend.clearReminderAs(userId, taskId);
     deliver(task, { kind: 'changed' });
   });
 

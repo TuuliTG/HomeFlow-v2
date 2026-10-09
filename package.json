@@ -28,7 +28,7 @@
     "db:reset": "supabase db reset",
     "db:migration": "supabase migration new",
     "db:test": "supabase test db",
-    "functions:check": "npx --yes deno@2.9.6 check --config supabase/functions/notify-household/deno.json supabase/functions/notify-household/index.ts"
+    "functions:check": "npx --yes deno@2.9.6 check --config supabase/functions/notify-household/deno.json supabase/functions/notify-household/index.ts && npx --yes deno@2.9.6 check --config supabase/functions/send-reminders/deno.json supabase/functions/send-reminders/index.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2",

@@ -4,7 +4,7 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { formatShortDate } from '@/features/tasks/dueDate';
 import { TaskCard } from '@/features/tasks/TaskCard';
-import { type CompletedTask, UNDO_WINDOW_MS } from '@/features/tasks/task';
+import { type CompletedTask, isToDoBy, UNDO_WINDOW_MS } from '@/features/tasks/task';
 import {
   useCompletedTasks,
   useTasks,
@@ -81,8 +81,7 @@ function ToDoList() {
       </p>
     );
   }
-  // Only their creator sees private tasks, so those are always the user's own to do.
-  const mine = tasks.data.filter((task) => task.pickedUpBy === user.id || task.isPrivate);
+  const mine = tasks.data.filter((task) => isToDoBy(task, user.id));
   if (mine.length === 0) {
     return <p className={emptyClassName}>Nothing picked up yet. Pick a task on the board.</p>;
   }

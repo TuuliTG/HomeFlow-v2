@@ -4,7 +4,8 @@ import { Link } from 'react-router';
 import { paths } from '@/app/paths';
 
 import { describeDueDate, today } from '@/features/tasks/dueDate';
-import { repeatLabel, type Task, taskTypeLabels } from '@/features/tasks/task';
+import { isToDoBy, repeatLabel, type Task, taskTypeLabels } from '@/features/tasks/task';
+import { TaskReminder } from '@/features/tasks/TaskReminder';
 import { useCompleteTask, usePickUpTask, usePutBackTask } from '@/features/tasks/useTasks';
 
 interface TaskCardProps {
@@ -36,6 +37,7 @@ export function TaskCard({ task, currentUserId }: TaskCardProps) {
           </span>
         )}
       </div>
+      {isToDoBy(task, currentUserId) && <TaskReminder task={task} currentUserId={currentUserId} />}
       <TaskActions task={task} currentUserId={currentUserId} />
     </li>
   );

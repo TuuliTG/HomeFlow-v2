@@ -2,13 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { parsePushPayload } from '@/lib/pushNotification';
 
-import {
-  type DeviceSubscription,
-  isAuthorized,
-  type NotifyDependencies,
-  notifyHousehold,
-  parseAddedTaskId,
-} from './notify';
+import type { DeviceSubscription } from '../_shared/push';
+import { type NotifyDependencies, notifyHousehold, parseAddedTaskId } from './notify';
 
 const task = {
   householdId: 'h1',
@@ -119,43 +114,6 @@ describe('notify household', () => {
       expect.objectContaining({ body: 'Someone added Book dentist' }),
     );
   });
-
-  it('forgets devices the push service reports as gone', async () => {
-    const deps = fakeDeps({
-      send: vi.fn((subscription: DeviceSubscription) =>
-        Promise.resolve(subscription.endpoint.endsWith('phone') ? 410 : 404),
-      ),
-    });
-
-    await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 0, removed: 2, failed: 0 });
-    expect(deps.forget).toHaveBeenCalledWith('https://push.example.com/ben-phone');
-    expect(deps.forget).toHaveBeenCalledWith('https://push.example.com/ben-tablet');
-  });
-
-  it('counts a gone device it could not forget as failed, and still reports the rest', async () => {
-    const deps = fakeDeps({
-      send: vi.fn((subscription: DeviceSubscription) =>
-        Promise.resolve(subscription.endpoint.endsWith('phone') ? 410 : 201),
-      ),
-      forget: () => Promise.reject(new Error('database unavailable')),
-    });
-
-    await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 1, removed: 0, failed: 1 });
-  });
-
-  it('keeps going when one device fails for another reason', async () => {
-    const deps = fakeDeps({
-      send: vi
-        .fn<NotifyDependencies['send']>()
-        .mockRejectedValueOnce(new Error('timeout'))
-        .mockResolvedValueOnce(500)
-        .mockResolvedValue(201),
-      subscriptionsOf: () => Promise.resolve([device('ben'), device('carol'), device('dave')]),
-    });
-
-    await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 1, removed: 0, failed: 2 });
-    expect(deps.forget).not.toHaveBeenCalled();
-  });
 });
 
 describe('webhook payload', () => {
@@ -173,21 +131,5 @@ describe('webhook payload', () => {
     ['a record without an id', { type: 'INSERT', table: 'tasks', record: { title: 'x' } }],
   ])('ignores %s', (_case, payload) => {
     expect(parseAddedTaskId(payload)).toBeNull();
-  });
-});
-
-describe('webhook secret', () => {
-  it('accepts the configured secret', () => {
-    expect(isAuthorized('s3cret-value', 's3cret-value')).toBe(true);
-  });
-
-  it.each([
-    ['a wrong secret', 's3cret-valuX', 's3cret-value'],
-    ['a shorter secret', 's3cret', 's3cret-value'],
-    ['no header', null, 's3cret-value'],
-    ['no configured secret', 's3cret-value', undefined],
-    ['an empty configured secret', '', ''],
-  ])('rejects %s', (_case, provided, secret) => {
-    expect(isAuthorized(provided, secret)).toBe(false);
   });
 });
