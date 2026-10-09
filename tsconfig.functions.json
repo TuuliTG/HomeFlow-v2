@@ -21,7 +21,8 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  // The Deno entry points (index.ts) import npm:/jsr: specifiers; `deno check` covers them (README).
+  // The Deno entry points (index.ts) and Deno-only modules import npm:/jsr: specifiers; `deno check`
+  // covers them (README).
   "include": ["supabase/functions/**/*.ts"],
-  "exclude": ["supabase/functions/**/index.ts"]
+  "exclude": ["supabase/functions/**/index.ts", "supabase/functions/_shared/deno/**"]
 }
