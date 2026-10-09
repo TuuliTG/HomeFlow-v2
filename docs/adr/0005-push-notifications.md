@@ -19,6 +19,9 @@ for apps added to the home screen (iOS 16.4+).
   occurrences of repeating tasks, and forgets subscriptions the push service reports gone (404/410).
 - The **`send-reminders` Edge Function** sends task reminders (ADR 0004). **Supabase Cron** calls it every minute
   with the same shared secret, so reminders arrive within about a minute of their time.
+- The functions use the **service role**, which has only the table privileges migrations grant it
+  (`auto_expose_new_tables = false`, like newer cloud projects): reading tasks, members, names and devices, and
+  deleting gone devices. Reminders are taken only through `take_due_reminders()`.
 - Each function's logic is in a plain module (`notify.ts`, `remind.ts`), and sending to devices in
   `_shared/push.ts`, all unit-tested; the Deno-only parts (`index.ts`, `_shared/deno/`) are checked with
   `deno check`.
