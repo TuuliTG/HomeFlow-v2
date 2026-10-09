@@ -7,6 +7,7 @@ import {
   fetchCompletedTasks,
   fetchHouseholdCompletedTasks,
   fetchTasks,
+  fetchTaskSuggestions,
   fetchTotalPoints,
   pickUpTask,
   putBackTask,
@@ -27,6 +28,14 @@ export function useCompletedTasks(userId: string) {
   return useQuery({
     queryKey: [...tasksKey(userId), 'completed'],
     queryFn: () => fetchCompletedTasks(userId),
+  });
+}
+
+/** Tasks the household has added before. Under `tasksKey`, so it refreshes with the board. */
+export function useTaskSuggestions(userId: string) {
+  return useQuery({
+    queryKey: [...tasksKey(userId), 'suggestions'],
+    queryFn: fetchTaskSuggestions,
   });
 }
 

@@ -315,6 +315,41 @@ export async function fakeSupabase(page: Page) {
     );
   }
 
+  /**
+   * Like task_suggestions(): one per title (ignoring case) with its newest details, most often added
+   * first. Simplified: repeats a task added itself count too.
+   */
+  async function taskSuggestions(route: Route) {
+    const byTitle = new Map<string, TaskRow[]>();
+    const visible = tasks.filter(
+      (task) =>
+        task.household_id === ownHousehold?.id && (!task.is_private || task.created_by === user.id),
+    );
+    for (const task of visible) {
+      const key = task.title.toLowerCase();
+      byTitle.set(key, [...(byTitle.get(key) ?? []), task]);
+    }
+    const suggestions = [...byTitle.values()].map((occurrences) => {
+      // `tasks` is newest first.
+      const [newest] = occurrences as [TaskRow, ...TaskRow[]];
+      return {
+        title: newest.title,
+        description: newest.description,
+        type: newest.type,
+        points: newest.points,
+        repeat_every_days: newest.repeat_every_days,
+        is_private: newest.is_private,
+        times_added: occurrences.length,
+        is_open: occurrences.some((task) => task.completed_at === null),
+      };
+    });
+    return reply(
+      route,
+      200,
+      suggestions.sort((a, b) => b.times_added - a.times_added),
+    );
+  }
+
   /** Accepts any email and password, for both creating an account and logging in. */
   function logInWith(route: Route) {
     return reply(route, 200, {
@@ -341,6 +376,7 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/update_task': updateTask,
     '/rest/v1/rpc/delete_task': deleteTask,
     '/rest/v1/rpc/household_statistics': householdStatistics,
+    '/rest/v1/rpc/task_suggestions': taskSuggestions,
     '/rest/v1/tasks': tasksEndpoint,
   };
 
