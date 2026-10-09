@@ -28,8 +28,8 @@ history grows past what one API request returns.
 ## Consequences
 
 - Each ranking and its score use the same numbers, so what the family sees explains the score.
-- A new metric (e.g. points for creating tasks, once they exist) is another `Metric` and column of
-  `household_statistics()`.
+- Creating a task earns no points, by design; _Tasks created_ stays a count. A new metric would be another
+  `Metric` and column of `household_statistics()`.
 
 ## Alternatives considered
 
