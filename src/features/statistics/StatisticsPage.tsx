@@ -59,7 +59,7 @@ function PeriodPicker({
         {periods.map((option) => (
           <label
             key={option}
-            className="has-checked:text-brand-900 has-focus-visible:outline-brand-600 cursor-pointer rounded-lg px-2 py-1.5 text-center text-slate-600 has-checked:bg-white has-checked:shadow-sm has-focus-visible:outline-2"
+            className="has-checked:text-brand-900 has-focus-visible:outline-brand-600 flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-2 text-center text-slate-600 has-checked:bg-white has-checked:shadow-sm has-focus-visible:outline-2"
           >
             <input
               type="radio"
@@ -191,5 +191,5 @@ function Leaderboard({
 
 function memberName({ userId, displayName }: MemberContribution, currentUserId: string): string {
   if (userId === currentUserId) return 'You';
-  return displayName ?? 'New member';
+  return displayName ?? 'New member (no name yet)';
 }

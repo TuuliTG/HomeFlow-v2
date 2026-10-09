@@ -25,7 +25,7 @@ export function periodStart(period: Period, now: Date): Date | null {
 
 export interface MemberContribution {
   userId: string;
-  /** Null until the member has chosen a display name. */
+  /** Null while the member has no profile, i.e. hasn't chosen a display name yet. */
   displayName: string | null;
   /** Shared tasks they marked done in the period. */
   done: number;

@@ -301,6 +301,7 @@ export async function fakeSupabase(page: Page) {
       200,
       userIds.map((id) => ({
         user_id: id,
+        display_name: profiles.get(id) ?? null,
         done: shared.filter((task) => task.completed_by === id && inPeriod(task.completed_at))
           .length,
         created: shared.filter((task) => task.created_by === id && inPeriod(task.created_at))
