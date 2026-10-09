@@ -100,6 +100,16 @@ function failureMessage(failed: Record<keyof typeof failureMessages, boolean>): 
   return action && failureMessages[action];
 }
 
+/**
+ * Whether the user can pick the task up or put it back. A private task is already the user's own, so
+ * neither applies.
+ */
+function pickUpAction(task: Task, currentUserId: string): 'pickUp' | 'putBack' | null {
+  if (task.isPrivate) return null;
+  if (task.pickedUpBy === currentUserId) return 'putBack';
+  return task.pickedUpBy === null ? 'pickUp' : null;
+}
+
 /** Pick up (or put back, if it's yours) and Mark done, with a message when one fails. */
 function TaskActions({ task, currentUserId }: TaskCardProps) {
   const completeTask = useCompleteTask(currentUserId);
@@ -107,6 +117,7 @@ function TaskActions({ task, currentUserId }: TaskCardProps) {
   const putBackTask = usePutBackTask(currentUserId);
   const [isConfirming, setIsConfirming] = useState(false);
   const isSomeoneElses = task.pickedUpBy !== null && task.pickedUpBy !== currentUserId;
+  const pickUp = pickUpAction(task, currentUserId);
   const isBusy = completeTask.isPending || pickUpTask.isPending || putBackTask.isPending;
   const failure = failureMessage({
     complete: completeTask.isError,
@@ -157,7 +168,7 @@ function TaskActions({ task, currentUserId }: TaskCardProps) {
           >
             Edit
           </Link>
-          {task.pickedUpBy === currentUserId &&
+          {pickUp === 'putBack' &&
             button(
               'Put back',
               () => {
@@ -165,7 +176,7 @@ function TaskActions({ task, currentUserId }: TaskCardProps) {
               },
               'border-slate-300 text-slate-700 hover:bg-slate-100',
             )}
-          {task.pickedUpBy === null &&
+          {pickUp === 'pickUp' &&
             button(
               'Pick up',
               () => {

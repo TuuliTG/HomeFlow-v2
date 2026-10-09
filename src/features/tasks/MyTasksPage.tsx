@@ -22,7 +22,7 @@ export function MyTasksPage() {
       <PageHeader
         eyebrow="Me"
         title="My tasks"
-        description="Things you've picked up and completed."
+        description="Things you've picked up, your private tasks and what you've completed."
       />
       <div className="flex flex-col gap-8">
         <PointsTotal />
@@ -81,7 +81,8 @@ function ToDoList() {
       </p>
     );
   }
-  const mine = tasks.data.filter((task) => task.pickedUpBy === user.id);
+  // Only their creator sees private tasks, so those are always the user's own to do.
+  const mine = tasks.data.filter((task) => task.pickedUpBy === user.id || task.isPrivate);
   if (mine.length === 0) {
     return <p className={emptyClassName}>Nothing picked up yet. Pick a task on the board.</p>;
   }
