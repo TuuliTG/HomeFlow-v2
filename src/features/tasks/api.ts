@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
-import { type CompletedTask, type NewTask, type Task, taskTypes } from '@/features/tasks/task';
+import {
+  type CompletedTask,
+  HOUSEHOLD_COMPLETED_LIMIT,
+  type HouseholdCompletedTask,
+  type NewTask,
+  type Task,
+  taskTypes,
+} from '@/features/tasks/task';
 import { getSupabaseClient } from '@/lib/supabase';
 
 const taskRowsSchema = z.array(
@@ -89,6 +96,37 @@ export async function fetchCompletedTasks(userId: string): Promise<CompletedTask
   return completedTaskRowsSchema
     .parse(data)
     .map(({ completed_at, ...task }) => ({ ...task, completedAt: completed_at }));
+}
+
+const householdCompletedRowsSchema = z.array(
+  z.object({
+    id: z.string(),
+    title: z.string(),
+    type: z.enum(taskTypes),
+    points: z.number(),
+    completed_at: z.string(),
+    completed_by: z.string().nullable(),
+  }),
+);
+
+/** The household's most recently done tasks, newest first, with who did them. */
+export async function fetchHouseholdCompletedTasks(): Promise<HouseholdCompletedTask[]> {
+  const { data, error } = await getSupabaseClient()
+    .from('tasks')
+    .select('id, title, type, points, completed_at, completed_by')
+    .not('completed_at', 'is', null)
+    .order('completed_at', { ascending: false })
+    .limit(HOUSEHOLD_COMPLETED_LIMIT);
+  if (error) throw error;
+  const rows = householdCompletedRowsSchema.parse(data);
+  const completerIds = rows.flatMap((row) => (row.completed_by ? [row.completed_by] : []));
+  const names = await fetchDisplayNames([...new Set(completerIds)]);
+  return rows.map(({ completed_at, completed_by, ...task }) => ({
+    ...task,
+    completedAt: completed_at,
+    completedBy: completed_by,
+    completerName: completed_by ? (names.get(completed_by) ?? null) : null,
+  }));
 }
 
 const pointsRowsSchema = z.array(z.object({ points: z.number() }));

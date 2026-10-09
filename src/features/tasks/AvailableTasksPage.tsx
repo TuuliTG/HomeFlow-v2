@@ -1,13 +1,24 @@
-import { Link } from 'react-router';
+import { useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { TaskCard } from '@/features/tasks/TaskCard';
 import { useTasks } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 
+const SHOW_COMPLETED_PARAM = 'completed';
+
 export function AvailableTasksPage() {
+  // Also kept in the address, so the choice survives a reload. Local state keeps the switch from
+  // flickering while the router updates the address.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showCompleted, setShowCompleted] = useState(
+    () => searchParams.get(SHOW_COMPLETED_PARAM) === '1',
+  );
+
   return (
     <>
       <div className="flex items-start justify-between gap-4">
@@ -23,7 +34,23 @@ export function AvailableTasksPage() {
           <span aria-hidden="true">+ </span>New task
         </Link>
       </div>
+      <label className="flex w-fit items-center gap-2 text-sm font-medium text-slate-700">
+        <input
+          type="checkbox"
+          role="switch"
+          checked={showCompleted}
+          onChange={(event) => {
+            setShowCompleted(event.target.checked);
+            setSearchParams(event.target.checked ? { [SHOW_COMPLETED_PARAM]: '1' } : {}, {
+              replace: true,
+            });
+          }}
+          className="accent-brand-600 size-4"
+        />
+        Show completed
+      </label>
       <TaskList />
+      {showCompleted && <HouseholdCompletedTasks />}
     </>
   );
 }
