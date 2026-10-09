@@ -13,6 +13,8 @@ export interface StoredTask extends NewTask {
   pickedUpBy: string | null;
   /** The task this one is the next occurrence of. */
   previousTaskId: string | null;
+  /** When it was added (ISO timestamp). */
+  createdAt: string;
   /** Who marked it done and when (ISO timestamp); null while open. */
   completed: { by: string; at: string } | null;
 }
@@ -104,6 +106,7 @@ export const fakeTasksBackend = {
         createdBy: userId,
         pickedUpBy: null,
         previousTaskId: null,
+        createdAt: new Date().toISOString(),
         completed: null,
       },
       false,
@@ -135,6 +138,7 @@ export const fakeTasksBackend = {
         dueOn: addDays(completedOn, task.repeatEveryDays),
         pickedUpBy: null,
         previousTaskId: task.id,
+        createdAt: new Date().toISOString(),
         completed: null,
       },
       true,
@@ -146,6 +150,15 @@ export const fakeTasksBackend = {
       if (task.completed) {
         task.completed.at = new Date(new Date(task.completed.at).getTime() - ms).toISOString();
       }
+    }
+  },
+  /** Moves every task, when it was added and done, `ms` into the past, e.g. into an earlier month. */
+  ageTasks(ms: number) {
+    const earlier = (timestamp: string) =>
+      new Date(new Date(timestamp).getTime() - ms).toISOString();
+    for (const task of tasks) {
+      task.createdAt = earlier(task.createdAt);
+      if (task.completed) task.completed.at = earlier(task.completed.at);
     }
   },
   /** Makes every request fail, like a network error. */

@@ -50,6 +50,9 @@ export const fakeHouseholdBackend = {
     return household;
   },
   householdIdOf: (userId: string) => memberships.get(userId) ?? null,
+  /** The household's members' user ids, in the order they joined. */
+  memberIdsOf: (householdId: string) =>
+    [...memberships].flatMap(([userId, memberOf]) => (memberOf === householdId ? [userId] : [])),
   /** Makes creating and joining households fail, like a network error. */
   failRequests() {
     requestsFail = true;

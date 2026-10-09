@@ -10,7 +10,8 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 ## Requirements
 
 1. **Visibility & fairness** — shared overview of what exists, who did it, and who planned it.
-2. **Cognitive + physical tasks** — creating/organising tasks is work and earns points.
+2. **Cognitive + physical tasks** — creating/organising tasks is work and is credited: doing a task earns its
+   points, and the tasks each member creates are counted (creating earns no points).
 3. **Low effort, non-intrusive** — quick interactions; must not become another chore for the organiser.
 4. **Positive motivation** — points, progress, shared family goals; no punishment.
 5. **Child-friendly mode** — minimal text, icons, colours, stars/progress (later iteration).
@@ -22,13 +23,13 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
   (frequency, type physical/meta), bonus points (e.g. "new for you", fairness boost), "last done by …";
   **Pick up task** button; **+** to create a task.
 - **Create / edit task** — reuse a previous task or type a new one; points, type, assignees (adults default, children
-  opt-in); a **private** check mark keeps a task to yourself, without points. Creating a task awards points with
-  positive feedback.
+  opt-in); a **private** check mark keeps a task to yourself, without points. Creating a task gets positive
+  feedback and counts towards _tasks created_ (no points).
 - **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
 - **Rewards** — points per member, personal rewards/collectibles, shared family goal progress. Must make clear how
   points are earned and how shared goals accumulate.
-- **Statistics** — weekly/period selector, fairness score (0–100, e.g. "Balanced"), leaderboard showing _done_ vs
-  _created_ counts per member, contribution over time. Only shared tasks count; private tasks never do.
+- **Statistics** — period selector; _points earned_ (from doing tasks) and _tasks created_ per member, each with its
+  own fairness score (0–100, e.g. "Balanced"); contribution over time. Only shared tasks count; private tasks never do.
 
 ## Design principles from evaluation
 
