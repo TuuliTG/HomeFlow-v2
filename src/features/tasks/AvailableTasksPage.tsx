@@ -5,19 +5,17 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
+import type { Task } from '@/features/tasks/task';
 import { TaskCard } from '@/features/tasks/TaskCard';
 import { useTasks } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 
 const SHOW_COMPLETED_PARAM = 'completed';
+const ONLY_UNPICKED_PARAM = 'unpicked';
 
 export function AvailableTasksPage() {
-  // Also kept in the address, so the choice survives a reload. Local state keeps the switch from
-  // flickering while the router updates the address.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [showCompleted, setShowCompleted] = useState(
-    () => searchParams.get(SHOW_COMPLETED_PARAM) === '1',
-  );
+  const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM);
+  const [onlyUnpicked, setOnlyUnpicked] = useSwitchParam(ONLY_UNPICKED_PARAM);
 
   return (
     <>
@@ -34,28 +32,68 @@ export function AvailableTasksPage() {
           <span aria-hidden="true">+ </span>New task
         </Link>
       </div>
-      <label className="flex w-fit items-center gap-2 text-sm font-medium text-slate-700">
-        <input
-          type="checkbox"
-          role="switch"
-          checked={showCompleted}
-          onChange={(event) => {
-            setShowCompleted(event.target.checked);
-            setSearchParams(event.target.checked ? { [SHOW_COMPLETED_PARAM]: '1' } : {}, {
-              replace: true,
-            });
-          }}
-          className="accent-brand-600 size-4"
-        />
-        Show completed
-      </label>
-      <TaskList />
+      <div className="flex flex-wrap gap-x-6 gap-y-2">
+        <Switch label="Only tasks to pick up" checked={onlyUnpicked} onChange={setOnlyUnpicked} />
+        <Switch label="Show completed" checked={showCompleted} onChange={setShowCompleted} />
+      </div>
+      <TaskList onlyUnpicked={onlyUnpicked} />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
   );
 }
 
-function TaskList() {
+/**
+ * An on/off choice kept in the address as `?<name>=1`, so it survives a reload. Local state keeps
+ * the switch from flickering while the router updates the address.
+ */
+function useSwitchParam(name: string): [boolean, (on: boolean) => void] {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isOn, setIsOn] = useState(() => searchParams.get(name) === '1');
+
+  function set(on: boolean) {
+    setIsOn(on);
+    setSearchParams(
+      (params) => {
+        if (on) params.set(name, '1');
+        else params.delete(name);
+        return params;
+      },
+      { replace: true },
+    );
+  }
+
+  return [isOn, set];
+}
+
+interface SwitchProps {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}
+
+function Switch({ label, checked, onChange }: SwitchProps) {
+  return (
+    <label className="flex w-fit items-center gap-2 text-sm font-medium text-slate-700">
+      <input
+        type="checkbox"
+        role="switch"
+        checked={checked}
+        onChange={(event) => {
+          onChange(event.target.checked);
+        }}
+        className="accent-brand-600 size-4"
+      />
+      {label}
+    </label>
+  );
+}
+
+/** Whether anyone could still pick the task up: not picked up yet, and not someone's private task. */
+function isUnpicked(task: Task): boolean {
+  return task.pickedUpBy === null && !task.isPrivate;
+}
+
+function TaskList({ onlyUnpicked }: { onlyUnpicked: boolean }) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
 
@@ -69,17 +107,25 @@ function TaskList() {
     );
   }
   if (tasks.data.length === 0) {
-    return (
-      <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-        No tasks yet. Create the first one!
-      </p>
-    );
+    return <EmptyMessage>No tasks yet. Create the first one!</EmptyMessage>;
+  }
+  const shown = onlyUnpicked ? tasks.data.filter(isUnpicked) : tasks.data;
+  if (shown.length === 0) {
+    return <EmptyMessage>Every task has been picked up.</EmptyMessage>;
   }
   return (
     <ul className="flex flex-col gap-3">
-      {tasks.data.map((task) => (
+      {shown.map((task) => (
         <TaskCard key={task.id} task={task} currentUserId={user.id} />
       ))}
     </ul>
+  );
+}
+
+function EmptyMessage({ children }: { children: string }) {
+  return (
+    <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+      {children}
+    </p>
   );
 }
