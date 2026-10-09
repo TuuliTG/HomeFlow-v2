@@ -14,6 +14,7 @@ import {
   undoCompleteTask,
   updateTask,
 } from '@/features/tasks/api';
+import { clearTaskReminder, fetchReminders, setTaskReminder } from '@/features/tasks/remindersApi';
 import type { NewTask } from '@/features/tasks/task';
 import { today } from '@/features/tasks/dueDate';
 
@@ -112,6 +113,28 @@ export function useUndoCompleteTask(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: undoCompleteTask,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+  });
+}
+
+/** The user's reminders. Under `tasksKey`, so putting a task back or marking it done refreshes them. */
+export function useReminders(userId: string) {
+  return useQuery({ queryKey: [...tasksKey(userId), 'reminders'], queryFn: fetchReminders });
+}
+
+export function useSetReminder(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, remindAt }: { taskId: string; remindAt: string }) =>
+      setTaskReminder(taskId, remindAt),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+  });
+}
+
+export function useClearReminder(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: clearTaskReminder,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
 }

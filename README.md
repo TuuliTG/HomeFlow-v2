@@ -8,8 +8,8 @@ See [docs/product-brief.md](docs/product-brief.md).
 one task board ([ADR 0003](docs/adr/0003-accounts-and-households.md)). Members pick up tasks (listed on their Me
 screen with what they've completed and their total points); tasks can have a due date, be private, be edited,
 deleted, marked done (and undone), repeat a set number of days after they were done and be added again from earlier
-tasks; the board updates live and members can get push notifications
-([ADR 0004](docs/adr/0004-tasks.md), [ADR 0005](docs/adr/0005-push-notifications.md)).
+tasks; the board updates live and members can get push notifications, including reminders they set for their
+own tasks ([ADR 0004](docs/adr/0004-tasks.md), [ADR 0005](docs/adr/0005-push-notifications.md)).
 Work in progress is tracked in [plan.md](plan.md).
 
 ## Tech stack
@@ -102,11 +102,14 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
    3. **Supabase → Edge Functions → Secrets:** add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
       (`mailto:` plus your email; push services use it to reach you) and `NOTIFY_WEBHOOK_SECRET` (a long random
       string, e.g. from `openssl rand -hex 32`).
-   4. Deploy the function (uses the project linked in step 1, or add `--project-ref <ref>`):
-      `npx supabase functions deploy notify-household`. Its settings come from `supabase/config.toml`; without the
-      secrets from step 3 it answers every call with an error.
+   4. Deploy the functions (uses the project linked in step 1, or add `--project-ref <ref>`):
+      `npx supabase functions deploy notify-household send-reminders`. Their settings come from
+      `supabase/config.toml`; without the secrets from step 3 they answer every call with an error.
    5. **Supabase → Database → Webhooks** (newer dashboards: **Integrations → Database Webhooks**; enable webhooks
       once if asked) **→ Create:** table `tasks`, event _Insert_, type _Supabase Edge Functions_, function
       `notify-household`, method POST, timeout at its maximum, and an HTTP header `x-webhook-secret` with the same
       secret. Don't add the service-key auth header: the function doesn't need it.
-   6. In the app: Me → _Turn on notifications_ on each device. On iPhone, add HomeFlow to the Home Screen first.
+   6. **Supabase → Integrations → Cron** (enable it once if asked) **→ Create job:** name `send-reminders`,
+      schedule every minute (`* * * * *`), type _Supabase Edge Function_, method POST, function `send-reminders`,
+      and an HTTP header `x-webhook-secret` with the same secret. This sends task reminders.
+   7. In the app: Me → _Turn on notifications_ on each device. On iPhone, add HomeFlow to the Home Screen first.

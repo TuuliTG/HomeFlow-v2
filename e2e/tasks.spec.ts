@@ -116,6 +116,38 @@ test('family member can pick up a task, find it on the Me screen and mark it don
   await expect(page.getByRole('region', { name: 'Points earned' })).toContainText('3');
 });
 
+test('family member can set a reminder for a task they picked up', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('Vacuum');
+  await page.getByRole('button', { name: 'Create task' }).click();
+  await page
+    .getByRole('listitem', { name: 'Vacuum' })
+    .getByRole('button', { name: 'Pick up: Vacuum' })
+    .click();
+
+  await page.getByRole('link', { name: 'Me' }).click();
+  const task = page
+    .getByRole('region', { name: 'To do' })
+    .getByRole('listitem', { name: 'Vacuum' });
+  await task.getByRole('button', { name: 'Remind me: Vacuum' }).click();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  await task
+    .getByLabel('Remind me at')
+    .fill(
+      `${String(tomorrow.getFullYear())}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}T09:00`,
+    );
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on the reminder form').toEqual([]);
+  await task.getByRole('button', { name: 'Save reminder' }).click();
+
+  await expect(task.getByText('Reminder tomorrow at 9:00')).toBeVisible();
+});
+
 test('family member can fix a task and then delete it', async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);

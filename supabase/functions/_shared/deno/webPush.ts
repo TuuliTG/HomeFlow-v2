@@ -9,7 +9,7 @@ import type { DeviceSubscription, PushDependencies, PushMessage } from '../push.
 const SEND_TIMEOUT_MS = 10_000;
 const ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
-export const env = (name: string) => Deno.env.get(name) ?? '';
+const env = (name: string) => Deno.env.get(name) ?? '';
 
 // The service role bypasses Row Level Security: the functions read every member's devices. It is
 // injected by Supabase and never leaves the server.

@@ -2,14 +2,14 @@
 
 The decisions that shape HomeFlow and why, grouped by topic. Read the ones your change touches before starting.
 
-| ADR                                     | Topic                                                            |
-| --------------------------------------- | ---------------------------------------------------------------- |
-| [0001](0001-how-we-work.md)             | Decision records, branches, PRs, CI and tests                    |
-| [0002](0002-stack-and-architecture.md)  | Tech stack, Supabase, folder structure, PWA, hosting             |
-| [0003](0003-accounts-and-households.md) | Login, personal data, households, invite codes, RLS scoping      |
-| [0004](0004-tasks.md)                   | Task data, marking done, repeating tasks, ordering, live updates |
-| [0005](0005-push-notifications.md)      | Web Push, device subscriptions, the notify-household function    |
-| [0006](0006-statistics-and-fairness.md) | Statistics periods, household_statistics(), the fairness score   |
+| ADR                                     | Topic                                                             |
+| --------------------------------------- | ----------------------------------------------------------------- |
+| [0001](0001-how-we-work.md)             | Decision records, branches, PRs, CI and tests                     |
+| [0002](0002-stack-and-architecture.md)  | Tech stack, Supabase, folder structure, PWA, hosting              |
+| [0003](0003-accounts-and-households.md) | Login, personal data, households, invite codes, RLS scoping       |
+| [0004](0004-tasks.md)                   | Task data, marking done, repeating tasks, reminders, live updates |
+| [0005](0005-push-notifications.md)      | Web Push, device subscriptions, the Edge Functions that send      |
+| [0006](0006-statistics-and-fairness.md) | Statistics periods, household_statistics(), the fairness score    |
 
 ## Guidelines
 

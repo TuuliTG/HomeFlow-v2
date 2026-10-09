@@ -243,6 +243,7 @@ export async function fakeSupabase(page: Page) {
       );
       if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
       task.picked_up_by = pickedUpBy;
+      if (pickedUpBy === null) reminders.delete(task_id);
       return reply(route, 204);
     };
   }
@@ -284,6 +285,29 @@ export async function fakeSupabase(page: Page) {
     const task = ownOpenTask(task_id);
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
     tasks.splice(tasks.indexOf(task), 1);
+    return reply(route, 204);
+  }
+
+  /** The user's reminders by task id, like task_reminders with Row Level Security. */
+  const reminders = new Map<string, string>();
+
+  /** Like set_task_reminder(): only for an open task the user picked up or added privately. */
+  async function setTaskReminder(route: Route) {
+    const { task_id, remind_at } = route.request().postDataJSON() as {
+      task_id: string;
+      remind_at: string;
+    };
+    const task = ownOpenTask(task_id);
+    const isToDo =
+      task && (task.picked_up_by === user.id || (task.is_private && task.created_by === user.id));
+    if (!isToDo) return reply(route, 400, { code: 'P0002', message: 'No open task of yours' });
+    reminders.set(task_id, remind_at);
+    return reply(route, 204);
+  }
+
+  async function clearTaskReminder(route: Route) {
+    const { task_id } = route.request().postDataJSON() as { task_id: string };
+    reminders.delete(task_id);
     return reply(route, 204);
   }
 
@@ -377,6 +401,14 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/delete_task': deleteTask,
     '/rest/v1/rpc/household_statistics': householdStatistics,
     '/rest/v1/rpc/task_suggestions': taskSuggestions,
+    '/rest/v1/rpc/set_task_reminder': setTaskReminder,
+    '/rest/v1/rpc/clear_task_reminder': clearTaskReminder,
+    '/rest/v1/task_reminders': (route) =>
+      reply(
+        route,
+        200,
+        [...reminders].map(([task_id, remind_at]) => ({ task_id, remind_at })),
+      ),
     '/rest/v1/tasks': tasksEndpoint,
   };
 

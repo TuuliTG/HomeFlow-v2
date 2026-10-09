@@ -418,3 +418,8 @@ enabled = true
 # (x-webhook-secret) itself, so it doesn't require a user JWT.
 [functions.notify-household]
 verify_jwt = false
+
+# Called every minute by Supabase Cron to send due task reminders (ADR 0004). It checks the same shared
+# secret (x-webhook-secret) itself, so it doesn't require a user JWT.
+[functions.send-reminders]
+verify_jwt = false
