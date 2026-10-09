@@ -35,6 +35,7 @@ interface TaskRow {
   due_on: string | null;
   picked_up_by: string | null;
   is_private: boolean;
+  created_at: string;
   completed_at: string | null;
   completed_by: string | null;
 }
@@ -97,6 +98,7 @@ export async function fakeSupabase(page: Page) {
       due_on: null,
       picked_up_by: null,
       is_private: false,
+      created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
     },
@@ -163,6 +165,7 @@ export async function fakeSupabase(page: Page) {
         household_id: ownHousehold.id,
         created_by: user.id,
         picked_up_by: null,
+        created_at: new Date().toISOString(),
         completed_at: null,
         completed_by: null,
       });
@@ -223,6 +226,7 @@ export async function fakeSupabase(page: Page) {
       id: `e2e-task-${String(tasks.length)}`,
       due_on: due.toISOString().slice(0, 10),
       picked_up_by: null,
+      created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
     };
@@ -283,6 +287,28 @@ export async function fakeSupabase(page: Page) {
     return reply(route, 204);
   }
 
+  /** Like household_statistics(): each member's shared tasks done and added since `since`. */
+  async function householdStatistics(route: Route) {
+    const { since } = route.request().postDataJSON() as { since: string | null };
+    const inPeriod = (timestamp: string | null) =>
+      timestamp !== null && (since === null || timestamp >= since);
+    const shared = tasks.filter(
+      (task) => task.household_id === ownHousehold?.id && !task.is_private,
+    );
+    const userIds = ownHousehold ? (members.get(ownHousehold.id) ?? []) : [];
+    return reply(
+      route,
+      200,
+      userIds.map((id) => ({
+        user_id: id,
+        done: shared.filter((task) => task.completed_by === id && inPeriod(task.completed_at))
+          .length,
+        created: shared.filter((task) => task.created_by === id && inPeriod(task.created_at))
+          .length,
+      })),
+    );
+  }
+
   /** Accepts any email and password, for both creating an account and logging in. */
   function logInWith(route: Route) {
     return reply(route, 200, {
@@ -308,6 +334,7 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/put_back_task': setPickedUp(null),
     '/rest/v1/rpc/update_task': updateTask,
     '/rest/v1/rpc/delete_task': deleteTask,
+    '/rest/v1/rpc/household_statistics': householdStatistics,
     '/rest/v1/tasks': tasksEndpoint,
   };
 

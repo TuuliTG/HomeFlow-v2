@@ -9,6 +9,7 @@ import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 // Unit tests never reach Supabase: the feature apis are replaced by in-memory fakes.
 vi.mock('@/features/auth/api', () => import('@/test/fakeAuthApi'));
 vi.mock('@/features/household/api', () => import('@/test/fakeHouseholdApi'));
+vi.mock('@/features/statistics/api', () => import('@/test/fakeStatisticsApi'));
 vi.mock('@/features/tasks/api', () => import('@/test/fakeTasksApi'));
 
 // jsdom has no matchMedia; behave like a browser tab where no media query matches.
