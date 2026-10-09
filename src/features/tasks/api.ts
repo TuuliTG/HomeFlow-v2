@@ -7,6 +7,7 @@ const taskRowsSchema = z.array(
   z.object({
     id: z.string(),
     title: z.string(),
+    description: z.string().nullable(),
     type: z.enum(taskTypes),
     points: z.number(),
     created_by: z.string().nullable(),
@@ -51,7 +52,9 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
 export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
-    .select('id, title, type, points, created_by, repeat_every_days, due_on, picked_up_by')
+    .select(
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by',
+    )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
@@ -135,11 +138,12 @@ export async function putBackTask(taskId: string): Promise<void> {
 /** Replaces an open task's details. Any member of the household can edit it. */
 export async function updateTask(
   taskId: string,
-  { title, type, points, dueOn, repeatEveryDays }: NewTask,
+  { title, description, type, points, dueOn, repeatEveryDays }: NewTask,
 ): Promise<void> {
   const { error } = await getSupabaseClient().rpc('update_task', {
     task_id: taskId,
     task_title: title,
+    task_description: description,
     task_type: type,
     task_points: points,
     task_due_on: dueOn,

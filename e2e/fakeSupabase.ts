@@ -27,6 +27,7 @@ interface TaskRow {
   id: string;
   household_id: string;
   title: string;
+  description: string | null;
   type: string;
   points: number;
   created_by: string;
@@ -87,6 +88,7 @@ export async function fakeSupabase(page: Page) {
       id: 'e2e-ben-task',
       household_id: existing.id,
       title: EXISTING_HOUSEHOLD.task,
+      description: null,
       type: 'planning',
       points: 5,
       created_by: 'e2e-ben',
@@ -151,7 +153,7 @@ export async function fakeSupabase(page: Page) {
       if (!ownHousehold) return reply(route, 400, { code: '23502', message: 'No household' });
       const task = request.postDataJSON() as Pick<
         TaskRow,
-        'title' | 'type' | 'points' | 'repeat_every_days' | 'due_on'
+        'title' | 'description' | 'type' | 'points' | 'repeat_every_days' | 'due_on'
       >;
       tasks.unshift({
         ...task,
@@ -240,6 +242,7 @@ export async function fakeSupabase(page: Page) {
     const body = route.request().postDataJSON() as {
       task_id: string;
       task_title: string;
+      task_description: string | null;
       task_type: string;
       task_points: number;
       task_due_on: string | null;
@@ -249,6 +252,7 @@ export async function fakeSupabase(page: Page) {
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
     Object.assign(task, {
       title: body.task_title,
+      description: body.task_description,
       type: body.task_type,
       points: body.task_points,
       due_on: body.task_due_on,

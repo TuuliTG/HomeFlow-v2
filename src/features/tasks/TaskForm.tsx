@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { paths } from '@/app/paths';
 import { inputClassName } from '@/components/ui/formStyles';
 import {
+  DESCRIPTION_MAX_LENGTH,
   type NewTask,
   newTaskSchema,
   repeatChoices,
@@ -16,7 +17,7 @@ import {
 
 const DEFAULT_POINTS = '3';
 
-type FieldName = 'title' | 'points' | 'dueOn';
+type FieldName = 'title' | 'description' | 'points' | 'dueOn';
 
 interface FormError {
   /** The field to fix, or null when saving failed. */
@@ -25,7 +26,7 @@ interface FormError {
 }
 
 function fieldOf(path: PropertyKey | undefined): FieldName {
-  return path === 'points' || path === 'dueOn' ? path : 'title';
+  return path === 'description' || path === 'points' || path === 'dueOn' ? path : 'title';
 }
 
 interface TaskFormProps {
@@ -37,12 +38,12 @@ interface TaskFormProps {
   onSave: (task: NewTask) => Promise<void>;
 }
 
-/** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
 /** The form's field values (strings, as inputs hold them) for a task, or for a new one. */
 function fieldValues(task: NewTask | undefined) {
   if (!task)
     return {
       title: '',
+      description: '',
       type: 'physical' as TaskType,
       points: DEFAULT_POINTS,
       repeat: '',
@@ -50,6 +51,7 @@ function fieldValues(task: NewTask | undefined) {
     };
   return {
     title: task.title,
+    description: task.description ?? '',
     type: task.type,
     points: String(task.points),
     repeat: task.repeatEveryDays === null ? '' : String(task.repeatEveryDays),
@@ -57,9 +59,11 @@ function fieldValues(task: NewTask | undefined) {
   };
 }
 
+/** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
 export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormProps) {
   const [initialValues] = useState(() => fieldValues(initial));
   const [title, setTitle] = useState(initialValues.title);
+  const [description, setDescription] = useState(initialValues.description);
   const [type, setType] = useState<TaskType>(initialValues.type);
   const [points, setPoints] = useState(initialValues.points);
   /** Days between occurrences, or '' for a one-off task. */
@@ -71,7 +75,13 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
   const titleRef = useRef<HTMLInputElement>(null);
   const pointsRef = useRef<HTMLInputElement>(null);
   const dueOnRef = useRef<HTMLInputElement>(null);
-  const fieldRefs = { title: titleRef, points: pointsRef, dueOn: dueOnRef };
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const fieldRefs = {
+    title: titleRef,
+    description: descriptionRef,
+    points: pointsRef,
+    dueOn: dueOnRef,
+  };
 
   function errorPropsFor(field: FieldName) {
     const hasError = error?.field === field;
@@ -86,6 +96,7 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
       points,
       repeatEveryDays: repeatEveryDays === '' ? null : Number(repeatEveryDays),
       dueOn: dueOn === '' ? null : dueOn,
+      description: description.trim() === '' ? null : description,
     });
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
@@ -120,6 +131,23 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
           value={title}
           onChange={(event) => {
             setTitle(event.target.value);
+          }}
+          className={inputClassName}
+        />
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+        Description (optional)
+        <textarea
+          name="description"
+          ref={descriptionRef}
+          rows={2}
+          maxLength={DESCRIPTION_MAX_LENGTH}
+          {...errorPropsFor('description')}
+          placeholder="e.g. The bins are behind the garage"
+          value={description}
+          onChange={(event) => {
+            setDescription(event.target.value);
           }}
           className={inputClassName}
         />

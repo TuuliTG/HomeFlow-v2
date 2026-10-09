@@ -10,6 +10,7 @@ export const taskTypeLabels: Record<TaskType, string> = {
 };
 
 export const TITLE_MAX_LENGTH = 80;
+export const DESCRIPTION_MAX_LENGTH = 500;
 
 /** How long after marking a task done the user can undo it; `undo_complete_task()` enforces it. */
 export const UNDO_WINDOW_MS = 60 * 60 * 1000;
@@ -31,6 +32,16 @@ export const newTaskSchema = z.object({
     .trim()
     .min(1, 'Give the task a name.')
     .max(TITLE_MAX_LENGTH, `Keep the name to ${TITLE_MAX_LENGTH} characters or fewer.`),
+  /** More detail when the title isn't enough; null when there is none. */
+  description: z
+    .string()
+    .trim()
+    .min(1)
+    .max(
+      DESCRIPTION_MAX_LENGTH,
+      `Keep the description to ${String(DESCRIPTION_MAX_LENGTH)} characters or fewer.`,
+    )
+    .nullable(),
   type: z.enum(taskTypes),
   points: z.coerce
     .number()

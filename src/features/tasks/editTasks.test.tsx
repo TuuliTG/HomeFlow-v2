@@ -82,6 +82,33 @@ describe('editing a task', () => {
     expect(await screen.findByText(/isn't on the board any more/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to the tasks' })).toBeInTheDocument();
   });
+
+  it('can add, change and remove the description', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Dust',
+      type: 'physical',
+      points: 2,
+      description: 'Shelves only',
+    });
+    const user = userEvent.setup();
+    renderAppAt('/tasks/task:0/edit');
+
+    const description = await screen.findByLabelText('Description (optional)');
+    expect(description).toHaveValue('Shelves only');
+    await user.clear(description);
+    await user.type(description, 'Shelves and lamps');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    const task = await screen.findByRole('listitem', { name: 'Dust' });
+    expect(within(task).getByText('Shelves and lamps')).toBeInTheDocument();
+
+    await user.click(within(task).getByRole('link', { name: 'Edit: Dust' }));
+    await user.clear(await screen.findByLabelText('Description (optional)'));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByRole('listitem', { name: 'Dust' })).not.toHaveTextContent('Shelves');
+  });
 });
 
 describe('deleting a task', () => {

@@ -10,9 +10,9 @@ back rather than follow a fixed calendar.
 
 ## Decisions
 
-- `tasks` belong to a household: title, type (`physical`/`planning`), points (1–10), `created_by` (from the default,
-  never the client), optional `due_on`, `repeat_every_days` (1–365), `completed_at`/`completed_by` and
-  `previous_task_id`. New tasks default to the creator's household.
+- `tasks` belong to a household: title, optional description (≤ 500 characters), type (`physical`/`planning`),
+  points (1–10), `created_by` (from the default, never the client), optional `due_on`, `repeat_every_days`
+  (1–365), `completed_at`/`completed_by` and `previous_task_id`. New tasks default to the creator's household.
 - **Least privilege**: members can read and insert tasks; every change goes through a function. Marking done uses
   `complete_task(task_id, completed_on)` (security definer). In one transaction it marks an open task in the
   caller's household done and, if it repeats, inserts the **next occurrence**, due

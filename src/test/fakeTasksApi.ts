@@ -83,6 +83,7 @@ export const fakeTasksBackend = {
       {
         repeatEveryDays: null,
         dueOn: null,
+        description: null,
         ...task,
         id: `task:${String(tasks.length)}`,
         householdId,
@@ -155,18 +156,31 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
       .filter((task) => task.householdId === householdId && !task.completed)
       .reverse()
       .sort(byDueDate)
-      .map(({ id, title, type, points, repeatEveryDays, dueOn, createdBy, pickedUpBy }) => ({
-        id,
-        title,
-        type,
-        points,
-        repeatEveryDays,
-        dueOn,
-        createdBy,
-        creatorName: fakeAuthBackend.displayNameOf(createdBy),
-        pickedUpBy,
-        pickerName: pickedUpBy ? fakeAuthBackend.displayNameOf(pickedUpBy) : null,
-      })),
+      .map(
+        ({
+          id,
+          title,
+          description,
+          type,
+          points,
+          repeatEveryDays,
+          dueOn,
+          createdBy,
+          pickedUpBy,
+        }) => ({
+          id,
+          title,
+          description,
+          type,
+          points,
+          repeatEveryDays,
+          dueOn,
+          createdBy,
+          creatorName: fakeAuthBackend.displayNameOf(createdBy),
+          pickedUpBy,
+          pickerName: pickedUpBy ? fakeAuthBackend.displayNameOf(pickedUpBy) : null,
+        }),
+      ),
   );
 };
 

@@ -37,7 +37,7 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select lives_ok(
   format(
-    $$ select public.update_task(%L, 'Vacuum', 'planning', 5::smallint, '2026-12-24', 7::smallint) $$,
+    $$ select public.update_task(%L, 'Vacuum', null, 'planning', 5::smallint, '2026-12-24', 7::smallint) $$,
     current_setting('test.vacuum')
   ),
   'any member can edit an open task in their household'
@@ -53,18 +53,18 @@ select results_eq(
 );
 select lives_ok(
   format(
-    $$ select public.update_task(%L, 'Vacuum', 'physical', 3::smallint, null, null) $$,
+    $$ select public.update_task(%L, 'Vacuum', null, 'physical', 3::smallint, null, null) $$,
     current_setting('test.vacuum')
   ),
   'a due date and repeating can be removed'
 );
 select throws_ok(
-  format($$ select public.update_task(%L, '', 'physical', 3::smallint, null, null) $$, current_setting('test.vacuum')),
+  format($$ select public.update_task(%L, '', null, 'physical', 3::smallint, null, null) $$, current_setting('test.vacuum')),
   '23514', null,
   'an edit must still be a valid task'
 );
 select throws_ok(
-  format($$ select public.update_task(%L, 'Hacked', 'physical', 3::smallint, null, null) $$, current_setting('test.carol')),
+  format($$ select public.update_task(%L, 'Hacked', null, 'physical', 3::smallint, null, null) $$, current_setting('test.carol')),
   'P0002', null,
   'a member cannot edit another household''s task'
 );
@@ -97,7 +97,7 @@ select throws_ok(
 -- Ben marks the repeating task done, then undoes it.
 select public.complete_task(current_setting('test.plants')::uuid, current_date);
 select throws_ok(
-  format($$ select public.update_task(%L, 'Edited', 'physical', 1::smallint, null, 3::smallint) $$, current_setting('test.plants')),
+  format($$ select public.update_task(%L, 'Edited', null, 'physical', 1::smallint, null, 3::smallint) $$, current_setting('test.plants')),
   'P0002', null,
   'a done task cannot be edited'
 );

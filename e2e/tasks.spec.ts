@@ -90,7 +90,9 @@ test('family member can fix a task and then delete it', async ({ page }) => {
   await page.getByRole('link', { name: 'Tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
   await page.getByLabel('Task').fill('Vacum');
+  await page.getByLabel('Description (optional)').fill('Under the sofa too');
   await page.getByRole('button', { name: 'Create task' }).click();
+  await expect(page.getByText('Under the sofa too')).toBeVisible();
 
   await page.getByRole('link', { name: 'Edit: Vacum' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Edit task' })).toBeVisible();
