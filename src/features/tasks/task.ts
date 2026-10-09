@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
-export const taskTypes = ['physical', 'planning'] as const;
+export const taskTypes = ['physical', 'meta'] as const;
 
 export type TaskType = (typeof taskTypes)[number];
 
 export const taskTypeLabels: Record<TaskType, string> = {
   physical: 'Physical',
-  planning: 'Planning',
+  meta: 'Meta work',
 };
 
 export const TITLE_MAX_LENGTH = 80;

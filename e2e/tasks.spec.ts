@@ -18,7 +18,7 @@ test('family member can create a task and see it on the shared task board', asyn
   expect(results.violations, 'a11y violations on the new task form').toEqual([]);
 
   await page.getByLabel('Task').fill('Water plants');
-  await page.getByRole('radio', { name: 'Planning' }).check();
+  await page.getByRole('radio', { name: 'Meta work' }).check();
   await page.getByLabel('Points').fill('5');
   await page.getByRole('button', { name: 'Create task' }).click();
 

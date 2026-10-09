@@ -5,7 +5,8 @@ Instructions for AI coding agents (and humans) working on HomeFlow. `CLAUDE.md` 
 ## Project
 
 HomeFlow is a mobile-first PWA for families to share household tasks fairly, crediting both physical work and
-planning work. Product context: [docs/product-brief.md](docs/product-brief.md). Decisions: [docs/adr/](docs/adr/README.md).
+meta work (planning, remembering, organising). Product context: [docs/product-brief.md](docs/product-brief.md).
+Decisions: [docs/adr/](docs/adr/README.md).
 
 Stack: Vite + React 19 + TypeScript (strict) · React Router · TanStack Query · Tailwind CSS v4 · Zod · Supabase ·
 Vitest + Testing Library · Playwright · deployed on Vercel. Node ≥ 22.12 (`.nvmrc`).

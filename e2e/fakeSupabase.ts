@@ -89,7 +89,7 @@ export async function fakeSupabase(page: Page) {
       household_id: existing.id,
       title: EXISTING_HOUSEHOLD.task,
       description: null,
-      type: 'planning',
+      type: 'meta',
       points: 5,
       created_by: 'e2e-ben',
       repeat_every_days: null,

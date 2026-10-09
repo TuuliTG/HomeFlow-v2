@@ -1,7 +1,7 @@
 # HomeFlow
 
 A mobile-first web app (PWA) that helps families share household tasks fairly. It makes both physical chores and
-invisible planning work visible, and motivates through shared goals instead of control.
+invisible meta work visible, and motivates through shared goals instead of control.
 See [docs/product-brief.md](docs/product-brief.md).
 
 **Status:** a family logs in with email and password, creates or joins a household with an invite code and shares

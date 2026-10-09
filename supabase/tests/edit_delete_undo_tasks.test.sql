@@ -37,7 +37,7 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select lives_ok(
   format(
-    $$ select public.update_task(%L, 'Vacuum', null, 'planning', 5::smallint, '2026-12-24', 7::smallint) $$,
+    $$ select public.update_task(%L, 'Vacuum', null, 'meta', 5::smallint, '2026-12-24', 7::smallint) $$,
     current_setting('test.vacuum')
   ),
   'any member can edit an open task in their household'
@@ -47,7 +47,7 @@ select results_eq(
     'select title, type, points, due_on, repeat_every_days, created_by from public.tasks where id = %L',
     current_setting('test.vacuum')
   ),
-  $$ values ('Vacuum', 'planning', 5::smallint, '2026-12-24'::date, 7::smallint,
+  $$ values ('Vacuum', 'meta', 5::smallint, '2026-12-24'::date, 7::smallint,
              '11111111-1111-1111-1111-111111111111'::uuid) $$,
   'editing changes the details but not who added the task'
 );

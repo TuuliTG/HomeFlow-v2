@@ -33,7 +33,7 @@ describe('task board', () => {
     const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
     fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
-    fakeTasksBackend.addTaskAs(ben.id, { title: 'Book dentist', type: 'planning', points: 5 });
+    fakeTasksBackend.addTaskAs(ben.id, { title: 'Book dentist', type: 'meta', points: 5 });
     renderAppAt('/');
 
     const tasks = await screen.findAllByRole('listitem', { name: /Vacuum|Book dentist/ });
@@ -116,14 +116,14 @@ describe('creating a task', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'New task' })).toBeInTheDocument();
 
     await user.type(screen.getByLabelText('Task'), '  Book dentist  ');
-    await user.click(screen.getByRole('radio', { name: 'Planning' }));
+    await user.click(screen.getByRole('radio', { name: 'Meta work' }));
     await user.clear(screen.getByLabelText('Points'));
     await user.type(screen.getByLabelText('Points'), '5');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     const task = await screen.findByRole('listitem', { name: 'Book dentist' });
     expect(screen.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeInTheDocument();
-    expect(within(task).getByText('Planning')).toBeInTheDocument();
+    expect(within(task).getByText('Meta work')).toBeInTheDocument();
     expect(within(task).getByText('5 points')).toBeInTheDocument();
     expect(within(task).getByText('Added by you')).toBeInTheDocument();
   });

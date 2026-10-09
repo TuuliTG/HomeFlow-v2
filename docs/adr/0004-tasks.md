@@ -1,16 +1,16 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-08
+- **Updated:** 2026-10-09
 
 ## Context
 
-A household shares one task board. Adding a task is planning work and doing it is physical work; both are credited
-later, so the data must record who did what and when. Many tasks repeat, and a late task should push the next one
-back rather than follow a fixed calendar.
+A household shares one task board. Adding a task is meta work (planning) and doing it is physical work; both are
+credited later, so the data must record who did what and when. Many tasks repeat, and a late task should push the
+next one back rather than follow a fixed calendar.
 
 ## Decisions
 
-- `tasks` belong to a household: title, optional description (≤ 500 characters), type (`physical`/`planning`),
+- `tasks` belong to a household: title, optional description (≤ 500 characters), type (`physical`/`meta`),
   points (1–10), `created_by` (from the default, never the client), optional `due_on`, `repeat_every_days`
   (1–365), `completed_at`/`completed_by` and `previous_task_id`. New tasks default to the creator's household.
 - **Least privilege**: members can read and insert tasks; every change goes through a function. Marking done uses

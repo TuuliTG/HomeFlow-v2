@@ -38,7 +38,7 @@ export function TaskCard({ task, currentUserId }: TaskCardProps) {
 }
 
 function TaskDetails({ task, currentUserId, titleId }: TaskCardProps & { titleId: string }) {
-  const isPlanning = task.type === 'planning';
+  const isMeta = task.type === 'meta';
   return (
     <div className="flex flex-col gap-1">
       <h2 id={titleId} className="font-semibold text-slate-900">
@@ -51,7 +51,7 @@ function TaskDetails({ task, currentUserId, titleId }: TaskCardProps & { titleId
         <span
           className={[
             tagClassName,
-            isPlanning ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700',
+            isMeta ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700',
           ].join(' ')}
         >
           {taskTypeLabels[task.type]}

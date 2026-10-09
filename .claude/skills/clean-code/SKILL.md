@@ -9,7 +9,7 @@ description: Clean code standards for HomeFlow TypeScript/React code — naming,
 
 - Names reveal intent: `pickUpTask`, `fairnessScore`, `isOverdue`. No abbreviations or `data`/`info`/`handle2`.
 - Booleans read as questions (`is`, `has`, `can`); event handlers `onX` (props) / `handleX` (implementation).
-- Use domain language from `docs/product-brief.md` (task, member, points, planning task, fairness, family goal).
+- Use domain language from `docs/product-brief.md` (task, member, points, meta task, fairness, family goal).
 
 ## Functions & components
 
