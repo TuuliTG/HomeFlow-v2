@@ -119,4 +119,26 @@ describe('private tasks', () => {
     const next = await screen.findByRole('listitem', { name: 'Water my plants' });
     expect(within(next).getByText('Private')).toBeInTheDocument();
   });
+
+  it('show up in My tasks without picking them up', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Buy a present',
+      type: 'meta',
+      points: null,
+      isPrivate: true,
+    });
+    renderAppAt('/me');
+
+    const toDo = await screen.findByRole('region', { name: 'To do' });
+    const task = await within(toDo).findByRole('listitem', { name: 'Buy a present' });
+    expect(within(toDo).queryByRole('listitem', { name: 'Vacuum' })).not.toBeInTheDocument();
+    expect(
+      within(task).queryByRole('button', { name: /Pick up|Put back/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(task).getByRole('button', { name: 'Mark done: Buy a present' }),
+    ).toBeInTheDocument();
+  });
 });
