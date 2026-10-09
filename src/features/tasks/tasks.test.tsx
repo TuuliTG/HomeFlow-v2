@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
-import { fakeTasksBackend } from '@/test/fakeTasksApi';
+import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 

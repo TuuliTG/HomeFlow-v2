@@ -4,7 +4,7 @@ import { afterEach, vi } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
-import { fakeTasksBackend } from '@/test/fakeTasksApi';
+import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 
 // Unit tests never reach Supabase: the feature apis are replaced by in-memory fakes.
 vi.mock('@/features/auth/api', () => import('@/test/fakeAuthApi'));

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TASK_ACTIVITY_DURATION_MS } from '@/features/tasks/useTaskActivity';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
-import { fakeTasksBackend } from '@/test/fakeTasksApi';
+import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 

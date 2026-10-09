@@ -11,9 +11,8 @@ import {
   repeatLabel,
   TITLE_MAX_LENGTH,
   type TaskType,
-  taskTypeLabels,
-  taskTypes,
 } from '@/features/tasks/task';
+import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 
 const DEFAULT_POINTS = '3';
 
@@ -153,29 +152,7 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
         />
       </label>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium text-slate-700">Type</legend>
-        <div className="flex gap-3">
-          {taskTypes.map((option) => (
-            <label
-              key={option}
-              className="has-checked:border-brand-600 has-checked:bg-brand-50 flex flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800"
-            >
-              <input
-                type="radio"
-                name="type"
-                value={option}
-                checked={type === option}
-                onChange={() => {
-                  setType(option);
-                }}
-                className="accent-brand-600"
-              />
-              {taskTypeLabels[option]}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <TaskTypeField value={type} onChange={setType} />
 
       <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
         Points
