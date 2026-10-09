@@ -17,7 +17,7 @@ test('family member can create a task and see it on the shared task board', asyn
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations on the new task form').toEqual([]);
 
-  await page.getByLabel('Task').fill('Water plants');
+  await page.getByLabel('Task', { exact: true }).fill('Water plants');
   await page.getByRole('radio', { name: 'Meta work' }).check();
   await page.getByLabel('Points').fill('5');
   await page.getByRole('button', { name: 'Create task' }).click();
@@ -38,7 +38,7 @@ test('family member can mark a repeating task done and see it come back', async 
   await page.getByRole('link', { name: 'Tasks' }).click();
 
   await page.getByRole('link', { name: 'New task' }).click();
-  await page.getByLabel('Task').fill('Change bed linen');
+  await page.getByLabel('Task', { exact: true }).fill('Change bed linen');
   await page.getByLabel('Repeats').selectOption({ label: 'Every 2 weeks' });
   await page.getByLabel('Due date').fill('2026-10-06');
   await page.getByRole('button', { name: 'Create task' }).click();
@@ -62,7 +62,7 @@ test('family member can pick up a task, find it on the Me screen and mark it don
   await logInAsFamilyMember(page);
   await page.getByRole('link', { name: 'Tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
-  await page.getByLabel('Task').fill('Vacuum');
+  await page.getByLabel('Task', { exact: true }).fill('Vacuum');
   await page.getByRole('button', { name: 'Create task' }).click();
 
   const task = page.getByRole('listitem', { name: 'Vacuum' });
@@ -89,14 +89,14 @@ test('family member can fix a task and then delete it', async ({ page }) => {
   await logInAsFamilyMember(page);
   await page.getByRole('link', { name: 'Tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
-  await page.getByLabel('Task').fill('Vacum');
+  await page.getByLabel('Task', { exact: true }).fill('Vacum');
   await page.getByLabel('Description (optional)').fill('Under the sofa too');
   await page.getByRole('button', { name: 'Create task' }).click();
   await expect(page.getByText('Under the sofa too')).toBeVisible();
 
   await page.getByRole('link', { name: 'Edit: Vacum' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Edit task' })).toBeVisible();
-  await page.getByLabel('Task').fill('Vacuum');
+  await page.getByLabel('Task', { exact: true }).fill('Vacuum');
   await page.getByLabel('Points').fill('4');
   await page.getByRole('button', { name: 'Save changes' }).click();
 
@@ -117,7 +117,7 @@ test('family member can show the tasks done in the household', async ({ page }) 
   await logInAsFamilyMember(page);
   await page.getByRole('link', { name: 'Tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
-  await page.getByLabel('Task').fill('Vacuum');
+  await page.getByLabel('Task', { exact: true }).fill('Vacuum');
   await page.getByRole('button', { name: 'Create task' }).click();
   await page.getByRole('button', { name: 'Mark done: Vacuum' }).click();
   await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
