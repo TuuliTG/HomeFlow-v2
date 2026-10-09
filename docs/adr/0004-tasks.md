@@ -18,7 +18,7 @@ next one back rather than follow a fixed calendar.
   the others, and every security definer function that acts on any open task skips other members' private ones.
   A private task is the creator's own to do: it is listed in their My tasks without picking it up, and has no
   Pick up or Put back. **Private tasks have no points** (`points` is null exactly when `is_private`, a check
-  constraint) and statistics count only shared tasks, both done and created. A private task whose creator
+  constraint) and statistics count only shared tasks, both done and created (ADR 0006). A private task whose creator
   deletes their account or leaves stays hidden from everyone.
 - **Least privilege**: members can read and insert tasks; every change goes through a function. Marking done uses
   `complete_task(task_id, completed_on)` (security definer). In one transaction it marks an open task in the
