@@ -2,7 +2,7 @@
 -- Anna and Ben share a household; Anna adds a private task and a shared one.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(13);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -92,6 +92,13 @@ select results_eq(
 select lives_ok(
   format('select public.delete_task(id) from public.tasks where previous_task_id = %L', current_setting('test.present')),
   'whoever added a private task can delete it'
+);
+
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select results_eq(
+  $$ select count(*)::int from public.tasks where completed_at is not null $$,
+  $$ values (0) $$,
+  'other members cannot see a private task once it is done either'
 );
 
 select * from finish();
