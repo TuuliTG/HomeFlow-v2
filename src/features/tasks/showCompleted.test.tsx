@@ -32,8 +32,8 @@ describe('showing completed tasks on the board', () => {
     const completed = await screen.findByRole('region', { name: 'Completed' });
     const items = await within(completed).findAllByRole('listitem');
     expect(items.map((item) => item.textContent)).toEqual([
-      expect.stringMatching(/^Book dentistDone by Ben · .* · 5 points$/),
-      expect.stringMatching(/^VacuumDone by you · .* · 3 points$/),
+      expect.stringMatching(/^Book dentistDone by Ben · .* · 5 pointsAdd again$/),
+      expect.stringMatching(/^VacuumDone by you · .* · 3 pointsAdd again$/),
     ]);
     expect(screen.getByRole('listitem', { name: 'Water plants' })).toBeInTheDocument();
   });

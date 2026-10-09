@@ -7,7 +7,8 @@ See [docs/product-brief.md](docs/product-brief.md).
 **Status:** a family logs in with email and password, creates or joins a household with an invite code and shares
 one task board ([ADR 0003](docs/adr/0003-accounts-and-households.md)). Members pick up tasks (listed on their Me
 screen with what they've completed and their total points); tasks can have a due date, be private, be edited,
-deleted, marked done (and undone) and repeat a set number of days after they were done; the board updates live and members can get push notifications
+deleted, marked done (and undone), repeat a set number of days after they were done and be added again from earlier
+tasks; the board updates live and members can get push notifications
 ([ADR 0004](docs/adr/0004-tasks.md), [ADR 0005](docs/adr/0005-push-notifications.md)).
 Work in progress is tracked in [plan.md](plan.md).
 

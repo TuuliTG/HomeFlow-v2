@@ -6,6 +6,7 @@ import {
   type HouseholdCompletedTask,
   type NewTask,
   type Task,
+  type TaskSuggestion,
   taskTypes,
 } from '@/features/tasks/task';
 import { getSupabaseClient } from '@/lib/supabase';
@@ -145,6 +146,37 @@ export async function fetchTotalPoints(userId: string): Promise<number> {
     .eq('is_private', false);
   if (error) throw error;
   return pointsRowsSchema.parse(data).reduce((total, row) => total + row.points, 0);
+}
+
+const suggestionRowsSchema = z.array(
+  z.object({
+    title: z.string(),
+    description: z.string().nullable(),
+    type: z.enum(taskTypes),
+    points: z.number().nullable(),
+    repeat_every_days: z.number().nullable(),
+    is_private: z.boolean(),
+    times_added: z.number(),
+    is_open: z.boolean(),
+  }),
+);
+
+/**
+ * The tasks the household has added before, one per title with its newest details, most often added
+ * first. Other members' private tasks are left out.
+ */
+export async function fetchTaskSuggestions(): Promise<TaskSuggestion[]> {
+  const result = await getSupabaseClient().rpc('task_suggestions');
+  if (result.error) throw result.error;
+  return suggestionRowsSchema
+    .parse(result.data)
+    .map(({ repeat_every_days, is_private, times_added, is_open, ...task }) => ({
+      ...task,
+      repeatEveryDays: repeat_every_days,
+      isPrivate: is_private,
+      timesAdded: times_added,
+      isOpen: is_open,
+    }));
 }
 
 /** Adds a task to the user's household; the database fills in the household and the creator. */

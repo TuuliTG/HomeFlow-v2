@@ -83,6 +83,14 @@ export interface Task extends NewTask {
   pickerName: string | null;
 }
 
+/** A task the household has added before, to add again with the same details (`task_suggestions()`). */
+export interface TaskSuggestion extends Omit<NewTask, 'dueOn'> {
+  /** How many times members have added it; repeats a task adds itself don't count. */
+  timesAdded: number;
+  /** Whether it is on the board now, not yet done. */
+  isOpen: boolean;
+}
+
 /** A task the user has marked done. */
 export interface CompletedTask {
   id: string;

@@ -38,6 +38,11 @@ next one back rather than follow a fixed calendar.
 - The board shows open tasks, soonest due first and tasks without a due date last (newest first within a date).
   "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done tasks.
   "Only tasks to pick up" (`?unpicked=1`) hides tasks someone has picked up and private tasks (nobody picks them up).
+- **Adding a task again**: the New task form suggests earlier tasks from the household's own history, read with
+  `task_suggestions()` (security invoker, so RLS hides other members' private tasks): one per title ignoring case,
+  with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Picking
+  one fills in the form without a due date. There is no templates table: deleted tasks drop out on their own, and
+  categories can later filter the same list.
 - **Live updates**: `tasks` is in the `supabase_realtime` publication (RLS applies per subscriber). The app
   subscribes once (`subscribeToTaskChanges`) and refetches through TanStack Query on every insert, update or
   delete (deletes aren't filtered by RLS, so they only trigger the refetch). Tasks

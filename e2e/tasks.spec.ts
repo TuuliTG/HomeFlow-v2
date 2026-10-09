@@ -31,6 +31,38 @@ test('family member can create a task and see it on the shared task board', asyn
   await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
 });
 
+test('family member can add a task again from earlier tasks', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('Take out trash');
+  await page.getByLabel('Points').fill('1');
+  await page.getByRole('button', { name: 'Create task' }).click();
+  const firstTask = page.getByRole('listitem', { name: 'Take out trash' });
+  await firstTask.getByRole('button', { name: 'Mark done: Take out trash' }).click();
+  await expect(firstTask).toBeHidden();
+
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('trash');
+  await expect(page.getByRole('option', { name: /Take out trash/ })).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on the task suggestions').toEqual([]);
+  await page.getByRole('option', { name: /Take out trash/ }).click();
+  await expect(page.getByLabel('Points')).toHaveValue('1');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  await expect(page.getByRole('listitem', { name: 'Take out trash' })).toBeVisible();
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page
+    .getByRole('region', { name: 'Add again' })
+    .getByRole('button', { name: /Take out trash/ })
+    .click();
+  await expect(
+    page.getByText('Take out trash is already on the board.', { exact: false }),
+  ).toBeVisible();
+});
+
 test('family member can mark a repeating task done and see it come back', async ({ page }) => {
   await page.clock.setFixedTime(new Date(2026, 9, 8, 12));
   await fakeSupabase(page);

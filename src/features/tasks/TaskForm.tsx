@@ -9,10 +9,12 @@ import {
   newTaskSchema,
   repeatChoices,
   repeatLabel,
-  TITLE_MAX_LENGTH,
+  type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
 import { PrivateTaskField } from '@/features/tasks/PrivateTaskField';
+import { suggestionAsTask } from '@/features/tasks/suggestions';
+import { TaskTitleField } from '@/features/tasks/TaskTitleField';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 
 const DEFAULT_POINTS = '3';
@@ -32,6 +34,10 @@ function fieldOf(path: PropertyKey | undefined): FieldName {
 interface TaskFormProps {
   /** The task being edited; a new task starts empty and can be made private. */
   initial?: NewTask;
+  /** A new task's starting details, e.g. an earlier task's to add it again. */
+  prefill?: NewTask | undefined;
+  /** Tasks the household has added before, offered to add again; leave out when editing. */
+  suggestions?: TaskSuggestion[];
   submitLabel: string;
   isSaving: boolean;
   /** Saves the task; a rejection shows "We couldn't save the task." */
@@ -62,8 +68,15 @@ function fieldValues(task: NewTask | undefined) {
 }
 
 /** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
-export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormProps) {
-  const [initialValues] = useState(() => fieldValues(initial));
+export function TaskForm({
+  initial,
+  prefill,
+  suggestions = [],
+  submitLabel,
+  isSaving,
+  onSave,
+}: TaskFormProps) {
+  const [initialValues] = useState(() => fieldValues(initial ?? prefill));
   const [title, setTitle] = useState(initialValues.title);
   const [description, setDescription] = useState(initialValues.description);
   const [type, setType] = useState<TaskType>(initialValues.type);
@@ -89,6 +102,18 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
   function errorPropsFor(field: FieldName) {
     const hasError = error?.field === field;
     return { 'aria-invalid': hasError, 'aria-describedby': hasError ? errorId : undefined };
+  }
+
+  function fillIn(suggestion: TaskSuggestion) {
+    const values = fieldValues(suggestionAsTask(suggestion));
+    setTitle(values.title);
+    setDescription(values.description);
+    setType(values.type);
+    setPoints(values.points);
+    setRepeatEveryDays(values.repeat);
+    setDueOn(values.dueOn);
+    setIsPrivate(values.isPrivate);
+    setError(null);
   }
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
@@ -123,22 +148,14 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
       className="flex flex-col gap-5"
       noValidate
     >
-      <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-        Task
-        <input
-          type="text"
-          name="title"
-          ref={titleRef}
-          maxLength={TITLE_MAX_LENGTH}
-          {...errorPropsFor('title')}
-          placeholder="e.g. Take out the recycling"
-          value={title}
-          onChange={(event) => {
-            setTitle(event.target.value);
-          }}
-          className={inputClassName}
-        />
-      </label>
+      <TaskTitleField
+        value={title}
+        onChange={setTitle}
+        suggestions={suggestions}
+        onPick={fillIn}
+        inputRef={titleRef}
+        errorProps={errorPropsFor('title')}
+      />
 
       <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
         Description (optional)
