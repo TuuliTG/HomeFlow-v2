@@ -8,6 +8,9 @@ export function toDateTimeLocal(date: Date): string {
   return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+/** How far ahead a reminder can be; `set_task_reminder()` enforces it. */
+export const MAX_REMINDER_AHEAD_MS = 365 * 24 * 60 * 60 * 1000;
+
 /** The next full hour, as a starting point for a new reminder. */
 export function suggestedReminderTime(now: Date): string {
   const nextHour = new Date(now);

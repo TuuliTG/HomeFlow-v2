@@ -32,6 +32,8 @@ as $$
     and ((task.is_private and task.created_by = doer) or task.picked_up_by = doer);
 $$;
 
+revoke execute on function private.is_task_to_do_by(public.tasks, uuid) from public;
+
 -- Sets (or moves) the user's reminder for an open task that is theirs to do. Raises no_data_found (P0002) if the
 -- task isn't, and invalid_parameter_value (22023) for a time in the past or more than a year ahead.
 create function public.set_task_reminder(task_id uuid, remind_at timestamptz)
@@ -95,8 +97,9 @@ end;
 $$;
 
 -- For the send-reminders Edge Function only: removes every reminder that is due and returns those whose task is
--- still open and the user's to do (one sent late or done meanwhile isn't worth a notification). Taking them out
--- in one statement means two overlapping runs can't send the same reminder twice.
+-- still open and the user's to do, and whose time is less than an hour ago (after an outage, a task done meanwhile
+-- or a reminder hours late isn't worth a notification). Taking them out in one statement means two overlapping runs
+-- can't send the same reminder twice.
 create function public.take_due_reminders()
 returns table (user_id uuid, task_title text)
 language sql
@@ -104,11 +107,12 @@ security definer
 set search_path = ''
 as $$
   with due as (
-    delete from public.task_reminders r where r.remind_at <= now() returning r.task_id, r.user_id
+    delete from public.task_reminders r where r.remind_at <= now()
+      returning r.task_id, r.user_id, r.remind_at
   )
   select due.user_id, t.title
     from due join public.tasks t on t.id = due.task_id
-    where private.is_task_to_do_by(t, due.user_id);
+    where private.is_task_to_do_by(t, due.user_id) and due.remind_at > now() - interval '1 hour';
 $$;
 
 revoke execute on function public.take_due_reminders() from public, anon, authenticated;

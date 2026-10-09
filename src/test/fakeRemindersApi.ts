@@ -1,6 +1,6 @@
 import type * as remindersApi from '@/features/tasks/remindersApi';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
-import { fakeTasksBackend, reminders, requestsFailing } from '@/test/fakeTasksBackend';
+import { fakeTasksBackend, reminderRequestsFailing, reminders } from '@/test/fakeTasksBackend';
 import { asCurrentUser } from '@/test/fakeTasksApi';
 
 /**
@@ -10,7 +10,7 @@ import { asCurrentUser } from '@/test/fakeTasksApi';
 
 export const fetchReminders: typeof remindersApi.fetchReminders = () => {
   const user = fakeAuthBackend.currentUser();
-  if (requestsFailing() || !user) return Promise.reject(new Error('Network error'));
+  if (reminderRequestsFailing() || !user) return Promise.reject(new Error('Network error'));
   return Promise.resolve(
     [...(reminders.get(user.id) ?? new Map<string, string>())].map(([taskId, remindAt]) => ({
       taskId,

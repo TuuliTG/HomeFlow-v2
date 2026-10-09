@@ -48,8 +48,9 @@ next one back rather than follow a fixed calendar.
   owner and written only through `set_task_reminder()` / `clear_task_reminder()`, which check the task is theirs;
   putting a task back removes it. The `send-reminders` Edge Function (ADR 0005) sends due reminders as a push
   notification to the owner's devices, opening My tasks. It takes them with `take_due_reminders()` (service role
-  only), which deletes every due reminder and returns those whose task is still theirs and open, so a reminder is
-  sent at most once and a task done meanwhile isn't. Reminders aren't copied to a repeating task's next occurrence.
+  only), which deletes every due reminder and returns those whose task is still theirs and open and that are less
+  than an hour late, so a reminder is sent at most once, and not for a task done meanwhile or after an outage. The
+  app hides reminders whose time has passed. Reminders aren't copied to a repeating task's next occurrence.
 - **Live updates**: `tasks` is in the `supabase_realtime` publication (RLS applies per subscriber). The app
   subscribes once (`subscribeToTaskChanges`) and refetches through TanStack Query on every insert, update or
   delete (deletes aren't filtered by RLS, so they only trigger the refetch). Tasks

@@ -117,9 +117,17 @@ export function useUndoCompleteTask(userId: string) {
   });
 }
 
-/** The user's reminders. Under `tasksKey`, so putting a task back or marking it done refreshes them. */
+/**
+ * The user's upcoming reminders. Under `tasksKey`, so putting a task back or marking it done refreshes
+ * them. Reminders whose time has passed are being or have been sent, so they are left out.
+ */
 export function useReminders(userId: string) {
-  return useQuery({ queryKey: [...tasksKey(userId), 'reminders'], queryFn: fetchReminders });
+  return useQuery({
+    queryKey: [...tasksKey(userId), 'reminders'],
+    queryFn: fetchReminders,
+    select: (reminders) =>
+      reminders.filter((reminder) => new Date(reminder.remindAt).getTime() > Date.now()),
+  });
 }
 
 export function useSetReminder(userId: string) {

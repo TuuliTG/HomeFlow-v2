@@ -2,7 +2,7 @@
 -- Anna and Ben share a household. Anna has a private task and picks up a shared one; Ben has picked up another.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(17);
+select plan(18);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -123,6 +123,14 @@ select results_eq(
 select is_empty(
   'select * from public.take_due_reminders()',
   'a reminder is sent once'
+);
+reset role;
+insert into public.task_reminders (task_id, user_id, remind_at)
+  values (current_setting('test.present')::uuid, '11111111-1111-1111-1111-111111111111', now() - interval '2 hours');
+set local role service_role;
+select is_empty(
+  'select * from public.take_due_reminders()',
+  'a reminder more than an hour late is dropped'
 );
 reset role;
 select results_eq(
