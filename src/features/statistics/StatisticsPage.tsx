@@ -10,7 +10,7 @@ import {
   periodLabels,
   periods,
 } from '@/features/statistics/statistics';
-import { useContributions } from '@/features/statistics/useStatistics';
+import { useContributions } from '@/features/statistics/useContributions';
 import { useLoggedInUser } from '@/lib/auth';
 
 const PERIOD_PARAM = 'period';
