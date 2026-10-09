@@ -13,6 +13,9 @@ next one back rather than follow a fixed calendar.
 - `tasks` belong to a household: title, optional description (≤ 500 characters), type (`physical`/`meta`),
   points (1–10), `created_by` (from the default, never the client), optional `due_on`, `repeat_every_days`
   (1–365), `completed_at`/`completed_by` and `previous_task_id`. New tasks default to the creator's household.
+- **Private tasks**: `is_private` (chosen when adding, never changed; the next occurrence keeps it). The select
+  policy shows a private task only to its creator, so the board, "Show completed" and live updates hide it from
+  the others, and every security definer function that acts on any open task skips other members' private ones.
 - **Least privilege**: members can read and insert tasks; every change goes through a function. Marking done uses
   `complete_task(task_id, completed_on)` (security definer). In one transaction it marks an open task in the
   caller's household done and, if it repeats, inserts the **next occurrence**, due

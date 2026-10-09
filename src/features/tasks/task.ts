@@ -55,6 +55,8 @@ export const newTaskSchema = z.object({
   repeatEveryDays: z.number().int().min(1).max(365).nullable(),
   /** Local date (YYYY-MM-DD) the task should be done by, if any. */
   dueOn: z.iso.date('Pick a valid due date.').nullable(),
+  /** Seen only by whoever added it, not shared with the family. Chosen when adding the task. */
+  isPrivate: z.boolean(),
 });
 
 export type NewTask = z.infer<typeof newTaskSchema>;

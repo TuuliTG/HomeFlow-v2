@@ -34,6 +34,7 @@ interface TaskRow {
   repeat_every_days: number | null;
   due_on: string | null;
   picked_up_by: string | null;
+  is_private: boolean;
   completed_at: string | null;
   completed_by: string | null;
 }
@@ -95,6 +96,7 @@ export async function fakeSupabase(page: Page) {
       repeat_every_days: null,
       due_on: null,
       picked_up_by: null,
+      is_private: false,
       completed_at: null,
       completed_by: null,
     },
@@ -153,7 +155,7 @@ export async function fakeSupabase(page: Page) {
       if (!ownHousehold) return reply(route, 400, { code: '23502', message: 'No household' });
       const task = request.postDataJSON() as Pick<
         TaskRow,
-        'title' | 'description' | 'type' | 'points' | 'repeat_every_days' | 'due_on'
+        'title' | 'description' | 'type' | 'points' | 'repeat_every_days' | 'due_on' | 'is_private'
       >;
       tasks.unshift({
         ...task,

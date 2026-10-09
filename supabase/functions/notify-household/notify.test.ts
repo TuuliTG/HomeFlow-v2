@@ -10,7 +10,13 @@ import {
   parseAddedTaskId,
 } from './notify';
 
-const task = { householdId: 'h1', title: 'Book dentist', createdBy: 'anna', isRepeat: false };
+const task = {
+  householdId: 'h1',
+  title: 'Book dentist',
+  createdBy: 'anna',
+  isRepeat: false,
+  isPrivate: false,
+};
 
 function device(userId: string, endpoint = `https://push.example.com/${userId}`) {
   return { userId, endpoint, p256dh: 'key', auth: 'secret' };
@@ -83,6 +89,14 @@ describe('notify household', () => {
 
     await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 0, removed: 0, failed: 0 });
     expect(deps.send).not.toHaveBeenCalled();
+  });
+
+  it("doesn't notify anyone about a private task", async () => {
+    const deps = fakeDeps();
+    vi.mocked(deps.taskById).mockResolvedValue({ ...task, isPrivate: true });
+
+    await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 0, removed: 0, failed: 0 });
+    expect(deps.membersOf).not.toHaveBeenCalled();
   });
 
   it("doesn't notify anyone when the creator is alone in the household", async () => {

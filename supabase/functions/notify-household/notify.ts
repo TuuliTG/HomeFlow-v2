@@ -10,6 +10,8 @@ export interface TaskAdded {
   createdBy: string | null;
   /** Added automatically as the next occurrence of a repeating task, not by a member. */
   isRepeat: boolean;
+  /** Seen only by whoever added it, so the family isn't told about it. */
+  isPrivate: boolean;
 }
 
 export interface DeviceSubscription {
@@ -82,7 +84,8 @@ function isGone(status: number): boolean {
 
 /**
  * Notifies every household member except whoever added the task, and forgets dead devices. The next
- * occurrence of a repeating task isn't news, so it notifies no one.
+ * occurrence of a repeating task isn't news and a private task isn't the family's, so neither
+ * notifies anyone.
  */
 export async function notifyHousehold(
   taskId: string,
@@ -90,7 +93,7 @@ export async function notifyHousehold(
 ): Promise<NotifyResult> {
   const result: NotifyResult = { sent: 0, removed: 0, failed: 0 };
   const task = await deps.taskById(taskId);
-  if (!task || task.isRepeat) return result;
+  if (!task || task.isRepeat || task.isPrivate) return result;
   const members = await deps.membersOf(task.householdId);
   const recipients = members.filter((userId) => userId !== task.createdBy);
   if (recipients.length === 0) return result;

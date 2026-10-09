@@ -5,7 +5,7 @@ import {
   fakeTasksBackend,
   listeners,
   openTaskOf,
-  ownHouseholdId,
+  isVisible,
   requestsFailing,
   type StoredTask,
   tasks,
@@ -13,7 +13,8 @@ import {
 
 /**
  * In-memory stand-in for `@/features/tasks/api`, installed for every unit test in `setup.ts`.
- * Like the database, it shows the logged-in user only their own household's open tasks.
+ * Like the database, it shows the logged-in user only their own household's open tasks, and private
+ * tasks only to whoever added them.
  */
 
 /** Like `order by due_on asc nulls last`; a stable sort keeps newest first within a date. */
@@ -26,10 +27,9 @@ function byDueDate(a: StoredTask, b: StoredTask): number {
 
 export const fetchTasks: typeof tasksApi.fetchTasks = () => {
   if (requestsFailing()) return Promise.reject(new Error('Network error'));
-  const householdId = ownHouseholdId();
   return Promise.resolve(
     tasks
-      .filter((task) => task.householdId === householdId && !task.completed)
+      .filter((task) => isVisible(task) && !task.completed)
       .reverse()
       .sort(byDueDate)
       .map(
@@ -41,6 +41,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           points,
           repeatEveryDays,
           dueOn,
+          isPrivate,
           createdBy,
           pickedUpBy,
         }) => ({
@@ -51,6 +52,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           points,
           repeatEveryDays,
           dueOn,
+          isPrivate,
           createdBy,
           creatorName: fakeAuthBackend.displayNameOf(createdBy),
           pickedUpBy,
@@ -85,11 +87,11 @@ export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) 
 
 export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdCompletedTasks = () => {
   if (requestsFailing()) return Promise.reject(new Error('Network error'));
-  const householdId = ownHouseholdId();
   return Promise.resolve(
     tasks
-      .flatMap(({ id, title, type, points, householdId: taskHouseholdId, completed }) =>
-        completed && taskHouseholdId === householdId
+      .flatMap((task) => {
+        const { id, title, type, points, completed } = task;
+        return completed && isVisible(task)
           ? [
               {
                 id,
@@ -101,8 +103,8 @@ export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdComplet
                 completerName: fakeAuthBackend.displayNameOf(completed.by),
               },
             ]
-          : [],
-      )
+          : [];
+      })
       .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
   );
 };
@@ -133,21 +135,21 @@ export const putBackTask: typeof tasksApi.putBackTask = (taskId) =>
     const task = openTaskOf(userId, taskId);
     if (task.pickedUpBy !== userId) throw new Error('You have not picked up this task');
     task.pickedUpBy = null;
-    deliver(task.householdId, { kind: 'changed' });
+    deliver(task, { kind: 'changed' });
   });
 
 export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
   asCurrentUser((userId) => {
     const task = openTaskOf(userId, taskId);
     Object.assign(task, details);
-    deliver(task.householdId, { kind: 'changed' });
+    deliver(task, { kind: 'changed' });
   });
 
 export const deleteTask: typeof tasksApi.deleteTask = (taskId) =>
   asCurrentUser((userId) => {
     const task = openTaskOf(userId, taskId);
     tasks.splice(tasks.indexOf(task), 1);
-    deliver(task.householdId, { kind: 'changed' });
+    deliver(task, { kind: 'changed' });
   });
 
 /** Like `undo_complete_task()`, without the time limit (tests run within it). */
@@ -159,7 +161,7 @@ export const undoCompleteTask: typeof tasksApi.undoCompleteTask = (taskId) =>
     if (next?.completed) throw new Error('The next occurrence is already done');
     if (next) tasks.splice(tasks.indexOf(next), 1);
     task.completed = null;
-    deliver(task.householdId, { kind: 'changed' });
+    deliver(task, { kind: 'changed' });
   });
 
 export const subscribeToTaskChanges: typeof tasksApi.subscribeToTaskChanges = (onChange) => {

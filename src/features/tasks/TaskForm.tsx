@@ -12,6 +12,7 @@ import {
   TITLE_MAX_LENGTH,
   type TaskType,
 } from '@/features/tasks/task';
+import { PrivateTaskField } from '@/features/tasks/PrivateTaskField';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 
 const DEFAULT_POINTS = '3';
@@ -29,7 +30,7 @@ function fieldOf(path: PropertyKey | undefined): FieldName {
 }
 
 interface TaskFormProps {
-  /** The task being edited; a new task starts empty. */
+  /** The task being edited; a new task starts empty and can be made private. */
   initial?: NewTask;
   submitLabel: string;
   isSaving: boolean;
@@ -47,6 +48,7 @@ function fieldValues(task: NewTask | undefined) {
       points: DEFAULT_POINTS,
       repeat: '',
       dueOn: '',
+      isPrivate: false,
     };
   return {
     title: task.title,
@@ -55,6 +57,7 @@ function fieldValues(task: NewTask | undefined) {
     points: String(task.points),
     repeat: task.repeatEveryDays === null ? '' : String(task.repeatEveryDays),
     dueOn: task.dueOn ?? '',
+    isPrivate: task.isPrivate,
   };
 }
 
@@ -68,6 +71,7 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
   /** Days between occurrences, or '' for a one-off task. */
   const [repeatEveryDays, setRepeatEveryDays] = useState(initialValues.repeat);
   const [dueOn, setDueOn] = useState(initialValues.dueOn);
+  const [isPrivate, setIsPrivate] = useState(initialValues.isPrivate);
   const [error, setError] = useState<FormError | null>(null);
   const errorId = useId();
   const repeatHintId = useId();
@@ -96,6 +100,7 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
       repeatEveryDays: repeatEveryDays === '' ? null : Number(repeatEveryDays),
       dueOn: dueOn === '' ? null : dueOn,
       description: description.trim() === '' ? null : description,
+      isPrivate,
     });
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
@@ -213,6 +218,8 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
           {Number(repeatEveryDays) === 1 ? '1 day' : `${repeatEveryDays} days`} later.
         </p>
       )}
+
+      {!initial && <PrivateTaskField checked={isPrivate} onChange={setIsPrivate} />}
 
       {error && (
         <p id={errorId} role="alert" className="text-sm text-red-700">

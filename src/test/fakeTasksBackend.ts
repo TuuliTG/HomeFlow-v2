@@ -17,7 +17,7 @@ export interface StoredTask extends NewTask {
   completed: { by: string; at: string } | null;
 }
 
-/** A task as tests describe it: repeating and due date are optional. */
+/** A task as tests describe it: repeating, due date, description and privacy are optional. */
 type TaskDetails = Pick<NewTask, 'title' | 'type' | 'points'> & Partial<NewTask>;
 
 /** Oldest first; the api returns them soonest due first, then newest first (`byDueDate`). */
@@ -26,14 +26,22 @@ let requestsFail = false;
 let completions = 0;
 export const listeners = new Set<Parameters<typeof tasksApi.subscribeToTaskChanges>[0]>();
 
-export function ownHouseholdId(): string | null {
+function ownHouseholdId(): string | null {
   const user = fakeAuthBackend.currentUser();
   return user ? fakeHouseholdBackend.householdIdOf(user.id) : null;
 }
 
-/** Delivers a change live to the logged-in user if it is in their household (like Realtime with RLS). */
-export function deliver(householdId: string, change: tasksApi.TaskChange) {
-  if (householdId !== ownHouseholdId()) return;
+/** Whether the logged-in user can see the task, like the select policy on `tasks`. */
+export function isVisible(task: StoredTask): boolean {
+  return (
+    task.householdId === ownHouseholdId() &&
+    (!task.isPrivate || task.createdBy === fakeAuthBackend.currentUser()?.id)
+  );
+}
+
+/** Delivers a change live to the logged-in user if they can see the task (like Realtime with RLS). */
+export function deliver(task: StoredTask, change: tasksApi.TaskChange) {
+  if (!isVisible(task)) return;
   listeners.forEach((listener) => {
     listener(change);
   });
@@ -41,7 +49,7 @@ export function deliver(householdId: string, change: tasksApi.TaskChange) {
 
 function store(task: StoredTask, isRepeat: boolean) {
   tasks.push(task);
-  deliver(task.householdId, {
+  deliver(task, {
     kind: 'added',
     id: task.id,
     title: task.title,
@@ -61,7 +69,8 @@ export function openTaskOf(userId: string, taskId: string): StoredTask {
     (candidate) =>
       candidate.id === taskId &&
       !candidate.completed &&
-      candidate.householdId === fakeHouseholdBackend.householdIdOf(userId),
+      candidate.householdId === fakeHouseholdBackend.householdIdOf(userId) &&
+      (!candidate.isPrivate || candidate.createdBy === userId),
   );
   if (!task) throw new Error(`No open task ${taskId} in ${userId}'s household`);
   return task;
@@ -88,6 +97,7 @@ export const fakeTasksBackend = {
         repeatEveryDays: null,
         dueOn: null,
         description: null,
+        isPrivate: false,
         ...task,
         id: `task:${String(tasks.length)}`,
         householdId,
@@ -105,7 +115,7 @@ export const fakeTasksBackend = {
     if (task.pickedUpBy === userId) return;
     if (task.pickedUpBy) throw new Error('Someone else has picked up this task');
     task.pickedUpBy = userId;
-    deliver(task.householdId, { kind: 'changed' });
+    deliver(task, { kind: 'changed' });
   },
   /**
    * Marks an open task in `userId`'s household done on `completedOn`, adding the next occurrence of
@@ -116,7 +126,7 @@ export const fakeTasksBackend = {
     completions += 1;
     // A millisecond apart, so the newest completion sorts first.
     task.completed = { by: userId, at: new Date(Date.now() + completions).toISOString() };
-    deliver(task.householdId, { kind: 'changed' });
+    deliver(task, { kind: 'changed' });
     if (task.repeatEveryDays === null) return;
     store(
       {

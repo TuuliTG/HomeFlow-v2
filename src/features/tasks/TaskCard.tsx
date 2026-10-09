@@ -56,6 +56,9 @@ function TaskDetails({ task, currentUserId, titleId }: TaskCardProps & { titleId
         >
           {taskTypeLabels[task.type]}
         </span>
+        {task.isPrivate && (
+          <span className={`${tagClassName} bg-amber-100 text-amber-900`}>Private</span>
+        )}
         {task.repeatEveryDays !== null && (
           <span className={`${tagClassName} bg-sky-100 text-sky-800`}>
             {repeatLabel(task.repeatEveryDays)}

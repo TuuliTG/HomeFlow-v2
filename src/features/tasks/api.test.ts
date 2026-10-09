@@ -40,6 +40,7 @@ const newTask = {
   points: 3,
   repeatEveryDays: null,
   dueOn: null,
+  isPrivate: false,
 } as const;
 const row = {
   id: 't1',
@@ -51,6 +52,7 @@ const row = {
   repeat_every_days: null,
   due_on: null,
   picked_up_by: null,
+  is_private: false,
 };
 
 /** The tasks query's result: it is ordered twice (due date, then newest), then awaited. */
@@ -93,6 +95,7 @@ describe('tasks api', () => {
       points: 3,
       repeatEveryDays: null,
       dueOn: null,
+      isPrivate: false,
     });
   });
 
@@ -252,6 +255,15 @@ describe('tasks api', () => {
     expect(task).toMatchObject({ repeatEveryDays: 14, dueOn: '2026-10-22' });
   });
 
+  it('reads whether a task is private', async () => {
+    respondWithTasks({ data: [{ ...row, is_private: true }], error: null });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const [task] = await api.fetchTasks();
+
+    expect(task).toMatchObject({ isPrivate: true });
+  });
+
   it('skips the name lookup when there are no tasks', async () => {
     respondWithTasks({ data: [], error: null });
 
@@ -277,7 +289,7 @@ describe('tasks api', () => {
   it('adds a task, leaving household and creator to the database', async () => {
     query.insert.mockResolvedValue({ error: null });
 
-    await api.addTask({ ...newTask, repeatEveryDays: 7, dueOn: '2026-10-10' });
+    await api.addTask({ ...newTask, repeatEveryDays: 7, dueOn: '2026-10-10', isPrivate: true });
 
     expect(client.from).toHaveBeenCalledWith('tasks');
     expect(query.insert).toHaveBeenCalledWith({
@@ -287,6 +299,7 @@ describe('tasks api', () => {
       points: 3,
       repeat_every_days: 7,
       due_on: '2026-10-10',
+      is_private: true,
     });
   });
 
