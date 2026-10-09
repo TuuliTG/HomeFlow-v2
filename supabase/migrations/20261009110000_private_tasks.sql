@@ -1,6 +1,10 @@
 -- Private tasks (ADR 0004): a member can add a task only they can see, not shared with the family. Whether a task
 -- is private is chosen when adding it and doesn't change; the next occurrence of a repeating task keeps it.
+-- Private tasks have no points, so they never count towards points or statistics.
 alter table public.tasks add column is_private boolean not null default false;
+alter table public.tasks
+  alter column points drop not null,
+  add constraint tasks_points_only_shared check ((points is null) = is_private);
 
 grant insert (is_private) on table public.tasks to authenticated;
 

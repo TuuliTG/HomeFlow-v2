@@ -133,7 +133,8 @@ function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }
       <div className="flex items-center justify-between gap-4">
         <span className="font-medium text-slate-900">{task.title}</span>
         <span className="flex shrink-0 items-center gap-3 text-slate-500">
-          Done {formatShortDate(new Date(task.completedAt))} · {task.points} points
+          Done {formatShortDate(new Date(task.completedAt))}
+          {task.points !== null && ` · ${String(task.points)} points`}
           {canUndo && (
             <button
               type="button"

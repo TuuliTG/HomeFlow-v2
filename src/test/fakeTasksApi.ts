@@ -112,7 +112,11 @@ export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdComplet
 export const fetchTotalPoints: typeof tasksApi.fetchTotalPoints = (userId) => {
   if (requestsFailing()) return Promise.reject(new Error('Network error'));
   return Promise.resolve(
-    tasks.reduce((total, task) => total + (task.completed?.by === userId ? task.points : 0), 0),
+    tasks.reduce(
+      (total, task) =>
+        total + (task.completed?.by === userId && !task.isPrivate ? (task.points ?? 0) : 0),
+      0,
+    ),
   );
 };
 

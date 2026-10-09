@@ -30,7 +30,11 @@ export function TaskCard({ task, currentUserId }: TaskCardProps) {
     >
       <div className="flex items-start justify-between gap-4">
         <TaskDetails task={task} currentUserId={currentUserId} titleId={titleId} />
-        <span className="text-brand-900 shrink-0 text-sm font-semibold">{task.points} points</span>
+        {task.points !== null && (
+          <span className="text-brand-900 shrink-0 text-sm font-semibold">
+            {task.points} points
+          </span>
+        )}
       </div>
       <TaskActions task={task} currentUserId={currentUserId} />
     </li>

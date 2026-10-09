@@ -29,7 +29,7 @@ interface TaskRow {
   title: string;
   description: string | null;
   type: string;
-  points: number;
+  points: number | null;
   created_by: string;
   repeat_every_days: number | null;
   due_on: string | null;
@@ -257,7 +257,7 @@ export async function fakeSupabase(page: Page) {
       task_title: string;
       task_description: string | null;
       task_type: string;
-      task_points: number;
+      task_points: number | null;
       task_due_on: string | null;
       task_repeat_every_days: number | null;
     };

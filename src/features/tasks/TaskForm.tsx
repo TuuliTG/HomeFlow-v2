@@ -54,7 +54,7 @@ function fieldValues(task: NewTask | undefined) {
     title: task.title,
     description: task.description ?? '',
     type: task.type,
-    points: String(task.points),
+    points: task.points === null ? DEFAULT_POINTS : String(task.points),
     repeat: task.repeatEveryDays === null ? '' : String(task.repeatEveryDays),
     dueOn: task.dueOn ?? '',
     isPrivate: task.isPrivate,
@@ -96,7 +96,7 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
     const parsed = newTaskSchema.safeParse({
       title,
       type,
-      points,
+      points: isPrivate ? null : points,
       repeatEveryDays: repeatEveryDays === '' ? null : Number(repeatEveryDays),
       dueOn: dueOn === '' ? null : dueOn,
       description: description.trim() === '' ? null : description,
@@ -159,23 +159,27 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
 
       <TaskTypeField value={type} onChange={setType} />
 
-      <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-        Points
-        <input
-          type="number"
-          name="points"
-          ref={pointsRef}
-          {...errorPropsFor('points')}
-          inputMode="numeric"
-          min={1}
-          max={10}
-          value={points}
-          onChange={(event) => {
-            setPoints(event.target.value);
-          }}
-          className={`${inputClassName} w-24`}
-        />
-      </label>
+      {!initial && <PrivateTaskField checked={isPrivate} onChange={setIsPrivate} />}
+
+      {!isPrivate && (
+        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+          Points
+          <input
+            type="number"
+            name="points"
+            ref={pointsRef}
+            {...errorPropsFor('points')}
+            inputMode="numeric"
+            min={1}
+            max={10}
+            value={points}
+            onChange={(event) => {
+              setPoints(event.target.value);
+            }}
+            className={`${inputClassName} w-24`}
+          />
+        </label>
+      )}
 
       <div className="flex gap-3">
         <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
@@ -218,8 +222,6 @@ export function TaskForm({ initial, submitLabel, isSaving, onSave }: TaskFormPro
           {Number(repeatEveryDays) === 1 ? '1 day' : `${repeatEveryDays} days`} later.
         </p>
       )}
-
-      {!initial && <PrivateTaskField checked={isPrivate} onChange={setIsPrivate} />}
 
       {error && (
         <p id={errorId} role="alert" className="text-sm text-red-700">

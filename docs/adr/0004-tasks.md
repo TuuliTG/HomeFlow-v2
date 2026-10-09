@@ -16,8 +16,9 @@ next one back rather than follow a fixed calendar.
 - **Private tasks**: `is_private` (chosen when adding, never changed; the next occurrence keeps it). The select
   policy shows a private task only to its creator, so the board, "Show completed" and live updates hide it from
   the others, and every security definer function that acts on any open task skips other members' private ones.
-  Done private tasks count towards their creator's own points for now; fairness statistics will decide whether
-  they count there. A private task whose creator deletes their account or leaves stays hidden from everyone.
+  **Private tasks have no points** (`points` is null exactly when `is_private`, a check constraint) and statistics
+  count only shared tasks, both done and created. A private task whose creator deletes their account or leaves
+  stays hidden from everyone.
 - **Least privilege**: members can read and insert tasks; every change goes through a function. Marking done uses
   `complete_task(task_id, completed_on)` (security definer). In one transaction it marks an open task in the
   caller's household done and, if it repeats, inserts the **next occurrence**, due
@@ -31,7 +32,7 @@ next one back rather than follow a fixed calendar.
 - **Fixing mistakes**: any member can edit (`update_task()`) or delete (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
   the next occurrence it created, unless that one is already done.
-- **Points**: the Me screen shows the total points of every task the user has marked done, summed when read
+- **Points**: the Me screen shows the total points of every shared task the user has marked done, summed when read
   (`fetchTotalPoints`), not stored. Adding tasks earns nothing yet; points per period come later.
 - The board shows open tasks, soonest due first and tasks without a due date last (newest first within a date).
   "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done tasks.

@@ -5,7 +5,7 @@ interface PrivateTaskFieldProps {
   onChange: (isPrivate: boolean) => void;
 }
 
-/** The check mark that keeps a new task to its creator instead of sharing it with the family. */
+/** The check mark that keeps a new task to its creator, without points, instead of sharing it with the family. */
 export function PrivateTaskField({ checked, onChange }: PrivateTaskFieldProps) {
   const hintId = useId();
   return (
@@ -24,7 +24,7 @@ export function PrivateTaskField({ checked, onChange }: PrivateTaskFieldProps) {
         Keep it private
       </label>
       <p id={hintId} className="text-sm text-slate-600">
-        Only you can see it. It isn&apos;t shared with your family.
+        Only you can see it. It isn&apos;t shared with your family and earns no points.
       </p>
     </div>
   );

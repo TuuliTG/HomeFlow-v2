@@ -30,6 +30,45 @@ describe('private tasks', () => {
     expect(within(task).getByText('Private')).toBeInTheDocument();
   });
 
+  it('have no points', async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.type(await screen.findByLabelText('Task'), 'Buy a birthday present');
+    expect(screen.getByLabelText('Points')).toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Keep it private' }));
+    expect(screen.queryByLabelText('Points')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    const task = await screen.findByRole('listitem', { name: 'Buy a birthday present' });
+    expect(within(task).queryByText(/points/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'Edit: Buy a birthday present' }));
+    expect(await screen.findByLabelText('Task')).toHaveValue('Buy a birthday present');
+    expect(screen.queryByLabelText('Points')).not.toBeInTheDocument();
+  });
+
+  it("don't add to the points of whoever does them", async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Buy a present',
+      type: 'meta',
+      points: null,
+      isPrivate: true,
+    });
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:0', '2026-10-09');
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:1', '2026-10-09');
+    renderAppAt('/me');
+
+    const total = await screen.findByRole('region', { name: 'Points earned' });
+    expect(await within(total).findByText('3')).toBeInTheDocument();
+    const done = (await screen.findByText('Buy a present')).closest('li');
+    expect(done).not.toBeNull();
+    expect(done).not.toHaveTextContent(/points/);
+  });
+
   it('are shared with the family unless checked', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
@@ -53,7 +92,7 @@ describe('private tasks', () => {
       fakeTasksBackend.addTaskAs(ben.id, {
         title: 'Plan a surprise party',
         type: 'meta',
-        points: 5,
+        points: null,
         isPrivate: true,
       });
     });
@@ -68,7 +107,7 @@ describe('private tasks', () => {
     fakeTasksBackend.addTaskAs(anna.id, {
       title: 'Water my plants',
       type: 'physical',
-      points: 1,
+      points: null,
       repeatEveryDays: 7,
       isPrivate: true,
     });

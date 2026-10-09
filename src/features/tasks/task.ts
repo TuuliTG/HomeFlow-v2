@@ -29,35 +29,45 @@ export function repeatLabel(days: number): string {
   return `Every ${String(days)} days`;
 }
 
-export const newTaskSchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .min(1, 'Give the task a name.')
-    .max(TITLE_MAX_LENGTH, `Keep the name to ${TITLE_MAX_LENGTH} characters or fewer.`),
-  /** More detail when the title isn't enough; null when there is none. */
-  description: z
-    .string()
-    .trim()
-    .min(1)
-    .max(
-      DESCRIPTION_MAX_LENGTH,
-      `Keep the description to ${String(DESCRIPTION_MAX_LENGTH)} characters or fewer.`,
-    )
-    .nullable(),
-  type: z.enum(taskTypes),
-  points: z.coerce
-    .number()
-    .int('Points must be a whole number from 1 to 10.')
-    .min(1, 'Points must be a whole number from 1 to 10.')
-    .max(10, 'Points must be a whole number from 1 to 10.'),
-  /** Days after it is done that the task comes back; null for a one-off task. */
-  repeatEveryDays: z.number().int().min(1).max(365).nullable(),
-  /** Local date (YYYY-MM-DD) the task should be done by, if any. */
-  dueOn: z.iso.date('Pick a valid due date.').nullable(),
-  /** Seen only by whoever added it, not shared with the family. Chosen when adding the task. */
-  isPrivate: z.boolean(),
-});
+export const newTaskSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(1, 'Give the task a name.')
+      .max(TITLE_MAX_LENGTH, `Keep the name to ${TITLE_MAX_LENGTH} characters or fewer.`),
+    /** More detail when the title isn't enough; null when there is none. */
+    description: z
+      .string()
+      .trim()
+      .min(1)
+      .max(
+        DESCRIPTION_MAX_LENGTH,
+        `Keep the description to ${String(DESCRIPTION_MAX_LENGTH)} characters or fewer.`,
+      )
+      .nullable(),
+    type: z.enum(taskTypes),
+    /** Null for a private task: only shared tasks earn points. */
+    points: z.coerce
+      .number()
+      .int('Points must be a whole number from 1 to 10.')
+      .min(1, 'Points must be a whole number from 1 to 10.')
+      .max(10, 'Points must be a whole number from 1 to 10.')
+      .nullable(),
+    /** Days after it is done that the task comes back; null for a one-off task. */
+    repeatEveryDays: z.number().int().min(1).max(365).nullable(),
+    /** Local date (YYYY-MM-DD) the task should be done by, if any. */
+    dueOn: z.iso.date('Pick a valid due date.').nullable(),
+    /**
+     * Seen only by whoever added it, not shared with the family. Chosen when adding the task. Private
+     * tasks have no points and don't count in statistics.
+     */
+    isPrivate: z.boolean(),
+  })
+  .refine((task) => (task.points === null) === task.isPrivate, {
+    path: ['points'],
+    message: 'Only shared tasks have points.',
+  });
 
 export type NewTask = z.infer<typeof newTaskSchema>;
 
@@ -78,7 +88,8 @@ export interface CompletedTask {
   id: string;
   title: string;
   type: TaskType;
-  points: number;
+  /** Null for a private task. */
+  points: number | null;
   /** When it was marked done (ISO timestamp). */
   completedAt: string;
 }

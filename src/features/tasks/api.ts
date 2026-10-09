@@ -16,7 +16,7 @@ const taskRowsSchema = z.array(
     title: z.string(),
     description: z.string().nullable(),
     type: z.enum(taskTypes),
-    points: z.number(),
+    points: z.number().nullable(),
     created_by: z.string().nullable(),
     repeat_every_days: z.number().nullable(),
     due_on: z.string().nullable(),
@@ -29,7 +29,7 @@ const completedTaskRowsSchema = z.array(
     id: z.string(),
     title: z.string(),
     type: z.enum(taskTypes),
-    points: z.number(),
+    points: z.number().nullable(),
     completed_at: z.string(),
   }),
 );
@@ -108,7 +108,7 @@ const householdCompletedRowsSchema = z.array(
     id: z.string(),
     title: z.string(),
     type: z.enum(taskTypes),
-    points: z.number(),
+    points: z.number().nullable(),
     completed_at: z.string(),
     completed_by: z.string().nullable(),
   }),
@@ -136,12 +136,13 @@ export async function fetchHouseholdCompletedTasks(): Promise<HouseholdCompleted
 
 const pointsRowsSchema = z.array(z.object({ points: z.number() }));
 
-/** All the points `userId` has earned by marking tasks done. */
+/** All the points `userId` has earned by marking shared tasks done; private tasks have none. */
 export async function fetchTotalPoints(userId: string): Promise<number> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select('points')
-    .eq('completed_by', userId);
+    .eq('completed_by', userId)
+    .eq('is_private', false);
   if (error) throw error;
   return pointsRowsSchema.parse(data).reduce((total, row) => total + row.points, 0);
 }

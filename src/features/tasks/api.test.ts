@@ -189,13 +189,18 @@ describe('tasks api', () => {
   });
 
   it("adds up the points of the user's completed tasks", async () => {
-    query.eq.mockResolvedValueOnce({ data: [{ points: 3 }, { points: 5 }], error: null });
+    query.eq
+      .mockReturnValueOnce(query)
+      .mockResolvedValueOnce({ data: [{ points: 3 }, { points: 5 }], error: null });
 
     await expect(api.fetchTotalPoints('u1')).resolves.toBe(8);
     expect(query.select).toHaveBeenCalledWith('points');
-    expect(query.eq).toHaveBeenCalledWith('completed_by', 'u1');
+    expect(query.eq.mock.calls).toEqual([
+      ['completed_by', 'u1'],
+      ['is_private', false],
+    ]);
 
-    query.eq.mockResolvedValueOnce({ data: null, error: failure });
+    query.eq.mockReturnValueOnce(query).mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.fetchTotalPoints('u1')).rejects.toBe(failure);
   });
 
