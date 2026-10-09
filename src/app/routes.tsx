@@ -12,7 +12,7 @@ import { NotificationSettings } from '@/features/notifications/NotificationSetti
 import { turnOffNotificationsOnThisDevice } from '@/features/notifications/usePushNotifications';
 import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
-import { AvailableTasksPage } from '@/features/tasks/AvailableTasksPage';
+import { SharedTasksPage } from '@/features/tasks/SharedTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
 import { EditTaskPage } from '@/features/tasks/EditTaskPage';
 import { MyTasksPage } from '@/features/tasks/MyTasksPage';
@@ -34,7 +34,7 @@ export const routes: RouteObject[] = [
           </OnboardingGate>
         ),
         children: [
-          { path: paths.tasks, element: <AvailableTasksPage /> },
+          { path: paths.tasks, element: <SharedTasksPage /> },
           { path: paths.newTask, element: <CreateTaskPage /> },
           { path: paths.editTask(':taskId'), element: <EditTaskPage /> },
           {

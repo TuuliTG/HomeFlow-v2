@@ -36,7 +36,7 @@ export function CreateTaskPage() {
           isSaving={addTask.isPending}
           onSave={async (task) => {
             await addTask.mutateAsync(task);
-            await navigate(paths.tasks);
+            await navigate(paths.taskList(task.isPrivate));
           }}
         />
       )}

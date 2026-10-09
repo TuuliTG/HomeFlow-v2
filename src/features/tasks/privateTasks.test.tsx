@@ -15,7 +15,7 @@ function addBen() {
 }
 
 describe('private tasks', () => {
-  it('can be added with a check mark and are marked private on the board', async () => {
+  it('can be added with a check mark and are marked private on the Me page', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
@@ -26,8 +26,55 @@ describe('private tasks', () => {
     await user.click(privateBox);
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
+    expect(await screen.findByRole('heading', { level: 1, name: 'My tasks' })).toBeInTheDocument();
     const task = await screen.findByRole('listitem', { name: 'Buy a birthday present' });
     expect(within(task).getByText('Private')).toBeInTheDocument();
+  });
+
+  it("don't show up on the shared tasks page, not even when done", async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Buy a present',
+      type: 'meta',
+      points: null,
+      isPrivate: true,
+    });
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Call the dentist',
+      type: 'meta',
+      points: null,
+      isPrivate: true,
+    });
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:1', '2026-10-09');
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:3', '2026-10-09');
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await screen.findByRole('listitem', { name: 'Vacuum' });
+    expect(screen.queryByText('Buy a present')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('switch', { name: 'Show completed' }));
+    expect(await screen.findByText('Dust')).toBeInTheDocument();
+    expect(screen.queryByText('Call the dentist')).not.toBeInTheDocument();
+  });
+
+  it('go back to the Me page after editing', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Buy a present',
+      type: 'meta',
+      points: null,
+      isPrivate: true,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Buy a present' }));
+    await user.click(await screen.findByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'My tasks' })).toBeInTheDocument();
   });
 
   it('have no points', async () => {
@@ -112,7 +159,7 @@ describe('private tasks', () => {
       isPrivate: true,
     });
     const user = userEvent.setup();
-    renderAppAt('/');
+    renderAppAt('/me');
 
     await user.click(await screen.findByRole('button', { name: 'Mark done: Water my plants' }));
 

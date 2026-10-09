@@ -16,8 +16,9 @@ next one back rather than follow a fixed calendar.
 - **Private tasks**: `is_private` (chosen when adding, never changed; the next occurrence keeps it). The select
   policy shows a private task only to its creator, so the board, "Show completed" and live updates hide it from
   the others, and every security definer function that acts on any open task skips other members' private ones.
-  A private task is the creator's own to do: it is listed in their My tasks without picking it up, and has no
-  Pick up or Put back. **Private tasks have no points** (`points` is null exactly when `is_private`, a check
+  A private task is the creator's own to do: it is listed only in their My tasks (Me page), without picking it up,
+  and has no Pick up or Put back. The Shared tasks board and its "Show completed" leave out even the creator's
+  own private tasks, and saving or deleting one returns to the Me page. **Private tasks have no points** (`points` is null exactly when `is_private`, a check
   constraint) and statistics count only shared tasks, both done and created (ADR 0006). A private task whose creator
   deletes their account or leaves stays hidden from everyone.
 - **Least privilege**: members can read and insert tasks; every change goes through a function. Marking done uses
@@ -35,9 +36,9 @@ next one back rather than follow a fixed calendar.
   the next occurrence it created, unless that one is already done.
 - **Points**: the Me screen shows the total points of every shared task the user has marked done, summed when read
   (`fetchTotalPoints`), not stored. Adding tasks earns nothing yet; points per period come later.
-- The board shows open tasks, soonest due first and tasks without a due date last (newest first within a date).
-  "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done tasks.
-  "Only tasks to pick up" (`?unpicked=1`) hides tasks someone has picked up and private tasks (nobody picks them up).
+- The board (the **Shared tasks** page) shows open shared tasks, soonest due first and tasks without a due date last (newest first within a date).
+  "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done shared tasks.
+  "Only tasks to pick up" (`?unpicked=1`) hides tasks someone has picked up.
 - **Adding a task again**: the New task form suggests earlier tasks from the household's own history, read with
   `task_suggestions()` (security invoker, so RLS hides other members' private tasks): one per title ignoring case,
   with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Picking

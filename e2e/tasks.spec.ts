@@ -9,7 +9,7 @@ test.use({ serviceWorkers: 'block' });
 test('family member can create a task and see it on the shared task board', async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
-  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
   await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
 
   await page.getByRole('link', { name: 'New task' }).click();
@@ -34,7 +34,7 @@ test('family member can create a task and see it on the shared task board', asyn
 test('family member can add a task again from earlier tasks', async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
-  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
   await page.getByLabel('Task', { exact: true }).fill('Take out trash');
   await page.getByLabel('Points').fill('1');
@@ -67,7 +67,7 @@ test('family member can mark a repeating task done and see it come back', async 
   await page.clock.setFixedTime(new Date(2026, 9, 8, 12));
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
-  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
 
   await page.getByRole('link', { name: 'New task' }).click();
   await page.getByLabel('Task', { exact: true }).fill('Change bed linen');
@@ -92,7 +92,7 @@ test('family member can pick up a task, find it on the Me screen and mark it don
 }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
-  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
   await page.getByLabel('Task', { exact: true }).fill('Vacuum');
   await page.getByRole('button', { name: 'Create task' }).click();
@@ -119,7 +119,7 @@ test('family member can pick up a task, find it on the Me screen and mark it don
 test('family member can set a reminder for a task they picked up', async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
-  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
   await page.getByLabel('Task', { exact: true }).fill('Vacuum');
   await page.getByRole('button', { name: 'Create task' }).click();
@@ -151,7 +151,7 @@ test('family member can set a reminder for a task they picked up', async ({ page
 test('family member can fix a task and then delete it', async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
-  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
   await page.getByLabel('Task', { exact: true }).fill('Vacum');
   await page.getByLabel('Description (optional)').fill('Under the sofa too');
@@ -179,7 +179,7 @@ test('family member can fix a task and then delete it', async ({ page }) => {
 test('family member can show the tasks done in the household', async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
-  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
   await page.getByLabel('Task', { exact: true }).fill('Vacuum');
   await page.getByRole('button', { name: 'Create task' }).click();

@@ -10,20 +10,23 @@ describe('AppShell', () => {
     logInAsFamilyMember();
   });
 
-  it('shows the available tasks screen by default', async () => {
+  it('shows the shared tasks screen by default', async () => {
     renderAppAt('/');
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Available tasks' }),
+      await screen.findByRole('heading', { level: 1, name: 'Shared tasks' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Tasks' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Shared tasks' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 
   it.each([
     ['Me', 'My tasks'],
     ['Rewards', 'Rewards & goals'],
     ['Statistics', 'Fairness & progress'],
-    ['Tasks', 'Available tasks'],
+    ['Shared tasks', 'Shared tasks'],
   ])('navigates to %s', async (linkName, heading) => {
     const user = userEvent.setup();
     renderAppAt('/statistics');
@@ -40,6 +43,6 @@ describe('AppShell', () => {
 
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'Back to tasks' }));
-    expect(await screen.findByRole('heading', { name: 'Available tasks' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Shared tasks' })).toBeInTheDocument();
   });
 });

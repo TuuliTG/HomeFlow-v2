@@ -13,7 +13,7 @@ import { useLoggedInUser } from '@/lib/auth';
 const SHOW_COMPLETED_PARAM = 'completed';
 const ONLY_UNPICKED_PARAM = 'unpicked';
 
-export function AvailableTasksPage() {
+export function SharedTasksPage() {
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM);
   const [onlyUnpicked, setOnlyUnpicked] = useSwitchParam(ONLY_UNPICKED_PARAM);
 
@@ -22,8 +22,8 @@ export function AvailableTasksPage() {
       <div className="flex items-start justify-between gap-4">
         <PageHeader
           eyebrow="Tasks"
-          title="Available tasks"
-          description="Pick any task. New tasks earn bonus points for variety and fairness."
+          title="Shared tasks"
+          description="Pick any task. New tasks earn bonus points for variety and fairness. Your private tasks are on your Me page."
         />
         <Link
           to={paths.newTask}
@@ -88,9 +88,9 @@ function Switch({ label, checked, onChange }: SwitchProps) {
   );
 }
 
-/** Whether anyone could still pick the task up: not picked up yet, and not someone's private task. */
+/** Whether anyone could still pick the task up. */
 function isUnpicked(task: Task): boolean {
-  return task.pickedUpBy === null && !task.isPrivate;
+  return task.pickedUpBy === null;
 }
 
 function TaskList({ onlyUnpicked }: { onlyUnpicked: boolean }) {
@@ -106,10 +106,12 @@ function TaskList({ onlyUnpicked }: { onlyUnpicked: boolean }) {
       </p>
     );
   }
-  if (tasks.data.length === 0) {
+  // Private tasks are listed only on the Me page.
+  const shared = tasks.data.filter((task) => !task.isPrivate);
+  if (shared.length === 0) {
     return <EmptyMessage>No tasks yet. Create the first one!</EmptyMessage>;
   }
-  const shown = onlyUnpicked ? tasks.data.filter(isUnpicked) : tasks.data;
+  const shown = onlyUnpicked ? shared.filter(isUnpicked) : shared;
   if (shown.length === 0) {
     return <EmptyMessage>Every task has been picked up.</EmptyMessage>;
   }

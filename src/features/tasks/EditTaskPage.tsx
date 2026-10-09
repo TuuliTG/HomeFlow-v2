@@ -50,7 +50,7 @@ function EditTask({ task, userId }: { task: Task; userId: string }) {
         isSaving={updateTask.isPending}
         onSave={async (changed) => {
           await updateTask.mutateAsync({ taskId: task.id, task: changed });
-          await navigate(paths.tasks);
+          await navigate(paths.taskList(changed.isPrivate));
         }}
       />
       <DeleteTask task={task} userId={userId} />
@@ -95,7 +95,9 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
           type="button"
           disabled={deleteTask.isPending}
           onClick={() => {
-            deleteTask.mutate(task.id, { onSuccess: () => void navigate(paths.tasks) });
+            deleteTask.mutate(task.id, {
+              onSuccess: () => void navigate(paths.taskList(task.isPrivate)),
+            });
           }}
           className="rounded-lg bg-red-700 px-4 py-2.5 font-semibold text-white hover:bg-red-900 disabled:opacity-60"
         >

@@ -255,7 +255,7 @@ export function TaskForm({
           {submitLabel}
         </button>
         <Link
-          to={paths.tasks}
+          to={paths.taskList(initial?.isPrivate ?? false)}
           className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-center font-semibold text-slate-700 hover:bg-slate-100"
         >
           Cancel
