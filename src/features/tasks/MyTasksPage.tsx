@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { formatShortDate } from '@/features/tasks/dueDate';
+import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import { TaskCard } from '@/features/tasks/TaskCard';
 import { type CompletedTask, isToDoBy, UNDO_WINDOW_MS } from '@/features/tasks/task';
 import {
@@ -19,11 +20,14 @@ const emptyClassName =
 export function MyTasksPage() {
   return (
     <>
-      <PageHeader
-        eyebrow="Me"
-        title="My tasks"
-        description="Things you've picked up, your private tasks and what you've completed."
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          eyebrow="Me"
+          title="My tasks"
+          description="Things you've picked up, your private tasks and what you've completed."
+        />
+        <NewTaskLink />
+      </div>
       <div className="flex flex-col gap-8">
         <PointsTotal />
         <section aria-labelledby="to-do-heading" className="flex flex-col gap-3">

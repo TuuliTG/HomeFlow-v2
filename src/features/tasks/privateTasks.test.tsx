@@ -77,6 +77,22 @@ describe('private tasks', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'My tasks' })).toBeInTheDocument();
   });
 
+  it('can be added from the Me page', async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'New task' }));
+    await user.type(await screen.findByLabelText('Task'), 'Buy a birthday present');
+    await user.click(screen.getByRole('checkbox', { name: 'Keep it private' }));
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    const toDo = await screen.findByRole('region', { name: 'To do' });
+    expect(
+      await within(toDo).findByRole('listitem', { name: 'Buy a birthday present' }),
+    ).toBeInTheDocument();
+  });
+
   it('have no points', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();

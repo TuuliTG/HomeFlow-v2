@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 
-import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
+import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import type { Task } from '@/features/tasks/task';
 import { TaskCard } from '@/features/tasks/TaskCard';
 import { useTasks } from '@/features/tasks/useTasks';
@@ -25,12 +25,7 @@ export function SharedTasksPage() {
           title="Shared tasks"
           description="Pick any task. New tasks earn bonus points for variety and fairness. Your private tasks are on your Me page."
         />
-        <Link
-          to={paths.newTask}
-          className="bg-brand-600 hover:bg-brand-900 shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-white"
-        >
-          <span aria-hidden="true">+ </span>New task
-        </Link>
+        <NewTaskLink />
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-2">
         <Switch label="Only tasks to pick up" checked={onlyUnpicked} onChange={setOnlyUnpicked} />
