@@ -3,12 +3,13 @@ import { useSearchParams } from 'react-router';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import {
-  byMostContributed,
   fairnessOf,
   type MemberContribution,
+  type Metric,
   type Period,
   periodLabels,
   periods,
+  rankBy,
 } from '@/features/statistics/statistics';
 import { useContributions } from '@/features/statistics/useContributions';
 import { useLoggedInUser } from '@/lib/auth';
@@ -32,7 +33,7 @@ export function StatisticsPage() {
       <PageHeader
         eyebrow="Statistics"
         title="Fairness & progress"
-        description="How shared tasks are done and added across the family. Private tasks don't count."
+        description="Points earned and tasks created across the family. Private tasks don't count."
       />
       <PeriodPicker
         period={period}
@@ -96,96 +97,125 @@ function StatisticsBody({
   }
   return (
     <div className="flex flex-col gap-6">
-      <FairnessScore contributions={contributions.data} />
-      <Leaderboard contributions={byMostContributed(contributions.data)} userId={userId} />
+      {contributions.data.length < 2 && (
+        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
+          Invite your family to see how the work is shared.
+        </p>
+      )}
+      {metrics.map((metric) => (
+        <MetricSection
+          key={metric}
+          metric={metric}
+          contributions={contributions.data}
+          userId={userId}
+        />
+      ))}
     </div>
   );
 }
 
-function FairnessScore({ contributions }: { contributions: MemberContribution[] }) {
-  const fairness = fairnessOf(contributions);
+interface MetricDetails {
+  title: string;
+  description: string;
+  /** "12 points · 3 tasks done" */
+  summary: (member: MemberContribution) => string;
+  /** Shown instead of a fairness score while no one has any. */
+  empty: string;
+  barClassName: string;
+}
+
+const metrics: Metric[] = ['points', 'created'];
+
+const metricDetails: Record<Metric, MetricDetails> = {
+  points: {
+    title: 'Points earned',
+    description: 'From doing shared tasks.',
+    summary: ({ points, done }) => `${countOf(points, 'point')} · ${countOf(done, 'task')} done`,
+    empty: 'No points earned yet in this period.',
+    barClassName: 'bg-brand-600',
+  },
+  created: {
+    title: 'Tasks created',
+    description: 'Adding shared tasks is meta work: planning and remembering.',
+    summary: ({ created }) => countOf(created, 'task'),
+    empty: 'No tasks created yet in this period.',
+    barClassName: 'bg-meta-500',
+  },
+};
+
+/** "1 point", "3 points". */
+function countOf(count: number, noun: string): string {
+  return `${String(count)} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+/** One metric: its fairness score and each member's share, most first. */
+function MetricSection({
+  metric,
+  contributions,
+  userId,
+}: {
+  metric: Metric;
+  contributions: MemberContribution[];
+  userId: string;
+}) {
+  const { title, description, summary, empty, barClassName } = metricDetails[metric];
+  const headingId = `${metric}-heading`;
+  const most = Math.max(1, ...contributions.map((member) => member[metric]));
   return (
-    <section
-      aria-labelledby="fairness-heading"
-      className="rounded-2xl border border-slate-200 bg-white p-4"
-    >
-      <h2 id="fairness-heading" className="text-sm font-medium text-slate-600">
-        Fairness score
-      </h2>
-      {fairness ? (
-        <>
-          <p className="mt-1 flex items-baseline gap-2">
-            <span className="text-4xl font-bold text-slate-900">{fairness.score}</span>
-            <span className="text-sm text-slate-500">/ 100</span>
-            <span className="bg-brand-50 text-brand-900 ml-auto rounded-full px-3 py-1 text-sm font-semibold">
-              {fairness.label}
-            </span>
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            100 means everyone did and added as many tasks as each other.
-          </p>
-        </>
-      ) : (
-        <p className="mt-1 text-sm text-slate-600">
-          {contributions.length < 2
-            ? 'Invite your family to see how the work is shared.'
-            : 'Nothing done or added yet in this period.'}
-        </p>
-      )}
+    <section aria-labelledby={headingId} className="flex flex-col gap-3">
+      <div>
+        <h2 id={headingId} className="text-lg font-semibold text-slate-900">
+          {title}
+        </h2>
+        <p className="text-sm text-slate-600">{description}</p>
+      </div>
+      <div className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+        <FairnessScore contributions={contributions} metric={metric} empty={empty} />
+        <ol aria-label={`${title} by member`} className="flex flex-col divide-y divide-slate-200">
+          {rankBy(contributions, metric).map((member) => (
+            <li
+              key={member.userId}
+              aria-label={memberName(member, userId)}
+              className="flex flex-col gap-2 px-4 py-3 text-sm"
+            >
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="font-medium text-slate-900">{memberName(member, userId)}</span>
+                <span className="text-slate-600">{summary(member)}</span>
+              </div>
+              <div aria-hidden="true" className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={`h-full ${barClassName}`}
+                  style={{ width: `${String((member[metric] / most) * 100)}%` }}
+                />
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
     </section>
   );
 }
 
-function Leaderboard({
+function FairnessScore({
   contributions,
-  userId,
+  metric,
+  empty,
 }: {
   contributions: MemberContribution[];
-  userId: string;
+  metric: Metric;
+  empty: string;
 }) {
-  const most = Math.max(1, ...contributions.map(({ done, created }) => done + created));
+  if (contributions.length < 2) return null;
+  const fairness = fairnessOf(contributions, metric);
+  if (!fairness) return <p className="px-4 py-3 text-sm text-slate-600">{empty}</p>;
   return (
-    <section aria-labelledby="leaderboard-heading" className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-4">
-        <h2 id="leaderboard-heading" className="text-lg font-semibold text-slate-900">
-          Leaderboard
-        </h2>
-        <p aria-hidden="true" className="flex gap-3 text-xs text-slate-600">
-          <span className="flex items-center gap-1">
-            <span className="bg-brand-600 size-2.5 rounded-full" /> Done
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="bg-meta-500 size-2.5 rounded-full" /> Added
-          </span>
-        </p>
-      </div>
-      <ol className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
-        {contributions.map((member) => (
-          <li
-            key={member.userId}
-            aria-label={memberName(member, userId)}
-            className="flex flex-col gap-2 px-4 py-3 text-sm"
-          >
-            <div className="flex items-baseline justify-between gap-4">
-              <span className="font-medium text-slate-900">{memberName(member, userId)}</span>
-              <span className="text-slate-600">
-                {member.done} done · {member.created} added
-              </span>
-            </div>
-            <div aria-hidden="true" className="flex h-2 overflow-hidden rounded-full bg-slate-100">
-              <div
-                className="bg-brand-600"
-                style={{ width: `${String((member.done / most) * 100)}%` }}
-              />
-              <div
-                className="bg-meta-500"
-                style={{ width: `${String((member.created / most) * 100)}%` }}
-              />
-            </div>
-          </li>
-        ))}
-      </ol>
-    </section>
+    <p className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600">
+      Fairness
+      <span className="text-lg font-bold text-slate-900">{fairness.score}</span>/ 100
+      <span className="bg-brand-50 text-brand-900 ml-auto rounded-full px-3 py-1 font-semibold">
+        {fairness.label}
+      </span>
+    </p>
   );
 }
 

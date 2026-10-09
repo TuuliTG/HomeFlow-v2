@@ -1,8 +1,9 @@
--- Statistics (ADR 0006): how many shared tasks each member of the user's household has done and added since a
--- time (all time when null), with their display names. Counted in the database, so the totals aren't cut short by
--- the API's row limit. Security invoker, so Row Level Security applies too; private tasks never count.
+-- Statistics (ADR 0006): how many shared tasks each member of the user's household has done, the points those
+-- earned, and how many they added since a time (all time when null), with their display names. Counted in the
+-- database, so the totals aren't cut short by the API's row limit. Security invoker, so Row Level Security applies
+-- too; private tasks never count.
 create function public.household_statistics(since timestamptz)
-returns table (user_id uuid, display_name text, done integer, created integer)
+returns table (user_id uuid, display_name text, done integer, points integer, created integer)
 language sql
 stable
 security invoker
@@ -11,11 +12,8 @@ as $$
   select
     m.user_id,
     p.display_name,
-    (
-      select count(*)::integer from public.tasks t
-      where t.household_id = m.household_id and t.completed_by = m.user_id and not t.is_private
-        and t.completed_at >= coalesce(household_statistics.since, '-infinity')
-    ),
+    done_tasks.done,
+    coalesce(done_tasks.points, 0),
     (
       select count(*)::integer from public.tasks t
       where t.household_id = m.household_id and t.created_by = m.user_id and not t.is_private
@@ -23,6 +21,11 @@ as $$
     )
   from public.household_members m
   left join public.profiles p on p.id = m.user_id
+  cross join lateral (
+    select count(*)::integer as done, sum(t.points)::integer as points from public.tasks t
+    where t.household_id = m.household_id and t.completed_by = m.user_id and not t.is_private
+      and t.completed_at >= coalesce(household_statistics.since, '-infinity')
+  ) done_tasks
   where m.household_id = (select private.current_household_id())
   order by m.joined_at, m.user_id;
 $$;

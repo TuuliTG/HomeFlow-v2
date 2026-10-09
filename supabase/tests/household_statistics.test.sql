@@ -47,9 +47,9 @@ update public.tasks set created_at = now() - interval '40 days' where title = 'V
 set local role authenticated;
 
 select results_eq(
-  $$ select display_name, done, created from public.household_statistics(null) $$,
-  $$ values ('Anna', 0, 2), ('Ben', 1, 0), (null, 0, 0) $$,
-  'counts shared tasks each member did and added, with their names, leaving out private tasks'
+  $$ select display_name, done, points, created from public.household_statistics(null) $$,
+  $$ values ('Anna', 0, 0, 2), ('Ben', 1, 3, 0), (null, 0, 0, 0) $$,
+  'counts shared tasks each member did, their points and the tasks they added, with their names, leaving out private tasks'
 );
 select results_eq(
   $$ select user_id::text, done, created from public.household_statistics(now() - interval '7 days') $$,

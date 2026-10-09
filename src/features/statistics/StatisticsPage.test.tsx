@@ -10,13 +10,8 @@ import { logInAsFamilyMember } from '@/test/session';
 
 const FORTY_DAYS_MS = 40 * 24 * 60 * 60 * 1000;
 
-function addTask(userId: string, title: string, isPrivate = false) {
-  fakeTasksBackend.addTaskAs(userId, {
-    title,
-    type: 'physical',
-    points: isPrivate ? null : 3,
-    isPrivate,
-  });
+function addTask(userId: string, title: string, points: number | null = 3) {
+  fakeTasksBackend.addTaskAs(userId, { title, type: 'physical', points, isPrivate: !points });
 }
 
 function addBen() {
@@ -25,64 +20,86 @@ function addBen() {
   return ben;
 }
 
-async function leaderboardRows() {
-  const leaderboard = await screen.findByRole('region', { name: 'Leaderboard' });
-  return within(leaderboard)
+function metric(name: 'Points earned' | 'Tasks created') {
+  return screen.getByRole('region', { name });
+}
+
+/** Each member's row in a metric, most first. */
+function rows(name: 'Points earned' | 'Tasks created') {
+  return within(metric(name))
     .getAllByRole('listitem')
     .map((item) => item.textContent);
 }
 
 describe('statistics page', () => {
-  it("ranks members by what they did and added this week, and scores how fairly it's shared", async () => {
+  it('ranks points earned and tasks created separately, each with its own fairness score', async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
-    addTask(anna.id, 'Vacuum');
-    addTask(anna.id, 'Book dentist');
-    addTask(anna.id, 'Water plants');
+    addTask(anna.id, 'Vacuum', 5);
+    addTask(anna.id, 'Book dentist', 2);
+    addTask(anna.id, 'Water plants', 1);
     fakeTasksBackend.completeTaskAs(ben.id, 'task:0', '2026-10-09');
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:1', '2026-10-09');
     renderAppAt('/statistics');
 
-    expect(await leaderboardRows()).toEqual(['You0 done · 3 added', 'Ben1 done · 0 added']);
-    const fairness = screen.getByRole('region', { name: 'Fairness score' });
-    expect(fairness).toHaveTextContent('50/ 100');
-    expect(fairness).toHaveTextContent('Slightly uneven');
+    await screen.findByRole('region', { name: 'Points earned' });
+    expect(rows('Points earned')).toEqual([
+      'Ben5 points · 1 task done',
+      'You2 points · 1 task done',
+    ]);
+    expect(metric('Points earned')).toHaveTextContent('Fairness57/ 100Slightly uneven');
+    expect(rows('Tasks created')).toEqual(['You3 tasks', 'Ben0 tasks']);
+    expect(metric('Tasks created')).toHaveTextContent('Fairness0/ 100Uneven');
   });
 
   it('counts earlier work under a longer period, kept in the address', async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
-    addTask(ben.id, 'Vacuum');
+    addTask(ben.id, 'Vacuum', 4);
     fakeTasksBackend.completeTaskAs(anna.id, 'task:0', '2026-10-09');
     fakeTasksBackend.ageTasks(FORTY_DAYS_MS);
     addTask(anna.id, 'Book dentist');
     const user = userEvent.setup();
     const { router } = renderAppAt('/statistics');
 
-    expect(await leaderboardRows()).toEqual(['You0 done · 1 added', 'Ben0 done · 0 added']);
+    await screen.findByRole('region', { name: 'Points earned' });
+    expect(rows('Points earned')).toEqual([
+      'You0 points · 0 tasks done',
+      'Ben0 points · 0 tasks done',
+    ]);
+    expect(metric('Points earned')).toHaveTextContent('No points earned yet in this period.');
+    expect(rows('Tasks created')).toEqual(['You1 task', 'Ben0 tasks']);
     expect(screen.getByRole('radio', { name: 'This week' })).toBeChecked();
 
     await user.click(screen.getByRole('radio', { name: 'All time' }));
 
-    await vi.waitFor(async () => {
-      expect(await leaderboardRows()).toEqual(['You1 done · 1 added', 'Ben0 done · 1 added']);
+    await vi.waitFor(() => {
+      expect(rows('Points earned')).toEqual([
+        'You4 points · 1 task done',
+        'Ben0 points · 0 tasks done',
+      ]);
     });
+    expect(rows('Tasks created')).toEqual(['You1 task', 'Ben1 task']);
+    expect(metric('Tasks created')).toHaveTextContent('Fairness100/ 100Balanced');
     expect(screen.getByRole('radio', { name: 'All time' })).toBeChecked();
     expect(router.state.location.search).toBe('?period=all');
-    expect(screen.getByRole('region', { name: 'Fairness score' })).toHaveTextContent('67/ 100');
   });
 
   it('leaves out private tasks', async () => {
     const anna = logInAsFamilyMember();
     addBen();
-    addTask(anna.id, 'Buy a present', true);
+    addTask(anna.id, 'Buy a present', null);
     fakeTasksBackend.completeTaskAs(anna.id, 'task:0', '2026-10-09');
     renderAppAt('/statistics?period=month');
 
-    expect(await leaderboardRows()).toEqual(['You0 done · 0 added', 'Ben0 done · 0 added']);
+    await screen.findByRole('region', { name: 'Points earned' });
+    expect(rows('Points earned')).toEqual([
+      'You0 points · 0 tasks done',
+      'Ben0 points · 0 tasks done',
+    ]);
+    expect(rows('Tasks created')).toEqual(['You0 tasks', 'Ben0 tasks']);
+    expect(metric('Tasks created')).toHaveTextContent('No tasks created yet in this period.');
     expect(screen.getByRole('radio', { name: 'This month' })).toBeChecked();
-    expect(screen.getByRole('region', { name: 'Fairness score' })).toHaveTextContent(
-      'Nothing done or added yet in this period.',
-    );
   });
 
   it('suggests inviting the family when there is no one to compare with', async () => {
@@ -90,10 +107,11 @@ describe('statistics page', () => {
     addTask(anna.id, 'Vacuum');
     renderAppAt('/statistics');
 
-    expect(await leaderboardRows()).toEqual(['You0 done · 1 added']);
-    expect(screen.getByRole('region', { name: 'Fairness score' })).toHaveTextContent(
-      'Invite your family to see how the work is shared.',
-    );
+    expect(
+      await screen.findByText('Invite your family to see how the work is shared.'),
+    ).toBeInTheDocument();
+    expect(rows('Tasks created')).toEqual(['You1 task']);
+    expect(metric('Tasks created')).not.toHaveTextContent('Fairness');
   });
 
   it('says so when the statistics cannot be loaded', async () => {

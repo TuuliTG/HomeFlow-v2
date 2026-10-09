@@ -16,14 +16,19 @@ export const fetchContributions: typeof statisticsApi.fetchContributions = (sinc
   const inPeriod = (timestamp: string) => since === null || new Date(timestamp) >= since;
   const memberIds = householdId ? fakeHouseholdBackend.memberIdsOf(householdId) : [];
   return Promise.resolve(
-    memberIds.map((userId) => ({
-      userId,
-      displayName: fakeAuthBackend.displayNameOf(userId),
-      done: shared.filter(({ completed }) => completed?.by === userId && inPeriod(completed.at))
-        .length,
-      created: shared.filter(
-        ({ createdBy, createdAt }) => createdBy === userId && inPeriod(createdAt),
-      ).length,
-    })),
+    memberIds.map((userId) => {
+      const done = shared.filter(
+        ({ completed }) => completed?.by === userId && inPeriod(completed.at),
+      );
+      return {
+        userId,
+        displayName: fakeAuthBackend.displayNameOf(userId),
+        done: done.length,
+        points: done.reduce((total, task) => total + (task.points ?? 0), 0),
+        created: shared.filter(
+          ({ createdBy, createdAt }) => createdBy === userId && inPeriod(createdAt),
+        ).length,
+      };
+    }),
   );
 };

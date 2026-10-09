@@ -6,7 +6,7 @@ import { EXISTING_HOUSEHOLD, fakeSupabase, logInAsNewUser } from './fakeSupabase
 // See auth.spec.ts: the Supabase fake can't intercept requests that go through the service worker.
 test.use({ serviceWorkers: 'block' });
 
-test('family member sees who did and added tasks, and how fairly it is shared', async ({
+test('family member sees points earned and tasks created, and how fairly each is shared', async ({
   page,
 }) => {
   await fakeSupabase(page);
@@ -21,15 +21,14 @@ test('family member sees who did and added tasks, and how fairly it is shared', 
   await expect(task).toBeHidden();
   await nav.getByRole('link', { name: 'Statistics' }).click();
 
-  const leaderboard = page.getByRole('region', { name: 'Leaderboard' });
-  await expect(leaderboard.getByRole('listitem', { name: 'Ben' })).toContainText(
-    '0 done · 1 added',
-  );
-  await expect(leaderboard.getByRole('listitem', { name: 'You' })).toContainText(
-    '1 done · 0 added',
-  );
-  await expect(page.getByRole('region', { name: 'Fairness score' })).toContainText('100');
-  await expect(page.getByRole('region', { name: 'Fairness score' })).toContainText('Balanced');
+  const points = page.getByRole('region', { name: 'Points earned' });
+  await expect(points.getByRole('listitem')).toHaveText([
+    'You5 points · 1 task done',
+    'Ben0 points · 0 tasks done',
+  ]);
+  await expect(points).toContainText('Uneven');
+  const created = page.getByRole('region', { name: 'Tasks created' });
+  await expect(created.getByRole('listitem')).toHaveText(['Ben1 task', 'You0 tasks']);
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations on Statistics').toEqual([]);
 

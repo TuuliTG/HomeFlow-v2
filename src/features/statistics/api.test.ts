@@ -18,15 +18,15 @@ describe('statistics api', () => {
   it("counts each member's tasks since the start of the period", async () => {
     client.rpc.mockResolvedValue({
       data: [
-        { user_id: 'u1', display_name: 'Anna', done: 2, created: 3 },
-        { user_id: 'u2', display_name: null, done: 1, created: 0 },
+        { user_id: 'u1', display_name: 'Anna', done: 2, points: 7, created: 3 },
+        { user_id: 'u2', display_name: null, done: 1, points: 2, created: 0 },
       ],
       error: null,
     });
 
     await expect(api.fetchContributions(new Date('2026-10-05T00:00:00Z'))).resolves.toEqual([
-      { userId: 'u1', displayName: 'Anna', done: 2, created: 3 },
-      { userId: 'u2', displayName: null, done: 1, created: 0 },
+      { userId: 'u1', displayName: 'Anna', done: 2, points: 7, created: 3 },
+      { userId: 'u2', displayName: null, done: 1, points: 2, created: 0 },
     ]);
     expect(client.rpc).toHaveBeenCalledWith('household_statistics', {
       since: '2026-10-05T00:00:00.000Z',

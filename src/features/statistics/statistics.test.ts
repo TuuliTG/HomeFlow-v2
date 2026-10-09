@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  byMostContributed,
   fairnessOf,
   type MemberContribution,
   periodStart,
+  rankBy,
 } from '@/features/statistics/statistics';
 
-const anna = { userId: 'anna', displayName: 'Anna', done: 0, created: 0 };
+const anna = { userId: 'anna', displayName: 'Anna', done: 0, points: 0, created: 0 };
 
-function contribution(done: number, created: number): MemberContribution {
-  return { ...anna, done, created };
+function points(earned: number): MemberContribution {
+  return { ...anna, points: earned };
 }
 
 describe('periodStart', () => {
@@ -26,49 +26,54 @@ describe('periodStart', () => {
   });
 });
 
-describe('byMostContributed', () => {
-  it('puts whoever did and added most first, keeping ties in order', () => {
+describe('rankBy', () => {
+  it('puts whoever has most of the metric first, keeping ties in the order they joined', () => {
     const ben = { ...anna, userId: 'ben', displayName: 'Ben' };
     const carl = { ...anna, userId: 'carl', displayName: 'Carl' };
+    const contributions = [
+      { ...anna, points: 3, created: 2 },
+      { ...ben, points: 8, created: 0 },
+      { ...carl, points: 3, created: 5 },
+    ];
+    const names = (ranked: MemberContribution[]) => ranked.map(({ displayName }) => displayName);
 
-    expect(
-      byMostContributed([
-        { ...anna, done: 1, created: 0 },
-        { ...ben, done: 2, created: 3 },
-        { ...carl, done: 0, created: 1 },
-      ]).map(({ displayName }) => displayName),
-    ).toEqual(['Ben', 'Anna', 'Carl']);
+    expect(names(rankBy(contributions, 'points'))).toEqual(['Ben', 'Anna', 'Carl']);
+    expect(names(rankBy(contributions, 'created'))).toEqual(['Carl', 'Anna', 'Ben']);
   });
 });
 
 describe('fairnessOf', () => {
-  it('is 100 and balanced when everyone did as much', () => {
-    expect(fairnessOf([contribution(2, 1), contribution(1, 2)])).toEqual({
-      score: 100,
-      label: 'Balanced',
-    });
+  it('is 100 and balanced when everyone has as much', () => {
+    expect(fairnessOf([points(4), points(4)], 'points')).toEqual({ score: 100, label: 'Balanced' });
   });
 
-  it('is 0 when one member did everything', () => {
-    expect(fairnessOf([contribution(3, 2), contribution(0, 0), contribution(0, 0)])).toEqual({
+  it('is 0 when one member has it all', () => {
+    expect(fairnessOf([points(5), points(0), points(0)], 'points')).toEqual({
       score: 0,
       label: 'Uneven',
     });
   });
 
   it('falls in between for uneven shares', () => {
-    expect(fairnessOf([contribution(3, 0), contribution(1, 0)])).toEqual({
+    expect(fairnessOf([points(3), points(1)], 'points')).toEqual({
       score: 50,
       label: 'Slightly uneven',
     });
-    expect(fairnessOf([contribution(9, 0), contribution(1, 0)])).toEqual({
-      score: 20,
-      label: 'Uneven',
-    });
+    expect(fairnessOf([points(9), points(1)], 'points')).toEqual({ score: 20, label: 'Uneven' });
   });
 
-  it('has no score for a single member or when nothing has been done', () => {
-    expect(fairnessOf([contribution(3, 1)])).toBeNull();
-    expect(fairnessOf([contribution(0, 0), contribution(0, 0)])).toBeNull();
+  it('scores each metric on its own', () => {
+    const contributions = [
+      { ...anna, points: 10, created: 1 },
+      { ...anna, points: 0, created: 1 },
+    ];
+
+    expect(fairnessOf(contributions, 'points')?.score).toBe(0);
+    expect(fairnessOf(contributions, 'created')?.score).toBe(100);
+  });
+
+  it('has no score for a single member or when there is nothing yet', () => {
+    expect(fairnessOf([points(3)], 'points')).toBeNull();
+    expect(fairnessOf([points(0), points(0)], 'points')).toBeNull();
   });
 });

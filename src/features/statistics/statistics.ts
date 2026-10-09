@@ -29,35 +29,39 @@ export interface MemberContribution {
   displayName: string | null;
   /** Shared tasks they marked done in the period. */
   done: number;
+  /** Points those tasks earned. */
+  points: number;
   /** Shared tasks they added in the period (meta work). */
   created: number;
 }
 
-/** How evenly the work is shared: 100 when everyone did as much, 0 when one member did it all. */
+/** What the Statistics screen compares members by, each on its own. */
+export type Metric = 'points' | 'created';
+
+/** How evenly a metric is shared: 100 when everyone has as much, 0 when one member has it all. */
 export interface Fairness {
   score: number;
   label: 'Balanced' | 'Slightly uneven' | 'Uneven';
 }
 
-/** Most done and added first; a stable sort keeps members with equal totals in the order they joined. */
-export function byMostContributed(contributions: MemberContribution[]): MemberContribution[] {
-  return [...contributions].sort((a, b) => b.done + b.created - (a.done + a.created));
+/** Most first; a stable sort keeps members with equal values in the order they joined. */
+export function rankBy(contributions: MemberContribution[], metric: Metric): MemberContribution[] {
+  return [...contributions].sort((a, b) => b[metric] - a[metric]);
 }
 
 /**
- * How evenly done and added tasks are spread across the members: 100 minus how far the shares are
- * from equal, as a percentage of the furthest they can be. Null with fewer than two members or
- * nothing to compare.
+ * How evenly `metric` is spread across the members: 100 minus how far the shares are from equal, as
+ * a percentage of the furthest they can be. Null with fewer than two members or nothing to compare.
  */
-export function fairnessOf(contributions: MemberContribution[]): Fairness | null {
-  const totals = contributions.map(({ done, created }) => done + created);
-  const sum = totals.reduce((total, value) => total + value, 0);
-  const count = totals.length;
+export function fairnessOf(contributions: MemberContribution[], metric: Metric): Fairness | null {
+  const values = contributions.map((contribution) => contribution[metric]);
+  const sum = values.reduce((total, value) => total + value, 0);
+  const count = values.length;
   if (count < 2 || sum === 0) return null;
 
   const evenShare = 1 / count;
   const distance =
-    totals.reduce((total, value) => total + Math.abs(value / sum - evenShare), 0) / 2;
+    values.reduce((total, value) => total + Math.abs(value / sum - evenShare), 0) / 2;
   const score = Math.round(100 * (1 - distance / (1 - evenShare)));
   const label = score >= 80 ? 'Balanced' : score >= 50 ? 'Slightly uneven' : 'Uneven';
   return { score, label };
