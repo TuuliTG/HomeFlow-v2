@@ -42,7 +42,9 @@ next one back rather than follow a fixed calendar.
   each of the next five days by date, Later and No due date, leaving out empty groups. Grouping is done in the app
   from the same sorted list, with the user's local date; no calendar grid, which needs far more room on a phone.
   "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done shared tasks.
-  "Only tasks to pick up" (`?unpicked=1`) hides tasks someone has picked up.
+  A **Show** filter (`?show=`, one choice at a time, `taskFilter.ts`) narrows the board to tasks due **Today** or
+  **This week** (the next seven days, so it ends where "Later" begins; both include overdue tasks, which still need
+  doing), with **No due date**, or **Available** (nobody has picked them up); **All** is the default.
 - **Adding a task again**: the New task form suggests earlier tasks from the household's own history, read with
   `task_suggestions()` (security invoker, so RLS hides other members' private tasks): one per title ignoring case,
   with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Picking

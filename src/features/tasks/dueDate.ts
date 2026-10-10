@@ -20,7 +20,7 @@ export function today(): string {
   return toIsoDate(new Date());
 }
 
-function addDays(isoDate: string, days: number): string {
+export function addDays(isoDate: string, days: number): string {
   const date = fromIsoDate(isoDate);
   date.setDate(date.getDate() + days);
   return toIsoDate(date);
@@ -40,7 +40,7 @@ export function describeDueDate(dueOn: string, todayDate: string): string {
 }
 
 /** The last day, counted from today, that gets a group of its own; anything after is "Later". */
-const LAST_DAY_SHOWN_ONE_BY_ONE = 6;
+export const LAST_DAY_SHOWN_ONE_BY_ONE = 6;
 
 function dueGroupLabel(dueOn: string | null, todayDate: string): string {
   if (dueOn === null) return 'No due date';
