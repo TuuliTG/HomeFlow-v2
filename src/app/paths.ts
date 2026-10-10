@@ -8,6 +8,7 @@ export const paths = {
   taskList: (isPrivate: boolean) => (isPrivate ? '/me' : '/'),
   me: '/me',
   rewards: '/rewards',
+  newGoal: '/rewards/new',
   statistics: '/statistics',
   login: '/login',
   household: '/household',
