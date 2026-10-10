@@ -10,6 +10,14 @@ export const taskTypeLabels: Record<TaskType, string> = {
 };
 
 export const TITLE_MAX_LENGTH = 80;
+
+/**
+ * A task's name as `task_suggestions()` groups tasks and `favourite_tasks` stores them: ignoring case and
+ * spaces around it.
+ */
+export function titleKey(title: string): string {
+  return title.trim().toLowerCase();
+}
 export const DESCRIPTION_MAX_LENGTH = 500;
 
 /** How many recently done tasks the board shows with "Show completed". */

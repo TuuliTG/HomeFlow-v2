@@ -31,7 +31,7 @@ test('family member can create a task and see it on the shared task board', asyn
   await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
 });
 
-test('family member can add a task again from earlier tasks', async ({ page }) => {
+test('family member can add a task again from earlier tasks and favourites', async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
   await page.getByRole('link', { name: 'Shared tasks' }).click();
@@ -54,8 +54,15 @@ test('family member can add a task again from earlier tasks', async ({ page }) =
 
   await expect(page.getByRole('listitem', { name: 'Take out trash' })).toBeVisible();
   await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('Take out trash');
+  await page.getByRole('button', { name: 'Favourite' }).click();
+  await expect(page.getByRole('button', { name: 'Favourite' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByLabel('Task', { exact: true }).fill('');
   await page
-    .getByRole('region', { name: 'Add again' })
+    .getByRole('region', { name: 'Favourites' })
     .getByRole('button', { name: /Take out trash/ })
     .click();
   await expect(

@@ -5,13 +5,20 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { findSuggestion, suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskForm } from '@/features/tasks/TaskForm';
-import { useAddTask, useTaskSuggestions } from '@/features/tasks/useTasks';
+import {
+  useAddTask,
+  useFavouriteTasks,
+  useSetFavouriteTask,
+  useTaskSuggestions,
+} from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 
 export function CreateTaskPage() {
   const user = useLoggedInUser();
   const addTask = useAddTask(user.id);
   const suggestions = useTaskSuggestions(user.id);
+  const favourites = useFavouriteTasks(user.id);
+  const setFavourite = useSetFavouriteTask(user.id);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   /** The name of an earlier task to add again (`paths.addTaskAgain`). */
@@ -32,6 +39,12 @@ export function CreateTaskPage() {
         <TaskForm
           prefill={again && suggestionAsTask(again)}
           suggestions={suggestions.data ?? []}
+          favourites={{
+            keys: favourites.data ?? [],
+            onChange: (title, isFavourite) => {
+              setFavourite.mutate({ title, isFavourite });
+            },
+          }}
           submitLabel="Create task"
           isSaving={addTask.isPending}
           onSave={async (task) => {

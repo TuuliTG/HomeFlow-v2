@@ -47,9 +47,15 @@ next one back rather than follow a fixed calendar.
   doing), with **No due date**, or **Available** (nobody has picked them up); **All** is the default.
 - **Adding a task again**: the New task form suggests earlier tasks from the household's own history, read with
   `task_suggestions()` (security invoker, so RLS hides other members' private tasks): one per title ignoring case,
-  with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Picking
-  one fills in the form without a due date. There is no templates table: deleted tasks drop out on their own, and
-  categories can later filter the same list.
+  with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Typing a
+  name lists the matching ones; picking one fills in the form without a due date. There is no templates table:
+  deleted tasks drop out on their own, and categories can later filter the same list.
+- **Favourites**: before a name is typed, the form offers the user's favourite tasks by name instead of the most
+  often added ones, which changed under the user and weren't what they wanted. A star by the name field stars or
+  unstars the task being named, also a new one, saved straight away. `favourite_tasks` stores only the name ignoring
+  case (`title_key`), per user and household; the details come from `task_suggestions()`, so a favourite whose task
+  is deleted (or another member's private task) isn't offered. Each member sees and changes only their own
+  favourites (RLS); favourites are personal, like reminders.
 - **Reminders**: a member can ask to be reminded of a task that is theirs to do (their private task or one they
   picked up) at a time they choose, within a year. `task_reminders` (one per task and user) is visible only to its
   owner and written only through `set_task_reminder()` / `clear_task_reminder()`, which check the task is theirs;

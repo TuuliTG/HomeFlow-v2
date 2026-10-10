@@ -1,5 +1,5 @@
 import type * as tasksApi from '@/features/tasks/api';
-import type { NewTask } from '@/features/tasks/task';
+import { type NewTask, titleKey } from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 
@@ -26,6 +26,8 @@ type TaskDetails = Pick<NewTask, 'title' | 'type' | 'points'> & Partial<NewTask>
 export const tasks: StoredTask[] = [];
 /** Reminders by user id, then task id (ISO timestamps). */
 export const reminders = new Map<string, Map<string, string>>();
+/** Favourite task names (`titleKey`) by user id. */
+const favourites = new Map<string, Set<string>>();
 let requestsFail = false;
 let reminderRequestsFail = false;
 let completions = 0;
@@ -100,6 +102,7 @@ export const fakeTasksBackend = {
   reset() {
     tasks.length = 0;
     reminders.clear();
+    favourites.clear();
     requestsFail = false;
     reminderRequestsFail = false;
     completions = 0;
@@ -198,6 +201,17 @@ export const fakeTasksBackend = {
         byTask.set(taskId, new Date(new Date(remindAt).getTime() - ms).toISOString());
       }
     }
+  },
+  /** Stars or unstars the task with this name for `userId`, like `favourite_tasks`. */
+  setFavouriteAs(userId: string, title: string, isFavourite: boolean) {
+    const keys = new Set(favourites.get(userId));
+    if (isFavourite) keys.add(titleKey(title));
+    else keys.delete(titleKey(title));
+    favourites.set(userId, keys);
+  },
+  /** The names (`titleKey`) of the tasks `userId` has starred. */
+  favouritesOf(userId: string): string[] {
+    return [...(favourites.get(userId) ?? [])];
   },
   /** Makes loading reminders fail, while tasks still load. */
   failReminderRequests() {
