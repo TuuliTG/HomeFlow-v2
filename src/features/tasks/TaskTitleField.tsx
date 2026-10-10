@@ -1,7 +1,7 @@
 import { type KeyboardEvent, type RefObject, useId, useState } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
-import { StarIcon } from '@/components/ui/icons';
+import { FavouriteStarButton } from '@/features/tasks/FavouriteStarButton';
 import {
   favouriteSuggestions,
   matchingSuggestions,
@@ -115,7 +115,7 @@ export function TaskTitleField({
             className={inputClassName}
           />
         </label>
-        {favourites && <FavouriteButton title={value} favourites={favourites} />}
+        {favourites && <TitleFavouriteStar title={value} favourites={favourites} />}
         <SuggestionList
           id={listId}
           matches={matches}
@@ -133,28 +133,18 @@ export function TaskTitleField({
   );
 }
 
-interface FavouriteButtonProps {
-  /** The name being typed. */
-  title: string;
-  favourites: FavouriteTasks;
-}
-
-/** A star toggle that makes the task being named a favourite, or no longer one. */
-function FavouriteButton({ title, favourites }: FavouriteButtonProps) {
-  const isFavourite = favourites.keys?.includes(titleKey(title)) ?? false;
+/** The star by the name field, for the task being named. */
+function TitleFavouriteStar({ title, favourites }: { title: string; favourites: FavouriteTasks }) {
   return (
-    <button
-      type="button"
-      aria-label="Favourite"
-      aria-pressed={isFavourite}
+    <FavouriteStarButton
+      label="Favourite"
+      variant="field"
+      isFavourite={favourites.keys?.includes(titleKey(title)) ?? false}
       disabled={title.trim() === '' || favourites.isSaving}
-      onClick={() => {
-        favourites.onChange(title, !isFavourite);
+      onChange={(isFavourite) => {
+        favourites.onChange(title, isFavourite);
       }}
-      className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 hover:border-amber-500 disabled:opacity-50 aria-pressed:border-amber-500 aria-pressed:text-amber-600"
-    >
-      <StarIcon className="size-6" fill={isFavourite ? 'currentColor' : 'none'} />
-    </button>
+    />
   );
 }
 
