@@ -28,6 +28,9 @@ export const tasks: StoredTask[] = [];
 export const reminders = new Map<string, Map<string, string>>();
 /** Stars on tasks, like `favourite_tasks`: one per household, name (`titleKey`) and member who starred it. */
 const favourites: { householdId: string; key: string; starredBy: string }[] = [];
+/** Names (`titleKey`) whose star fails to save, and saves held until released (`holdFavourite`). */
+const failingFavourites = new Set<string>();
+const heldFavourites = new Map<string, Promise<void>>();
 let requestsFail = false;
 let reminderRequestsFail = false;
 let completions = 0;
@@ -120,6 +123,8 @@ export const fakeTasksBackend = {
     tasks.length = 0;
     reminders.clear();
     favourites.length = 0;
+    failingFavourites.clear();
+    heldFavourites.clear();
     requestsFail = false;
     reminderRequestsFail = false;
     completions = 0;
@@ -224,6 +229,7 @@ export const fakeTasksBackend = {
    * removes every star on it they can see.
    */
   setFavouriteAs(userId: string, title: string, isFavourite: boolean) {
+    if (failingFavourites.has(titleKey(title))) throw new Error('Saving the star failed');
     const householdId = fakeHouseholdBackend.householdIdOf(userId);
     if (!householdId) throw new Error(`${userId} is not in a household`);
     const key = titleKey(title);
@@ -234,6 +240,27 @@ export const fakeTasksBackend = {
     } else if (!favourites.some((star) => own(star) && star.starredBy === userId)) {
       favourites.push({ householdId, key, starredBy: userId });
     }
+  },
+  /** Makes starring or unstarring the task with this name fail. */
+  failFavourite(title: string) {
+    failingFavourites.add(titleKey(title));
+  },
+  /** Holds saving a star on the task with this name until the returned function is called. */
+  holdFavourite(title: string): () => void {
+    let release: (() => void) | undefined;
+    heldFavourites.set(
+      titleKey(title),
+      new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+    );
+    return () => {
+      release?.();
+    };
+  },
+  /** Resolves when a held save of a star on this name may go ahead (`holdFavourite`). */
+  favouriteSaved(title: string): Promise<void> {
+    return heldFavourites.get(titleKey(title)) ?? Promise.resolve();
   },
   /** The names (`titleKey`) of the favourites `userId` can see, each once. */
   favouritesOf(userId: string): string[] {

@@ -140,7 +140,8 @@ function TitleFavouriteStar({ title, favourites }: { title: string; favourites: 
       label="Favourite"
       variant="field"
       isFavourite={favourites.keys?.includes(titleKey(title)) ?? false}
-      disabled={title.trim() === '' || favourites.isSaving}
+      disabled={title.trim() === ''}
+      isSaving={favourites.isSaving}
       onChange={(isFavourite) => {
         favourites.onChange(title, isFavourite);
       }}

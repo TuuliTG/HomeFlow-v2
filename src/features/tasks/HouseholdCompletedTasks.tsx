@@ -54,7 +54,7 @@ function CompletedTasksBody({
     <ul className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
       {completed.data.map((task) => (
         <li key={task.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-          <div className="flex flex-col gap-0.5">
+          <div className="flex min-w-0 flex-col gap-0.5 break-words">
             <span className="font-medium text-slate-900">{task.title}</span>
             <span className="text-slate-500">
               Done by {doneByLabel(task, userId)} · {formatShortDate(new Date(task.completedAt))}

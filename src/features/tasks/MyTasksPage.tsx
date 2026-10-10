@@ -4,9 +4,9 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { formatShortDate } from '@/features/tasks/dueDate';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
-import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import { type CompletedTask, isToDoBy, UNDO_WINDOW_MS } from '@/features/tasks/task';
+import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import {
   useCompletedTasks,
   useTasks,
@@ -130,7 +130,7 @@ function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }
   return (
     <li className="flex flex-col gap-1 px-4 py-3 text-sm">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-col gap-0.5">
+        <div className="flex min-w-0 flex-col gap-0.5 break-words">
           <span className="font-medium text-slate-900">{task.title}</span>
           <span className="text-slate-500">
             Done {formatShortDate(new Date(task.completedAt))}

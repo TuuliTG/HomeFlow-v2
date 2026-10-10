@@ -12,7 +12,13 @@ interface FavouriteStarButtonProps {
   /** The accessible name, e.g. "Favourite" or "Favourite: Vacuum". */
   label: string;
   isFavourite: boolean;
+  /** Can't be used at all, e.g. before there is a name to star. */
   disabled: boolean;
+  /**
+   * While a change is saving: taps are ignored, so quick taps can't save out of order. Unlike `disabled`,
+   * the button keeps the keyboard focus.
+   */
+  isSaving?: boolean;
   onChange: (isFavourite: boolean) => void;
   variant: keyof typeof variantClassNames;
 }
@@ -22,6 +28,7 @@ export function FavouriteStarButton({
   label,
   isFavourite,
   disabled,
+  isSaving = false,
   onChange,
   variant,
 }: FavouriteStarButtonProps) {
@@ -31,10 +38,11 @@ export function FavouriteStarButton({
       aria-label={label}
       aria-pressed={isFavourite}
       disabled={disabled}
+      aria-disabled={isSaving || undefined}
       onClick={() => {
-        onChange(!isFavourite);
+        if (!isSaving) onChange(!isFavourite);
       }}
-      className={`flex size-11 shrink-0 items-center justify-center text-slate-500 disabled:opacity-50 aria-pressed:text-amber-600 ${variantClassNames[variant]}`}
+      className={`flex size-11 shrink-0 items-center justify-center text-slate-500 disabled:opacity-50 aria-disabled:opacity-50 aria-pressed:text-amber-600 ${variantClassNames[variant]}`}
     >
       <StarIcon className="size-6" fill={isFavourite ? 'currentColor' : 'none'} />
     </button>

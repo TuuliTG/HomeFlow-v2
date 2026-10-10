@@ -95,9 +95,59 @@ describe('starring tasks from the task lists', () => {
 
     await user.click(star);
 
-    await waitFor(() => {
-      expect(star).toHaveAttribute('aria-pressed', 'false');
-    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Not saved');
+    expect(star).toHaveAttribute('aria-pressed', 'false');
     expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual([]);
+  });
+
+  it('undoes only the star that failed while another is still saving', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, TRASH);
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
+    fakeTasksBackend.failFavourite(TRASH.title);
+    const saveVacuum = fakeTasksBackend.holdFavourite('Vacuum');
+    const user = userEvent.setup();
+    renderAppAt('/');
+    const trash = await screen.findByRole('button', { name: 'Favourite: Take out trash' });
+    const vacuum = screen.getByRole('button', { name: 'Favourite: Vacuum' });
+    await waitFor(() => {
+      expect(trash).toBeEnabled();
+    });
+
+    await user.click(vacuum);
+    await user.click(trash);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Not saved');
+    expect(trash).toHaveAttribute('aria-pressed', 'false');
+    expect(vacuum).toHaveAttribute('aria-pressed', 'true');
+    saveVacuum();
+    await waitFor(() => {
+      expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual(['vacuum']);
+    });
+    expect(vacuum).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('ignores taps on a star while it is saving, keeping the focus on it', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, TRASH);
+    const save = fakeTasksBackend.holdFavourite(TRASH.title);
+    const user = userEvent.setup();
+    renderAppAt('/');
+    const star = await screen.findByRole('button', { name: 'Favourite: Take out trash' });
+    await waitFor(() => {
+      expect(star).toBeEnabled();
+    });
+
+    await user.click(star);
+    await user.click(star);
+
+    expect(star).toHaveFocus();
+    expect(star).toHaveAttribute('aria-disabled', 'true');
+    expect(star).toHaveAttribute('aria-pressed', 'true');
+    save();
+    await waitFor(() => {
+      expect(star).not.toHaveAttribute('aria-disabled');
+    });
+    expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
   });
 });
