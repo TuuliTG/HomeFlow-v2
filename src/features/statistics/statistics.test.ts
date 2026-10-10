@@ -7,7 +7,17 @@ import {
   rankBy,
 } from '@/features/statistics/statistics';
 
-const anna = { userId: 'anna', displayName: 'Anna', done: 0, points: 0, created: 0 };
+const anna: MemberContribution = {
+  userId: 'anna',
+  displayName: 'Anna',
+  done: 0,
+  points: 0,
+  physicalDone: 0,
+  physicalPoints: 0,
+  metaDone: 0,
+  metaPoints: 0,
+  created: 0,
+};
 
 function points(earned: number): MemberContribution {
   return { ...anna, points: earned };

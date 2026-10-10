@@ -14,6 +14,10 @@ function addTask(userId: string, title: string, points: number | null = 3) {
   fakeTasksBackend.addTaskAs(userId, { title, type: 'physical', points, isPrivate: !points });
 }
 
+function addMetaTask(userId: string, title: string, points: number) {
+  fakeTasksBackend.addTaskAs(userId, { title, type: 'meta', points });
+}
+
 function addBen() {
   const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
   fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
@@ -50,6 +54,46 @@ describe('statistics page', () => {
     expect(metric('Points earned')).toHaveTextContent('Fairness57/ 100Slightly uneven');
     expect(rows('Tasks created')).toEqual(['You3 tasks', 'Ben0 tasks']);
     expect(metric('Tasks created')).toHaveTextContent('Fairness0/ 100Uneven');
+  });
+
+  it('shows the points of physical and meta work apart, kept in the address', async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    addTask(anna.id, 'Vacuum', 5);
+    addMetaTask(anna.id, 'Book dentist', 2);
+    addMetaTask(anna.id, 'Plan the party', 4);
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:0', '2026-10-09');
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:1', '2026-10-09');
+    fakeTasksBackend.completeTaskAs(ben.id, 'task:2', '2026-10-09');
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/statistics?period=month');
+
+    await screen.findByRole('region', { name: 'Points earned' });
+    expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+    expect(rows('Points earned')).toEqual([
+      'You7 points · 2 tasks done',
+      'Ben4 points · 1 task done',
+    ]);
+    expect(
+      within(metric('Points earned')).getByRole('img', {
+        name: '5 physical points, 2 meta work points',
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Physical' }));
+    expect(rows('Points earned')).toEqual([
+      'You5 points · 1 task done',
+      'Ben0 points · 0 tasks done',
+    ]);
+    expect(metric('Points earned')).toHaveTextContent('Fairness0/ 100Uneven');
+
+    await user.click(screen.getByRole('radio', { name: 'Meta work' }));
+    expect(rows('Points earned')).toEqual([
+      'Ben4 points · 1 task done',
+      'You2 points · 1 task done',
+    ]);
+    expect(router.state.location.search).toBe('?period=month&work=meta');
+    expect(rows('Tasks created')).toEqual(['You3 tasks', 'Ben0 tasks']);
   });
 
   it('counts earlier work under a longer period, kept in the address', async () => {

@@ -31,12 +31,35 @@ export interface MemberContribution {
   done: number;
   /** Points those tasks earned. */
   points: number;
+  /** The physical tasks among those, and their points. */
+  physicalDone: number;
+  physicalPoints: number;
+  /** The meta work tasks among those, and their points. */
+  metaDone: number;
+  metaPoints: number;
   /** Shared tasks they added in the period (meta work). */
   created: number;
 }
 
 /** What the Statistics screen compares members by, each on its own. */
-export type Metric = 'points' | 'created';
+export type Metric = 'points' | 'physicalPoints' | 'metaPoints' | 'created';
+
+/** Which tasks' points the Points earned graph counts: all of them, or one task type. */
+export const pointsFilters = ['all', 'physical', 'meta'] as const;
+
+export type PointsFilter = (typeof pointsFilters)[number];
+
+export const pointsFilterLabels: Record<PointsFilter, string> = {
+  all: 'All',
+  physical: 'Physical',
+  meta: 'Meta work',
+};
+
+export const pointsMetrics: Record<PointsFilter, Metric> = {
+  all: 'points',
+  physical: 'physicalPoints',
+  meta: 'metaPoints',
+};
 
 /** How evenly a metric is shared: 100 when everyone has as much, 0 when one member has it all. */
 export interface Fairness {

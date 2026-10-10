@@ -3,7 +3,7 @@
 -- household before moving to Anna's.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(6);
+select plan(7);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -51,6 +51,19 @@ select results_eq(
   $$ values ('Anna', 0, 0, 2), ('Ben', 1, 3, 0), (null, 0, 0, 0) $$,
   'counts shared tasks each member did, their points and the tasks they added, with their names, leaving out private tasks'
 );
+reset role;
+update public.tasks
+  set completed_by = '11111111-1111-1111-1111-111111111111', completed_at = now()
+  where title = 'Book dentist';
+set local role authenticated;
+select results_eq(
+  $$ select display_name, done, points, meta_done, meta_points from public.household_statistics(null) $$,
+  $$ values ('Anna', 1, 2, 1, 2), ('Ben', 1, 3, 0, 0), (null, 0, 0, 0, 0) $$,
+  'counts which of the tasks done were meta work, and their points'
+);
+reset role;
+update public.tasks set completed_by = null, completed_at = null where title = 'Book dentist';
+set local role authenticated;
 select results_eq(
   $$ select user_id::text, done, created from public.household_statistics(now() - interval '7 days') $$,
   $$ values

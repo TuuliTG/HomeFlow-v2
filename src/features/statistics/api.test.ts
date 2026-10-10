@@ -15,18 +15,54 @@ describe('statistics api', () => {
     getSupabaseClient.mockReturnValue(client);
   });
 
-  it("counts each member's tasks since the start of the period", async () => {
+  it("counts each member's tasks since the start of the period, physical and meta work apart", async () => {
     client.rpc.mockResolvedValue({
       data: [
-        { user_id: 'u1', display_name: 'Anna', done: 2, points: 7, created: 3 },
-        { user_id: 'u2', display_name: null, done: 1, points: 2, created: 0 },
+        {
+          user_id: 'u1',
+          display_name: 'Anna',
+          done: 2,
+          points: 7,
+          created: 3,
+          meta_done: 1,
+          meta_points: 2,
+        },
+        {
+          user_id: 'u2',
+          display_name: null,
+          done: 1,
+          points: 2,
+          created: 0,
+          meta_done: 0,
+          meta_points: 0,
+        },
       ],
       error: null,
     });
 
     await expect(api.fetchContributions(new Date('2026-10-05T00:00:00Z'))).resolves.toEqual([
-      { userId: 'u1', displayName: 'Anna', done: 2, points: 7, created: 3 },
-      { userId: 'u2', displayName: null, done: 1, points: 2, created: 0 },
+      {
+        userId: 'u1',
+        displayName: 'Anna',
+        done: 2,
+        points: 7,
+        physicalDone: 1,
+        physicalPoints: 5,
+        metaDone: 1,
+        metaPoints: 2,
+        created: 3,
+      },
+      {
+        userId: 'u2',
+        displayName: null,
+        done: 1,
+        points: 2,
+        physicalDone: 1,
+        physicalPoints: 2,
+        metaDone: 0,
+        metaPoints: 0,
+        created: 0,
+      },
     ]);
     expect(client.rpc).toHaveBeenCalledWith('household_statistics', {
       since: '2026-10-05T00:00:00.000Z',
