@@ -60,10 +60,11 @@ describe('adding a task again', () => {
 
     const options = await within(await screen.findByRole('listbox')).findAllByRole('option');
     expect(options.map((option) => option.textContent)).toEqual([
-      'Take out trashOn the board · 1 point',
+      // Both added once; the newer one, or by name when added in the same millisecond.
       'Sort the trashOn the board · 2 points',
+      'Take out trashOn the board · 1 point',
     ]);
-    await user.click(options[1] ?? document.body);
+    await user.click(options[0] ?? document.body);
 
     expect(screen.getByLabelText('Task')).toHaveValue('Sort the trash');
     expect(screen.getByRole('radio', { name: 'Meta work' })).toBeChecked();
