@@ -54,8 +54,7 @@ describe('filterTasks', () => {
   });
 
   it('shows tasks nobody has picked up', () => {
-    expect(shown('available')).not.toContain('Picked up today');
-    expect(shown('available')).toHaveLength(tasks.length - 1);
+    expect(shown('available')).toEqual(['Overdue', 'Today', 'In six days', 'In a week', 'Undated']);
   });
 });
 

@@ -91,7 +91,23 @@ describe('filtering the board', () => {
     expectShown(['Water plants'], ['Vacuum', 'Book dentist', 'Buy a present']);
   });
 
-  it('says when nothing matches, and is remembered in the address with "Show completed"', async () => {
+  it('keeps the choice in the address, and goes back to all from the nav', async () => {
+    const anna = logInAsFamilyMember();
+    addTask(anna.id, 'Dust');
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/');
+    await screen.findByRole('listitem', { name: 'Dust' });
+
+    await user.click(screen.getByRole('radio', { name: 'This week' }));
+    expect(router.state.location.search).toBe('?show=week');
+
+    await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
+    expect(router.state.location.search).toBe('');
+    expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+    expectShown(['Dust'], []);
+  });
+
+  it('says when nothing matches, and is read from the address with "Show completed"', async () => {
     const anna = logInAsFamilyMember();
     addTask(anna.id, 'Dust');
     renderAppAt('/?show=today&completed=1');

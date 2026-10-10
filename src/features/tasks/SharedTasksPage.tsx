@@ -47,7 +47,8 @@ export function SharedTasksPage() {
 
 /**
  * A choice kept in the address as `?<name>=<value>`, so it survives a reload; `null` leaves it out.
- * Local state keeps the control from flickering while the router updates the address.
+ * Local state keeps the control from flickering while the router updates the address, and follows the
+ * address when it changes otherwise (the nav link, back and forward).
  */
 function useParam<T>(
   name: string,
@@ -55,7 +56,13 @@ function useParam<T>(
   serialise: (value: T) => string | null,
 ): [T, (value: T) => void] {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [value, setValue] = useState(() => parse(searchParams.get(name)));
+  const inAddress = searchParams.get(name);
+  const [value, setValue] = useState(() => parse(inAddress));
+  const [seenInAddress, setSeenInAddress] = useState(inAddress);
+  if (inAddress !== seenInAddress) {
+    setSeenInAddress(inAddress);
+    setValue(parse(inAddress));
+  }
 
   function set(next: T) {
     setValue(next);
@@ -103,7 +110,10 @@ function FilterChoice({ filter, onChange }: FilterChoiceProps) {
         Show:
       </span>
       {taskFilters.map((option) => (
-        <label key={option}>
+        <label
+          key={option}
+          className="has-checked:border-brand-600 has-checked:bg-brand-600 has-focus-visible:outline-brand-600 flex min-h-11 cursor-pointer items-center rounded-full border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-slate-400 has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2"
+        >
           <input
             type="radio"
             name="task-filter"
@@ -112,11 +122,9 @@ function FilterChoice({ filter, onChange }: FilterChoiceProps) {
             onChange={() => {
               onChange(option);
             }}
-            className="peer sr-only"
+            className="sr-only"
           />
-          <span className="peer-checked:border-brand-600 peer-checked:bg-brand-600 peer-focus-visible:outline-brand-600 block cursor-pointer rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 hover:border-slate-400">
-            {taskFilterLabels[option]}
-          </span>
+          {taskFilterLabels[option]}
         </label>
       ))}
     </fieldset>
