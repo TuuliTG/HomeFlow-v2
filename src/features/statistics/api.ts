@@ -17,8 +17,8 @@ const statisticsRowsSchema = z.array(
 
 /**
  * How many shared tasks each member of the user's household has done (and their points, in all and by
- * task type) and added since `since` (all time when null), in the order they joined. Counted by `household_statistics()`
- * in the database.
+ * task type) and added since `since` (all time when null), in the order they joined. Counted by
+ * `household_statistics()` in the database.
  */
 export async function fetchContributions(since: Date | null): Promise<MemberContribution[]> {
   // Without generated database types the function's result is untyped; Zod checks it.

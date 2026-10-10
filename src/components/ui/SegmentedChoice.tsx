@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 interface SegmentedChoiceProps<T extends string> {
   legend: string;
   options: readonly T[];
@@ -14,6 +16,7 @@ export function SegmentedChoice<T extends string>({
   value,
   onChange,
 }: SegmentedChoiceProps<T>) {
+  const name = useId();
   return (
     <fieldset>
       <legend className="sr-only">{legend}</legend>
@@ -28,7 +31,7 @@ export function SegmentedChoice<T extends string>({
           >
             <input
               type="radio"
-              name={legend}
+              name={name}
               value={option}
               checked={option === value}
               onChange={() => {

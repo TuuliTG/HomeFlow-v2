@@ -29,7 +29,8 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 - **Rewards** — points per member, personal rewards/collectibles, shared family goal progress. Must make clear how
   points are earned and how shared goals accumulate.
 - **Statistics** — period selector; _points earned_ (from doing tasks, all or physical/meta work apart) and _tasks
-  created_ per member, each with its own fairness score (0–100, e.g. "Balanced"); contribution over time. Only shared tasks count; private tasks never do.
+  created_ per member, each with its own fairness score (0–100, e.g. "Balanced"); contribution over time. Only shared
+  tasks count; private tasks never do.
 
 ## Design principles from evaluation
 
