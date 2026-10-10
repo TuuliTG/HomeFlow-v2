@@ -1,5 +1,3 @@
-import { useSearchParams } from 'react-router';
-
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import {
@@ -13,19 +11,22 @@ import {
 } from '@/features/statistics/statistics';
 import { useContributions } from '@/features/statistics/useContributions';
 import { useLoggedInUser } from '@/lib/auth';
+import { useSearchParam } from '@/lib/useSearchParam';
 
 const PERIOD_PARAM = 'period';
 
-function isPeriod(value: string | null): value is Period {
-  return periods.some((period) => period === value);
+/** The period shown, kept in the address as `?period=<period>`; this week by default. */
+function usePeriodParam() {
+  return useSearchParam<Period>(
+    PERIOD_PARAM,
+    (value) => periods.find((period) => period === value) ?? 'week',
+    (period) => (period === 'week' ? null : period),
+  );
 }
 
 export function StatisticsPage() {
   const user = useLoggedInUser();
-  // Kept in the address, so the choice survives a reload.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const param = searchParams.get(PERIOD_PARAM);
-  const period: Period = isPeriod(param) ? param : 'week';
+  const [period, setPeriod] = usePeriodParam();
   const contributions = useContributions(user.id, period);
 
   return (
@@ -35,12 +36,7 @@ export function StatisticsPage() {
         title="Fairness & progress"
         description="Points earned and tasks created across the family. Private tasks don't count."
       />
-      <PeriodPicker
-        period={period}
-        onChange={(next) => {
-          setSearchParams(next === 'week' ? {} : { [PERIOD_PARAM]: next }, { replace: true });
-        }}
-      />
+      <PeriodPicker period={period} onChange={setPeriod} />
       <StatisticsBody contributions={contributions} userId={user.id} />
     </>
   );

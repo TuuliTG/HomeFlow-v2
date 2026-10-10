@@ -1,6 +1,3 @@
-import { useState } from 'react';
-import { useSearchParams } from 'react-router';
-
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
@@ -17,6 +14,7 @@ import {
   taskFilters,
 } from '@/features/tasks/taskFilter';
 import { useLoggedInUser } from '@/lib/auth';
+import { useSearchParam } from '@/lib/useSearchParam';
 
 const SHOW_COMPLETED_PARAM = 'completed';
 const FILTER_PARAM = 'show';
@@ -45,44 +43,9 @@ export function SharedTasksPage() {
   );
 }
 
-/**
- * A choice kept in the address as `?<name>=<value>`, so it survives a reload; `null` leaves it out.
- * Local state keeps the control from flickering while the router updates the address, and follows the
- * address when it changes otherwise (the nav link, back and forward).
- */
-function useParam<T>(
-  name: string,
-  parse: (value: string | null) => T,
-  serialise: (value: T) => string | null,
-): [T, (value: T) => void] {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const inAddress = searchParams.get(name);
-  const [value, setValue] = useState(() => parse(inAddress));
-  const [seenInAddress, setSeenInAddress] = useState(inAddress);
-  if (inAddress !== seenInAddress) {
-    setSeenInAddress(inAddress);
-    setValue(parse(inAddress));
-  }
-
-  function set(next: T) {
-    setValue(next);
-    const serialised = serialise(next);
-    setSearchParams(
-      (params) => {
-        if (serialised === null) params.delete(name);
-        else params.set(name, serialised);
-        return params;
-      },
-      { replace: true },
-    );
-  }
-
-  return [value, set];
-}
-
 /** An on/off choice kept in the address as `?<name>=1`. */
 function useSwitchParam(name: string) {
-  return useParam(
+  return useSearchParam(
     name,
     (value) => value === '1',
     (on) => (on ? '1' : null),
@@ -91,7 +54,7 @@ function useSwitchParam(name: string) {
 
 /** Which tasks to show, kept in the address as `?show=<filter>`; all tasks by default. */
 function useFilterParam() {
-  return useParam<TaskFilter>(FILTER_PARAM, parseTaskFilter, (filter) =>
+  return useSearchParam<TaskFilter>(FILTER_PARAM, parseTaskFilter, (filter) =>
     filter === 'all' ? null : filter,
   );
 }
