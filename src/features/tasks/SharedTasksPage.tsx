@@ -3,10 +3,10 @@ import { useSearchParams } from 'react-router';
 
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import type { Task } from '@/features/tasks/task';
-import { TaskCard } from '@/features/tasks/TaskCard';
 import { useTasks } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 
@@ -110,13 +110,7 @@ function TaskList({ onlyUnpicked }: { onlyUnpicked: boolean }) {
   if (shown.length === 0) {
     return <EmptyMessage>Every task has been picked up.</EmptyMessage>;
   }
-  return (
-    <ul className="flex flex-col gap-3">
-      {shown.map((task) => (
-        <TaskCard key={task.id} task={task} currentUserId={user.id} />
-      ))}
-    </ul>
-  );
+  return <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />;
 }
 
 function EmptyMessage({ children }: { children: string }) {

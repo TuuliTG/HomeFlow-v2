@@ -27,6 +27,16 @@ async function fillInTask(user: UserEvent, title: string, points = '3') {
   await user.click(screen.getByRole('button', { name: 'Create task' }));
 }
 
+/** The due-date groups under `level` headings, in order, with the titles of their tasks. */
+function tasksByGroup(level: 2 | 3) {
+  return screen.getAllByRole('heading', { level }).map(({ textContent: label }) => [
+    label,
+    within(screen.getByRole('region', { name: label }))
+      .getAllByRole('heading', { level: level + 1 })
+      .map((title) => title.textContent),
+  ]);
+}
+
 describe('task board', () => {
   it("shows the household's tasks, newest first, with who added them", async () => {
     const anna = logInAsFamilyMember();
@@ -47,7 +57,8 @@ describe('task board', () => {
     ]);
   });
 
-  it('lists the soonest due tasks first, and tasks without a due date last', async () => {
+  it('groups the tasks by when they are due, soonest first and no due date last', async () => {
+    setToday();
     const anna = logInAsFamilyMember();
     const add = (title: string, dueOn: string | null) => {
       fakeTasksBackend.addTaskAs(anna.id, { title, type: 'physical', points: 1, dueOn });
@@ -57,15 +68,18 @@ describe('task board', () => {
     add('Vacuum', '2026-10-06');
     add('Water plants', null);
     add('Take out recycling', '2026-10-09');
+    add('Mop', '2026-10-10');
+    add('Cook', '2026-10-08');
     renderAppAt('/');
 
     await screen.findByRole('listitem', { name: 'Vacuum' });
-    expect(screen.getAllByRole('heading', { level: 2 }).map((title) => title.textContent)).toEqual([
-      'Vacuum',
-      'Take out recycling',
-      'Change bed linen',
-      'Water plants',
-      'Dust',
+    expect(tasksByGroup(2)).toEqual([
+      ['Overdue', ['Vacuum']],
+      ['Today', ['Cook']],
+      ['Tomorrow', ['Take out recycling']],
+      ['Sat 10 Oct', ['Mop']],
+      ['Later', ['Change bed linen']],
+      ['No due date', ['Water plants', 'Dust']],
     ]);
   });
 
@@ -100,6 +114,34 @@ describe('task board', () => {
     renderAppAt('/');
 
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the tasks.");
+  });
+});
+
+describe('My tasks', () => {
+  it('groups what is yours to do by when it is due', async () => {
+    setToday();
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Buy a present',
+      type: 'meta',
+      points: null,
+      isPrivate: true,
+    });
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Vacuum',
+      type: 'physical',
+      points: 3,
+      dueOn: '2026-10-08',
+    });
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });
+    fakeTasksBackend.pickUpTaskAs(anna.id, 'task:1');
+    renderAppAt('/me');
+
+    await screen.findByRole('listitem', { name: 'Vacuum' });
+    expect(tasksByGroup(3)).toEqual([
+      ['Today', ['Vacuum']],
+      ['No due date', ['Buy a present']],
+    ]);
   });
 });
 

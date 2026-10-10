@@ -13,6 +13,11 @@ interface TaskCardProps {
   currentUserId: string;
 }
 
+interface TaskCardWithTitleProps extends TaskCardProps {
+  /** Heading level of the task's title, one below the heading of the list it is in. */
+  titleLevel: 3 | 4;
+}
+
 /** "you", their name, or "someone" if they haven't chosen a name or have deleted their account. */
 function personLabel(userId: string | null, name: string | null, currentUserId: string): string {
   if (userId === currentUserId) return 'you';
@@ -21,7 +26,7 @@ function personLabel(userId: string | null, name: string | null, currentUserId: 
 
 const tagClassName = 'w-fit rounded-full px-2 py-0.5 text-xs font-medium';
 
-export function TaskCard({ task, currentUserId }: TaskCardProps) {
+export function TaskCard({ task, currentUserId, titleLevel }: TaskCardWithTitleProps) {
   const titleId = useId();
 
   return (
@@ -30,7 +35,12 @@ export function TaskCard({ task, currentUserId }: TaskCardProps) {
       className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
     >
       <div className="flex items-start justify-between gap-4">
-        <TaskDetails task={task} currentUserId={currentUserId} titleId={titleId} />
+        <TaskDetails
+          task={task}
+          currentUserId={currentUserId}
+          titleId={titleId}
+          titleLevel={titleLevel}
+        />
         {task.points !== null && (
           <span className="text-brand-900 shrink-0 text-sm font-semibold">
             {task.points} points
@@ -43,13 +53,19 @@ export function TaskCard({ task, currentUserId }: TaskCardProps) {
   );
 }
 
-function TaskDetails({ task, currentUserId, titleId }: TaskCardProps & { titleId: string }) {
+function TaskDetails({
+  task,
+  currentUserId,
+  titleId,
+  titleLevel,
+}: TaskCardWithTitleProps & { titleId: string }) {
   const isMeta = task.type === 'meta';
+  const Title = titleLevel === 3 ? 'h3' : 'h4';
   return (
     <div className="flex flex-col gap-1">
-      <h2 id={titleId} className="font-semibold text-slate-900">
+      <Title id={titleId} className="font-semibold text-slate-900">
         {task.title}
-      </h2>
+      </Title>
       {task.description !== null && (
         <p className="text-sm whitespace-pre-line text-slate-600">{task.description}</p>
       )}

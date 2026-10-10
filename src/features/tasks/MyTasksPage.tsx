@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { formatShortDate } from '@/features/tasks/dueDate';
+import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
-import { TaskCard } from '@/features/tasks/TaskCard';
 import { type CompletedTask, isToDoBy, UNDO_WINDOW_MS } from '@/features/tasks/task';
 import {
   useCompletedTasks,
@@ -89,13 +89,7 @@ function ToDoList() {
   if (mine.length === 0) {
     return <p className={emptyClassName}>Nothing picked up yet. Pick a task on the board.</p>;
   }
-  return (
-    <ul className="flex flex-col gap-3">
-      {mine.map((task) => (
-        <TaskCard key={task.id} task={task} currentUserId={user.id} />
-      ))}
-    </ul>
-  );
+  return <DueTaskGroups tasks={mine} currentUserId={user.id} headingLevel={3} />;
 }
 
 function CompletedList() {
