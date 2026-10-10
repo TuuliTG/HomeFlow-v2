@@ -10,7 +10,8 @@ Follow these steps in order. Do not skip steps; say explicitly if one does not a
 1. **Understand** — Read `AGENTS.md`, `docs/product-brief.md` (for features) and relevant ADRs in `docs/adr/`.
    Find existing code to reuse before writing new code.
 2. **Branch** — `git switch -c <what-the-change-does>` from an up-to-date `main`: kebab-case, descriptive, no
-   type prefix (`sort-tasks-by-due-date`, `fix-login-on-ios`). Never commit on `main`.
+   type prefix (`sort-tasks-by-due-date`, `fix-login-on-ios`). Never commit on `main`. If the session assigned a
+   generated branch name, use a descriptive one instead (see `AGENTS.md`).
 3. **Plan** — List the smallest set of changes. If it involves a new dependency, schema, security model or
    cross-cutting pattern, plan the ADR update (`adr` skill).
 4. **Test first** — Write or update a failing test that describes the behaviour (`testing` skill).
