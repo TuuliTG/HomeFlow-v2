@@ -9,7 +9,7 @@ import {
 } from '@/features/tasks/suggestions';
 import { TITLE_MAX_LENGTH, type TaskSuggestion, titleKey } from '@/features/tasks/task';
 
-/** The tasks the user has starred, offered on the New task form to add again. */
+/** The tasks the household has starred, offered on the New task form to add again. */
 export interface FavouriteTasks {
   /** Their names, as `titleKey` gives them; undefined while they (or the suggestions) load. */
   keys: string[] | undefined;
@@ -26,7 +26,7 @@ interface TaskTitleFieldProps {
   suggestions: TaskSuggestion[];
   /** Fills the form with an earlier task's details. */
   onPick: (suggestion: TaskSuggestion) => void;
-  /** The user's favourites, starred with a button by the name; none when editing. */
+  /** The household's favourites, starred with a button by the name; none when editing. */
   favourites?: FavouriteTasks | undefined;
   inputRef: RefObject<HTMLInputElement | null>;
   /** `aria-invalid` and `aria-describedby` while the title has an error. */
@@ -35,7 +35,7 @@ interface TaskTitleFieldProps {
 
 /**
  * The task's name, as a combobox listing earlier tasks that match what is typed, with a star to make it
- * a favourite. Before anything is typed, the user's favourites are offered as buttons.
+ * a favourite. Before anything is typed, the household's favourites are offered as buttons.
  */
 export function TaskTitleField({
   value,
@@ -163,7 +163,7 @@ interface FavouriteTaskListProps {
   onPick: (suggestion: TaskSuggestion) => void;
 }
 
-/** The user's favourite tasks, each a button that fills in the form, or how to add some. */
+/** The household's favourite tasks, each a button that fills in the form, or how to add some. */
 function FavouriteTaskList({ suggestions, onPick }: FavouriteTaskListProps) {
   const headingId = useId();
   return (

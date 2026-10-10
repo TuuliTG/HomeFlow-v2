@@ -43,7 +43,10 @@ export function useTaskSuggestions(userId: string) {
 
 const favouritesKey = (userId: string) => [...tasksKey(userId), 'favourites'] as const;
 
-/** The names of the tasks the user has starred (`titleKey`). */
+/**
+ * The names of the tasks starred in the user's household (`titleKey`). Under `tasksKey`, so it refreshes
+ * with the board.
+ */
 export function useFavouriteTasks(userId: string) {
   return useQuery({ queryKey: favouritesKey(userId), queryFn: fetchFavouriteTasks });
 }

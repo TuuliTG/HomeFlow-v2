@@ -23,7 +23,7 @@ export function findSuggestion(
   return suggestions.find((suggestion) => titleKey(suggestion.title) === titleKey(title));
 }
 
-/** The earlier tasks the user has starred (`favouriteKeys`, from `titleKey`), by name. */
+/** The earlier tasks the household has starred (`favouriteKeys`, from `titleKey`), by name. */
 export function favouriteSuggestions(
   suggestions: TaskSuggestion[],
   favouriteKeys: string[],

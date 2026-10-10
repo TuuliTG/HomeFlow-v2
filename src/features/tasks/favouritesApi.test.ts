@@ -21,8 +21,11 @@ describe('favourites api', () => {
     query.delete.mockReturnValue(query);
   });
 
-  it("fetches the names of the user's favourite tasks", async () => {
-    query.select.mockResolvedValueOnce({ data: [{ title_key: 'take out trash' }], error: null });
+  it("fetches the names of the household's favourite tasks, each once", async () => {
+    query.select.mockResolvedValueOnce({
+      data: [{ title_key: 'take out trash' }, { title_key: 'take out trash' }],
+      error: null,
+    });
 
     await expect(api.fetchFavouriteTasks()).resolves.toEqual(['take out trash']);
     expect(client.from).toHaveBeenCalledWith('favourite_tasks');

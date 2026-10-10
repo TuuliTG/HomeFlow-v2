@@ -136,15 +136,22 @@ describe('adding a task again', () => {
     expect(screen.queryByRole('region', { name: 'Favourites' })).not.toBeInTheDocument();
   });
 
-  it("doesn't offer other members' favourites", async () => {
+  it('shares favourites with the household, and any member can unstar them', async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
     fakeTasksBackend.addTaskAs(anna.id, TRASH);
     favourite(ben.id, TRASH.title);
+    const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await screen.findByText("Tap the star by a task's name to keep it here for next time.");
-    expect(await favouriteButtons()).toEqual([]);
+    await user.click(await screen.findByRole('button', { name: /Take out trash/ }));
+    const star = screen.getByRole('button', { name: 'Favourite' });
+    expect(star).toHaveAttribute('aria-pressed', 'true');
+    await user.click(star);
+
+    await waitFor(() => {
+      expect(fakeTasksBackend.favouritesOf(ben.id)).toEqual([]);
+    });
   });
 
   it('lists earlier tasks that match the name being typed', async () => {
@@ -230,7 +237,7 @@ describe('adding a task again', () => {
     expect(screen.queryByText(/is already on the board/)).not.toBeInTheDocument();
   });
 
-  it("suggests the user's own private tasks as private, but not other members'", async () => {
+  it("suggests the user's own private tasks as private, but not other members' even when starred", async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
     fakeTasksBackend.addTaskAs(anna.id, {
@@ -245,7 +252,8 @@ describe('adding a task again', () => {
       points: null,
       isPrivate: true,
     });
-    favourite(anna.id, 'Buy a present', 'Plan a surprise');
+    favourite(anna.id, 'Buy a present');
+    favourite(ben.id, 'Plan a surprise');
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 

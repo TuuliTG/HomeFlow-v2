@@ -1,35 +1,61 @@
--- Favourite tasks (ADR 0004): names of tasks a member has starred on the New task form, where they are offered to
--- add again. Each member has their own, per household. Stored by name ignoring case, like task_suggestions()
--- groups tasks, so a favourite stays one when the task is added again.
+-- Favourite tasks (ADR 0004): names of tasks members have starred on the New task form, where they are offered to
+-- add again. Shared by the household: a star any member sets or removes shows for everyone. Stored by name ignoring
+-- case, like task_suggestions() groups tasks, so a favourite stays one when the task is added again.
 create table public.favourite_tasks (
-  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
   household_id uuid not null default private.current_household_id()
     references public.households (id) on delete cascade,
   -- The task's name in lower case, without spaces around it.
   title_key text not null check (title_key = lower(btrim(title_key)) and char_length(title_key) between 1 and 80),
-  primary key (user_id, household_id, title_key)
+  -- Who starred it; one row per member who did, so a star never reveals another member's (private) one.
+  starred_by uuid default auth.uid() references auth.users (id) on delete set null,
+  unique (household_id, title_key, starred_by)
 );
 
 alter table public.favourite_tasks enable row level security;
 
--- A member's favourites are their own: nobody else in the household sees them.
 revoke all on table public.favourite_tasks from anon, authenticated;
 grant select, delete on table public.favourite_tasks to authenticated;
 grant insert (title_key) on table public.favourite_tasks to authenticated;
 
-create policy "Users can view their own favourite tasks"
+-- Whether the user can see the favourite: one they starred themselves, or one whose task they can see (tasks' own
+-- RLS applies here), so a star on another member's private task doesn't reveal its name.
+create function private.can_see_favourite(favourite public.favourite_tasks)
+returns boolean
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select favourite.household_id = (select private.current_household_id())
+    and (
+      favourite.starred_by = (select auth.uid())
+      or exists (
+        select 1 from public.tasks t
+        where t.household_id = favourite.household_id and lower(btrim(t.title)) = favourite.title_key
+      )
+    );
+$$;
+
+revoke execute on function private.can_see_favourite(public.favourite_tasks) from public;
+grant execute on function private.can_see_favourite(public.favourite_tasks) to authenticated;
+
+create policy "Members can view their household's favourite tasks"
   on public.favourite_tasks for select to authenticated
-  using (user_id = (select auth.uid()) and household_id = (select private.current_household_id()));
+  using (private.can_see_favourite(favourite_tasks));
 
-create policy "Users can add their own favourite tasks"
+create policy "Members can star tasks for their household"
   on public.favourite_tasks for insert to authenticated
-  with check (user_id = (select auth.uid()) and household_id = (select private.current_household_id()));
+  with check (
+    starred_by = (select auth.uid()) and household_id = (select private.current_household_id())
+  );
 
-create policy "Users can remove their own favourite tasks"
+-- Any member can unstar a favourite they can see, whoever starred it.
+create policy "Members can unstar their household's favourite tasks"
   on public.favourite_tasks for delete to authenticated
-  using (user_id = (select auth.uid()) and household_id = (select private.current_household_id()));
+  using (private.can_see_favourite(favourite_tasks));
 
--- task_suggestions() as before, but the user's favourites are always included, even beyond the 50 most often
+-- task_suggestions() as before, but the household's favourites are always included, even beyond the 50 most often
 -- added tasks, so a rarely added favourite is still offered.
 create or replace function public.task_suggestions()
 returns table (
@@ -69,7 +95,7 @@ as $$
       row_number() over (order by u.times_added desc, u.last_added_at desc nulls last, n.title) as rank,
       exists (
         select 1 from public.favourite_tasks f
-        where f.user_id = (select auth.uid()) and f.title_key = btrim(n.title_key)
+        where f.household_id = n.household_id and f.title_key = btrim(n.title_key)
       ) as is_favourite
     from newest n
     join usage u using (title_key)

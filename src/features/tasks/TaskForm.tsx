@@ -38,7 +38,7 @@ interface TaskFormProps {
   prefill?: NewTask | undefined;
   /** Tasks the household has added before, offered to add again; leave out when editing. */
   suggestions?: TaskSuggestion[];
-  /** The user's favourite tasks, offered to add again; leave out when editing. */
+  /** The household's favourite tasks, offered to add again; leave out when editing. */
   favourites?: FavouriteTasks;
   submitLabel: string;
   isSaving: boolean;

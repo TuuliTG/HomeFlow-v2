@@ -4,17 +4,23 @@ import { titleKey } from '@/features/tasks/task';
 import { getSupabaseClient } from '@/lib/supabase';
 
 const favouriteRowsSchema = z.array(z.object({ title_key: z.string() }));
-/** Postgres' unique_violation: the task is a favourite already. */
+/** Postgres' unique_violation: the user has starred the task already. */
 const ALREADY_FAVOURITE = '23505';
 
-/** The names of the tasks the user has starred in their household, as `titleKey` gives them. */
+/**
+ * The names of the tasks starred in the user's household, as `titleKey` gives them, each once (members who
+ * star the same task each have a row). Stars on other members' private tasks are left out.
+ */
 export async function fetchFavouriteTasks(): Promise<string[]> {
   const { data, error } = await getSupabaseClient().from('favourite_tasks').select('title_key');
   if (error) throw error;
-  return favouriteRowsSchema.parse(data).map((row) => row.title_key);
+  return [...new Set(favouriteRowsSchema.parse(data).map((row) => row.title_key))];
 }
 
-/** Stars or unstars the task with this name for the user; the database fills in the user and household. */
+/**
+ * Stars the task with this name for the household, or unstars it whoever starred it. The database fills in
+ * the household and who starred it.
+ */
 export async function setFavouriteTask(title: string, isFavourite: boolean): Promise<void> {
   const favourites = getSupabaseClient().from('favourite_tasks');
   const { error } = isFavourite
