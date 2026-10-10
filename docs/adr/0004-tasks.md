@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-09
+- **Updated:** 2026-10-10
 
 ## Context
 
@@ -38,6 +38,9 @@ next one back rather than follow a fixed calendar.
 - **Points**: the Me screen shows the total points of every shared task the user has marked done, summed when read
   (`fetchTotalPoints`), not stored. Adding tasks earns nothing yet; points per period come later.
 - The board (the **Shared tasks** page) shows open shared tasks, soonest due first and tasks without a due date last (newest first within a date).
+  It and the Me page's _To do_ group them under headings like an agenda (`groupByDueDate`): Overdue, Today, Tomorrow,
+  each of the next five days by date, Later and No due date, leaving out empty groups. Grouping is done in the app
+  from the same sorted list, with the user's local date; no calendar grid, which needs far more room on a phone.
   "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done shared tasks.
   "Only tasks to pick up" (`?unpicked=1`) hides tasks someone has picked up.
 - **Adding a task again**: the New task form suggests earlier tasks from the household's own history, read with
