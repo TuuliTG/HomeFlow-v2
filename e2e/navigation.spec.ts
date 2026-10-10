@@ -21,6 +21,7 @@ test('family member can move between all main screens', async ({ page }) => {
   for (const [link, heading] of [
     ['Shared tasks', 'Shared tasks'],
     ['Me', 'My tasks'],
+    ['News', 'What the family has done'],
     ['Rewards', 'Rewards & goals'],
     ['Statistics', 'Fairness & progress'],
   ] as const) {

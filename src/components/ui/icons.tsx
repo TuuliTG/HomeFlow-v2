@@ -59,3 +59,19 @@ export function HomeIcon(props: IconProps) {
     </BaseIcon>
   );
 }
+
+export function NewsIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2h-1M8 9h5M8 13h5M8 16h3" />
+    </BaseIcon>
+  );
+}
+
+export function ThumbsUpIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M7 10v11H4V10zM7 10l4-7a2 2 0 0 1 3 2l-1 4h6a2 2 0 0 1 2 2.3l-1.4 7A2 2 0 0 1 17.6 21H7" />
+    </BaseIcon>
+  );
+}
