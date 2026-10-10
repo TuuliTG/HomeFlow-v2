@@ -1,6 +1,6 @@
 import { useId } from 'react';
 
-import { groupByDueDate, today } from '@/features/tasks/dueDate';
+import { type DueGroup, groupByDueDate, today } from '@/features/tasks/dueDate';
 import type { Task } from '@/features/tasks/task';
 import { TaskCard } from '@/features/tasks/TaskCard';
 
@@ -12,15 +12,17 @@ interface DueTaskGroupsProps {
   headingLevel: 2 | 3;
 }
 
-/** Tasks under headings for when they are due: Overdue, Today, Tomorrow, each day of the week, Later. */
+/**
+ * Tasks under headings for when they are due: Overdue, Today, Tomorrow, the next five days by date, Later
+ * and No due date.
+ */
 export function DueTaskGroups({ tasks, currentUserId, headingLevel }: DueTaskGroupsProps) {
   return (
     <div className="flex flex-col gap-6 pt-2">
       {groupByDueDate(tasks, today()).map((group) => (
         <DueTaskGroup
           key={group.label}
-          label={group.label}
-          tasks={group.items}
+          group={group}
           currentUserId={currentUserId}
           headingLevel={headingLevel}
         />
@@ -30,11 +32,10 @@ export function DueTaskGroups({ tasks, currentUserId, headingLevel }: DueTaskGro
 }
 
 function DueTaskGroup({
-  label,
-  tasks,
+  group: { label, isOverdue, items: tasks },
   currentUserId,
   headingLevel,
-}: Omit<DueTaskGroupsProps, 'tasks'> & { label: string; tasks: Task[] }) {
+}: Omit<DueTaskGroupsProps, 'tasks'> & { group: DueGroup<Task> }) {
   const headingId = useId();
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
 
@@ -44,7 +45,7 @@ function DueTaskGroup({
         id={headingId}
         className={[
           'text-sm font-semibold tracking-wide uppercase',
-          label === 'Overdue' ? 'text-red-700' : 'text-slate-600',
+          isOverdue ? 'text-red-700' : 'text-slate-600',
         ].join(' ')}
       >
         {label}

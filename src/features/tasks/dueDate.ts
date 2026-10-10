@@ -39,21 +39,22 @@ export function describeDueDate(dueOn: string, todayDate: string): string {
   return dueOn < todayDate ? `Was due ${formatted}` : `Due ${formatted}`;
 }
 
-/** Days after tomorrow that get a group of their own; anything further is "Later". */
-const DAYS_SHOWN_ONE_BY_ONE = 6;
+/** The last day, counted from today, that gets a group of its own; anything after is "Later". */
+const LAST_DAY_SHOWN_ONE_BY_ONE = 6;
 
 function dueGroupLabel(dueOn: string | null, todayDate: string): string {
   if (dueOn === null) return 'No due date';
   if (dueOn < todayDate) return 'Overdue';
   if (dueOn === todayDate) return 'Today';
   if (dueOn === addDays(todayDate, 1)) return 'Tomorrow';
-  if (dueOn > addDays(todayDate, DAYS_SHOWN_ONE_BY_ONE)) return 'Later';
+  if (dueOn > addDays(todayDate, LAST_DAY_SHOWN_ONE_BY_ONE)) return 'Later';
   return formatShortDate(fromIsoDate(dueOn));
 }
 
 export interface DueGroup<T> {
-  /** "Overdue", "Today", "Tomorrow", a day of the coming week ("Fri 9 Oct"), "Later" or "No due date". */
+  /** "Overdue", "Today", "Tomorrow", one of the next five days ("Fri 9 Oct"), "Later" or "No due date". */
   label: string;
+  isOverdue: boolean;
   items: T[];
 }
 
@@ -70,7 +71,12 @@ export function groupByDueDate<T extends { dueOn: string | null }>(
     const label = dueGroupLabel(item.dueOn, todayDate);
     const last = groups.at(-1);
     if (last?.label === label) last.items.push(item);
-    else groups.push({ label, items: [item] });
+    else
+      groups.push({
+        label,
+        isOverdue: item.dueOn !== null && item.dueOn < todayDate,
+        items: [item],
+      });
   }
   return groups;
 }

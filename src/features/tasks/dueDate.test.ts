@@ -5,8 +5,8 @@ import { groupByDueDate } from '@/features/tasks/dueDate';
 /** Wednesday 7 October 2026. */
 const TODAY = '2026-10-07';
 
-function titlesByGroup(dueDates: (string | null)[]) {
-  const items = dueDates.map((dueOn, index) => ({ title: String(index), dueOn }));
+function dueDatesByGroup(dueDates: (string | null)[]) {
+  const items = dueDates.map((dueOn) => ({ dueOn }));
   return groupByDueDate(items, TODAY).map(({ label, items: grouped }) => [
     label,
     grouped.map((item) => item.dueOn),
@@ -16,7 +16,7 @@ function titlesByGroup(dueDates: (string | null)[]) {
 describe('groupByDueDate', () => {
   it('groups by overdue, today, tomorrow, each day of the coming week, later and no due date', () => {
     expect(
-      titlesByGroup([
+      dueDatesByGroup([
         '2026-09-30',
         '2026-10-06',
         '2026-10-07',
@@ -38,8 +38,16 @@ describe('groupByDueDate', () => {
     ]);
   });
 
+  it('marks only the overdue group as overdue', () => {
+    expect(
+      groupByDueDate([{ dueOn: '2026-10-06' }, { dueOn: TODAY }], TODAY).map(
+        (group) => group.isOverdue,
+      ),
+    ).toEqual([true, false]);
+  });
+
   it('leaves out groups with nothing in them', () => {
-    expect(titlesByGroup(['2026-10-08', null])).toEqual([
+    expect(dueDatesByGroup(['2026-10-08', null])).toEqual([
       ['Tomorrow', ['2026-10-08']],
       ['No due date', [null]],
     ]);

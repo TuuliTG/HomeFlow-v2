@@ -11,9 +11,6 @@ import { useCompleteTask, usePickUpTask, usePutBackTask } from '@/features/tasks
 interface TaskCardProps {
   task: Task;
   currentUserId: string;
-}
-
-interface TaskCardWithTitleProps extends TaskCardProps {
   /** Heading level of the task's title, one below the heading of the list it is in. */
   titleLevel: 3 | 4;
 }
@@ -26,7 +23,7 @@ function personLabel(userId: string | null, name: string | null, currentUserId: 
 
 const tagClassName = 'w-fit rounded-full px-2 py-0.5 text-xs font-medium';
 
-export function TaskCard({ task, currentUserId, titleLevel }: TaskCardWithTitleProps) {
+export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
   const titleId = useId();
 
   return (
@@ -58,7 +55,7 @@ function TaskDetails({
   currentUserId,
   titleId,
   titleLevel,
-}: TaskCardWithTitleProps & { titleId: string }) {
+}: TaskCardProps & { titleId: string }) {
   const isMeta = task.type === 'meta';
   const Title = titleLevel === 3 ? 'h3' : 'h4';
   return (
@@ -129,7 +126,7 @@ function pickUpAction(task: Task, currentUserId: string): 'pickUp' | 'putBack' |
 }
 
 /** Pick up (or put back, if it's yours) and Mark done, with a message when one fails. */
-function TaskActions({ task, currentUserId }: TaskCardProps) {
+function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'currentUserId'>) {
   const completeTask = useCompleteTask(currentUserId);
   const pickUpTask = usePickUpTask(currentUserId);
   const putBackTask = usePutBackTask(currentUserId);
