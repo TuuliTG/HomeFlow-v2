@@ -172,10 +172,11 @@ export async function fakeSupabase(page: Page) {
       return reply(route, 201);
     }
     const householdId = ownHousehold?.id;
-    // "Show completed" asks for the household's done tasks (`completed_at=not.is.null`), newest first.
+    // "Show completed" asks for the household's done shared tasks (`completed_at=not.is.null`), newest first.
     if (new URL(request.url()).searchParams.get('completed_at') === 'not.is.null') {
       const done = tasks.filter(
-        (task) => task.household_id === householdId && task.completed_at !== null,
+        (task) =>
+          task.household_id === householdId && task.completed_at !== null && !task.is_private,
       );
       return reply(
         route,

@@ -42,7 +42,7 @@ describe('household setup', () => {
     renderAppAt('/');
 
     expect(await screen.findByText('Hello, Anna')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Shared tasks' })).toBeInTheDocument();
   });
 
   it('asks a logged-in user without a name for one first', async () => {

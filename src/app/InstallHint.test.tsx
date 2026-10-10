@@ -36,7 +36,7 @@ describe('Add to Home Screen hint', () => {
     useBrowser(userAgent);
     renderAppAt('/');
 
-    await screen.findByRole('heading', { level: 1, name: 'Available tasks' });
+    await screen.findByRole('heading', { level: 1, name: 'Shared tasks' });
     expect(hint()).toHaveTextContent('Tap Share, then Add to Home Screen');
   });
 
@@ -44,7 +44,7 @@ describe('Add to Home Screen hint', () => {
     useBrowser(IPHONE_SAFARI, { homeScreen: true });
     renderAppAt('/');
 
-    await screen.findByRole('heading', { level: 1, name: 'Available tasks' });
+    await screen.findByRole('heading', { level: 1, name: 'Shared tasks' });
     expect(hint()).not.toBeInTheDocument();
   });
 
@@ -53,7 +53,7 @@ describe('Add to Home Screen hint', () => {
     Object.defineProperty(navigator, 'standalone', { configurable: true, value: true });
     renderAppAt('/');
 
-    await screen.findByRole('heading', { level: 1, name: 'Available tasks' });
+    await screen.findByRole('heading', { level: 1, name: 'Shared tasks' });
     expect(hint()).not.toBeInTheDocument();
     Reflect.deleteProperty(navigator, 'standalone');
   });
@@ -65,7 +65,7 @@ describe('Add to Home Screen hint', () => {
     useBrowser(userAgent, { maxTouchPoints });
     renderAppAt('/');
 
-    await screen.findByRole('heading', { level: 1, name: 'Available tasks' });
+    await screen.findByRole('heading', { level: 1, name: 'Shared tasks' });
     expect(hint()).not.toBeInTheDocument();
   });
 
@@ -79,7 +79,7 @@ describe('Add to Home Screen hint', () => {
     unmount();
     renderAppAt('/');
 
-    await screen.findByRole('heading', { level: 1, name: 'Available tasks' });
+    await screen.findByRole('heading', { level: 1, name: 'Shared tasks' });
     expect(hint()).not.toBeInTheDocument();
   });
 

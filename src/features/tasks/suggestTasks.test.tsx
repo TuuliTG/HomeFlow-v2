@@ -169,7 +169,7 @@ describe('adding a task again', () => {
     await user.click(within(mistake).getByRole('link', { name: /Edit/ }));
     await user.click(await screen.findByRole('button', { name: 'Delete task' }));
     await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
-    await screen.findByRole('heading', { level: 1, name: 'Available tasks' });
+    await screen.findByRole('heading', { level: 1, name: 'Shared tasks' });
     await user.click(screen.getByRole('link', { name: 'New task' }));
 
     const recent = await screen.findByRole('region', { name: 'Add again' });

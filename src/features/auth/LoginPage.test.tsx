@@ -131,7 +131,7 @@ describe('login', () => {
     await submitLogin(user, { email: 'ben@example.com' });
 
     expect(await screen.findByText('Hello, Ben')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Shared tasks' })).toBeInTheDocument();
   });
 });
 

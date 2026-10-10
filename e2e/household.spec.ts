@@ -29,8 +29,8 @@ test('new user can create a household and see its invite code', async ({ page })
   await expect(memberList(page)).toHaveText(['Anna (you)']);
   await expectNoA11yViolations(page, 'household');
 
-  await page.getByRole('link', { name: 'Tasks' }).click();
-  await expect(page.getByRole('heading', { name: 'Available tasks' })).toBeVisible();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+  await expect(page.getByRole('heading', { name: 'Shared tasks' })).toBeVisible();
   await expect(page.getByText('Hello, Anna')).toBeVisible();
 });
 
@@ -50,7 +50,7 @@ test('new user can join a household with its invite code', async ({ page }) => {
   ).toBeVisible();
   await expect(memberList(page)).toHaveText(['Ben', 'Anna (you)']);
 
-  await page.getByRole('link', { name: 'Tasks' }).click();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
   const bensTask = page.getByRole('listitem', { name: EXISTING_HOUSEHOLD.task });
   await expect(bensTask.getByText('Added by Ben')).toBeVisible();
 

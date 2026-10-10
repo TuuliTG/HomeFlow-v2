@@ -115,12 +115,13 @@ const householdCompletedRowsSchema = z.array(
   }),
 );
 
-/** The household's most recently done tasks, newest first, with who did them. */
+/** The household's most recently done shared tasks, newest first, with who did them. */
 export async function fetchHouseholdCompletedTasks(): Promise<HouseholdCompletedTask[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select('id, title, type, points, completed_at, completed_by')
     .not('completed_at', 'is', null)
+    .eq('is_private', false)
     .order('completed_at', { ascending: false })
     .limit(HOUSEHOLD_COMPLETED_LIMIT);
   if (error) throw error;

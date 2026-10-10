@@ -14,7 +14,7 @@ test('family member sees points earned and tasks created, and how fairly each is
   await page.getByLabel('Invite code').fill(EXISTING_HOUSEHOLD.inviteCode);
   await page.getByRole('button', { name: 'Join household' }).click();
   const nav = page.getByRole('navigation', { name: 'Main' });
-  await nav.getByRole('link', { name: 'Tasks' }).click();
+  await nav.getByRole('link', { name: 'Shared tasks' }).click();
 
   const task = page.getByRole('listitem', { name: EXISTING_HOUSEHOLD.task });
   await task.getByRole('button', { name: `Mark done: ${EXISTING_HOUSEHOLD.task}` }).click();

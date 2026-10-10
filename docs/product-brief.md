@@ -19,7 +19,7 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 
 ## Screens (mid-fi prototype, mobile, bottom tab bar: Me · Tasks · Rewards · Statistics)
 
-- **Available tasks** — "Fairness this week" stacked bar per member; filter; task cards with points, tags
+- **Shared tasks** (formerly Available tasks) — "Fairness this week" stacked bar per member; filter; task cards with points, tags
   (frequency, type physical/meta), bonus points (e.g. "new for you", fairness boost), "last done by …";
   **Pick up task** button; **+** to create a task.
 - **Create / edit task** — reuse a previous task or type a new one; points, type, assignees (adults default, children
