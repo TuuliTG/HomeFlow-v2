@@ -40,6 +40,16 @@ interface TaskRow {
   completed_by: string | null;
 }
 
+interface GoalRow {
+  id: string;
+  household_id: string;
+  title: string;
+  target_points: number;
+  owner_id: string | null;
+  created_at: string;
+  claimed_at: string | null;
+}
+
 async function reply(route: Route, status: number, body?: unknown) {
   await route.fulfill({
     status,
@@ -381,6 +391,81 @@ export async function fakeSupabase(page: Page) {
     );
   }
 
+  const goals: GoalRow[] = [];
+
+  /** Like the policies on goals: the household's family goals and the user's own goals. */
+  function visibleGoals() {
+    return goals.filter(
+      (goal) =>
+        goal.household_id === ownHousehold?.id &&
+        (goal.owner_id === null || goal.owner_id === user.id),
+    );
+  }
+
+  /** Like goal_points(): shared tasks done since the goal was set, by the owner for a personal goal. */
+  function goalPoints(goal: GoalRow) {
+    return tasks
+      .filter(
+        (task) =>
+          task.household_id === goal.household_id &&
+          !task.is_private &&
+          task.completed_at !== null &&
+          task.completed_at >= goal.created_at &&
+          (goal.claimed_at === null || task.completed_at <= goal.claimed_at) &&
+          (goal.owner_id === null || task.completed_by === goal.owner_id),
+      )
+      .reduce((total, task) => total + (task.points ?? 0), 0);
+  }
+
+  async function goalsEndpoint(route: Route) {
+    const request = route.request();
+    if (request.method() === 'POST') {
+      if (!ownHousehold) return reply(route, 400, { code: '23502', message: 'No household' });
+      const goal = request.postDataJSON() as Pick<GoalRow, 'title' | 'target_points' | 'owner_id'>;
+      goals.push({
+        ...goal,
+        id: `e2e-goal-${String(goals.length)}`,
+        household_id: ownHousehold.id,
+        created_at: new Date().toISOString(),
+        claimed_at: null,
+      });
+      return reply(route, 201);
+    }
+    // DELETE, filtered by `id=eq.<id>`, for an open goal only.
+    const [id] = filterIds(new URL(request.url()).searchParams.get('id'));
+    const goal = visibleGoals().find((candidate) => candidate.id === id && !candidate.claimed_at);
+    if (goal) goals.splice(goals.indexOf(goal), 1);
+    return reply(route, 204);
+  }
+
+  /** Like household_goals(): open goals first, newest first, then claimed ones. */
+  async function householdGoals(route: Route) {
+    const open = visibleGoals().filter((goal) => goal.claimed_at === null);
+    const claimed = visibleGoals().filter((goal) => goal.claimed_at !== null);
+    return reply(
+      route,
+      200,
+      [...open.reverse(), ...claimed.reverse()].map((goal) => ({
+        ...goal,
+        points: goalPoints(goal),
+      })),
+    );
+  }
+
+  /** Like claim_goal_reward(). */
+  async function claimGoalReward(route: Route) {
+    const { goal_id } = route.request().postDataJSON() as { goal_id: string };
+    const goal = visibleGoals().find(
+      (candidate) => candidate.id === goal_id && !candidate.claimed_at,
+    );
+    if (!goal) return reply(route, 400, { code: 'P0002', message: 'No open goal with this id' });
+    if (goalPoints(goal) < goal.target_points) {
+      return reply(route, 400, { code: '23514', message: 'This goal has not been reached yet' });
+    }
+    goal.claimed_at = new Date().toISOString();
+    return reply(route, 204);
+  }
+
   /** Accepts any email and password, for both creating an account and logging in. */
   function logInWith(route: Route) {
     return reply(route, 200, {
@@ -417,6 +502,9 @@ export async function fakeSupabase(page: Page) {
         [...reminders].map(([task_id, remind_at]) => ({ task_id, remind_at })),
       ),
     '/rest/v1/tasks': tasksEndpoint,
+    '/rest/v1/goals': goalsEndpoint,
+    '/rest/v1/rpc/household_goals': householdGoals,
+    '/rest/v1/rpc/claim_goal_reward': claimGoalReward,
   };
 
   await page.route(`${FAKE_SUPABASE_URL}/**`, async (route) => {
