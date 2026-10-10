@@ -1,12 +1,15 @@
 import { useState } from 'react';
 
-import { type Goal, isReached } from '@/features/rewards/goal';
+import { type Goal, isManagedBy, isReached, ownerNameOf } from '@/features/rewards/goal';
 import { useClaimGoalReward, useDeleteGoal } from '@/features/rewards/useGoals';
 
-/** An open goal: its progress, claiming the reward once reached, and deleting it. */
+/**
+ * An open goal and its progress. Family goals and the user's own can be claimed once reached, and
+ * deleted; someone else's personal goal is only followed.
+ */
 export function GoalCard({ goal, userId }: { goal: Goal; userId: string }) {
-  const claim = useClaimGoalReward(userId);
-  const reached = isReached(goal);
+  const canManage = isManagedBy(goal, userId);
+  const othersName = goal.owner && !canManage ? ownerNameOf(goal.owner) : null;
   const shownPoints = Math.min(goal.points, goal.targetPoints);
   const percent = Math.round((shownPoints / goal.targetPoints) * 100);
 
@@ -16,7 +19,10 @@ export function GoalCard({ goal, userId }: { goal: Goal; userId: string }) {
       className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
     >
       <div className="flex items-baseline justify-between gap-4">
-        <h3 className="font-semibold text-slate-900">{goal.title}</h3>
+        <div>
+          <h3 className="font-semibold text-slate-900">{goal.title}</h3>
+          {othersName && <p className="text-sm text-slate-600">{othersName}&apos;s goal</p>}
+        </div>
         <span className="shrink-0 text-sm text-slate-600">
           {shownPoints} / {goal.targetPoints} points
         </span>
@@ -31,38 +37,49 @@ export function GoalCard({ goal, userId }: { goal: Goal; userId: string }) {
         className="h-3 overflow-hidden rounded-full bg-slate-200"
       >
         <div
-          className={`h-full rounded-full ${reached ? 'bg-emerald-600' : 'bg-brand-600'}`}
+          className={`h-full rounded-full ${isReached(goal) ? 'bg-emerald-600' : 'bg-brand-600'}`}
           style={{ width: `${String(percent)}%` }}
         />
       </div>
-      {reached ? (
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm font-medium text-emerald-800">Goal reached!</p>
-          <button
-            type="button"
-            aria-label={`Claim reward: ${goal.title}`}
-            disabled={claim.isPending}
-            onClick={() => {
-              claim.mutate(goal.id);
-            }}
-            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
-          >
-            Claim reward
-          </button>
-        </div>
-      ) : (
+      {!isReached(goal) ? (
         <p className="text-sm text-slate-600">
           {goal.targetPoints - goal.points} more{' '}
           {goal.targetPoints - goal.points === 1 ? 'point' : 'points'} to go
         </p>
+      ) : othersName ? (
+        <p className="text-sm font-medium text-emerald-800">{othersName} reached this goal!</p>
+      ) : (
+        <ClaimReward goal={goal} userId={userId} />
       )}
+      {canManage && <DeleteGoal goal={goal} userId={userId} />}
+    </li>
+  );
+}
+
+function ClaimReward({ goal, userId }: { goal: Goal; userId: string }) {
+  const claim = useClaimGoalReward(userId);
+  return (
+    <>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm font-medium text-emerald-800">Goal reached!</p>
+        <button
+          type="button"
+          aria-label={`Claim reward: ${goal.title}`}
+          disabled={claim.isPending}
+          onClick={() => {
+            claim.mutate(goal.id);
+          }}
+          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
+        >
+          Claim reward
+        </button>
+      </div>
       {claim.isError && (
         <p role="alert" className="text-sm text-red-700">
           We couldn&apos;t claim the reward. Check your connection and try again.
         </p>
       )}
-      <DeleteGoal goal={goal} userId={userId} />
-    </li>
+    </>
   );
 }
 
@@ -89,7 +106,7 @@ function DeleteGoal({ goal, userId }: { goal: Goal; userId: string }) {
     <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
       <p className="text-sm text-red-900">
         Delete &ldquo;{goal.title}&rdquo;
-        {goal.scope === 'shared' && ' for everyone in the household'}? This can&apos;t be undone.
+        {goal.owner === null && ' for everyone in the household'}? This can&apos;t be undone.
       </p>
       {deleteGoal.isError && (
         <p role="alert" className="text-sm text-red-700">

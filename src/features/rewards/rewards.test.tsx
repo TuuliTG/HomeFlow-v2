@@ -27,7 +27,7 @@ function doTask(userId: string, title: string, points: number) {
   fakeTasksBackend.completeTaskAs(userId, idOf(title), '2026-10-10');
 }
 
-type SectionName = 'Family goals' | 'Your goals';
+type SectionName = 'Family goals' | 'Your goals' | "Family members' goals";
 
 function section(name: SectionName) {
   return screen.getByRole('region', { name });
@@ -98,6 +98,38 @@ describe('rewards and goals', () => {
     const yours = within(section('Your goals')).getAllByRole('listitem');
     expect(yours.map((goal) => goal.getAttribute('aria-label'))).toEqual(['New book']);
     expect(yours[0]).toHaveTextContent('2 / 5 points');
+    const sweets = await findGoal("Family members' goals", 'Sweets');
+    expect(sweets).toHaveTextContent("Ben's goal");
+    expect(sweets).toHaveTextContent('4 / 5 points');
+  });
+
+  it("shows other members' goals for the family to cheer on, leaving claiming and deleting to them", async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    fakeGoalsBackend.addGoalAs(ben.id, { title: 'Sweets', targetPoints: 5, isShared: false });
+    doTask(ben.id, 'Mow the lawn', 6);
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'New book', targetPoints: 5, isShared: false });
+    fakeGoalsBackend.addGoalAs(ben.id, { title: 'Cinema', targetPoints: 1, isShared: false });
+    fakeGoalsBackend.claimAs('goal:2');
+    renderAppAt('/rewards');
+
+    const sweets = await findGoal("Family members' goals", 'Sweets');
+    expect(sweets).toHaveTextContent('Ben reached this goal!');
+    expect(within(sweets).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(section('Your goals')).getByRole('listitem')).toHaveAccessibleName('New book');
+    expect(screen.getByRole('region', { name: 'Rewards claimed' })).toHaveTextContent(
+      "CinemaBen's · Claimed",
+    );
+  });
+
+  it("leaves out the members' goals section when nobody else has a goal", async () => {
+    const anna = logInAsFamilyMember();
+    addBen();
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'New book', targetPoints: 5, isShared: false });
+    renderAppAt('/rewards');
+
+    await findGoal('Your goals', 'New book');
+    expect(screen.queryByRole('region', { name: "Family members' goals" })).not.toBeInTheDocument();
   });
 
   it('claims the reward of a reached goal, which then stays as history', async () => {

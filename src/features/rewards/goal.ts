@@ -41,10 +41,11 @@ export interface Goal {
   id: string;
   title: string;
   targetPoints: number;
-  scope: GoalScope;
+  /** Whose personal goal it is (everyone in the household sees it); null for a family goal. */
+  owner: { id: string; name: string | null } | null;
   /**
-   * Points of shared tasks done since the goal was set: by anyone for a family goal, by the user for
-   * their own. Counted up to when the reward was claimed.
+   * Points of shared tasks done since the goal was set: by anyone for a family goal, by its owner for
+   * a personal one. Counted up to when the reward was claimed.
    */
   points: number;
   /** When the reward was claimed (ISO timestamp); null while the goal is open. */
@@ -53,4 +54,14 @@ export interface Goal {
 
 export function isReached(goal: Goal): boolean {
   return goal.points >= goal.targetPoints;
+}
+
+/** Members claim and delete family goals and their own; someone else's personal goal is theirs. */
+export function isManagedBy(goal: Goal, userId: string): boolean {
+  return goal.owner === null || goal.owner.id === userId;
+}
+
+/** The owner's display name, or "A family member" if they haven't chosen one. */
+export function ownerNameOf(owner: NonNullable<Goal['owner']>): string {
+  return owner.name ?? 'A family member';
 }

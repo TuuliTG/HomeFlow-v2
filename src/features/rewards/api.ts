@@ -9,13 +9,14 @@ const goalRowsSchema = z.array(
     title: z.string(),
     target_points: z.number(),
     owner_id: z.string().nullable(),
+    owner_name: z.string().nullable(),
     claimed_at: z.string().nullable(),
     points: z.number(),
   }),
 );
 
 /**
- * The household's family goals and the user's own goals, with the points towards each: open goals
+ * The household's family goals and every member's personal goals, with the points towards each: open goals
  * first (newest first), then claimed ones. Counted by `household_goals()` in the database.
  */
 export async function fetchGoals(): Promise<Goal[]> {
@@ -24,10 +25,10 @@ export async function fetchGoals(): Promise<Goal[]> {
   if (result.error) throw result.error;
   return goalRowsSchema
     .parse(result.data)
-    .map(({ target_points, owner_id, claimed_at, ...goal }) => ({
+    .map(({ target_points, owner_id, owner_name, claimed_at, ...goal }) => ({
       ...goal,
       targetPoints: target_points,
-      scope: owner_id === null ? 'shared' : 'personal',
+      owner: owner_id === null ? null : { id: owner_id, name: owner_name },
       claimedAt: claimed_at,
     }));
 }

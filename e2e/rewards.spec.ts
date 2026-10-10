@@ -6,7 +6,7 @@ import { EXISTING_HOUSEHOLD, fakeSupabase, logInAsNewUser } from './fakeSupabase
 // See auth.spec.ts: the Supabase fake can't intercept requests that go through the service worker.
 test.use({ serviceWorkers: 'block' });
 
-test('family member sets a family goal and a personal one, earns the points and claims the reward', async ({
+test("family member sets a family goal and a personal one, follows others' goals, earns the points and claims the reward", async ({
   page,
 }) => {
   await fakeSupabase(page);
@@ -36,6 +36,12 @@ test('family member sets a family goal and a personal one, earns the points and 
     name: 'New book',
   });
   await expect(book).toContainText('0 / 20 points');
+  const bens = page
+    .getByRole('region', { name: "Family members' goals" })
+    .getByRole('listitem', { name: EXISTING_HOUSEHOLD.goal });
+  await expect(bens).toContainText("Ben's goal");
+  await expect(bens).toContainText('0 / 10 points');
+  await expect(bens.getByRole('button')).toHaveCount(0);
 
   await nav.getByRole('link', { name: 'Shared tasks' }).click();
   const task = page.getByRole('listitem', { name: EXISTING_HOUSEHOLD.task });

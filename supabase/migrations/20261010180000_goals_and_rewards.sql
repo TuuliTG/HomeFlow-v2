@@ -1,8 +1,8 @@
 -- Goals and rewards (ADR 0007): a goal is a reward the household or one member works towards, reached with the
 -- points of shared tasks done after it was set. A shared goal (owner_id null) counts everyone's points and the whole
--- household sees it; a personal goal counts only its owner's points and only they see it. Points aren't spent: the
--- same points count towards every goal they apply to. Once reached, the reward is claimed with
--- claim_goal_reward(), and the goal stays as history.
+-- household sees it; a personal goal counts only its owner's points, and the household sees it too so they can follow
+-- and celebrate it, but only the owner deletes or claims it. Points aren't spent: the same points count towards every
+-- goal they apply to. Once reached, the reward is claimed with claim_goal_reward(), and the goal stays as history.
 create table public.goals (
   id uuid primary key default gen_random_uuid(),
   household_id uuid not null default private.current_household_id()
@@ -27,12 +27,9 @@ revoke all on table public.goals from anon, authenticated;
 grant select, delete on table public.goals to authenticated;
 grant insert (title, target_points, owner_id) on table public.goals to authenticated;
 
-create policy "Members can view shared goals and their own personal ones"
+create policy "Members can view their household's goals"
   on public.goals for select to authenticated
-  using (
-    household_id = (select private.current_household_id())
-    and (owner_id is null or owner_id = (select auth.uid()))
-  );
+  using (household_id = (select private.current_household_id()));
 
 -- Nobody sets a personal goal for someone else.
 create policy "Members can add shared goals and their own personal ones"
@@ -43,8 +40,8 @@ create policy "Members can add shared goals and their own personal ones"
     and (owner_id is null or owner_id = (select auth.uid()))
   );
 
--- Claimed goals stay as the household's history.
-create policy "Members can delete open goals they can see"
+-- Someone's personal goal is theirs to delete. Claimed goals stay as the household's history.
+create policy "Members can delete open shared goals and their own personal ones"
   on public.goals for delete to authenticated
   using (
     household_id = (select private.current_household_id())
@@ -72,14 +69,15 @@ $$;
 revoke execute on function private.goal_points(public.goals) from public;
 grant execute on function private.goal_points(public.goals) to authenticated;
 
--- The goals the user can see with the points towards each, open goals first (newest first), then claimed ones
--- (most recently claimed first). Security invoker, so Row Level Security scopes it.
+-- The household's goals with the points towards each and the owner's display name, open goals first (newest first),
+-- then claimed ones (most recently claimed first). Security invoker, so Row Level Security scopes it.
 create function public.household_goals()
 returns table (
   id uuid,
   title text,
   target_points integer,
   owner_id uuid,
+  owner_name text,
   created_at timestamptz,
   claimed_at timestamptz,
   points integer
@@ -89,14 +87,16 @@ stable
 security invoker
 set search_path = ''
 as $$
-  select g.id, g.title, g.target_points, g.owner_id, g.created_at, g.claimed_at, private.goal_points(g)
+  select g.id, g.title, g.target_points, g.owner_id, p.display_name, g.created_at, g.claimed_at,
+    private.goal_points(g)
   from public.goals g
+  left join public.profiles p on p.id = g.owner_id
   order by g.claimed_at desc nulls first, g.created_at desc, g.id;
 $$;
 revoke execute on function public.household_goals() from public, anon;
 grant execute on function public.household_goals() to authenticated;
 
--- Claims the reward of an open goal the user can see once its points reach the target. Raises no_data_found
+-- Claims the reward of an open shared goal or the user's own personal goal once its points reach the target. Raises no_data_found
 -- (P0002) if there is no such open goal, and check_violation (23514) if it hasn't been reached yet.
 create function public.claim_goal_reward(goal_id uuid)
 returns void

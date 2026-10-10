@@ -20,7 +20,7 @@ describe('goals api', () => {
     query.delete.mockReturnValue(query);
   });
 
-  it('reads the goals with their points, telling family goals from personal ones', async () => {
+  it('reads the goals with their points, telling family goals from personal ones and whose they are', async () => {
     client.rpc.mockResolvedValue({
       data: [
         {
@@ -28,6 +28,7 @@ describe('goals api', () => {
           title: 'Pizza night',
           target_points: 30,
           owner_id: null,
+          owner_name: null,
           created_at: '2026-10-01T10:00:00Z',
           claimed_at: null,
           points: 12,
@@ -37,6 +38,7 @@ describe('goals api', () => {
           title: 'New book',
           target_points: 5,
           owner_id: 'u1',
+          owner_name: 'Anna',
           created_at: '2026-10-01T10:00:00Z',
           claimed_at: '2026-10-09T10:00:00Z',
           points: 6,
@@ -50,7 +52,7 @@ describe('goals api', () => {
         id: 'g1',
         title: 'Pizza night',
         targetPoints: 30,
-        scope: 'shared',
+        owner: null,
         points: 12,
         claimedAt: null,
       },
@@ -58,7 +60,7 @@ describe('goals api', () => {
         id: 'g2',
         title: 'New book',
         targetPoints: 5,
-        scope: 'personal',
+        owner: { id: 'u1', name: 'Anna' },
         points: 6,
         claimedAt: '2026-10-09T10:00:00Z',
       },

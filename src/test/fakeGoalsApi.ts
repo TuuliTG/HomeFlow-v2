@@ -7,7 +7,8 @@ import { requestsFailing, tasks } from '@/test/fakeTasksBackend';
 /**
  * In-memory stand-in for `@/features/rewards/api`, installed for every unit test in `setup.ts`. Like
  * `household_goals()`, it counts the points of shared tasks in `fakeTasksBackend` done since a goal was
- * set, and shows the logged-in user their household's family goals and their own personal ones.
+ * set. Like its policies, members see all their household's goals and claim or delete family goals
+ * and their own.
  */
 interface StoredGoal {
   id: string;
@@ -45,16 +46,17 @@ function loggedInUserId(): string {
 
 /** The goals the logged-in user can see, like the select policy on `goals`. */
 function visibleGoals(): StoredGoal[] {
-  const userId = loggedInUserId();
-  const householdId = fakeHouseholdBackend.householdIdOf(userId);
-  return goals.filter(
-    (goal) =>
-      goal.householdId === householdId && (goal.ownerId === null || goal.ownerId === userId),
-  );
+  const householdId = fakeHouseholdBackend.householdIdOf(loggedInUserId());
+  return goals.filter((goal) => goal.householdId === householdId);
 }
 
+/** An open family goal or one of the user's own, which they can claim or delete. */
 function openGoal(goalId: string): StoredGoal {
-  const goal = visibleGoals().find(({ id, claimedAt }) => id === goalId && claimedAt === null);
+  const userId = loggedInUserId();
+  const goal = visibleGoals().find(
+    ({ id, claimedAt, ownerId }) =>
+      id === goalId && claimedAt === null && (ownerId === null || ownerId === userId),
+  );
   if (!goal) throw new Error(`No open goal ${goalId}`);
   return goal;
 }
@@ -78,7 +80,10 @@ export const fetchGoals: typeof goalsApi.fetchGoals = () =>
         id: goal.id,
         title: goal.title,
         targetPoints: goal.targetPoints,
-        scope: goal.ownerId === null ? 'shared' : 'personal',
+        owner:
+          goal.ownerId === null
+            ? null
+            : { id: goal.ownerId, name: fakeAuthBackend.displayNameOf(goal.ownerId) },
         points: pointsOf(goal),
         claimedAt: goal.claimedAt,
       }));

@@ -4,7 +4,7 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { GoalCard } from '@/features/rewards/GoalCard';
-import type { Goal, GoalScope } from '@/features/rewards/goal';
+import { type Goal, ownerNameOf } from '@/features/rewards/goal';
 import { useGoals } from '@/features/rewards/useGoals';
 import { useLoggedInUser } from '@/lib/auth';
 
@@ -13,16 +13,32 @@ const emptyClassName =
 
 const claimedDateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
 
-const sections: Record<GoalScope, { heading: string; empty: string }> = {
-  shared: {
+type Section = 'family' | 'yours' | 'members';
+
+const sections: Record<Section, { heading: string; empty: string | null }> = {
+  family: {
     heading: 'Family goals',
     empty: 'No family goals yet. Set one everyone can work towards together, like a trip out.',
   },
-  personal: {
+  yours: {
     heading: 'Your goals',
-    empty: 'Set a goal of your own, like a treat. Only you see it, and only your points count.',
+    empty:
+      'Set a goal of your own, like a treat. Only your points count, and the family can cheer you on.',
   },
+  // Shown only when other members have goals.
+  members: { heading: "Family members' goals", empty: null },
 };
+
+function sectionOf(goal: Goal, userId: string): Section {
+  if (goal.owner === null) return 'family';
+  return goal.owner.id === userId ? 'yours' : 'members';
+}
+
+/** Whose a claimed reward was: "Family", "Yours" or "Ben's". */
+function ownerLabel(goal: Goal, userId: string): string {
+  if (goal.owner === null) return 'Family';
+  return goal.owner.id === userId ? 'Yours' : `${ownerNameOf(goal.owner)}'s`;
+}
 
 export function RewardsPage() {
   return (
@@ -62,30 +78,31 @@ function Goals() {
   const claimed = goals.data.filter((goal) => goal.claimedAt !== null);
   return (
     <div className="flex flex-col gap-8">
-      {(['shared', 'personal'] as const).map((scope) => (
+      {(['family', 'yours', 'members'] as const).map((section) => (
         <GoalSection
-          key={scope}
-          scope={scope}
-          goals={open.filter((goal) => goal.scope === scope)}
+          key={section}
+          section={section}
+          goals={open.filter((goal) => sectionOf(goal, user.id) === section)}
           userId={user.id}
         />
       ))}
-      {claimed.length > 0 && <ClaimedRewards goals={claimed} />}
+      {claimed.length > 0 && <ClaimedRewards goals={claimed} userId={user.id} />}
     </div>
   );
 }
 
 function GoalSection({
-  scope,
+  section,
   goals,
   userId,
 }: {
-  scope: GoalScope;
+  section: Section;
   goals: Goal[];
   userId: string;
 }) {
-  const { heading, empty } = sections[scope];
-  const headingId = `${scope}-goals-heading`;
+  const { heading, empty } = sections[section];
+  const headingId = `${section}-goals-heading`;
+  if (goals.length === 0 && empty === null) return null;
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
       <h2 id={headingId} className="text-lg font-semibold text-slate-900">
@@ -104,7 +121,7 @@ function GoalSection({
   );
 }
 
-function ClaimedRewards({ goals }: { goals: Goal[] }) {
+function ClaimedRewards({ goals, userId }: { goals: Goal[]; userId: string }) {
   return (
     <section aria-labelledby="claimed-heading" className="flex flex-col gap-3">
       <h2 id="claimed-heading" className="text-lg font-semibold text-slate-900">
@@ -115,7 +132,7 @@ function ClaimedRewards({ goals }: { goals: Goal[] }) {
           <li key={goal.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
             <span className="font-medium text-slate-900">{goal.title}</span>
             <span className="shrink-0 text-slate-500">
-              {goal.scope === 'shared' ? 'Family' : 'Yours'} · Claimed{' '}
+              {ownerLabel(goal, userId)} · Claimed{' '}
               {claimedDateFormat.format(new Date(goal.claimedAt ?? ''))}
             </span>
           </li>

@@ -9,6 +9,7 @@ insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
   ('22222222-2222-2222-2222-222222222222', 'ben@example.com'),
   ('33333333-3333-3333-3333-333333333333', 'carl@example.com');
+insert into public.profiles (id, display_name) values ('11111111-1111-1111-1111-111111111111', 'Anna');
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "33333333-3333-3333-3333-333333333333", "role": "authenticated"}';
@@ -56,12 +57,12 @@ select throws_ok(
   'a goal cannot be claimed before it is reached'
 );
 
--- Ben sees the family goal but not Anna's personal one, and can't set a personal goal for her.
+-- Ben sees Anna's personal goal too, but can't set, claim or delete one for her.
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select results_eq(
-  $$ select title from public.household_goals() $$,
-  $$ values ('Pizza night') $$,
-  'other members see family goals but not someone''s personal goals'
+  $$ select title, owner_name, points from public.household_goals() $$,
+  $$ values ('New book', 'Anna', 2), ('Pizza night', null, 5) $$,
+  'other members see someone''s personal goal, its progress and whose it is'
 );
 select throws_ok(
   $$ insert into public.goals (title, target_points, owner_id)
@@ -77,7 +78,7 @@ select throws_ok(
 delete from public.goals where id = current_setting('test.book')::uuid;
 select is(
   (select count(*)::integer from public.goals where id = current_setting('test.book')::uuid),
-  0, 'other members cannot see someone''s personal goal to delete it'
+  1, 'other members cannot delete someone''s personal goal'
 );
 select throws_ok(
   $$ insert into public.goals (title, target_points) values ('Holiday', 0) $$,

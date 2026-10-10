@@ -21,7 +21,7 @@ const DEFAULT_TARGET_POINTS = '20';
 
 const scopeHints: Record<GoalScope, string> = {
   shared: "Everyone's points count towards it, and the whole family sees it.",
-  personal: 'Only your points count towards it, and only you see it.',
+  personal: 'Only your points count towards it. The family sees it too and can cheer you on.',
 };
 
 type FieldName = 'title' | 'targetPoints';
