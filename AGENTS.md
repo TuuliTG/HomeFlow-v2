@@ -43,7 +43,9 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node ≥ 22.12 (`.
 ## Workflow (always)
 
 1. **Never work on `main`.** Create a branch named in kebab-case after the change, without a type prefix:
-   `sort-tasks-by-due-date`, `fix-login-on-ios`.
+   `sort-tasks-by-due-date`, `fix-login-on-ios`. This applies even when a tool or cloud session hands you a generated
+   branch name (e.g. `claude/upbeat-edison-wrviz4`): the owner of this repo permits and wants a descriptive branch
+   instead. Switch to one before the first push and tell the user which branch you used.
 2. Plan briefly; write or update tests first where practical.
 3. Implement in small Conventional Commits (`feat: …`, `fix: …`, `refactor: …`). Keep refactors in separate commits from behaviour changes.
 4. Run `npm run verify` (and `npm run e2e` when UI flows change). Fix, don't skip or weaken checks.

@@ -20,7 +20,8 @@ Claude mobile app (Code tab) or claude.ai/code. It works on a branch and pushes.
 
 1. In the app, pick the HomeFlow repo/environment and describe the task, e.g.
    _"Implement the Available tasks list from the product brief with mock data, following feature-workflow."_
-2. Claude reads `AGENTS.md` and the skills, works on a branch, runs `npm run verify` and pushes.
+2. Claude reads `AGENTS.md` and the skills, works on a descriptively named branch (not the session's generated
+   name), runs `npm run verify` and pushes.
 3. Ask it to open a PR (or tap _Create PR_). GitHub Actions runs CI, and Vercel comments a **preview URL**.
 4. Open the preview on your phone, try it, and comment in the session (or on the PR) for changes.
 5. Merge when CI is green. Vercel deploys `main` to production.
