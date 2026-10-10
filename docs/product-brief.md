@@ -26,8 +26,9 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
   opt-in); a **private** check mark keeps a task to yourself, without points. Creating a task gets positive
   feedback and counts towards _tasks created_ (no points).
 - **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
-- **Rewards** — points per member, personal rewards/collectibles, shared family goal progress. Must make clear how
-  points are earned and how shared goals accumulate.
+- **Rewards** — shared family goals (everyone's points count) and personal goals (only yours count; the family
+  sees them to cheer each other on), each a reward with the points needed and its progress; a family goal can ask
+  for a minimum from each member so nobody does it all alone; claim the reward once reached. Must make clear how points are earned and how shared goals accumulate.
 - **Statistics** — period selector; _points earned_ (from doing tasks, all or physical/meta work apart) and _tasks
   created_ per member, each with its own fairness score (0–100, e.g. "Balanced"); contribution over time. Only shared
   tasks count; private tasks never do.
