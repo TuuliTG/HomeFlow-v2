@@ -14,8 +14,9 @@ import {
   undoCompleteTask,
   updateTask,
 } from '@/features/tasks/api';
+import { fetchFavouriteTasks, setFavouriteTask } from '@/features/tasks/favouritesApi';
 import { clearTaskReminder, fetchReminders, setTaskReminder } from '@/features/tasks/remindersApi';
-import type { NewTask } from '@/features/tasks/task';
+import { type NewTask, titleKey } from '@/features/tasks/task';
 import { today } from '@/features/tasks/dueDate';
 
 export const tasksKey = (userId: string) => ['tasks', userId] as const;
@@ -37,6 +38,38 @@ export function useTaskSuggestions(userId: string) {
   return useQuery({
     queryKey: [...tasksKey(userId), 'suggestions'],
     queryFn: fetchTaskSuggestions,
+  });
+}
+
+const favouritesKey = (userId: string) => [...tasksKey(userId), 'favourites'] as const;
+
+/**
+ * The names of the tasks starred in the user's household (`titleKey`). Under `tasksKey`, so it refreshes
+ * with the board.
+ */
+export function useFavouriteTasks(userId: string) {
+  return useQuery({ queryKey: favouritesKey(userId), queryFn: fetchFavouriteTasks });
+}
+
+/** Stars or unstars a task. The star changes straight away and goes back if saving fails. */
+export function useSetFavouriteTask(userId: string) {
+  const queryClient = useQueryClient();
+  const queryKey = favouritesKey(userId);
+  return useMutation({
+    mutationFn: ({ title, isFavourite }: { title: string; isFavourite: boolean }) =>
+      setFavouriteTask(title, isFavourite),
+    onMutate: async ({ title, isFavourite }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<string[]>(queryKey);
+      const key = titleKey(title);
+      const others = (previous ?? []).filter((other) => other !== key);
+      queryClient.setQueryData(queryKey, isFavourite ? [...others, key] : others);
+      return { previous };
+    },
+    onError: (_error, _favourite, context) => {
+      queryClient.setQueryData(queryKey, context?.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });
 }
 

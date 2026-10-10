@@ -1,24 +1,17 @@
-import type { NewTask, TaskSuggestion } from '@/features/tasks/task';
+import { type NewTask, type TaskSuggestion, titleKey } from '@/features/tasks/task';
 
-/** How many of the most often added tasks are offered before the user types anything. */
-export const TOP_SUGGESTIONS_LIMIT = 6;
 /** How many matching tasks are listed while the user types a name. */
 export const MATCHING_SUGGESTIONS_LIMIT = 5;
-
-/** Names match ignoring case, like `task_suggestions()` groups them, and spaces around what is typed. */
-function normalise(title: string): string {
-  return title.trim().toLowerCase();
-}
 
 /** Earlier tasks whose name contains `query`, in the order given (most often added first). */
 export function matchingSuggestions(
   suggestions: TaskSuggestion[],
   query: string,
 ): TaskSuggestion[] {
-  const wanted = normalise(query);
+  const wanted = titleKey(query);
   if (wanted === '') return [];
   return suggestions
-    .filter((suggestion) => normalise(suggestion.title).includes(wanted))
+    .filter((suggestion) => titleKey(suggestion.title).includes(wanted))
     .slice(0, MATCHING_SUGGESTIONS_LIMIT);
 }
 
@@ -27,7 +20,18 @@ export function findSuggestion(
   suggestions: TaskSuggestion[],
   title: string,
 ): TaskSuggestion | undefined {
-  return suggestions.find((suggestion) => normalise(suggestion.title) === normalise(title));
+  return suggestions.find((suggestion) => titleKey(suggestion.title) === titleKey(title));
+}
+
+/** The earlier tasks the household has starred (`favouriteKeys`, from `titleKey`), by name. */
+export function favouriteSuggestions(
+  suggestions: TaskSuggestion[],
+  favouriteKeys: string[],
+): TaskSuggestion[] {
+  const favourites = new Set(favouriteKeys);
+  return suggestions
+    .filter((suggestion) => favourites.has(titleKey(suggestion.title)))
+    .sort((a, b) => a.title.localeCompare(b.title));
 }
 
 /** A new task with an earlier task's details. Its due date had passed, so the new one has none. */
