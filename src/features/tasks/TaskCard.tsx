@@ -5,6 +5,7 @@ import { paths } from '@/app/paths';
 
 import { describeDueDate, today } from '@/features/tasks/dueDate';
 import { isToDoBy, repeatLabel, type Task, taskTypeLabels } from '@/features/tasks/task';
+import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
 import { useCompleteTask, usePickUpTask, usePutBackTask } from '@/features/tasks/useTasks';
 
@@ -31,18 +32,19 @@ export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
       aria-labelledby={titleId}
       className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-2">
         <TaskDetails
           task={task}
           currentUserId={currentUserId}
           titleId={titleId}
           titleLevel={titleLevel}
         />
-        {task.points !== null && (
-          <span className="text-brand-900 shrink-0 text-sm font-semibold">
-            {task.points} points
-          </span>
-        )}
+        <div className="-mt-2 -mr-2 flex shrink-0 items-center gap-1">
+          {task.points !== null && (
+            <span className="text-brand-900 text-sm font-semibold">{task.points} points</span>
+          )}
+          <TaskFavouriteStar title={task.title} currentUserId={currentUserId} />
+        </div>
       </div>
       {isToDoBy(task, currentUserId) && <TaskReminder task={task} currentUserId={currentUserId} />}
       <TaskActions task={task} currentUserId={currentUserId} />
