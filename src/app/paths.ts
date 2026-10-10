@@ -9,6 +9,7 @@ export const paths = {
   me: '/me',
   news: '/news',
   rewards: '/rewards',
+  newGoal: '/rewards/new',
   statistics: '/statistics',
   login: '/login',
   household: '/household',

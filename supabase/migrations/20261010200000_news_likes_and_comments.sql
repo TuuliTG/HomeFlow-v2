@@ -1,4 +1,4 @@
--- News (ADR 0007): members can give a thumbs up to, and comment on, shared tasks someone in their household has
+-- News (ADR 0008): members can give a thumbs up to, and comment on, shared tasks someone in their household has
 -- done. Both hang off the task, so the tasks' own Row Level Security decides who sees them: only the household, and
 -- never a private task (which can't be liked or commented on anyway).
 

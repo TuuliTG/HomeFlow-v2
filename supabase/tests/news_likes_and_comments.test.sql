@@ -1,4 +1,4 @@
--- Likes and comments on done tasks (ADR 0007). Run with `npm run db:test` (needs Docker).
+-- Likes and comments on done tasks (ADR 0008). Run with `npm run db:test` (needs Docker).
 -- Anna and Ben share a household and Carl has his own. Ben has done Vacuum and Anna a private task.
 begin;
 create extension if not exists pgtap with schema extensions;

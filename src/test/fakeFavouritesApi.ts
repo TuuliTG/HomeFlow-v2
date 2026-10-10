@@ -14,7 +14,12 @@ export const fetchFavouriteTasks: typeof favouritesApi.fetchFavouriteTasks = () 
   return Promise.resolve(fakeTasksBackend.favouritesOf(user.id));
 };
 
-export const setFavouriteTask: typeof favouritesApi.setFavouriteTask = (title, isFavourite) =>
-  asCurrentUser((userId) => {
+export const setFavouriteTask: typeof favouritesApi.setFavouriteTask = async (
+  title,
+  isFavourite,
+) => {
+  await fakeTasksBackend.favouriteSaved(title);
+  return asCurrentUser((userId) => {
     fakeTasksBackend.setFavouriteAs(userId, title, isFavourite);
   });
+};

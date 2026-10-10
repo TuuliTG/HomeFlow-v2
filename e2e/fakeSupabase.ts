@@ -13,6 +13,8 @@ export const EXISTING_HOUSEHOLD = {
   name: 'The Virtanens',
   inviteCode: 'KTXN4P7Q',
   task: 'Book dentist',
+  /** Ben's personal goal. */
+  goal: 'New bike',
 };
 /** The code a household created in a test gets. */
 export const NEW_INVITE_CODE = 'ABCD2345';
@@ -38,6 +40,17 @@ interface TaskRow {
   created_at: string;
   completed_at: string | null;
   completed_by: string | null;
+}
+
+interface GoalRow {
+  id: string;
+  household_id: string;
+  title: string;
+  target_points: number;
+  owner_id: string | null;
+  min_points_per_member: number | null;
+  created_at: string;
+  claimed_at: string | null;
 }
 
 async function reply(route: Route, status: number, body?: unknown) {
@@ -471,6 +484,124 @@ export async function fakeSupabase(page: Page) {
     );
   }
 
+  // Ben has a goal of his own, which the family sees.
+  const goals: GoalRow[] = [
+    {
+      id: 'e2e-ben-goal',
+      household_id: existing.id,
+      title: EXISTING_HOUSEHOLD.goal,
+      target_points: 10,
+      owner_id: 'e2e-ben',
+      min_points_per_member: null,
+      created_at: new Date().toISOString(),
+      claimed_at: null,
+    },
+  ];
+
+  /** Like the select policy on goals: every goal in the user's household. */
+  function visibleGoals() {
+    return goals.filter((goal) => goal.household_id === ownHousehold?.id);
+  }
+
+  /** Like the delete policy and claim_goal_reward(): an open family goal or the user's own. */
+  function ownOpenGoal(goalId: string | undefined) {
+    return visibleGoals().find(
+      (goal) =>
+        goal.id === goalId &&
+        goal.claimed_at === null &&
+        (goal.owner_id === null || goal.owner_id === user.id),
+    );
+  }
+
+  /** Like goal_points(): shared tasks done since the goal was set, by `doneBy` (anyone when null). */
+  function goalPoints(goal: GoalRow, doneBy = goal.owner_id) {
+    return tasks
+      .filter(
+        (task) =>
+          task.household_id === goal.household_id &&
+          !task.is_private &&
+          task.completed_at !== null &&
+          task.completed_at >= goal.created_at &&
+          (goal.claimed_at === null || task.completed_at <= goal.claimed_at) &&
+          (doneBy === null || task.completed_by === doneBy),
+      )
+      .reduce((total, task) => total + (task.points ?? 0), 0);
+  }
+
+  /** Like goal_member_points(): what each current member has earned towards a family goal. */
+  function memberPoints(goal: GoalRow) {
+    return (members.get(goal.household_id) ?? []).map((id) => ({
+      user_id: id,
+      display_name: profiles.get(id) ?? null,
+      points: goalPoints(goal, id),
+    }));
+  }
+
+  /** Like goal_is_reached(). */
+  function isReached(goal: GoalRow) {
+    const minimum = goal.min_points_per_member;
+    return (
+      goalPoints(goal) >= goal.target_points &&
+      (minimum === null || memberPoints(goal).every(({ points }) => points >= minimum))
+    );
+  }
+
+  async function goalsEndpoint(route: Route) {
+    const request = route.request();
+    if (request.method() === 'POST') {
+      if (!ownHousehold) return reply(route, 400, { code: '23502', message: 'No household' });
+      const goal = request.postDataJSON() as Pick<
+        GoalRow,
+        'title' | 'target_points' | 'owner_id' | 'min_points_per_member'
+      >;
+      goals.push({
+        ...goal,
+        id: `e2e-goal-${String(goals.length)}`,
+        household_id: ownHousehold.id,
+        created_at: new Date().toISOString(),
+        claimed_at: null,
+      });
+      return reply(route, 201);
+    }
+    // DELETE, filtered by `id=eq.<id>`, for an open goal only.
+    const [id] = filterIds(new URL(request.url()).searchParams.get('id'));
+    const goal = ownOpenGoal(id);
+    if (goal) goals.splice(goals.indexOf(goal), 1);
+    return reply(route, 204);
+  }
+
+  /**
+   * Like household_goals(): open goals first, newest first, then claimed ones, with owners' names,
+   * whether each is reached and, for family goals, what each member has earned.
+   */
+  async function householdGoals(route: Route) {
+    const open = visibleGoals().filter((goal) => goal.claimed_at === null);
+    const claimed = visibleGoals().filter((goal) => goal.claimed_at !== null);
+    return reply(
+      route,
+      200,
+      [...open.reverse(), ...claimed.reverse()].map((goal) => ({
+        ...goal,
+        owner_name: goal.owner_id ? (profiles.get(goal.owner_id) ?? null) : null,
+        points: goalPoints(goal),
+        reached: isReached(goal),
+        member_points: goal.owner_id === null ? memberPoints(goal) : null,
+      })),
+    );
+  }
+
+  /** Like claim_goal_reward(). */
+  async function claimGoalReward(route: Route) {
+    const { goal_id } = route.request().postDataJSON() as { goal_id: string };
+    const goal = ownOpenGoal(goal_id);
+    if (!goal) return reply(route, 400, { code: 'P0002', message: 'No open goal with this id' });
+    if (!isReached(goal)) {
+      return reply(route, 400, { code: '23514', message: 'This goal has not been reached yet' });
+    }
+    goal.claimed_at = new Date().toISOString();
+    return reply(route, 204);
+  }
+
   /** Accepts any email and password, for both creating an account and logging in. */
   function logInWith(route: Route) {
     return reply(route, 200, {
@@ -510,6 +641,9 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/task_likes': likesEndpoint,
     '/rest/v1/task_comments': commentsEndpoint,
     '/rest/v1/tasks': tasksEndpoint,
+    '/rest/v1/goals': goalsEndpoint,
+    '/rest/v1/rpc/household_goals': householdGoals,
+    '/rest/v1/rpc/claim_goal_reward': claimGoalReward,
   };
 
   await page.route(`${FAKE_SUPABASE_URL}/**`, async (route) => {

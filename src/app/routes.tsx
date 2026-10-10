@@ -11,6 +11,7 @@ import { HouseholdSetupPage } from '@/features/household/HouseholdSetupPage';
 import { NewsPage } from '@/features/news/NewsPage';
 import { NotificationSettings } from '@/features/notifications/NotificationSettings';
 import { turnOffNotificationsOnThisDevice } from '@/features/notifications/usePushNotifications';
+import { NewGoalPage } from '@/features/rewards/NewGoalPage';
 import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { SharedTasksPage } from '@/features/tasks/SharedTasksPage';
@@ -49,6 +50,7 @@ export const routes: RouteObject[] = [
           },
           { path: paths.news, element: <NewsPage /> },
           { path: paths.rewards, element: <RewardsPage /> },
+          { path: paths.newGoal, element: <NewGoalPage /> },
           { path: paths.statistics, element: <StatisticsPage /> },
           { path: paths.household, element: <HouseholdPage /> },
           { path: '*', element: <NotFoundPage /> },

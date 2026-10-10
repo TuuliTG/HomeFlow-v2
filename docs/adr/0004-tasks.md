@@ -36,7 +36,7 @@ next one back rather than follow a fixed calendar.
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
   the next occurrence it created, unless that one is already done.
 - **Points**: the Me screen shows the total points of every shared task the user has marked done, summed when read
-  (`fetchTotalPoints`), not stored. Adding tasks earns nothing yet; points per period come later.
+  (`fetchTotalPoints`), not stored. Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
 - The board (the **Shared tasks** page) shows open shared tasks, soonest due first and tasks without a due date last (newest first within a date).
   It and the Me page's _To do_ group them under headings like an agenda (`groupByDueDate`): Overdue, Today, Tomorrow,
   each of the next five days by date, Later and No due date, leaving out empty groups. Grouping is done in the app
@@ -52,7 +52,8 @@ next one back rather than follow a fixed calendar.
   deleted tasks drop out on their own, and categories can later filter the same list.
 - **Favourites**: before a name is typed, the form offers the household's favourite tasks by name instead of the
   most often added ones, which changed under the user and weren't what they wanted. A star by the name field stars
-  or unstars the task being named, also a new one, saved straight away. Favourites are shared by the household:
+  or unstars the task being named, also a new one, saved straight away; so does a star on each open task card and
+  on each done task in the board's and the Me page's Completed lists. Favourites are shared by the household:
   any member's star shows for everyone, and any member can remove it. `favourite_tasks` stores only the name
   ignoring case (`title_key`), one row per member who starred it, so a star never reveals a private task: a member
   sees a star they set or one on a task they can see (`private.can_see_favourite()`, which leans on the tasks'

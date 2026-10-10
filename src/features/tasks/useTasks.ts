@@ -51,25 +51,40 @@ export function useFavouriteTasks(userId: string) {
   return useQuery({ queryKey: favouritesKey(userId), queryFn: fetchFavouriteTasks });
 }
 
-/** Stars or unstars a task. The star changes straight away and goes back if saving fails. */
+/** The favourite names (`titleKey`) with `key` starred or not. */
+function withFavourite(keys: string[] | undefined, key: string, isFavourite: boolean): string[] {
+  const others = (keys ?? []).filter((other) => other !== key);
+  return isFavourite ? [...others, key] : others;
+}
+
+/**
+ * Stars or unstars a task. The star changes straight away and goes back if saving fails. Several stars
+ * can be saving at once: each failure undoes only its own star, and the favourites are reloaded once the
+ * last one is saved, so a reload doesn't undo a star still being saved.
+ */
 export function useSetFavouriteTask(userId: string) {
   const queryClient = useQueryClient();
   const queryKey = favouritesKey(userId);
   return useMutation({
+    mutationKey: queryKey,
     mutationFn: ({ title, isFavourite }: { title: string; isFavourite: boolean }) =>
       setFavouriteTask(title, isFavourite),
     onMutate: async ({ title, isFavourite }) => {
       await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<string[]>(queryKey);
-      const key = titleKey(title);
-      const others = (previous ?? []).filter((other) => other !== key);
-      queryClient.setQueryData(queryKey, isFavourite ? [...others, key] : others);
-      return { previous };
+      queryClient.setQueryData<string[]>(queryKey, (keys) =>
+        withFavourite(keys, titleKey(title), isFavourite),
+      );
     },
-    onError: (_error, _favourite, context) => {
-      queryClient.setQueryData(queryKey, context?.previous);
+    onError: (_error, { title, isFavourite }) => {
+      queryClient.setQueryData<string[]>(queryKey, (keys) =>
+        withFavourite(keys, titleKey(title), !isFavourite),
+      );
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey }),
+    onSettled: () =>
+      // This mutation still counts as running here.
+      queryClient.isMutating({ mutationKey: queryKey }) === 1
+        ? queryClient.invalidateQueries({ queryKey })
+        : undefined,
   });
 }
 

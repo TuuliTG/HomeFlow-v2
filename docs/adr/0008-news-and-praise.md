@@ -1,4 +1,4 @@
-# 0007. News and praise
+# 0008. News and praise
 
 - **Updated:** 2026-10-10
 
