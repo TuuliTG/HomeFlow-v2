@@ -28,8 +28,9 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 - **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
 - **Rewards** — points per member, personal rewards/collectibles, shared family goal progress. Must make clear how
   points are earned and how shared goals accumulate.
-- **Statistics** — period selector; _points earned_ (from doing tasks) and _tasks created_ per member, each with its
-  own fairness score (0–100, e.g. "Balanced"); contribution over time. Only shared tasks count; private tasks never do.
+- **Statistics** — period selector; _points earned_ (from doing tasks, all or physical/meta work apart) and _tasks
+  created_ per member, each with its own fairness score (0–100, e.g. "Balanced"); contribution over time. Only shared
+  tasks count; private tasks never do.
 
 ## Design principles from evaluation
 

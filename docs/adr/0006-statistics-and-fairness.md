@@ -1,6 +1,6 @@
 # 0006. Statistics and fairness
 
-- **Updated:** 2026-10-09
+- **Updated:** 2026-10-10
 
 ## Context
 
@@ -12,14 +12,18 @@ history grows past what one API request returns.
 
 - **Counted in the database**: `household_statistics(since)` (security invoker, so Row Level Security scopes it to
   the caller's household) returns, per member and in the order they joined, their display name, the shared tasks
-  they _did_ (`completed_at >= since`) and the points those earned, and the shared tasks they _created_
+  they _did_ (`completed_at >= since`) and the points those earned, how many of those were meta work tasks
+  (`meta_done`, `meta_points`; physical work is the rest), and the shared tasks they _created_
   (`created_at >= since`), all in their current household; `since` null means all time. Totals aren't cut short by
   the 1000-row API limit. Private tasks never count; people who left the household aren't listed.
 - **Periods** are local calendar periods up to now: _This week_ (from Monday), _This month_ (from the 1st) and _All
   time_, computed in the browser (`periodStart()` in `src/features/statistics/statistics.ts`) and kept in the address
   as `?period=`.
-- **Two separate metrics, never combined**: _Points earned_ (physical work, from doing tasks) and _Tasks created_
-  (meta work). Each has its own ranking and fairness score, so points and task counts are never added together.
+- **Two separate metrics, never combined**: _Points earned_ (from doing tasks) and _Tasks created_ (meta work).
+  Each has its own ranking and fairness score, so points and task counts are never added together.
+- **Points by task type**: a toggle (_All_, _Physical_, _Meta work_, kept in the address as `?work=`) shows the
+  points of one task type with its own ranking and fairness score; under _All_ each member's bar is split into
+  physical and meta work points.
 - **Fairness score** (0–100) per metric: each member's share compared with an equal share. The score is
   `100 × (1 − d / dmax)`, where `d` is half the sum of `|share − 1/n|` and `dmax = 1 − 1/n` (one member has it all),
   so 100 is perfectly even and 0 is one member having it all. ≥ 80 is _Balanced_, ≥ 50 _Slightly uneven_, below that

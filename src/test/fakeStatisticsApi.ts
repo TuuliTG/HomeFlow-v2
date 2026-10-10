@@ -20,11 +20,17 @@ export const fetchContributions: typeof statisticsApi.fetchContributions = (sinc
       const done = shared.filter(
         ({ completed }) => completed?.by === userId && inPeriod(completed.at),
       );
+      const physical = done.filter((task) => task.type === 'physical');
+      const meta = done.filter((task) => task.type === 'meta');
       return {
         userId,
         displayName: fakeAuthBackend.displayNameOf(userId),
         done: done.length,
-        points: done.reduce((total, task) => total + (task.points ?? 0), 0),
+        points: pointsOf(done),
+        physicalDone: physical.length,
+        physicalPoints: pointsOf(physical),
+        metaDone: meta.length,
+        metaPoints: pointsOf(meta),
         created: shared.filter(
           ({ createdBy, createdAt }) => createdBy === userId && inPeriod(createdAt),
         ).length,
@@ -32,3 +38,7 @@ export const fetchContributions: typeof statisticsApi.fetchContributions = (sinc
     }),
   );
 };
+
+function pointsOf(tasks: { points: number | null }[]): number {
+  return tasks.reduce((total, task) => total + (task.points ?? 0), 0);
+}
