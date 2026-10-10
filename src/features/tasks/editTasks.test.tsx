@@ -140,6 +140,19 @@ describe('deleting a task', () => {
     expect(await screen.findByRole('listitem', { name: 'Dust' })).toBeInTheDocument();
   });
 
+  it('goes back to where the user was when cancelled', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });
+    fakeTasksBackend.pickUpTaskAs(anna.id, 'task:0');
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Dust' }));
+    await user.click(await screen.findByRole('link', { name: 'Cancel' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'My tasks' })).toBeInTheDocument();
+  });
+
   it('explains when the task cannot be deleted', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });

@@ -93,6 +93,19 @@ describe('private tasks', () => {
     ).toBeInTheDocument();
   });
 
+  it('can be called off from the Me page, back to the Me page', async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'New task' }));
+    await user.type(await screen.findByLabelText('Task'), 'Buy a birthday present');
+    await user.click(screen.getByRole('link', { name: 'Cancel' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'My tasks' })).toBeInTheDocument();
+    expect(screen.queryByText('Buy a birthday present')).not.toBeInTheDocument();
+  });
+
   it('have no points', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();

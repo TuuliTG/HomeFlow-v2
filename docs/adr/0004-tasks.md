@@ -18,7 +18,8 @@ next one back rather than follow a fixed calendar.
   the others, and every security definer function that acts on any open task skips other members' private ones.
   A private task is the creator's own to do: it is listed only in their My tasks (Me page), without picking it up,
   and has no Pick up or Put back. The Shared tasks board and its "Show completed" leave out even the creator's
-  own private tasks, and saving or deleting one returns to the Me page. **Private tasks have no points** (`points` is null exactly when `is_private`, a check
+  own private tasks, and saving or deleting one returns to the Me page (Cancel on the task form goes back to the
+  previous page). **Private tasks have no points** (`points` is null exactly when `is_private`, a check
   constraint) and statistics count only shared tasks, both done and created (ADR 0006). A private task whose creator
   deletes their account or leaves stays hidden from everyone.
 - **Least privilege**: members can read and insert tasks; every change goes through a function. Marking done uses

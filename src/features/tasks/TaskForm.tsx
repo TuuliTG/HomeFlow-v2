@@ -1,5 +1,4 @@
 import { type SyntheticEvent, useId, useRef, useState } from 'react';
-import { Link } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { inputClassName } from '@/components/ui/formStyles';
@@ -12,6 +11,7 @@ import {
   type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
+import { CancelLink } from '@/features/tasks/CancelLink';
 import { PrivateTaskField } from '@/features/tasks/PrivateTaskField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskTitleField } from '@/features/tasks/TaskTitleField';
@@ -254,12 +254,7 @@ export function TaskForm({
         >
           {submitLabel}
         </button>
-        <Link
-          to={paths.taskList(initial?.isPrivate ?? false)}
-          className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-center font-semibold text-slate-700 hover:bg-slate-100"
-        >
-          Cancel
-        </Link>
+        <CancelLink fallback={paths.taskList(initial?.isPrivate ?? false)} />
       </div>
     </form>
   );
