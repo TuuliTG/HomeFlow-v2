@@ -53,8 +53,9 @@ next one back rather than follow a fixed calendar.
 - **Favourites**: before a name is typed, the form offers the user's favourite tasks by name instead of the most
   often added ones, which changed under the user and weren't what they wanted. A star by the name field stars or
   unstars the task being named, also a new one, saved straight away. `favourite_tasks` stores only the name ignoring
-  case (`title_key`), per user and household; the details come from `task_suggestions()`, so a favourite whose task
-  is deleted (or another member's private task) isn't offered. Each member sees and changes only their own
+  case (`title_key`), per user and household; the details come from `task_suggestions()`, which returns the 50 most
+  often added tasks plus every favourite, so a favourite whose task is deleted (or another member's private task)
+  isn't offered. Each member sees and changes only their own
   favourites (RLS); favourites are personal, like reminders.
 - **Reminders**: a member can ask to be reminded of a task that is theirs to do (their private task or one they
   picked up) at a time they choose, within a year. `task_reminders` (one per task and user) is visible only to its

@@ -2,7 +2,7 @@
 -- Anna and Ben share a household and Carl has his own.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(9);
+select plan(10);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -45,6 +45,16 @@ select throws_ok(
   $$ update public.favourite_tasks set title_key = 'changed' $$,
   '42501', null,
   'favourites cannot be edited'
+);
+
+-- Fifty tasks added twice push Anna's favourite, added once, out of the 50 most often added; it is still suggested.
+insert into public.tasks (title, type, points) values ('Take out trash', 'physical', 1);
+insert into public.tasks (title, type, points)
+  select 'Chore ' || n, 'physical', 1 from generate_series(1, 50) n, generate_series(1, 2);
+select results_eq(
+  $$ select count(*)::integer, bool_or(title = 'Take out trash') from public.task_suggestions() $$,
+  $$ values (51, true) $$,
+  'favourites are suggested beyond the 50 most often added tasks'
 );
 
 -- Ben shares the household but not Anna's favourites.

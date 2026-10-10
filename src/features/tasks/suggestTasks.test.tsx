@@ -71,9 +71,7 @@ describe('adding a task again', () => {
     renderAppAt('/tasks/new');
     const star = await screen.findByRole('button', { name: 'Favourite' });
     expect(star).toBeDisabled();
-    expect(
-      screen.getByText("Tap the star by a task's name to keep it here for next time."),
-    ).toBeInTheDocument();
+    await screen.findByText("Tap the star by a task's name to keep it here for next time.");
 
     await user.type(screen.getByLabelText('Task'), 'take out trash');
     await user.click(star);
@@ -127,6 +125,15 @@ describe('adding a task again', () => {
     await waitFor(() => {
       expect(star).toHaveAttribute('aria-pressed', 'false');
     });
+  });
+
+  it("doesn't say how to add favourites when they can't be loaded", async () => {
+    logInAsFamilyMember();
+    fakeTasksBackend.failRequests();
+    renderAppAt('/tasks/new');
+
+    await screen.findByRole('button', { name: 'Favourite' });
+    expect(screen.queryByRole('region', { name: 'Favourites' })).not.toBeInTheDocument();
   });
 
   it("doesn't offer other members' favourites", async () => {

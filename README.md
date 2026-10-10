@@ -8,10 +8,10 @@ See [docs/product-brief.md](docs/product-brief.md).
 one task board ([ADR 0003](docs/adr/0003-accounts-and-households.md)). Members pick up tasks (listed on their Me
 screen with what they've completed and their total points); tasks can have a due date, be private, be edited,
 deleted, marked done (and undone), repeat a set number of days after they were done and be added again from earlier
-or starred favourite tasks (private ones are listed only on the Me screen); the board and the Me screen group tasks by when they are
-due (overdue, today, tomorrow, the next five days by date, later, no due date) and the board can be filtered to
-today, this week, no due date or tasks available to pick up; the Shared tasks board updates live and members can
-get push notifications, including reminders they set for their own tasks ([ADR 0004](docs/adr/0004-tasks.md), [ADR 0005](docs/adr/0005-push-notifications.md)).
+or starred favourite tasks (private ones are listed only on the Me screen); the board and the Me screen group
+tasks by when they are due (overdue, today, tomorrow, the next five days by date, later, no due date) and the
+board can be filtered to today, this week, no due date or tasks available to pick up; the Shared tasks board updates
+live and members can get push notifications, including reminders they set for their own tasks ([ADR 0004](docs/adr/0004-tasks.md), [ADR 0005](docs/adr/0005-push-notifications.md)).
 Work in progress is tracked in [plan.md](plan.md).
 
 ## Tech stack

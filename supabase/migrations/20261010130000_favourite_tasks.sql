@@ -27,4 +27,55 @@ create policy "Users can add their own favourite tasks"
 
 create policy "Users can remove their own favourite tasks"
   on public.favourite_tasks for delete to authenticated
-  using (user_id = (select auth.uid()));
+  using (user_id = (select auth.uid()) and household_id = (select private.current_household_id()));
+
+-- task_suggestions() as before, but the user's favourites are always included, even beyond the 50 most often
+-- added tasks, so a rarely added favourite is still offered.
+create or replace function public.task_suggestions()
+returns table (
+  title text,
+  description text,
+  type text,
+  points smallint,
+  repeat_every_days smallint,
+  is_private boolean,
+  times_added integer,
+  is_open boolean
+)
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  with household_tasks as (
+    select t.*, lower(t.title) as title_key from public.tasks t
+    where t.household_id = (select private.current_household_id())
+  ),
+  newest as (
+    select distinct on (h.title_key) h.* from household_tasks h order by h.title_key, h.created_at desc, h.id
+  ),
+  usage as (
+    select
+      h.title_key,
+      count(*) filter (where h.previous_task_id is null)::integer as times_added,
+      max(h.created_at) filter (where h.previous_task_id is null) as last_added_at,
+      bool_or(h.completed_at is null) as is_open
+    from household_tasks h
+    group by h.title_key
+  ),
+  ranked as (
+    select
+      n.title, n.description, n.type, n.points, n.repeat_every_days, n.is_private, u.times_added, u.is_open,
+      row_number() over (order by u.times_added desc, u.last_added_at desc nulls last, n.title) as rank,
+      exists (
+        select 1 from public.favourite_tasks f
+        where f.user_id = (select auth.uid()) and f.title_key = btrim(n.title_key)
+      ) as is_favourite
+    from newest n
+    join usage u using (title_key)
+  )
+  select r.title, r.description, r.type, r.points, r.repeat_every_days, r.is_private, r.times_added, r.is_open
+  from ranked r
+  where r.rank <= 50 or r.is_favourite
+  order by r.rank;
+$$;

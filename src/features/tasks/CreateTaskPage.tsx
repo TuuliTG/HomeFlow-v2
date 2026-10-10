@@ -40,7 +40,8 @@ export function CreateTaskPage() {
           prefill={again && suggestionAsTask(again)}
           suggestions={suggestions.data ?? []}
           favourites={{
-            keys: favourites.data ?? [],
+            keys: suggestions.isSuccess ? favourites.data : undefined,
+            isSaving: setFavourite.isPending,
             onChange: (title, isFavourite) => {
               setFavourite.mutate({ title, isFavourite });
             },

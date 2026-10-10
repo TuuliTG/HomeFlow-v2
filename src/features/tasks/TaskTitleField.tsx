@@ -11,8 +11,10 @@ import { TITLE_MAX_LENGTH, type TaskSuggestion, titleKey } from '@/features/task
 
 /** The tasks the user has starred, offered on the New task form to add again. */
 export interface FavouriteTasks {
-  /** Their names, as `titleKey` gives them. */
-  keys: string[];
+  /** Their names, as `titleKey` gives them; undefined while they (or the suggestions) load. */
+  keys: string[] | undefined;
+  /** While a star is being saved: the star waits, so quick taps can't save out of order. */
+  isSaving: boolean;
   /** Stars or unstars the task with this name. */
   onChange: (title: string, isFavourite: boolean) => void;
 }
@@ -77,7 +79,7 @@ export function TaskTitleField({
 
   return (
     <div className="flex flex-col gap-3">
-      {value === '' && favourites && (
+      {value === '' && favourites?.keys && (
         <FavouriteTaskList
           suggestions={favouriteSuggestions(suggestions, favourites.keys)}
           onPick={pick}
@@ -113,15 +115,7 @@ export function TaskTitleField({
             className={inputClassName}
           />
         </label>
-        {favourites && (
-          <FavouriteButton
-            isFavourite={favourites.keys.includes(titleKey(value))}
-            disabled={value.trim() === ''}
-            onChange={(isFavourite) => {
-              favourites.onChange(value, isFavourite);
-            }}
-          />
-        )}
+        {favourites && <FavouriteButton title={value} favourites={favourites} />}
         <SuggestionList
           id={listId}
           matches={matches}
@@ -140,21 +134,22 @@ export function TaskTitleField({
 }
 
 interface FavouriteButtonProps {
-  isFavourite: boolean;
-  disabled: boolean;
-  onChange: (isFavourite: boolean) => void;
+  /** The name being typed. */
+  title: string;
+  favourites: FavouriteTasks;
 }
 
 /** A star toggle that makes the task being named a favourite, or no longer one. */
-function FavouriteButton({ isFavourite, disabled, onChange }: FavouriteButtonProps) {
+function FavouriteButton({ title, favourites }: FavouriteButtonProps) {
+  const isFavourite = favourites.keys?.includes(titleKey(title)) ?? false;
   return (
     <button
       type="button"
       aria-label="Favourite"
       aria-pressed={isFavourite}
-      disabled={disabled}
+      disabled={title.trim() === '' || favourites.isSaving}
       onClick={() => {
-        onChange(!isFavourite);
+        favourites.onChange(title, !isFavourite);
       }}
       className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 hover:border-amber-500 disabled:opacity-50 aria-pressed:border-amber-500 aria-pressed:text-amber-600"
     >
