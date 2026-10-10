@@ -36,7 +36,7 @@ next one back rather than follow a fixed calendar.
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
   the next occurrence it created, unless that one is already done.
 - **Points**: the Me screen shows the total points of every shared task the user has marked done, summed when read
-  (`fetchTotalPoints`), not stored. Adding tasks earns nothing yet; points per period come later.
+  (`fetchTotalPoints`), not stored. Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
 - The board (the **Shared tasks** page) shows open shared tasks, soonest due first and tasks without a due date last (newest first within a date).
   It and the Me page's _To do_ group them under headings like an agenda (`groupByDueDate`): Overdue, Today, Tomorrow,
   each of the next five days by date, Later and No due date, leaving out empty groups. Grouping is done in the app

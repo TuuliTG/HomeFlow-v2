@@ -12,6 +12,8 @@ or the family's starred favourite tasks (private ones are listed only on the Me 
 tasks by when they are due (overdue, today, tomorrow, the next five days by date, later, no due date) and the
 board can be filtered to today, this week, no due date or tasks available to pick up; the Shared tasks board updates
 live and members can get push notifications, including reminders they set for their own tasks ([ADR 0004](docs/adr/0004-tasks.md), [ADR 0005](docs/adr/0005-push-notifications.md)).
+The Rewards screen holds family goals (optionally with a minimum from each member) and personal goals that points
+from shared tasks count towards; a reached goal's reward is claimed and kept as history ([ADR 0007](docs/adr/0007-goals-and-rewards.md)).
 Work in progress is tracked in [plan.md](plan.md).
 
 ## Tech stack

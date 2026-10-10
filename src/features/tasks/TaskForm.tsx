@@ -1,6 +1,7 @@
 import { type SyntheticEvent, useId, useRef, useState } from 'react';
 
 import { paths } from '@/app/paths';
+import { CancelLink } from '@/components/ui/CancelLink';
 import { inputClassName } from '@/components/ui/formStyles';
 import {
   DESCRIPTION_MAX_LENGTH,
@@ -11,7 +12,6 @@ import {
   type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
-import { CancelLink } from '@/features/tasks/CancelLink';
 import { PrivateTaskField } from '@/features/tasks/PrivateTaskField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
