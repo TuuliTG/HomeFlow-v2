@@ -3,19 +3,27 @@ import { useSearchParams } from 'react-router';
 
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
-import type { Task } from '@/features/tasks/task';
-import { TaskCard } from '@/features/tasks/TaskCard';
 import { useTasks } from '@/features/tasks/useTasks';
+import { today } from '@/features/tasks/dueDate';
+import {
+  filterTasks,
+  parseTaskFilter,
+  type TaskFilter,
+  taskFilterEmptyMessages,
+  taskFilterLabels,
+  taskFilters,
+} from '@/features/tasks/taskFilter';
 import { useLoggedInUser } from '@/lib/auth';
 
 const SHOW_COMPLETED_PARAM = 'completed';
-const ONLY_UNPICKED_PARAM = 'unpicked';
+const FILTER_PARAM = 'show';
 
 export function SharedTasksPage() {
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM);
-  const [onlyUnpicked, setOnlyUnpicked] = useSwitchParam(ONLY_UNPICKED_PARAM);
+  const [filter, setFilter] = useFilterParam();
 
   return (
     <>
@@ -27,37 +35,100 @@ export function SharedTasksPage() {
         />
         <NewTaskLink />
       </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-2">
-        <Switch label="Only tasks to pick up" checked={onlyUnpicked} onChange={setOnlyUnpicked} />
+      <div className="flex flex-col gap-3">
+        <FilterChoice filter={filter} onChange={setFilter} />
         <Switch label="Show completed" checked={showCompleted} onChange={setShowCompleted} />
       </div>
-      <TaskList onlyUnpicked={onlyUnpicked} />
+      <TaskList filter={filter} />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
   );
 }
 
 /**
- * An on/off choice kept in the address as `?<name>=1`, so it survives a reload. Local state keeps
- * the switch from flickering while the router updates the address.
+ * A choice kept in the address as `?<name>=<value>`, so it survives a reload; `null` leaves it out.
+ * Local state keeps the control from flickering while the router updates the address, and follows the
+ * address when it changes otherwise (the nav link, back and forward).
  */
-function useSwitchParam(name: string): [boolean, (on: boolean) => void] {
+function useParam<T>(
+  name: string,
+  parse: (value: string | null) => T,
+  serialise: (value: T) => string | null,
+): [T, (value: T) => void] {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [isOn, setIsOn] = useState(() => searchParams.get(name) === '1');
+  const inAddress = searchParams.get(name);
+  const [value, setValue] = useState(() => parse(inAddress));
+  const [seenInAddress, setSeenInAddress] = useState(inAddress);
+  if (inAddress !== seenInAddress) {
+    setSeenInAddress(inAddress);
+    setValue(parse(inAddress));
+  }
 
-  function set(on: boolean) {
-    setIsOn(on);
+  function set(next: T) {
+    setValue(next);
+    const serialised = serialise(next);
     setSearchParams(
       (params) => {
-        if (on) params.set(name, '1');
-        else params.delete(name);
+        if (serialised === null) params.delete(name);
+        else params.set(name, serialised);
         return params;
       },
       { replace: true },
     );
   }
 
-  return [isOn, set];
+  return [value, set];
+}
+
+/** An on/off choice kept in the address as `?<name>=1`. */
+function useSwitchParam(name: string) {
+  return useParam(
+    name,
+    (value) => value === '1',
+    (on) => (on ? '1' : null),
+  );
+}
+
+/** Which tasks to show, kept in the address as `?show=<filter>`; all tasks by default. */
+function useFilterParam() {
+  return useParam<TaskFilter>(FILTER_PARAM, parseTaskFilter, (filter) =>
+    filter === 'all' ? null : filter,
+  );
+}
+
+interface FilterChoiceProps {
+  filter: TaskFilter;
+  onChange: (filter: TaskFilter) => void;
+}
+
+/** One tap to pick which tasks the board shows. */
+function FilterChoice({ filter, onChange }: FilterChoiceProps) {
+  return (
+    <fieldset className="flex flex-wrap items-center gap-2">
+      <legend className="sr-only">Show</legend>
+      <span aria-hidden="true" className="text-sm font-medium text-slate-700">
+        Show:
+      </span>
+      {taskFilters.map((option) => (
+        <label
+          key={option}
+          className="has-checked:border-brand-600 has-checked:bg-brand-600 has-focus-visible:outline-brand-600 flex min-h-11 cursor-pointer items-center rounded-full border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-slate-400 has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2"
+        >
+          <input
+            type="radio"
+            name="task-filter"
+            value={option}
+            checked={filter === option}
+            onChange={() => {
+              onChange(option);
+            }}
+            className="sr-only"
+          />
+          {taskFilterLabels[option]}
+        </label>
+      ))}
+    </fieldset>
+  );
 }
 
 interface SwitchProps {
@@ -83,12 +154,7 @@ function Switch({ label, checked, onChange }: SwitchProps) {
   );
 }
 
-/** Whether anyone could still pick the task up. */
-function isUnpicked(task: Task): boolean {
-  return task.pickedUpBy === null;
-}
-
-function TaskList({ onlyUnpicked }: { onlyUnpicked: boolean }) {
+function TaskList({ filter }: { filter: TaskFilter }) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
 
@@ -104,19 +170,13 @@ function TaskList({ onlyUnpicked }: { onlyUnpicked: boolean }) {
   // Private tasks are listed only on the Me page.
   const shared = tasks.data.filter((task) => !task.isPrivate);
   if (shared.length === 0) {
-    return <EmptyMessage>No tasks yet. Create the first one!</EmptyMessage>;
+    return <EmptyMessage>{taskFilterEmptyMessages.all}</EmptyMessage>;
   }
-  const shown = onlyUnpicked ? shared.filter(isUnpicked) : shared;
+  const shown = filterTasks(shared, filter, today());
   if (shown.length === 0) {
-    return <EmptyMessage>Every task has been picked up.</EmptyMessage>;
+    return <EmptyMessage>{taskFilterEmptyMessages[filter]}</EmptyMessage>;
   }
-  return (
-    <ul className="flex flex-col gap-3">
-      {shown.map((task) => (
-        <TaskCard key={task.id} task={task} currentUserId={user.id} />
-      ))}
-    </ul>
-  );
+  return <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />;
 }
 
 function EmptyMessage({ children }: { children: string }) {

@@ -98,7 +98,12 @@ export const fetchTaskSuggestions: typeof tasksApi.fetchTaskSuggestions = () => 
   });
   return Promise.resolve(
     suggestions
-      .sort((a, b) => b.timesAdded - a.timesAdded || b.lastAddedAt.localeCompare(a.lastAddedAt))
+      .sort(
+        (a, b) =>
+          b.timesAdded - a.timesAdded ||
+          b.lastAddedAt.localeCompare(a.lastAddedAt) ||
+          a.suggestion.title.localeCompare(b.suggestion.title),
+      )
       .map(({ suggestion, timesAdded, isOpen }) => ({ ...suggestion, timesAdded, isOpen })),
   );
 };
