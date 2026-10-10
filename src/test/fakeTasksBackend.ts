@@ -152,6 +152,8 @@ export const fakeTasksBackend = {
       false,
     );
   },
+  /** How many tasks are stored, so the next one added gets the id `task:<count>`. */
+  taskCount: () => tasks.length,
   /** Picks up an open task for `userId`, like `pick_up_task()`, and delivers the change live. */
   pickUpTaskAs(userId: string, taskId: string) {
     const task = openTaskOf(userId, taskId);

@@ -17,7 +17,7 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 5. **Child-friendly mode** — minimal text, icons, colours, stars/progress (later iteration).
 6. **Transparency over time** — simple history/fairness trend, not data-heavy.
 
-## Screens (mid-fi prototype, mobile, bottom tab bar: Me · Tasks · Rewards · Statistics)
+## Screens (mid-fi prototype, mobile, bottom tab bar: Me · Tasks · News · Rewards · Statistics)
 
 - **Shared tasks** (formerly Available tasks) — "Fairness this week" stacked bar per member; filter; task cards with points, tags
   (frequency, type physical/meta), bonus points (e.g. "new for you", fairness boost), "last done by …";
@@ -26,6 +26,8 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
   opt-in); a **private** check mark keeps a task to yourself, without points. Creating a task gets positive
   feedback and counts towards _tasks created_ (no points).
 - **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
+- **News** — what the family has done in the last week, by day: each member's points that day (physical and meta
+  work apart) and each shared task done. Members give a thumbs up to others' work and comment on it.
 - **Rewards** — shared family goals (everyone's points count) and personal goals (only yours count; the family
   sees them to cheer each other on), each a reward with the points needed and its progress; a family goal can ask
   for a minimum from each member so nobody does it all alone; claim the reward once reached. Must make clear how points are earned and how shared goals accumulate.
@@ -38,4 +40,4 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 - Self-assignment, never one person assigning to others.
 - Clearly separate **tasks done** from **tasks created** everywhere points appear.
 - Encourage rotation: bonus for unfamiliar tasks, diminishing points for repeating the same task.
-- Avoid pure competition; open questions: reward reset period, lightweight thumbs-up/comments.
+- Avoid pure competition; praise each other with a thumbs up or a comment (News). Open question: reward reset period.

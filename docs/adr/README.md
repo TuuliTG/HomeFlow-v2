@@ -11,6 +11,7 @@ The decisions that shape HomeFlow and why, grouped by topic. Read the ones your 
 | [0005](0005-push-notifications.md)      | Web Push, device subscriptions, the Edge Functions that send      |
 | [0006](0006-statistics-and-fairness.md) | Statistics periods, household_statistics(), the fairness score    |
 | [0007](0007-goals-and-rewards.md)       | Family and personal goals, their progress and claiming rewards    |
+| [0008](0008-news-and-praise.md)         | The News tab, thumbs up and comments on done tasks                |
 
 ## Guidelines
 

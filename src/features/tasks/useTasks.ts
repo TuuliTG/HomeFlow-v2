@@ -17,7 +17,7 @@ import {
 import { fetchFavouriteTasks, setFavouriteTask } from '@/features/tasks/favouritesApi';
 import { clearTaskReminder, fetchReminders, setTaskReminder } from '@/features/tasks/remindersApi';
 import { type NewTask, titleKey } from '@/features/tasks/task';
-import { today } from '@/features/tasks/dueDate';
+import { today } from '@/lib/dates';
 
 export const tasksKey = (userId: string) => ['tasks', userId] as const;
 

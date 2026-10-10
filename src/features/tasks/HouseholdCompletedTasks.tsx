@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
-import { formatShortDate } from '@/features/tasks/dueDate';
+import { formatShortDate } from '@/lib/dates';
 import type { HouseholdCompletedTask } from '@/features/tasks/task';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { useHouseholdCompletedTasks } from '@/features/tasks/useTasks';

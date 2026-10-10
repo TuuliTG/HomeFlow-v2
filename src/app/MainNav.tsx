@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router';
 
 import { paths } from '@/app/paths';
-import { ChartIcon, CheckListIcon, StarIcon, UserIcon } from '@/components/ui/icons';
+import { ChartIcon, CheckListIcon, NewsIcon, StarIcon, UserIcon } from '@/components/ui/icons';
 
 const navItems = [
   { to: paths.me, label: 'Me', Icon: UserIcon },
   { to: paths.tasks, label: 'Shared tasks', Icon: CheckListIcon },
+  { to: paths.news, label: 'News', Icon: NewsIcon },
   { to: paths.rewards, label: 'Rewards', Icon: StarIcon },
   { to: paths.statistics, label: 'Statistics', Icon: ChartIcon },
 ] as const;
@@ -24,7 +25,7 @@ export function MainNav() {
               end
               className={({ isActive }) =>
                 [
-                  'flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium md:flex-row md:gap-3 md:rounded-lg md:text-sm',
+                  'flex flex-col items-center gap-1 px-2 py-2 text-xs font-medium md:flex-row md:gap-3 md:rounded-lg md:px-3 md:text-sm',
                   isActive
                     ? 'text-brand-900 md:bg-brand-50'
                     : 'text-slate-500 hover:text-slate-800',

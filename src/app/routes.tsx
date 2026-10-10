@@ -8,6 +8,7 @@ import { AuthProvider } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { HouseholdPage } from '@/features/household/HouseholdPage';
 import { HouseholdSetupPage } from '@/features/household/HouseholdSetupPage';
+import { NewsPage } from '@/features/news/NewsPage';
 import { NotificationSettings } from '@/features/notifications/NotificationSettings';
 import { turnOffNotificationsOnThisDevice } from '@/features/notifications/usePushNotifications';
 import { NewGoalPage } from '@/features/rewards/NewGoalPage';
@@ -47,6 +48,7 @@ export const routes: RouteObject[] = [
               </>
             ),
           },
+          { path: paths.news, element: <NewsPage /> },
           { path: paths.rewards, element: <RewardsPage /> },
           { path: paths.newGoal, element: <NewGoalPage /> },
           { path: paths.statistics, element: <StatisticsPage /> },

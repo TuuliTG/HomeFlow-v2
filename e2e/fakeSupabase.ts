@@ -185,6 +185,30 @@ export async function fakeSupabase(page: Page) {
       return reply(route, 201);
     }
     const householdId = ownHousehold?.id;
+    // The news asks for the household's shared tasks done since a date (`completed_at=gte.<timestamp>`), newest
+    // first, with their likes and comments.
+    const doneSince = new URL(request.url()).searchParams.get('completed_at');
+    if (doneSince?.startsWith('gte.')) {
+      const since = doneSince.slice('gte.'.length);
+      const done = tasks.filter(
+        (task) =>
+          task.household_id === householdId &&
+          !task.is_private &&
+          task.completed_at !== null &&
+          task.completed_at >= since,
+      );
+      return reply(
+        route,
+        200,
+        done
+          .sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at)))
+          .map((task) => ({
+            ...task,
+            task_likes: likes.filter((like) => like.task_id === task.id),
+            task_comments: comments.filter((comment) => comment.task_id === task.id),
+          })),
+      );
+    }
     // "Show completed" asks for the household's done shared tasks (`completed_at=not.is.null`), newest first.
     if (new URL(request.url()).searchParams.get('completed_at') === 'not.is.null') {
       const done = tasks.filter(
@@ -324,6 +348,48 @@ export async function fakeSupabase(page: Page) {
       200,
       [...favourites].map((title_key) => ({ title_key })),
     );
+  }
+
+  /** Likes and comments, like task_likes and task_comments with Row Level Security. */
+  const likes: { task_id: string; user_id: string }[] = [];
+  const comments: {
+    id: string;
+    task_id: string;
+    author_id: string;
+    body: string;
+    created_at: string;
+  }[] = [];
+
+  /** Adds or takes back the user's like. */
+  async function likesEndpoint(route: Route) {
+    const request = route.request();
+    if (request.method() === 'POST') {
+      const { task_id } = request.postDataJSON() as { task_id: string };
+      likes.push({ task_id, user_id: user.id });
+      return reply(route, 201);
+    }
+    const taskId = filterIds(new URL(request.url()).searchParams.get('task_id'))[0];
+    likes.splice(0, likes.length, ...likes.filter((like) => like.task_id !== taskId));
+    return reply(route, 204);
+  }
+
+  /** Adds or deletes the user's comments. */
+  async function commentsEndpoint(route: Route) {
+    const request = route.request();
+    if (request.method() === 'POST') {
+      const { task_id, body } = request.postDataJSON() as { task_id: string; body: string };
+      comments.push({
+        id: `e2e-comment-${String(comments.length)}`,
+        task_id,
+        author_id: user.id,
+        body,
+        created_at: new Date().toISOString(),
+      });
+      return reply(route, 201);
+    }
+    const id = filterIds(new URL(request.url()).searchParams.get('id'))[0];
+    comments.splice(0, comments.length, ...comments.filter((comment) => comment.id !== id));
+    return reply(route, 204);
   }
 
   /** The user's reminders by task id, like task_reminders with Row Level Security. */
@@ -572,6 +638,8 @@ export async function fakeSupabase(page: Page) {
         [...reminders].map(([task_id, remind_at]) => ({ task_id, remind_at })),
       ),
     '/rest/v1/favourite_tasks': favouritesEndpoint,
+    '/rest/v1/task_likes': likesEndpoint,
+    '/rest/v1/task_comments': commentsEndpoint,
     '/rest/v1/tasks': tasksEndpoint,
     '/rest/v1/goals': goalsEndpoint,
     '/rest/v1/rpc/household_goals': householdGoals,

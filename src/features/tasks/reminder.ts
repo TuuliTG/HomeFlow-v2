@@ -1,5 +1,5 @@
 /** Reminder times: instants stored as ISO timestamps, entered and shown in the user's own time zone. */
-import { formatShortDate } from '@/features/tasks/dueDate';
+import { formatShortDate } from '@/lib/dates';
 
 const pad = (value: number) => String(value).padStart(2, '0');
 

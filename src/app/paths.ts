@@ -7,6 +7,7 @@ export const paths = {
   /** Where a task is listed: private tasks only on the Me page, shared ones on the board. */
   taskList: (isPrivate: boolean) => (isPrivate ? '/me' : '/'),
   me: '/me',
+  news: '/news',
   rewards: '/rewards',
   newGoal: '/rewards/new',
   statistics: '/statistics',

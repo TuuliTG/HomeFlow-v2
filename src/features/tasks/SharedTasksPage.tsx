@@ -4,7 +4,7 @@ import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import { useTasks } from '@/features/tasks/useTasks';
-import { today } from '@/features/tasks/dueDate';
+import { today } from '@/lib/dates';
 import {
   filterTasks,
   parseTaskFilter,
