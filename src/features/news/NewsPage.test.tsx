@@ -175,6 +175,38 @@ describe('news page', () => {
     expect(screen.getByRole('textbox', { name: 'Comment on Vacuum' })).toHaveValue('Thanks!');
   });
 
+  it('closes the comment form without sending', async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    doTask(anna.id, ben.id, { title: 'Vacuum' });
+    const user = userEvent.setup();
+    renderAppAt('/news');
+
+    await user.click(await screen.findByRole('button', { name: 'Comment on Vacuum' }));
+    await user.type(screen.getByRole('textbox', { name: 'Comment on Vacuum' }), 'Hmm');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(
+      within(card('Ben completed Vacuum')).queryByRole('list', { name: 'Comments' }),
+    ).toBeNull();
+  });
+
+  it('says so when a comment cannot be deleted', async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    const vacuum = doTask(anna.id, ben.id, { title: 'Vacuum' });
+    fakeNewsBackend.commentAs(anna.id, vacuum, 'Thanks!');
+    fakeNewsBackend.failComments();
+    const user = userEvent.setup();
+    renderAppAt('/news');
+
+    await user.click(await screen.findByRole('button', { name: 'Delete your comment: Thanks!' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't delete your comment.");
+    expect(screen.getByText('Thanks!')).toBeInTheDocument();
+  });
+
   it('says so when the news cannot be loaded', async () => {
     logInAsFamilyMember();
     fakeTasksBackend.failRequests();

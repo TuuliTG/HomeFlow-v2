@@ -44,22 +44,29 @@ function Comment({ comment, userId }: { comment: NewsComment; userId: string }) 
   const deleteComment = useDeleteComment(userId);
   const isOwn = comment.author.userId === userId;
   return (
-    <li className="flex items-start justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm">
-      <p className="min-w-0 break-words text-slate-800">
-        <span className="font-semibold">{nameFor(comment.author, userId)}</span> {comment.body}
-      </p>
-      {isOwn && (
-        <button
-          type="button"
-          aria-label={`Delete your comment: ${comment.body}`}
-          disabled={deleteComment.isPending}
-          onClick={() => {
-            deleteComment.mutate(comment.id);
-          }}
-          className="shrink-0 text-slate-500 hover:text-red-700 disabled:opacity-60"
-        >
-          Delete
-        </button>
+    <li className="flex flex-col gap-1 rounded-xl bg-slate-50 px-3 py-2 text-sm">
+      <div className="flex items-start justify-between gap-2">
+        <p className="min-w-0 break-words text-slate-800">
+          <span className="font-semibold">{nameFor(comment.author, userId)}</span> {comment.body}
+        </p>
+        {isOwn && (
+          <button
+            type="button"
+            aria-label={`Delete your comment: ${comment.body}`}
+            disabled={deleteComment.isPending}
+            onClick={() => {
+              deleteComment.mutate(comment.id);
+            }}
+            className="-my-1 shrink-0 rounded px-2 py-1 text-slate-500 hover:text-red-700 disabled:opacity-60"
+          >
+            Delete
+          </button>
+        )}
+      </div>
+      {deleteComment.isError && (
+        <p role="alert" className="text-red-700">
+          We couldn&apos;t delete your comment. Try again.
+        </p>
       )}
     </li>
   );
@@ -128,6 +135,13 @@ function CommentForm({
           Send
         </button>
       </div>
+      <button
+        type="button"
+        onClick={onDone}
+        className="self-start text-sm font-semibold text-slate-600 hover:text-slate-900"
+      >
+        Cancel
+      </button>
       {error && (
         <p id={errorId} role="alert" className="text-sm text-red-700">
           {error}

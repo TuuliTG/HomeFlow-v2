@@ -54,7 +54,7 @@ export const fakeNewsBackend = {
       createdAt: new Date().toISOString(),
     });
   },
-  /** Makes adding comments fail, like a network error. */
+  /** Makes adding and deleting comments fail, like a network error. */
   failComments() {
     commentsFail = true;
   },
@@ -111,6 +111,7 @@ export const addComment: typeof newsApi.addComment = (taskId, body) => {
 };
 
 export const deleteComment: typeof newsApi.deleteComment = (commentId) => {
+  if (commentsFail) return Promise.reject(new Error('Network error'));
   const user = fakeAuthBackend.currentUser();
   const index = comments.findIndex(
     (comment) => comment.id === commentId && comment.authorId === user?.id,
