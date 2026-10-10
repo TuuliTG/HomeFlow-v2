@@ -14,7 +14,7 @@ import {
 import { CancelLink } from '@/features/tasks/CancelLink';
 import { PrivateTaskField } from '@/features/tasks/PrivateTaskField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
-import { TaskTitleField } from '@/features/tasks/TaskTitleField';
+import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 
 const DEFAULT_POINTS = '3';
@@ -38,6 +38,8 @@ interface TaskFormProps {
   prefill?: NewTask | undefined;
   /** Tasks the household has added before, offered to add again; leave out when editing. */
   suggestions?: TaskSuggestion[];
+  /** The household's favourite tasks, offered to add again; leave out when editing. */
+  favourites?: FavouriteTasks;
   submitLabel: string;
   isSaving: boolean;
   /** Saves the task; a rejection shows "We couldn't save the task." */
@@ -72,6 +74,7 @@ export function TaskForm({
   initial,
   prefill,
   suggestions = [],
+  favourites,
   submitLabel,
   isSaving,
   onSave,
@@ -153,6 +156,7 @@ export function TaskForm({
         onChange={setTitle}
         suggestions={suggestions}
         onPick={fillIn}
+        favourites={favourites}
         inputRef={titleRef}
         errorProps={errorPropsFor('title')}
       />

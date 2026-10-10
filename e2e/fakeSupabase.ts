@@ -289,6 +289,30 @@ export async function fakeSupabase(page: Page) {
     return reply(route, 204);
   }
 
+  /** The names of the user's favourite tasks in lower case, like favourite_tasks with Row Level Security. */
+  const favourites = new Set<string>();
+
+  /** Lists, adds (failing like the primary key for a duplicate) or removes the user's favourites. */
+  async function favouritesEndpoint(route: Route) {
+    const request = route.request();
+    if (request.method() === 'POST') {
+      const { title_key } = request.postDataJSON() as { title_key: string };
+      if (favourites.has(title_key))
+        return reply(route, 409, { code: '23505', message: 'Duplicate' });
+      favourites.add(title_key);
+      return reply(route, 201);
+    }
+    if (request.method() === 'DELETE') {
+      favourites.delete(filterIds(new URL(request.url()).searchParams.get('title_key'))[0] ?? '');
+      return reply(route, 204);
+    }
+    return reply(
+      route,
+      200,
+      [...favourites].map((title_key) => ({ title_key })),
+    );
+  }
+
   /** The user's reminders by task id, like task_reminders with Row Level Security. */
   const reminders = new Map<string, string>();
 
@@ -416,6 +440,7 @@ export async function fakeSupabase(page: Page) {
         200,
         [...reminders].map(([task_id, remind_at]) => ({ task_id, remind_at })),
       ),
+    '/rest/v1/favourite_tasks': favouritesEndpoint,
     '/rest/v1/tasks': tasksEndpoint,
   };
 

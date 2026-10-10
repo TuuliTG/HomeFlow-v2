@@ -1,12 +1,23 @@
 import { type KeyboardEvent, type RefObject, useId, useState } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
+import { StarIcon } from '@/components/ui/icons';
 import {
+  favouriteSuggestions,
   matchingSuggestions,
   suggestionPointsLabel,
-  TOP_SUGGESTIONS_LIMIT,
 } from '@/features/tasks/suggestions';
-import { TITLE_MAX_LENGTH, type TaskSuggestion } from '@/features/tasks/task';
+import { TITLE_MAX_LENGTH, type TaskSuggestion, titleKey } from '@/features/tasks/task';
+
+/** The tasks the household has starred, offered on the New task form to add again. */
+export interface FavouriteTasks {
+  /** Their names, as `titleKey` gives them; undefined while they (or the suggestions) load. */
+  keys: string[] | undefined;
+  /** While a star is being saved: the star waits, so quick taps can't save out of order. */
+  isSaving: boolean;
+  /** Stars or unstars the task with this name. */
+  onChange: (title: string, isFavourite: boolean) => void;
+}
 
 interface TaskTitleFieldProps {
   value: string;
@@ -15,20 +26,23 @@ interface TaskTitleFieldProps {
   suggestions: TaskSuggestion[];
   /** Fills the form with an earlier task's details. */
   onPick: (suggestion: TaskSuggestion) => void;
+  /** The household's favourites, starred with a button by the name; none when editing. */
+  favourites?: FavouriteTasks | undefined;
   inputRef: RefObject<HTMLInputElement | null>;
   /** `aria-invalid` and `aria-describedby` while the title has an error. */
   errorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
 }
 
 /**
- * The task's name, as a combobox listing earlier tasks that match what is typed. Before anything is
- * typed, the most often added tasks are offered as buttons.
+ * The task's name, as a combobox listing earlier tasks that match what is typed, with a star to make it
+ * a favourite. Before anything is typed, the household's favourites are offered as buttons.
  */
 export function TaskTitleField({
   value,
   onChange,
   suggestions,
   onPick,
+  favourites,
   inputRef,
   errorProps,
 }: TaskTitleFieldProps) {
@@ -65,11 +79,14 @@ export function TaskTitleField({
 
   return (
     <div className="flex flex-col gap-3">
-      {value === '' && (
-        <RecentTasks suggestions={suggestions.slice(0, TOP_SUGGESTIONS_LIMIT)} onPick={pick} />
+      {value === '' && favourites?.keys && (
+        <FavouriteTaskList
+          suggestions={favouriteSuggestions(suggestions, favourites.keys)}
+          onPick={pick}
+        />
       )}
-      <div className="relative">
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+      <div className="relative flex items-end gap-2">
+        <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
           Task
           <input
             type="text"
@@ -98,6 +115,7 @@ export function TaskTitleField({
             className={inputClassName}
           />
         </label>
+        {favourites && <FavouriteButton title={value} favourites={favourites} />}
         <SuggestionList
           id={listId}
           matches={matches}
@@ -115,36 +133,66 @@ export function TaskTitleField({
   );
 }
 
-interface RecentTasksProps {
+interface FavouriteButtonProps {
+  /** The name being typed. */
+  title: string;
+  favourites: FavouriteTasks;
+}
+
+/** A star toggle that makes the task being named a favourite, or no longer one. */
+function FavouriteButton({ title, favourites }: FavouriteButtonProps) {
+  const isFavourite = favourites.keys?.includes(titleKey(title)) ?? false;
+  return (
+    <button
+      type="button"
+      aria-label="Favourite"
+      aria-pressed={isFavourite}
+      disabled={title.trim() === '' || favourites.isSaving}
+      onClick={() => {
+        favourites.onChange(title, !isFavourite);
+      }}
+      className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 hover:border-amber-500 disabled:opacity-50 aria-pressed:border-amber-500 aria-pressed:text-amber-600"
+    >
+      <StarIcon className="size-6" fill={isFavourite ? 'currentColor' : 'none'} />
+    </button>
+  );
+}
+
+interface FavouriteTaskListProps {
   suggestions: TaskSuggestion[];
   onPick: (suggestion: TaskSuggestion) => void;
 }
 
-/** The household's most often added tasks, each a button that fills in the form. */
-function RecentTasks({ suggestions, onPick }: RecentTasksProps) {
+/** The household's favourite tasks, each a button that fills in the form, or how to add some. */
+function FavouriteTaskList({ suggestions, onPick }: FavouriteTaskListProps) {
   const headingId = useId();
-  if (suggestions.length === 0) return null;
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-2">
       <h2 id={headingId} className="text-sm font-medium text-slate-700">
-        Add again
+        Favourites
       </h2>
-      <ul className="flex flex-wrap gap-2">
-        {suggestions.map((suggestion) => (
-          <li key={suggestion.title}>
-            <button
-              type="button"
-              onClick={() => {
-                onPick(suggestion);
-              }}
-              className="hover:border-brand-600 hover:bg-brand-50 min-h-11 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
-            >
-              {suggestion.title}
-              <span className="text-slate-500"> · {suggestionPointsLabel(suggestion)}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {suggestions.length === 0 ? (
+        <p className="text-sm text-slate-600">
+          Tap the star by a task&apos;s name to keep it here for next time.
+        </p>
+      ) : (
+        <ul className="flex flex-wrap gap-2">
+          {suggestions.map((suggestion) => (
+            <li key={suggestion.title}>
+              <button
+                type="button"
+                onClick={() => {
+                  onPick(suggestion);
+                }}
+                className="hover:border-brand-600 hover:bg-brand-50 min-h-11 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+              >
+                {suggestion.title}
+                <span className="text-slate-500"> · {suggestionPointsLabel(suggestion)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
