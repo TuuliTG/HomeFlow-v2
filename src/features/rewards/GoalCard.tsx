@@ -79,7 +79,7 @@ function DeleteGoal({ goal, userId }: { goal: Goal; userId: string }) {
         onClick={() => {
           setIsConfirming(true);
         }}
-        className="w-fit text-sm font-semibold text-red-700 hover:underline"
+        className="-my-2 min-h-11 w-fit text-sm font-semibold text-red-700 hover:underline"
       >
         Delete
       </button>
