@@ -5,7 +5,7 @@ import { ChartIcon, CheckListIcon, StarIcon, UserIcon } from '@/components/ui/ic
 
 const navItems = [
   { to: paths.me, label: 'Me', Icon: UserIcon },
-  { to: paths.tasks, label: 'Tasks', Icon: CheckListIcon },
+  { to: paths.tasks, label: 'Shared tasks', Icon: CheckListIcon },
   { to: paths.rewards, label: 'Rewards', Icon: StarIcon },
   { to: paths.statistics, label: 'Statistics', Icon: ChartIcon },
 ] as const;

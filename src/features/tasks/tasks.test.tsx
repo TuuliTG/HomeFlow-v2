@@ -122,7 +122,7 @@ describe('creating a task', () => {
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     const task = await screen.findByRole('listitem', { name: 'Book dentist' });
-    expect(screen.getByRole('heading', { level: 1, name: 'Available tasks' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Shared tasks' })).toBeInTheDocument();
     expect(within(task).getByText('Meta work')).toBeInTheDocument();
     expect(within(task).getByText('5 points')).toBeInTheDocument();
     expect(within(task).getByText('Added by you')).toBeInTheDocument();

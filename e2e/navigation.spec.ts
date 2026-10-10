@@ -19,7 +19,7 @@ test('family member can move between all main screens', async ({ page }) => {
 
   const nav = page.getByRole('navigation', { name: 'Main' });
   for (const [link, heading] of [
-    ['Tasks', 'Available tasks'],
+    ['Shared tasks', 'Shared tasks'],
     ['Me', 'My tasks'],
     ['Rewards', 'Rewards & goals'],
     ['Statistics', 'Fairness & progress'],

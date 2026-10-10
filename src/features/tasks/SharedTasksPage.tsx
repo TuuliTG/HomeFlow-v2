@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 
-import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
+import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import type { Task } from '@/features/tasks/task';
 import { TaskCard } from '@/features/tasks/TaskCard';
 import { useTasks } from '@/features/tasks/useTasks';
@@ -13,7 +13,7 @@ import { useLoggedInUser } from '@/lib/auth';
 const SHOW_COMPLETED_PARAM = 'completed';
 const ONLY_UNPICKED_PARAM = 'unpicked';
 
-export function AvailableTasksPage() {
+export function SharedTasksPage() {
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM);
   const [onlyUnpicked, setOnlyUnpicked] = useSwitchParam(ONLY_UNPICKED_PARAM);
 
@@ -22,15 +22,10 @@ export function AvailableTasksPage() {
       <div className="flex items-start justify-between gap-4">
         <PageHeader
           eyebrow="Tasks"
-          title="Available tasks"
-          description="Pick any task. New tasks earn bonus points for variety and fairness."
+          title="Shared tasks"
+          description="Pick any task. New tasks earn bonus points for variety and fairness. Your private tasks are on your Me page."
         />
-        <Link
-          to={paths.newTask}
-          className="bg-brand-600 hover:bg-brand-900 shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-white"
-        >
-          <span aria-hidden="true">+ </span>New task
-        </Link>
+        <NewTaskLink />
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-2">
         <Switch label="Only tasks to pick up" checked={onlyUnpicked} onChange={setOnlyUnpicked} />
@@ -88,9 +83,9 @@ function Switch({ label, checked, onChange }: SwitchProps) {
   );
 }
 
-/** Whether anyone could still pick the task up: not picked up yet, and not someone's private task. */
+/** Whether anyone could still pick the task up. */
 function isUnpicked(task: Task): boolean {
-  return task.pickedUpBy === null && !task.isPrivate;
+  return task.pickedUpBy === null;
 }
 
 function TaskList({ onlyUnpicked }: { onlyUnpicked: boolean }) {
@@ -106,10 +101,12 @@ function TaskList({ onlyUnpicked }: { onlyUnpicked: boolean }) {
       </p>
     );
   }
-  if (tasks.data.length === 0) {
+  // Private tasks are listed only on the Me page.
+  const shared = tasks.data.filter((task) => !task.isPrivate);
+  if (shared.length === 0) {
     return <EmptyMessage>No tasks yet. Create the first one!</EmptyMessage>;
   }
-  const shown = onlyUnpicked ? tasks.data.filter(isUnpicked) : tasks.data;
+  const shown = onlyUnpicked ? shared.filter(isUnpicked) : shared;
   if (shown.length === 0) {
     return <EmptyMessage>Every task has been picked up.</EmptyMessage>;
   }

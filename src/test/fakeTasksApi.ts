@@ -121,7 +121,7 @@ export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdComplet
     tasks
       .flatMap((task) => {
         const { id, title, type, points, completed } = task;
-        return completed && isVisible(task)
+        return completed && isVisible(task) && !task.isPrivate
           ? [
               {
                 id,
