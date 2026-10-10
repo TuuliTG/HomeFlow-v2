@@ -4,7 +4,7 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { GoalCard } from '@/features/rewards/GoalCard';
-import { type Goal, ownerNameOf } from '@/features/rewards/goal';
+import { type Goal, nameOf } from '@/features/rewards/goal';
 import { useGoals } from '@/features/rewards/useGoals';
 import { useLoggedInUser } from '@/lib/auth';
 
@@ -37,7 +37,7 @@ function sectionOf(goal: Goal, userId: string): Section {
 /** Whose a claimed reward was: "Family", "Yours" or "Ben's". */
 function ownerLabel(goal: Goal, userId: string): string {
   if (goal.owner === null) return 'Family';
-  return goal.owner.id === userId ? 'Yours' : `${ownerNameOf(goal.owner)}'s`;
+  return goal.owner.id === userId ? 'Yours' : `${nameOf(goal.owner)}'s`;
 }
 
 export function RewardsPage() {

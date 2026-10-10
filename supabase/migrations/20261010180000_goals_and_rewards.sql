@@ -2,7 +2,8 @@
 -- points of shared tasks done after it was set. A shared goal (owner_id null) counts everyone's points and the whole
 -- household sees it; a personal goal counts only its owner's points, and the household sees it too so they can follow
 -- and celebrate it, but only the owner deletes or claims it. Points aren't spent: the same points count towards every
--- goal they apply to. Once reached, the reward is claimed with claim_goal_reward(), and the goal stays as history.
+-- goal they apply to. A shared goal can ask for a minimum from each member, so one member can't reach it alone. Once
+-- reached, the reward is claimed with claim_goal_reward(), and the goal stays as history.
 create table public.goals (
   id uuid primary key default gen_random_uuid(),
   household_id uuid not null default private.current_household_id()
@@ -11,11 +12,14 @@ create table public.goals (
   target_points integer not null check (target_points between 1 and 10000),
   -- Whose goal it is; null for a shared family goal. A personal goal goes with its owner's account.
   owner_id uuid references auth.users (id) on delete cascade,
+  -- The points each member of the household must earn towards a shared goal before it is reached; null for none.
+  min_points_per_member integer check (min_points_per_member between 1 and target_points),
   -- Kept when the creator deletes their account, so a shared goal stays.
   created_by uuid default auth.uid() references auth.users (id) on delete set null,
   created_at timestamptz not null default now(),
   claimed_at timestamptz,
-  claimed_by uuid references auth.users (id) on delete set null
+  claimed_by uuid references auth.users (id) on delete set null,
+  constraint goals_minimum_only_shared check (min_points_per_member is null or owner_id is null)
 );
 create index goals_household_id_idx on public.goals (household_id);
 
@@ -25,7 +29,7 @@ alter table public.goals enable row level security;
 -- the goal is reached. created_by, created_at and household_id always come from their defaults.
 revoke all on table public.goals from anon, authenticated;
 grant select, delete on table public.goals to authenticated;
-grant insert (title, target_points, owner_id) on table public.goals to authenticated;
+grant insert (title, target_points, owner_id, min_points_per_member) on table public.goals to authenticated;
 
 create policy "Members can view their household's goals"
   on public.goals for select to authenticated
@@ -69,8 +73,54 @@ $$;
 revoke execute on function private.goal_points(public.goals) from public;
 grant execute on function private.goal_points(public.goals) to authenticated;
 
--- The household's goals with the points towards each and the owner's display name, open goals first (newest first),
--- then claimed ones (most recently claimed first). Security invoker, so Row Level Security scopes it.
+-- What each current member of a goal's household has earned towards it, in the order they joined (same points as
+-- goal_points()). Members who have left aren't listed, though their points still count towards the total.
+create function private.goal_member_points(goal public.goals)
+returns table (user_id uuid, display_name text, points integer, joined_at timestamptz)
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select m.user_id, p.display_name, coalesce(sum(t.points), 0)::integer, m.joined_at
+  from public.household_members m
+  left join public.profiles p on p.id = m.user_id
+  left join public.tasks t
+    on t.household_id = goal.household_id
+    and t.completed_by = m.user_id
+    and not t.is_private
+    and t.completed_at >= goal.created_at
+    and t.completed_at <= coalesce(goal.claimed_at, 'infinity')
+  where m.household_id = goal.household_id
+  group by m.user_id, p.display_name, m.joined_at;
+$$;
+revoke execute on function private.goal_member_points(public.goals) from public;
+grant execute on function private.goal_member_points(public.goals) to authenticated;
+
+-- A goal is reached when its points reach the target and, if it asks for a minimum, every current member has earned
+-- at least that much towards it.
+create function private.goal_is_reached(goal public.goals)
+returns boolean
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select private.goal_points(goal) >= goal.target_points
+    and (
+      goal.min_points_per_member is null
+      or not exists (
+        select 1 from private.goal_member_points(goal) mp where mp.points < goal.min_points_per_member
+      )
+    );
+$$;
+revoke execute on function private.goal_is_reached(public.goals) from public;
+grant execute on function private.goal_is_reached(public.goals) to authenticated;
+
+-- The household's goals with the points towards each, whether it is reached and the owner's display name, open goals
+-- first (newest first), then claimed ones (most recently claimed first). Shared goals also list what each member has
+-- earned towards them (`member_points`: user_id, display_name, points). Security invoker, so Row Level Security
+-- scopes it.
 create function public.household_goals()
 returns table (
   id uuid,
@@ -78,17 +128,27 @@ returns table (
   target_points integer,
   owner_id uuid,
   owner_name text,
+  min_points_per_member integer,
   created_at timestamptz,
   claimed_at timestamptz,
-  points integer
+  points integer,
+  reached boolean,
+  member_points jsonb
 )
 language sql
 stable
 security invoker
 set search_path = ''
 as $$
-  select g.id, g.title, g.target_points, g.owner_id, p.display_name, g.created_at, g.claimed_at,
-    private.goal_points(g)
+  select g.id, g.title, g.target_points, g.owner_id, p.display_name, g.min_points_per_member, g.created_at,
+    g.claimed_at, private.goal_points(g), private.goal_is_reached(g),
+    case when g.owner_id is null then (
+      select coalesce(jsonb_agg(
+        jsonb_build_object('user_id', mp.user_id, 'display_name', mp.display_name, 'points', mp.points)
+        order by mp.joined_at, mp.user_id
+      ), '[]'::jsonb)
+      from private.goal_member_points(g) mp
+    ) end
   from public.goals g
   left join public.profiles p on p.id = g.owner_id
   order by g.claimed_at desc nulls first, g.created_at desc, g.id;
@@ -96,8 +156,8 @@ $$;
 revoke execute on function public.household_goals() from public, anon;
 grant execute on function public.household_goals() to authenticated;
 
--- Claims the reward of an open shared goal or the user's own personal goal once its points reach the target. Raises no_data_found
--- (P0002) if there is no such open goal, and check_violation (23514) if it hasn't been reached yet.
+-- Claims the reward of an open shared goal or the user's own personal goal once it is reached (goal_is_reached()).
+-- Raises no_data_found (P0002) if there is no such open goal, and check_violation (23514) if it isn't reached yet.
 create function public.claim_goal_reward(goal_id uuid)
 returns void
 language plpgsql
@@ -117,7 +177,7 @@ begin
   if goal.id is null then
     raise exception 'No open goal with this id in your household' using errcode = 'P0002';
   end if;
-  if private.goal_points(goal) < goal.target_points then
+  if not private.goal_is_reached(goal) then
     raise exception 'This goal has not been reached yet' using errcode = '23514';
   end if;
   update public.goals g set claimed_at = now(), claimed_by = auth.uid() where g.id = goal.id;

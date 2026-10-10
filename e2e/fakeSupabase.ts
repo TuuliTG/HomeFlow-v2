@@ -48,6 +48,7 @@ interface GoalRow {
   title: string;
   target_points: number;
   owner_id: string | null;
+  min_points_per_member: number | null;
   created_at: string;
   claimed_at: string | null;
 }
@@ -401,6 +402,7 @@ export async function fakeSupabase(page: Page) {
       title: EXISTING_HOUSEHOLD.goal,
       target_points: 10,
       owner_id: 'e2e-ben',
+      min_points_per_member: null,
       created_at: new Date().toISOString(),
       claimed_at: null,
     },
@@ -421,8 +423,8 @@ export async function fakeSupabase(page: Page) {
     );
   }
 
-  /** Like goal_points(): shared tasks done since the goal was set, by the owner for a personal goal. */
-  function goalPoints(goal: GoalRow) {
+  /** Like goal_points(): shared tasks done since the goal was set, by `doneBy` (anyone when null). */
+  function goalPoints(goal: GoalRow, doneBy = goal.owner_id) {
     return tasks
       .filter(
         (task) =>
@@ -431,16 +433,37 @@ export async function fakeSupabase(page: Page) {
           task.completed_at !== null &&
           task.completed_at >= goal.created_at &&
           (goal.claimed_at === null || task.completed_at <= goal.claimed_at) &&
-          (goal.owner_id === null || task.completed_by === goal.owner_id),
+          (doneBy === null || task.completed_by === doneBy),
       )
       .reduce((total, task) => total + (task.points ?? 0), 0);
+  }
+
+  /** Like goal_member_points(): what each current member has earned towards a family goal. */
+  function memberPoints(goal: GoalRow) {
+    return (members.get(goal.household_id) ?? []).map((id) => ({
+      user_id: id,
+      display_name: profiles.get(id) ?? null,
+      points: goalPoints(goal, id),
+    }));
+  }
+
+  /** Like goal_is_reached(). */
+  function isReached(goal: GoalRow) {
+    const minimum = goal.min_points_per_member;
+    return (
+      goalPoints(goal) >= goal.target_points &&
+      (minimum === null || memberPoints(goal).every(({ points }) => points >= minimum))
+    );
   }
 
   async function goalsEndpoint(route: Route) {
     const request = route.request();
     if (request.method() === 'POST') {
       if (!ownHousehold) return reply(route, 400, { code: '23502', message: 'No household' });
-      const goal = request.postDataJSON() as Pick<GoalRow, 'title' | 'target_points' | 'owner_id'>;
+      const goal = request.postDataJSON() as Pick<
+        GoalRow,
+        'title' | 'target_points' | 'owner_id' | 'min_points_per_member'
+      >;
       goals.push({
         ...goal,
         id: `e2e-goal-${String(goals.length)}`,
@@ -457,7 +480,10 @@ export async function fakeSupabase(page: Page) {
     return reply(route, 204);
   }
 
-  /** Like household_goals(): open goals first, newest first, then claimed ones, with owners' names. */
+  /**
+   * Like household_goals(): open goals first, newest first, then claimed ones, with owners' names,
+   * whether each is reached and, for family goals, what each member has earned.
+   */
   async function householdGoals(route: Route) {
     const open = visibleGoals().filter((goal) => goal.claimed_at === null);
     const claimed = visibleGoals().filter((goal) => goal.claimed_at !== null);
@@ -468,6 +494,8 @@ export async function fakeSupabase(page: Page) {
         ...goal,
         owner_name: goal.owner_id ? (profiles.get(goal.owner_id) ?? null) : null,
         points: goalPoints(goal),
+        reached: isReached(goal),
+        member_points: goal.owner_id === null ? memberPoints(goal) : null,
       })),
     );
   }
@@ -477,7 +505,7 @@ export async function fakeSupabase(page: Page) {
     const { goal_id } = route.request().postDataJSON() as { goal_id: string };
     const goal = ownOpenGoal(goal_id);
     if (!goal) return reply(route, 400, { code: 'P0002', message: 'No open goal with this id' });
-    if (goalPoints(goal) < goal.target_points) {
+    if (!isReached(goal)) {
       return reply(route, 400, { code: '23514', message: 'This goal has not been reached yet' });
     }
     goal.claimed_at = new Date().toISOString();

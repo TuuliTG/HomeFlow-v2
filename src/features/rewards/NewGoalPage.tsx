@@ -24,12 +24,16 @@ const scopeHints: Record<GoalScope, string> = {
   personal: 'Only your points count towards it. The family sees it too and can cheer you on.',
 };
 
-type FieldName = 'title' | 'targetPoints';
+type FieldName = 'title' | 'targetPoints' | 'minPointsPerMember';
 
 interface FormError {
   /** The field to fix, or null when saving failed. */
   field: FieldName | null;
   message: string;
+}
+
+function fieldOf(path: PropertyKey | undefined): FieldName {
+  return path === 'targetPoints' || path === 'minPointsPerMember' ? path : 'title';
 }
 
 export function NewGoalPage() {
@@ -39,11 +43,19 @@ export function NewGoalPage() {
   const [title, setTitle] = useState('');
   const [targetPoints, setTargetPoints] = useState(DEFAULT_TARGET_POINTS);
   const [scope, setScope] = useState<GoalScope>('shared');
+  /** Points each member must earn towards a family goal, or '' for no minimum. */
+  const [minPointsPerMember, setMinPointsPerMember] = useState('');
   const [error, setError] = useState<FormError | null>(null);
   const errorId = useId();
+  const minimumHintId = useId();
   const titleRef = useRef<HTMLInputElement>(null);
   const targetPointsRef = useRef<HTMLInputElement>(null);
-  const fieldRefs = { title: titleRef, targetPoints: targetPointsRef };
+  const minimumRef = useRef<HTMLInputElement>(null);
+  const fieldRefs = {
+    title: titleRef,
+    targetPoints: targetPointsRef,
+    minPointsPerMember: minimumRef,
+  };
 
   function errorPropsFor(field: FieldName) {
     const hasError = error?.field === field;
@@ -52,10 +64,16 @@ export function NewGoalPage() {
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
-    const parsed = newGoalSchema.safeParse({ title, targetPoints, scope });
+    const parsed = newGoalSchema.safeParse({
+      title,
+      targetPoints,
+      scope,
+      minPointsPerMember:
+        scope === 'shared' && minPointsPerMember !== '' ? Number(minPointsPerMember) : null,
+    });
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
-      const field = issue?.path[0] === 'targetPoints' ? 'targetPoints' : 'title';
+      const field = fieldOf(issue?.path[0]);
       setError({ field, message: issue?.message ?? 'Check the goal details.' });
       fieldRefs[field].current?.focus();
       return;
@@ -131,6 +149,34 @@ export function NewGoalPage() {
           />
           <p className="text-sm text-slate-600">{scopeHints[scope]}</p>
         </div>
+
+        {scope === 'shared' && (
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Minimum points from each member (optional)
+            <input
+              type="number"
+              name="minPointsPerMember"
+              ref={minimumRef}
+              {...errorPropsFor('minPointsPerMember')}
+              aria-describedby={
+                error?.field === 'minPointsPerMember'
+                  ? `${errorId} ${minimumHintId}`
+                  : minimumHintId
+              }
+              inputMode="numeric"
+              min={1}
+              value={minPointsPerMember}
+              onChange={(event) => {
+                setMinPointsPerMember(event.target.value);
+              }}
+              className={`${inputClassName} w-28`}
+            />
+            <span id={minimumHintId} className="font-normal text-slate-600">
+              The goal is reached only once everyone has earned at least this much, so nobody does
+              it all alone.
+            </span>
+          </label>
+        )}
 
         {error && (
           <p id={errorId} role="alert" className="text-sm text-red-700">

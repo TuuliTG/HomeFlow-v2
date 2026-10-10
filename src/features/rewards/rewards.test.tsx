@@ -132,6 +132,76 @@ describe('rewards and goals', () => {
     expect(screen.queryByRole('region', { name: "Family members' goals" })).not.toBeInTheDocument();
   });
 
+  it('sets a family goal asking each member for a minimum share of the points', async () => {
+    logInAsFamilyMember();
+    addBen();
+    const user = userEvent.setup();
+    renderAppAt('/rewards/new');
+
+    const minimum = screen.getByLabelText(/Minimum points from each member/);
+    expect(minimum).toHaveAccessibleDescription(/nobody does it all alone/);
+    await user.click(screen.getByRole('radio', { name: 'Just me' }));
+    expect(screen.queryByLabelText(/Minimum points from each member/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'The family' }));
+    await user.type(screen.getByLabelText('Reward'), 'Zoo trip');
+    await user.type(screen.getByLabelText(/Minimum points from each member/), '3');
+    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+
+    const zoo = await findGoal('Family goals', 'Zoo trip');
+    expect(zoo).toHaveTextContent('At least 3 points from each member');
+    expect(
+      within(zoo)
+        .getByRole('list', { name: 'Points from each member towards Zoo trip' })
+        .querySelectorAll('li'),
+    ).toHaveLength(2);
+    expect(zoo).toHaveTextContent('You0 / 3');
+    expect(zoo).toHaveTextContent('Ben0 / 3');
+  });
+
+  it("can't be claimed while a member hasn't earned the minimum, even with enough points", async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    fakeGoalsBackend.addGoalAs(anna.id, {
+      title: 'Zoo trip',
+      targetPoints: 10,
+      isShared: true,
+      minPointsPerMember: 3,
+    });
+    fakeGoalsBackend.addGoalAs(anna.id, {
+      title: 'Movie night',
+      targetPoints: 10,
+      isShared: true,
+      minPointsPerMember: 1,
+    });
+    doTask(anna.id, 'Vacuum', 9);
+    doTask(ben.id, 'Dust', 1);
+    renderAppAt('/rewards');
+
+    const zoo = await findGoal('Family goals', 'Zoo trip');
+    expect(zoo).toHaveTextContent('10 / 10 points');
+    expect(zoo).toHaveTextContent('Enough points! One member still needs to earn their share.');
+    expect(zoo).toHaveTextContent('You3 / 3 ✓, done');
+    expect(zoo).toHaveTextContent('Ben1 / 3');
+    expect(within(zoo).queryByRole('button', { name: /Claim reward/ })).not.toBeInTheDocument();
+    const movie = await findGoal('Family goals', 'Movie night');
+    expect(within(movie).getByRole('button', { name: 'Claim reward: Movie night' })).toBeEnabled();
+  });
+
+  it('asks for a minimum no bigger than the points needed', async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/rewards/new');
+
+    await user.type(screen.getByLabelText('Reward'), 'Zoo trip');
+    await user.type(screen.getByLabelText(/Minimum points from each member/), '30');
+    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'The minimum from each member must be a whole number from 1 to the points needed.',
+    );
+    expect(screen.getByLabelText(/Minimum points from each member/)).toHaveFocus();
+  });
+
   it('claims the reward of a reached goal, which then stays as history', async () => {
     const anna = logInAsFamilyMember();
     fakeGoalsBackend.addGoalAs(anna.id, { title: 'Pizza night', targetPoints: 5, isShared: true });

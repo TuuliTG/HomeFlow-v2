@@ -10,37 +10,56 @@ const goalRowsSchema = z.array(
     target_points: z.number(),
     owner_id: z.string().nullable(),
     owner_name: z.string().nullable(),
+    min_points_per_member: z.number().nullable(),
     claimed_at: z.string().nullable(),
     points: z.number(),
+    reached: z.boolean(),
+    member_points: z
+      .array(
+        z.object({ user_id: z.string(), display_name: z.string().nullable(), points: z.number() }),
+      )
+      .nullable(),
   }),
 );
 
 /**
- * The household's family goals and every member's personal goals, with the points towards each: open goals
- * first (newest first), then claimed ones. Counted by `household_goals()` in the database.
+ * The household's family goals and every member's personal goals, with the points towards each and
+ * whether each is reached: open goals first (newest first), then claimed ones. Counted by
+ * `household_goals()` in the database, which also decides whether a goal is reached.
  */
 export async function fetchGoals(): Promise<Goal[]> {
   // Without generated database types the function's result is untyped; Zod checks it.
   const result = await getSupabaseClient().rpc('household_goals');
   if (result.error) throw result.error;
-  return goalRowsSchema
-    .parse(result.data)
-    .map(({ target_points, owner_id, owner_name, claimed_at, ...goal }) => ({
-      ...goal,
-      targetPoints: target_points,
-      owner: owner_id === null ? null : { id: owner_id, name: owner_name },
-      claimedAt: claimed_at,
-    }));
+  return goalRowsSchema.parse(result.data).map((row) => ({
+    id: row.id,
+    title: row.title,
+    targetPoints: row.target_points,
+    owner: row.owner_id === null ? null : { id: row.owner_id, name: row.owner_name },
+    minPointsPerMember: row.min_points_per_member,
+    points: row.points,
+    memberPoints: (row.member_points ?? []).map(({ user_id, display_name, points }) => ({
+      id: user_id,
+      name: display_name,
+      points,
+    })),
+    reached: row.reached,
+    claimedAt: row.claimed_at,
+  }));
 }
 
 /** Sets a goal for the family, or for `userId` alone. */
-export async function addGoal({ title, targetPoints, scope }: NewGoal, userId: string) {
+export async function addGoal(
+  { title, targetPoints, scope, minPointsPerMember }: NewGoal,
+  userId: string,
+) {
   const { error } = await getSupabaseClient()
     .from('goals')
     .insert({
       title,
       target_points: targetPoints,
       owner_id: scope === 'personal' ? userId : null,
+      min_points_per_member: minPointsPerMember,
     });
   if (error) throw error;
 }

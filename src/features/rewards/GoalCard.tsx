@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { type Goal, isManagedBy, isReached, ownerNameOf } from '@/features/rewards/goal';
+import { type Goal, isManagedBy, membersShortOfMinimum, nameOf } from '@/features/rewards/goal';
 import { useClaimGoalReward, useDeleteGoal } from '@/features/rewards/useGoals';
 
 /**
@@ -9,7 +9,7 @@ import { useClaimGoalReward, useDeleteGoal } from '@/features/rewards/useGoals';
  */
 export function GoalCard({ goal, userId }: { goal: Goal; userId: string }) {
   const canManage = isManagedBy(goal, userId);
-  const othersName = goal.owner && !canManage ? ownerNameOf(goal.owner) : null;
+  const othersName = goal.owner && !canManage ? nameOf(goal.owner) : null;
   const shownPoints = Math.min(goal.points, goal.targetPoints);
   const percent = Math.round((shownPoints / goal.targetPoints) * 100);
 
@@ -22,6 +22,12 @@ export function GoalCard({ goal, userId }: { goal: Goal; userId: string }) {
         <div>
           <h3 className="font-semibold text-slate-900">{goal.title}</h3>
           {othersName && <p className="text-sm text-slate-600">{othersName}&apos;s goal</p>}
+          {goal.minPointsPerMember !== null && (
+            <p className="text-sm text-slate-600">
+              At least {goal.minPointsPerMember} {pointsWord(goal.minPointsPerMember)} from each
+              member
+            </p>
+          )}
         </div>
         <span className="shrink-0 text-sm text-slate-600">
           {shownPoints} / {goal.targetPoints} points
@@ -37,15 +43,15 @@ export function GoalCard({ goal, userId }: { goal: Goal; userId: string }) {
         className="h-3 overflow-hidden rounded-full bg-slate-200"
       >
         <div
-          className={`h-full rounded-full ${isReached(goal) ? 'bg-emerald-600' : 'bg-brand-600'}`}
+          className={`h-full rounded-full ${goal.reached ? 'bg-emerald-600' : 'bg-brand-600'}`}
           style={{ width: `${String(percent)}%` }}
         />
       </div>
-      {!isReached(goal) ? (
-        <p className="text-sm text-slate-600">
-          {goal.targetPoints - goal.points} more{' '}
-          {goal.targetPoints - goal.points === 1 ? 'point' : 'points'} to go
-        </p>
+      {goal.minPointsPerMember !== null && (
+        <MemberMinimums goal={goal} minimum={goal.minPointsPerMember} userId={userId} />
+      )}
+      {!goal.reached ? (
+        <p className="text-sm text-slate-600">{progressMessage(goal)}</p>
       ) : othersName ? (
         <p className="text-sm font-medium text-emerald-800">{othersName} reached this goal!</p>
       ) : (
@@ -53,6 +59,54 @@ export function GoalCard({ goal, userId }: { goal: Goal; userId: string }) {
       )}
       {canManage && <DeleteGoal goal={goal} userId={userId} />}
     </li>
+  );
+}
+
+function pointsWord(count: number): string {
+  return count === 1 ? 'point' : 'points';
+}
+
+/** What is still missing from a goal that isn't reached: points, or members' minimums. */
+function progressMessage(goal: Goal): string {
+  const missing = goal.targetPoints - goal.points;
+  if (missing > 0) return `${String(missing)} more ${pointsWord(missing)} to go`;
+  const short = membersShortOfMinimum(goal).length;
+  return `Enough points! ${short === 1 ? 'One member still needs' : `${String(short)} members still need`} to earn their share.`;
+}
+
+/** Each member's points towards a family goal's minimum, so the family sees who still has to help. */
+function MemberMinimums({
+  goal,
+  minimum,
+  userId,
+}: {
+  goal: Goal;
+  minimum: number;
+  userId: string;
+}) {
+  return (
+    <ul
+      aria-label={`Points from each member towards ${goal.title}`}
+      className="flex flex-col gap-1"
+    >
+      {goal.memberPoints.map((member) => {
+        const hasShare = member.points >= minimum;
+        return (
+          <li key={member.id} className="flex items-center justify-between gap-4 text-sm">
+            <span className="text-slate-700">{member.id === userId ? 'You' : nameOf(member)}</span>
+            <span className={hasShare ? 'font-medium text-emerald-800' : 'text-slate-600'}>
+              {Math.min(member.points, minimum)} / {minimum}
+              {hasShare && (
+                <>
+                  <span aria-hidden="true"> ✓</span>
+                  <span className="sr-only">, done</span>
+                </>
+              )}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

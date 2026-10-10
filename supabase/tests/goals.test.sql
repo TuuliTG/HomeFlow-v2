@@ -3,7 +3,7 @@
 -- before the goals were set don't count. (now() is the same all through the transaction.)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(25);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -60,7 +60,7 @@ select throws_ok(
 -- Ben sees Anna's personal goal too, but can't set, claim or delete one for her.
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select results_eq(
-  $$ select title, owner_name, points from public.household_goals() $$,
+  $$ select title, owner_name, points from public.household_goals() order by title $$,
   $$ values ('New book', 'Anna', 2), ('Pizza night', null, 5) $$,
   'other members see someone''s personal goal, its progress and whose it is'
 );
@@ -133,6 +133,49 @@ select results_eq(
 select lives_ok(
   format('select public.claim_goal_reward(%L)', current_setting('test.book')),
   'members can claim their own reached personal goal'
+);
+
+-- Family goals asking for a minimum from each member. Anna has 6 points since the goals were set and Ben 3.
+insert into public.goals (title, target_points, min_points_per_member) values
+  ('Movie night', 8, 3), ('Zoo trip', 8, 4);
+select results_eq(
+  $$ select title, points, reached, member_points from public.household_goals()
+     where min_points_per_member is not null order by title $$,
+  $$ values
+    ('Movie night', 9, true, '[{"user_id": "11111111-1111-1111-1111-111111111111", "display_name": "Anna", "points": 6},
+                              {"user_id": "22222222-2222-2222-2222-222222222222", "display_name": null, "points": 3}]'::jsonb),
+    ('Zoo trip', 9, false, '[{"user_id": "11111111-1111-1111-1111-111111111111", "display_name": "Anna", "points": 6},
+                             {"user_id": "22222222-2222-2222-2222-222222222222", "display_name": null, "points": 3}]'::jsonb) $$,
+  'a goal with a minimum is reached only once every member has earned it, and lists what each has earned'
+);
+select throws_ok(
+  $$ select public.claim_goal_reward(id) from public.goals where title = 'Zoo trip' $$,
+  '23514', null,
+  'a goal cannot be claimed while a member has earned less than the minimum'
+);
+select lives_ok(
+  $$ select public.claim_goal_reward(id) from public.goals where title = 'Movie night' $$,
+  'a goal is claimed once every member has earned the minimum'
+);
+select is(
+  (select member_points from public.household_goals() where title = 'New book'),
+  null, 'personal goals list no member points'
+);
+select throws_ok(
+  $$ insert into public.goals (title, target_points, owner_id, min_points_per_member)
+     values ('Sweets', 5, '11111111-1111-1111-1111-111111111111', 2) $$,
+  '23514', null,
+  'only family goals ask for a minimum from each member'
+);
+select throws_ok(
+  $$ insert into public.goals (title, target_points, min_points_per_member) values ('Holiday', 5, 6) $$,
+  '23514', null,
+  'the minimum is at most the goal''s points'
+);
+select throws_ok(
+  $$ insert into public.goals (title, target_points, min_points_per_member) values ('Holiday', 5, 0) $$,
+  '23514', null,
+  'the minimum is at least one point'
 );
 
 -- Carl's household is separate.

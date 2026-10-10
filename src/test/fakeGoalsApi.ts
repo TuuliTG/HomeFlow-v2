@@ -7,7 +7,7 @@ import { requestsFailing, tasks } from '@/test/fakeTasksBackend';
 /**
  * In-memory stand-in for `@/features/rewards/api`, installed for every unit test in `setup.ts`. Like
  * `household_goals()`, it counts the points of shared tasks in `fakeTasksBackend` done since a goal was
- * set. Like its policies, members see all their household's goals and claim or delete family goals
+ * set, and decides whether a goal is reached like `goal_is_reached()`. Like its policies, members see all their household's goals and claim or delete family goals
  * and their own.
  */
 interface StoredGoal {
@@ -17,6 +17,7 @@ interface StoredGoal {
   targetPoints: number;
   /** Null for a family goal. */
   ownerId: string | null;
+  minPointsPerMember: number | null;
   /** ISO timestamps. */
   createdAt: string;
   claimedAt: string | null;
@@ -24,7 +25,8 @@ interface StoredGoal {
 
 const goals: StoredGoal[] = [];
 
-function pointsOf(goal: StoredGoal): number {
+/** Points from shared tasks done towards the goal, by `doneBy` (anyone when null). */
+function pointsOf(goal: StoredGoal, doneBy = goal.ownerId): number {
   return tasks
     .filter(
       ({ householdId, isPrivate, completed }) =>
@@ -33,9 +35,27 @@ function pointsOf(goal: StoredGoal): number {
         completed !== null &&
         completed.at >= goal.createdAt &&
         (goal.claimedAt === null || completed.at <= goal.claimedAt) &&
-        (goal.ownerId === null || completed.by === goal.ownerId),
+        (doneBy === null || completed.by === doneBy),
     )
     .reduce((total, task) => total + (task.points ?? 0), 0);
+}
+
+/** What each current member has earned towards a family goal, in the order they joined. */
+function memberPointsOf(goal: StoredGoal): Goal['memberPoints'] {
+  if (goal.ownerId !== null) return [];
+  return fakeHouseholdBackend.memberIdsOf(goal.householdId).map((id) => ({
+    id,
+    name: fakeAuthBackend.displayNameOf(id),
+    points: pointsOf(goal, id),
+  }));
+}
+
+function isReached(goal: StoredGoal): boolean {
+  const minimum = goal.minPointsPerMember;
+  return (
+    pointsOf(goal) >= goal.targetPoints &&
+    (minimum === null || memberPointsOf(goal).every(({ points }) => points >= minimum))
+  );
 }
 
 function loggedInUserId(): string {
@@ -84,15 +104,26 @@ export const fetchGoals: typeof goalsApi.fetchGoals = () =>
           goal.ownerId === null
             ? null
             : { id: goal.ownerId, name: fakeAuthBackend.displayNameOf(goal.ownerId) },
+        minPointsPerMember: goal.minPointsPerMember,
         points: pointsOf(goal),
+        memberPoints: memberPointsOf(goal),
+        reached: isReached(goal),
         claimedAt: goal.claimedAt,
       }));
   });
 
-export const addGoal: typeof goalsApi.addGoal = ({ title, targetPoints, scope }, userId) =>
+export const addGoal: typeof goalsApi.addGoal = (
+  { title, targetPoints, scope, minPointsPerMember },
+  userId,
+) =>
   request(() => {
     if (userId !== loggedInUserId()) throw new Error('Nobody sets a goal for someone else');
-    fakeGoalsBackend.addGoalAs(userId, { title, targetPoints, isShared: scope === 'shared' });
+    fakeGoalsBackend.addGoalAs(userId, {
+      title,
+      targetPoints,
+      isShared: scope === 'shared',
+      minPointsPerMember,
+    });
   });
 
 export const deleteGoal: typeof goalsApi.deleteGoal = (goalId) =>
@@ -103,7 +134,7 @@ export const deleteGoal: typeof goalsApi.deleteGoal = (goalId) =>
 export const claimGoalReward: typeof goalsApi.claimGoalReward = (goalId) =>
   request(() => {
     const goal = openGoal(goalId);
-    if (pointsOf(goal) < goal.targetPoints) throw new Error('This goal has not been reached yet');
+    if (!isReached(goal)) throw new Error('This goal has not been reached yet');
     goal.claimedAt = new Date().toISOString();
   });
 
@@ -111,10 +142,15 @@ export const fakeGoalsBackend = {
   reset() {
     goals.length = 0;
   },
-  /** Stores a goal as if `userId` had set it: a family goal, or their own. */
+  /** Stores a goal as if `userId` had set it: a family goal (optionally with a minimum), or their own. */
   addGoalAs(
     userId: string,
-    goal: { title: string; targetPoints: number; isShared: boolean },
+    goal: {
+      title: string;
+      targetPoints: number;
+      isShared: boolean;
+      minPointsPerMember?: number | null;
+    },
   ): void {
     const householdId = fakeHouseholdBackend.householdIdOf(userId);
     if (!householdId) throw new Error(`${userId} is not in a household`);
@@ -124,6 +160,7 @@ export const fakeGoalsBackend = {
       title: goal.title,
       targetPoints: goal.targetPoints,
       ownerId: goal.isShared ? null : userId,
+      minPointsPerMember: goal.minPointsPerMember ?? null,
       createdAt: new Date().toISOString(),
       claimedAt: null,
     });
