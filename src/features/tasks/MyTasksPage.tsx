@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { formatShortDate } from '@/features/tasks/dueDate';
+import { formatShortDate } from '@/lib/dates';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import { type CompletedTask, isToDoBy, UNDO_WINDOW_MS } from '@/features/tasks/task';

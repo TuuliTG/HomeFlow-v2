@@ -1,4 +1,5 @@
-import { addDays, LAST_DAY_SHOWN_ONE_BY_ONE } from '@/features/tasks/dueDate';
+import { LAST_DAY_SHOWN_ONE_BY_ONE } from '@/features/tasks/dueDate';
+import { addDays } from '@/lib/dates';
 import type { Task } from '@/features/tasks/task';
 
 export const taskFilters = ['all', 'today', 'week', 'undated', 'available'] as const;

@@ -1,6 +1,7 @@
 import { useId } from 'react';
 
-import { type DueGroup, groupByDueDate, today } from '@/features/tasks/dueDate';
+import { type DueGroup, groupByDueDate } from '@/features/tasks/dueDate';
+import { today } from '@/lib/dates';
 import type { Task } from '@/features/tasks/task';
 import { TaskCard } from '@/features/tasks/TaskCard';
 

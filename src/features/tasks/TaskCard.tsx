@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 
 import { paths } from '@/app/paths';
 
-import { describeDueDate, today } from '@/features/tasks/dueDate';
+import { describeDueDate } from '@/features/tasks/dueDate';
+import { today } from '@/lib/dates';
 import { isToDoBy, repeatLabel, type Task, taskTypeLabels } from '@/features/tasks/task';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
 import { useCompleteTask, usePickUpTask, usePutBackTask } from '@/features/tasks/useTasks';
