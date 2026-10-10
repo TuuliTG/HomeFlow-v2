@@ -183,7 +183,7 @@ test('family member can fix a task and then delete it', async ({ page }) => {
   await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
 });
 
-test('family member can show the tasks done in the household', async ({ page }) => {
+test('family member can show the tasks done in the household and star one', async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
   await page.getByRole('link', { name: 'Shared tasks' }).click();
@@ -200,4 +200,12 @@ test('family member can show the tasks done in the household', async ({ page }) 
   await expect(completed.getByText(/^Done by you/)).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations with completed tasks shown').toEqual([]);
+
+  const star = completed.getByRole('button', { name: 'Favourite: Vacuum' });
+  await star.click();
+  await expect(star).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('link', { name: 'New task' }).click();
+  await expect(
+    page.getByRole('region', { name: 'Favourites' }).getByRole('button', { name: /Vacuum/ }),
+  ).toBeVisible();
 });

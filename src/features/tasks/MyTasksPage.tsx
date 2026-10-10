@@ -6,6 +6,7 @@ import { formatShortDate } from '@/features/tasks/dueDate';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import { type CompletedTask, isToDoBy, UNDO_WINDOW_MS } from '@/features/tasks/task';
+import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import {
   useCompletedTasks,
   useTasks,
@@ -128,11 +129,15 @@ function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }
 
   return (
     <li className="flex flex-col gap-1 px-4 py-3 text-sm">
-      <div className="flex items-center justify-between gap-4">
-        <span className="font-medium text-slate-900">{task.title}</span>
-        <span className="flex shrink-0 items-center gap-3 text-slate-500">
-          Done {formatShortDate(new Date(task.completedAt))}
-          {task.points !== null && ` · ${String(task.points)} points`}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-0.5 break-words">
+          <span className="font-medium text-slate-900">{task.title}</span>
+          <span className="text-slate-500">
+            Done {formatShortDate(new Date(task.completedAt))}
+            {task.points !== null && ` · ${String(task.points)} points`}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
           {canUndo && (
             <button
               type="button"
@@ -141,12 +146,13 @@ function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }
               onClick={() => {
                 undo.mutate(task.id);
               }}
-              className="text-brand-900 font-semibold hover:underline disabled:opacity-60"
+              className="text-brand-900 flex min-h-11 items-center px-1 font-semibold hover:underline disabled:opacity-60"
             >
               Undo
             </button>
           )}
-        </span>
+          <TaskFavouriteStar title={task.title} currentUserId={userId} />
+        </div>
       </div>
       {undo.isError && (
         <p role="alert" className="text-xs text-red-700">

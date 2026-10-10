@@ -4,6 +4,7 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { formatShortDate } from '@/features/tasks/dueDate';
 import type { HouseholdCompletedTask } from '@/features/tasks/task';
+import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { useHouseholdCompletedTasks } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 
@@ -53,20 +54,23 @@ function CompletedTasksBody({
     <ul className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
       {completed.data.map((task) => (
         <li key={task.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-          <div className="flex flex-col gap-0.5">
+          <div className="flex min-w-0 flex-col gap-0.5 break-words">
             <span className="font-medium text-slate-900">{task.title}</span>
             <span className="text-slate-500">
               Done by {doneByLabel(task, userId)} · {formatShortDate(new Date(task.completedAt))}
               {task.points !== null && ` · ${String(task.points)} points`}
             </span>
           </div>
-          <Link
-            to={paths.addTaskAgain(task.title)}
-            aria-label={`Add ${task.title} again`}
-            className="text-brand-600 hover:text-brand-900 flex min-h-11 shrink-0 items-center font-semibold"
-          >
-            Add again
-          </Link>
+          <div className="flex shrink-0 items-center gap-1">
+            <Link
+              to={paths.addTaskAgain(task.title)}
+              aria-label={`Add ${task.title} again`}
+              className="text-brand-600 hover:text-brand-900 flex min-h-11 items-center font-semibold"
+            >
+              Add again
+            </Link>
+            <TaskFavouriteStar title={task.title} currentUserId={userId} />
+          </div>
         </li>
       ))}
     </ul>
