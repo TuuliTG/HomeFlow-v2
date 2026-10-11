@@ -23,6 +23,7 @@ export interface MemberContribution {
   userId: string;
   /** Null while the member has no profile, i.e. hasn't chosen a display name yet. */
   displayName: string | null;
+  isChild: boolean;
   /** Shared tasks they marked done in the period. */
   done: number;
   /** Points those tasks earned. */

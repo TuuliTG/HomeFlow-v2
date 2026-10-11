@@ -15,12 +15,13 @@ describe('statistics api', () => {
     getSupabaseClient.mockReturnValue(client);
   });
 
-  it("counts each member's tasks since the start of the period, physical and meta work apart", async () => {
+  it("counts each member's tasks since the start of the period, physical and meta work apart, and who is a child", async () => {
     client.rpc.mockResolvedValue({
       data: [
         {
           user_id: 'u1',
           display_name: 'Anna',
+          is_child: false,
           done: 2,
           points: 7,
           created: 3,
@@ -30,6 +31,7 @@ describe('statistics api', () => {
         {
           user_id: 'u2',
           display_name: null,
+          is_child: true,
           done: 1,
           points: 2,
           created: 0,
@@ -44,6 +46,7 @@ describe('statistics api', () => {
       {
         userId: 'u1',
         displayName: 'Anna',
+        isChild: false,
         done: 2,
         points: 7,
         physicalDone: 1,
@@ -55,6 +58,7 @@ describe('statistics api', () => {
       {
         userId: 'u2',
         displayName: null,
+        isChild: true,
         done: 1,
         points: 2,
         physicalDone: 1,

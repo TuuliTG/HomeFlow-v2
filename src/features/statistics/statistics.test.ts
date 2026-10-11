@@ -10,6 +10,7 @@ import {
 const anna: MemberContribution = {
   userId: 'anna',
   displayName: 'Anna',
+  isChild: false,
   done: 0,
   points: 0,
   physicalDone: 0,
