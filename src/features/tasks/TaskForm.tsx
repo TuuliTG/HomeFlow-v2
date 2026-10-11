@@ -3,6 +3,7 @@ import { type SyntheticEvent, useId, useRef, useState } from 'react';
 import { paths } from '@/app/paths';
 import { CancelLink } from '@/components/ui/CancelLink';
 import { inputClassName } from '@/components/ui/formStyles';
+import { CheckboxField } from '@/features/tasks/CheckboxField';
 import {
   DESCRIPTION_MAX_LENGTH,
   type NewTask,
@@ -11,7 +12,6 @@ import {
   type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
-import { PrivateTaskField } from '@/features/tasks/PrivateTaskField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
@@ -181,7 +181,15 @@ export function TaskForm({
 
       <TaskTypeField value={type} onChange={setType} />
 
-      {!initial && <PrivateTaskField checked={isPrivate} onChange={setIsPrivate} />}
+      {!initial && (
+        <CheckboxField
+          name="isPrivate"
+          label={t.taskForm.keepPrivate}
+          hint={t.taskForm.privateHint}
+          checked={isPrivate}
+          onChange={setIsPrivate}
+        />
+      )}
 
       {!isPrivate && (
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
