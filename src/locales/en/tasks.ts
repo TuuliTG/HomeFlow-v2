@@ -45,6 +45,7 @@ export const tasks = {
   },
   card: {
     private: 'Private',
+    forChildren: 'For children',
     addedBy: {
       you: 'Added by you',
       someone: 'Added by someone',

@@ -60,6 +60,11 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
        * tasks have no points and don't count in statistics.
        */
       isPrivate: z.boolean(),
+      /**
+       * Whether children in the household see it and can do it; adults see every task. A child's own
+       * tasks are always for children.
+       */
+      forChildren: z.boolean(),
     })
     .refine((task) => (task.points === null) === task.isPrivate, {
       path: ['points'],

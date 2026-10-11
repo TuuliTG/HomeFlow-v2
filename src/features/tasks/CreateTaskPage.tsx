@@ -8,6 +8,7 @@ import { TaskForm } from '@/features/tasks/TaskForm';
 import {
   useAddTask,
   useFavouriteTasks,
+  useIsChild,
   useSetFavouriteTask,
   useTaskSuggestions,
 } from '@/features/tasks/useTasks';
@@ -19,6 +20,7 @@ export function CreateTaskPage() {
   const addTask = useAddTask(user.id);
   const suggestions = useTaskSuggestions(user.id);
   const favourites = useFavouriteTasks(user.id);
+  const isChild = useIsChild(user.id);
   const setFavourite = useSetFavouriteTask(user.id);
   const navigate = useNavigate();
   const t = useMessages();
@@ -35,7 +37,7 @@ export function CreateTaskPage() {
         title={t.tasks.newTask}
         description={t.taskForm.create.description}
       />
-      {againTitle !== null && suggestions.isPending ? (
+      {(againTitle !== null && suggestions.isPending) || isChild.isPending ? (
         <LoadingMessage />
       ) : (
         <TaskForm
@@ -48,6 +50,7 @@ export function CreateTaskPage() {
               setFavourite.mutate({ title, isFavourite });
             },
           }}
+          isChild={isChild.data ?? false}
           submitLabel={t.taskForm.create.submit}
           isSaving={addTask.isPending}
           onSave={async (task) => {

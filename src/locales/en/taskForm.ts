@@ -29,6 +29,8 @@ export const taskForm = {
   type: 'Type',
   keepPrivate: 'Keep it private',
   privateHint: "Only you can see it. It isn't shared with your family and earns no points.",
+  forChildren: 'Children can do it',
+  forChildrenHint: 'Children in your household see only the tasks they can do.',
   points: 'Points',
   repeats: 'Repeats',
   doesNotRepeat: "Doesn't repeat",

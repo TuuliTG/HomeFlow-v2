@@ -23,7 +23,8 @@ async function joinHousehold(user: UserEvent, code: string) {
 async function memberNames() {
   const members = await screen.findByRole('region', { name: 'Members' });
   const items = await within(members).findAllByRole('listitem');
-  return items.map((item) => item.textContent);
+  // Each member's name, without the "Child" choice beside it.
+  return items.map((item) => item.firstElementChild?.textContent);
 }
 
 describe('household setup', () => {

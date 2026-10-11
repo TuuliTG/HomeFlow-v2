@@ -5,6 +5,7 @@ import {
   fetchHouseholdMembers,
   fetchOwnHousehold,
   joinHousehold,
+  setMemberIsChild,
 } from '@/features/household/api';
 
 const householdKey = (userId: string | undefined) => ['household', userId] as const;
@@ -17,10 +18,25 @@ export function useOwnHousehold(userId: string | undefined) {
   });
 }
 
+const membersKey = (householdId: string) => ['household-members', householdId] as const;
+
 export function useHouseholdMembers(householdId: string) {
   return useQuery({
-    queryKey: ['household-members', householdId],
+    queryKey: membersKey(householdId),
     queryFn: () => fetchHouseholdMembers(householdId),
+  });
+}
+
+/**
+ * Marks a member as a child or an adult. Tasks a new child gives back reach the board through its live
+ * updates.
+ */
+export function useSetMemberIsChild(householdId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ memberId, isChild }: { memberId: string; isChild: boolean }) =>
+      setMemberIsChild(memberId, isChild),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: membersKey(householdId) }),
   });
 }
 

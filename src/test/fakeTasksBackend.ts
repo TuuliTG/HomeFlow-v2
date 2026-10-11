@@ -36,17 +36,22 @@ let reminderRequestsFail = false;
 let completions = 0;
 export const listeners = new Set<Parameters<typeof tasksApi.subscribeToTaskChanges>[0]>();
 
-function ownHouseholdId(): string | null {
-  const user = fakeAuthBackend.currentUser();
-  return user ? fakeHouseholdBackend.householdIdOf(user.id) : null;
+/**
+ * Whether `userId` can see the task, like `private.can_see_task()`: in their household, shared or their own, and
+ * for children if they are a child.
+ */
+function canSee(userId: string, task: StoredTask): boolean {
+  return (
+    task.householdId === fakeHouseholdBackend.householdIdOf(userId) &&
+    (!task.isPrivate || task.createdBy === userId) &&
+    (task.forChildren || !fakeHouseholdBackend.isChild(userId))
+  );
 }
 
 /** Whether the logged-in user can see the task, like the select policy on `tasks`. */
 export function isVisible(task: StoredTask): boolean {
-  return (
-    task.householdId === ownHouseholdId() &&
-    (!task.isPrivate || task.createdBy === fakeAuthBackend.currentUser()?.id)
-  );
+  const user = fakeAuthBackend.currentUser();
+  return user !== null && canSee(user.id, task);
 }
 
 /** Delivers a change live to the logged-in user if they can see the task (like Realtime with RLS). */
@@ -76,11 +81,7 @@ function addDays(isoDate: string, days: number): string {
 
 export function openTaskOf(userId: string, taskId: string): StoredTask {
   const task = tasks.find(
-    (candidate) =>
-      candidate.id === taskId &&
-      !candidate.completed &&
-      candidate.householdId === fakeHouseholdBackend.householdIdOf(userId) &&
-      (!candidate.isPrivate || candidate.createdBy === userId),
+    (candidate) => candidate.id === taskId && !candidate.completed && canSee(userId, candidate),
   );
   if (!task) throw new Error(`No open task ${taskId} in ${userId}'s household`);
   return task;
@@ -103,7 +104,7 @@ function canSeeFavourite(userId: string, star: (typeof favourites)[number]): boo
         (task) =>
           task.householdId === star.householdId &&
           titleKey(task.title) === star.key &&
-          (!task.isPrivate || task.createdBy === userId),
+          canSee(userId, task),
       ))
   );
 }
@@ -140,6 +141,7 @@ export const fakeTasksBackend = {
         dueOn: null,
         description: null,
         isPrivate: false,
+        forChildren: false,
         ...task,
         id: `task:${String(tasks.length)}`,
         householdId,

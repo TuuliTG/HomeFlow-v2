@@ -3,7 +3,6 @@ import { type SyntheticEvent, useId, useRef, useState } from 'react';
 import { paths } from '@/app/paths';
 import { CancelLink } from '@/components/ui/CancelLink';
 import { inputClassName } from '@/components/ui/formStyles';
-import { CheckboxField } from '@/features/tasks/CheckboxField';
 import {
   DESCRIPTION_MAX_LENGTH,
   type NewTask,
@@ -13,6 +12,7 @@ import {
   type TaskType,
 } from '@/features/tasks/task';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
+import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
 import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -40,6 +40,8 @@ interface TaskFormProps {
   suggestions?: TaskSuggestion[];
   /** The household's favourite tasks, offered to add again; leave out when editing. */
   favourites?: FavouriteTasks;
+  /** A child's tasks are always for children, so they aren't asked. */
+  isChild: boolean;
   submitLabel: string;
   isSaving: boolean;
   /** Saves the task; a rejection shows "We couldn't save the task." */
@@ -57,6 +59,7 @@ function fieldValues(task: NewTask | undefined) {
       repeat: '',
       dueOn: '',
       isPrivate: false,
+      forChildren: false,
     };
   return {
     title: task.title,
@@ -66,6 +69,24 @@ function fieldValues(task: NewTask | undefined) {
     repeat: task.repeatEveryDays === null ? '' : String(task.repeatEveryDays),
     dueOn: task.dueOn ?? '',
     isPrivate: task.isPrivate,
+    forChildren: task.forChildren,
+  };
+}
+
+type FieldValues = ReturnType<typeof fieldValues>;
+
+/** The task the field values describe, for `newTaskSchema` to check. */
+function taskInput(values: FieldValues, isChild: boolean) {
+  return {
+    title: values.title,
+    type: values.type,
+    points: values.isPrivate ? null : values.points,
+    repeatEveryDays: values.repeat === '' ? null : Number(values.repeat),
+    dueOn: values.dueOn === '' ? null : values.dueOn,
+    description: values.description.trim() === '' ? null : values.description,
+    isPrivate: values.isPrivate,
+    // An adult's private task is theirs alone, so it isn't for children either.
+    forChildren: isChild || (!values.isPrivate && values.forChildren),
   };
 }
 
@@ -75,6 +96,7 @@ export function TaskForm({
   prefill,
   suggestions = [],
   favourites,
+  isChild,
   submitLabel,
   isSaving,
   onSave,
@@ -88,6 +110,7 @@ export function TaskForm({
   const [repeatEveryDays, setRepeatEveryDays] = useState(initialValues.repeat);
   const [dueOn, setDueOn] = useState(initialValues.dueOn);
   const [isPrivate, setIsPrivate] = useState(initialValues.isPrivate);
+  const [forChildren, setForChildren] = useState(initialValues.forChildren);
   const [error, setError] = useState<FormError | null>(null);
   const t = useMessages();
   const errorId = useId();
@@ -117,20 +140,16 @@ export function TaskForm({
     setRepeatEveryDays(values.repeat);
     setDueOn(values.dueOn);
     setIsPrivate(values.isPrivate);
+    setForChildren(values.forChildren);
     setError(null);
   }
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
-    const parsed = newTaskSchema(t).safeParse({
-      title,
-      type,
-      points: isPrivate ? null : points,
-      repeatEveryDays: repeatEveryDays === '' ? null : Number(repeatEveryDays),
-      dueOn: dueOn === '' ? null : dueOn,
-      description: description.trim() === '' ? null : description,
-      isPrivate,
-    });
+    const values = { title, description, type, points, repeat: repeatEveryDays, dueOn };
+    const parsed = newTaskSchema(t).safeParse(
+      taskInput({ ...values, isPrivate, forChildren }, isChild),
+    );
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
       const field = fieldOf(issue?.path[0]);
@@ -181,15 +200,14 @@ export function TaskForm({
 
       <TaskTypeField value={type} onChange={setType} />
 
-      {!initial && (
-        <CheckboxField
-          name="isPrivate"
-          label={t.taskForm.keepPrivate}
-          hint={t.taskForm.privateHint}
-          checked={isPrivate}
-          onChange={setIsPrivate}
-        />
-      )}
+      <TaskAudienceFields
+        canBePrivate={!initial}
+        isChild={isChild}
+        isPrivate={isPrivate}
+        onPrivateChange={setIsPrivate}
+        forChildren={forChildren}
+        onForChildrenChange={setForChildren}
+      />
 
       {!isPrivate && (
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">

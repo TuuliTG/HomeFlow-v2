@@ -28,6 +28,8 @@ export const taskForm: Messages['taskForm'] = {
   type: 'Tyyppi',
   keepPrivate: 'Pidä yksityisenä',
   privateHint: 'Vain sinä näet sen. Sitä ei jaeta perheesi kanssa, eikä siitä saa pisteitä.',
+  forChildren: 'Lapset voivat tehdä sen',
+  forChildrenHint: 'Kotitaloutesi lapset näkevät vain tehtävät, jotka he voivat tehdä.',
   points: 'Pisteet',
   repeats: 'Toistuu',
   doesNotRepeat: 'Ei toistu',

@@ -41,6 +41,7 @@ const newTask = {
   repeatEveryDays: null,
   dueOn: null,
   isPrivate: false,
+  forChildren: false,
 } as const;
 const row = {
   id: 't1',
@@ -53,6 +54,7 @@ const row = {
   due_on: null,
   picked_up_by: null,
   is_private: false,
+  for_children: false,
 };
 
 /** The tasks query's result: it is ordered twice (due date, then newest), then awaited. */
@@ -233,6 +235,7 @@ describe('tasks api', () => {
       description: 'Use the small nozzle.',
       repeatEveryDays: 7,
       dueOn: '2026-10-10',
+      forChildren: true,
     });
 
     expect(client.rpc).toHaveBeenCalledWith('update_task', {
@@ -243,6 +246,7 @@ describe('tasks api', () => {
       task_points: 3,
       task_due_on: '2026-10-10',
       task_repeat_every_days: 7,
+      task_for_children: true,
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
@@ -267,6 +271,15 @@ describe('tasks api', () => {
     const [task] = await api.fetchTasks();
 
     expect(task).toMatchObject({ isPrivate: true });
+  });
+
+  it('reads whether children can do a task', async () => {
+    respondWithTasks({ data: [{ ...row, for_children: true }], error: null });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const [task] = await api.fetchTasks();
+
+    expect(task).toMatchObject({ forChildren: true });
   });
 
   it('skips the name lookup when there are no tasks', async () => {
@@ -294,7 +307,13 @@ describe('tasks api', () => {
   it('adds a task, leaving household and creator to the database', async () => {
     query.insert.mockResolvedValue({ error: null });
 
-    await api.addTask({ ...newTask, repeatEveryDays: 7, dueOn: '2026-10-10', isPrivate: true });
+    await api.addTask({
+      ...newTask,
+      repeatEveryDays: 7,
+      dueOn: '2026-10-10',
+      isPrivate: true,
+      forChildren: true,
+    });
 
     expect(client.from).toHaveBeenCalledWith('tasks');
     expect(query.insert).toHaveBeenCalledWith({
@@ -305,6 +324,7 @@ describe('tasks api', () => {
       repeat_every_days: 7,
       due_on: '2026-10-10',
       is_private: true,
+      for_children: true,
     });
   });
 

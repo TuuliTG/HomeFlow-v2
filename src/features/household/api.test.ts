@@ -51,12 +51,18 @@ describe('household api', () => {
   });
 
   it('lists members in joining order with their display names', async () => {
-    query.order.mockResolvedValue({ data: [{ user_id: 'u2' }, { user_id: 'u1' }], error: null });
+    query.order.mockResolvedValue({
+      data: [
+        { user_id: 'u2', is_child: true },
+        { user_id: 'u1', is_child: false },
+      ],
+      error: null,
+    });
     query.in.mockResolvedValue({ data: [{ id: 'u1', display_name: 'Anna' }], error: null });
 
     await expect(api.fetchHouseholdMembers('h1')).resolves.toEqual([
-      { userId: 'u2', displayName: null },
-      { userId: 'u1', displayName: 'Anna' },
+      { userId: 'u2', displayName: null, isChild: true },
+      { userId: 'u1', displayName: 'Anna', isChild: false },
     ]);
     expect(query.eq).toHaveBeenCalledWith('household_id', 'h1');
     expect(query.order).toHaveBeenCalledWith('joined_at');
@@ -67,9 +73,21 @@ describe('household api', () => {
     query.order.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.fetchHouseholdMembers('h1')).rejects.toBe(failure);
 
-    query.order.mockResolvedValueOnce({ data: [{ user_id: 'u1' }], error: null });
+    query.order.mockResolvedValueOnce({ data: [{ user_id: 'u1', is_child: false }], error: null });
     query.in.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.fetchHouseholdMembers('h1')).rejects.toBe(failure);
+  });
+
+  it('marks a member as a child through the database function', async () => {
+    client.rpc.mockResolvedValueOnce({ data: null, error: null });
+    await api.setMemberIsChild('u2', true);
+    expect(client.rpc).toHaveBeenCalledWith('set_member_is_child', {
+      member_id: 'u2',
+      is_child: true,
+    });
+
+    client.rpc.mockResolvedValueOnce({ data: null, error: failure });
+    await expect(api.setMemberIsChild('u2', false)).rejects.toBe(failure);
   });
 
   it('creates a household through the database function', async () => {

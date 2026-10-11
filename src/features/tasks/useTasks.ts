@@ -15,6 +15,7 @@ import {
   updateTask,
 } from '@/features/tasks/api';
 import { fetchFavouriteTasks, setFavouriteTask } from '@/features/tasks/favouritesApi';
+import { fetchIsChild } from '@/features/tasks/membershipApi';
 import { clearTaskReminder, fetchReminders, setTaskReminder } from '@/features/tasks/remindersApi';
 import { type NewTask, titleKey } from '@/features/tasks/task';
 import { today } from '@/lib/dates';
@@ -38,6 +39,14 @@ export function useTaskSuggestions(userId: string) {
   return useQuery({
     queryKey: [...tasksKey(userId), 'suggestions'],
     queryFn: fetchTaskSuggestions,
+  });
+}
+
+/** Whether the user is a child in their household. Under `tasksKey`, so it refreshes with the board. */
+export function useIsChild(userId: string) {
+  return useQuery({
+    queryKey: [...tasksKey(userId), 'is-child'],
+    queryFn: () => fetchIsChild(userId),
   });
 }
 

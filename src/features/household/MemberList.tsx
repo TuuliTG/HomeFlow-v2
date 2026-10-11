@@ -1,5 +1,6 @@
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
-import { useHouseholdMembers } from '@/features/household/useHousehold';
+import type { HouseholdMember } from '@/features/household/household';
+import { useHouseholdMembers, useSetMemberIsChild } from '@/features/household/useHousehold';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface MemberListProps {
@@ -9,7 +10,11 @@ interface MemberListProps {
 
 export function MemberList({ householdId, currentUserId }: MemberListProps) {
   const members = useHouseholdMembers(householdId);
+  const setIsChild = useSetMemberIsChild(householdId);
   const t = useMessages();
+  const isAdult = members.data?.some(
+    (member) => member.userId === currentUserId && !member.isChild,
+  );
 
   return (
     <section aria-labelledby="members" className="flex flex-col gap-3">
@@ -24,16 +29,72 @@ export function MemberList({ householdId, currentUserId }: MemberListProps) {
       )}
       {members.data && (
         <ul className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
-          {members.data.map(({ userId, displayName }) => (
-            <li key={userId} className="px-4 py-3 text-slate-900">
-              {displayName ?? <span className="text-slate-500">{t.common.newMember}</span>}
-              {userId === currentUserId && (
-                <span className="text-slate-500">{t.household.members.you}</span>
-              )}
-            </li>
+          {members.data.map((member) => (
+            <MemberRow
+              key={member.userId}
+              member={member}
+              isYou={member.userId === currentUserId}
+              // An adult decides for the others, never for themselves, so the household keeps an adult.
+              onChildChange={
+                isAdult && member.userId !== currentUserId
+                  ? (isChild) => {
+                      setIsChild.mutate({ memberId: member.userId, isChild });
+                    }
+                  : undefined
+              }
+              isSaving={setIsChild.isPending}
+            />
           ))}
         </ul>
       )}
+      {setIsChild.isError && (
+        <p role="alert" className="text-sm text-red-700">
+          {t.household.members.setChildFailed}
+        </p>
+      )}
+      {members.data && <p className="text-sm text-slate-600">{t.household.members.childrenHint}</p>}
     </section>
+  );
+}
+
+interface MemberRowProps {
+  member: HouseholdMember;
+  isYou: boolean;
+  /** Lets the user mark the member as a child or an adult; left out when they can't. */
+  onChildChange: ((isChild: boolean) => void) | undefined;
+  isSaving: boolean;
+}
+
+function MemberRow({ member, isYou, onChildChange, isSaving }: MemberRowProps) {
+  const t = useMessages();
+  const name = member.displayName ?? t.common.newMember;
+  return (
+    <li className="flex items-center justify-between gap-3 px-4 py-3 text-slate-900">
+      <span>
+        {member.displayName ?? <span className="text-slate-500">{t.common.newMember}</span>}
+        {isYou && <span className="text-slate-500">{t.household.members.you}</span>}
+      </span>
+      {onChildChange ? (
+        <label className="flex shrink-0 items-center gap-2 text-sm font-medium text-slate-700">
+          <input
+            type="checkbox"
+            aria-label={t.household.members.isChild(name)}
+            checked={member.isChild}
+            disabled={isSaving}
+            onChange={(event) => {
+              onChildChange(event.target.checked);
+            }}
+            className="accent-brand-600 size-4"
+          />
+          {t.household.members.child}
+        </label>
+      ) : (
+        member.isChild && (
+          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+            {t.household.members.child}
+          </span>
+        )
+      )}
+    </li>
   );
 }

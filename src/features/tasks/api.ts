@@ -23,6 +23,7 @@ const taskRowsSchema = z.array(
     due_on: z.string().nullable(),
     picked_up_by: z.string().nullable(),
     is_private: z.boolean(),
+    for_children: z.boolean(),
   }),
 );
 const completedTaskRowsSchema = z.array(
@@ -63,7 +64,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -77,9 +78,18 @@ export async function fetchTasks(): Promise<Task[]> {
   ]);
   const nameOf = (userId: string | null) => (userId ? (names.get(userId) ?? null) : null);
   return rows.map(
-    ({ created_by, repeat_every_days, due_on, picked_up_by, is_private, ...task }) => ({
+    ({
+      created_by,
+      repeat_every_days,
+      due_on,
+      picked_up_by,
+      is_private,
+      for_children,
+      ...task
+    }) => ({
       ...task,
       isPrivate: is_private,
+      forChildren: for_children,
       repeatEveryDays: repeat_every_days,
       dueOn: due_on,
       createdBy: created_by,
@@ -157,6 +167,7 @@ const suggestionRowsSchema = z.array(
     points: z.number().nullable(),
     repeat_every_days: z.number().nullable(),
     is_private: z.boolean(),
+    for_children: z.boolean(),
     times_added: z.number(),
     is_open: z.boolean(),
   }),
@@ -171,10 +182,11 @@ export async function fetchTaskSuggestions(): Promise<TaskSuggestion[]> {
   if (result.error) throw result.error;
   return suggestionRowsSchema
     .parse(result.data)
-    .map(({ repeat_every_days, is_private, times_added, is_open, ...task }) => ({
+    .map(({ repeat_every_days, is_private, for_children, times_added, is_open, ...task }) => ({
       ...task,
       repeatEveryDays: repeat_every_days,
       isPrivate: is_private,
+      forChildren: for_children,
       timesAdded: times_added,
       isOpen: is_open,
     }));
@@ -185,11 +197,18 @@ export async function addTask({
   repeatEveryDays,
   dueOn,
   isPrivate,
+  forChildren,
   ...task
 }: NewTask): Promise<void> {
   const { error } = await getSupabaseClient()
     .from('tasks')
-    .insert({ ...task, repeat_every_days: repeatEveryDays, due_on: dueOn, is_private: isPrivate });
+    .insert({
+      ...task,
+      repeat_every_days: repeatEveryDays,
+      due_on: dueOn,
+      is_private: isPrivate,
+      for_children: forChildren,
+    });
   if (error) throw error;
 }
 
@@ -218,12 +237,12 @@ export async function putBackTask(taskId: string): Promise<void> {
 }
 
 /**
- * Replaces an open task's details. Any member of the household can edit a shared task; whether it is
- * private stays as it was when it was added.
+ * Replaces an open task's details. Any member of the household can edit a shared task they see; whether
+ * it is private stays as it was when it was added. Only adults can make a task adults-only.
  */
 export async function updateTask(
   taskId: string,
-  { title, description, type, points, dueOn, repeatEveryDays }: NewTask,
+  { title, description, type, points, dueOn, repeatEveryDays, forChildren }: NewTask,
 ): Promise<void> {
   const { error } = await getSupabaseClient().rpc('update_task', {
     task_id: taskId,
@@ -233,6 +252,7 @@ export async function updateTask(
     task_points: points,
     task_due_on: dueOn,
     task_repeat_every_days: repeatEveryDays,
+    task_for_children: forChildren,
   });
   if (error) throw error;
 }

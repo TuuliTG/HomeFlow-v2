@@ -40,5 +40,10 @@ export const household: Messages['household'] = {
     heading: 'Jäsenet',
     loadFailed: 'Jäseniä ei voitu ladata.',
     you: ' (sinä)',
+    child: 'Lapsi',
+    isChild: (name: string) => `${name} on lapsi`,
+    childrenHint:
+      'Lapset näkevät vain tehtävät, joihin on merkitty ”Lapset voivat tehdä sen”. Aikuiset päättävät, kuka on lapsi.',
+    setChildFailed: 'Muutosta ei voitu tallentaa. Yritä uudelleen.',
   },
 };
