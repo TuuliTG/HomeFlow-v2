@@ -1,6 +1,6 @@
 # 0007. Goals and rewards
 
-- **Updated:** 2026-10-11 (participants of shared goals)
+- **Updated:** 2026-10-11 (participants of shared goals; editing goals)
 
 ## Context
 
@@ -19,6 +19,11 @@ together, and members want small personal goals of their own; both must make cle
   claims it. Shared goals are added only by `add_shared_goal(title, target_points, participants)` (security
   definer), which checks the caller is an adult and every participant is in the household, and inserts the goal
   and its participants together; `goal_participants` has no insert grant. Adults delete any open goal.
+- **Adults edit open goals** with `update_goal(goal_id, title, target_points, owner_id, participants)` (security
+  definer): the reward, the points and who it is for, shared ↔ personal included, replacing a shared goal's
+  participants. It checks participants like `add_shared_goal()` (both use `private.check_goal_participants()`) and
+  locks the row, so a goal isn't claimed mid-change. `created_at` stays, so points earned since the goal was set
+  still count: lowering the target can make it reached at once. Claimed goals can't be edited.
 - **Minimum per participant**: each participant can have their own `min_points` (≥ 1; `add_shared_goal()` checks
   they add up to at most `target_points`), so one member can't reach it alone and a younger child can be asked for
   less. A goal is reached only when the total reaches the target _and_ every participant has earned their minimum
@@ -42,8 +47,7 @@ together, and members want small personal goals of their own; both must make cle
 
 ## Consequences
 
-- Goals can't be edited yet (delete and set a new one), so participants can't be changed either. A child can't
-  suggest a goal; they ask an adult.
+- A child can't suggest or change a goal; they ask an adult. Changing a goal keeps no history of what it was.
 
 ## Alternatives considered
 
