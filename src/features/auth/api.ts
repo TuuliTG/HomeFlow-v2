@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { LoginError, type LoginFailureReason } from '@/features/auth/loginError';
 import type { AuthUser } from '@/lib/auth';
-import { getSupabaseClient } from '@/lib/supabase';
+import { functionErrorStatus, getSupabaseClient } from '@/lib/supabase';
 
 export interface Profile {
   displayName: string;
@@ -43,6 +43,26 @@ export async function createAccount(email: string, password: string): Promise<vo
       'Supabase asks new users to confirm their email',
     );
   }
+}
+
+const childSignInSchema = z.object({ tokenHash: z.string() });
+
+/**
+ * Signs a child without email in with the one-time code an adult gave them (`child-sign-in` Edge
+ * Function, ADR 0003). The function answers with a token like a magic link's, which logs in here.
+ */
+export async function signInWithChildCode(code: string): Promise<void> {
+  const client = getSupabaseClient();
+  const result = await client.functions.invoke<unknown>('child-sign-in', { body: { code } });
+  // functions-js types its error as any; it is a FunctionsError.
+  const error = result.error as Error | null;
+  if (functionErrorStatus(error) === 401) {
+    throw new LoginError('unknown-child-code', 'Unknown, used or expired code');
+  }
+  if (error) throw error;
+  const { tokenHash } = childSignInSchema.parse(result.data);
+  const verified = await client.auth.verifyOtp({ token_hash: tokenHash, type: 'email' });
+  if (verified.error) throw toLoginError(verified.error);
 }
 
 /** Logs out on this device only. */

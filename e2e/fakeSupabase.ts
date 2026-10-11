@@ -18,6 +18,8 @@ export const EXISTING_HOUSEHOLD = {
 };
 /** The code a household created in a test gets. */
 export const NEW_INVITE_CODE = 'ABCD2345';
+/** The sign-in code every child without email gets here. */
+export const CHILD_SIGN_IN_CODE = 'KX7P29QF';
 
 interface HouseholdRow {
   id: string;
@@ -159,6 +161,8 @@ export async function fakeSupabase(page: Page) {
 
   /** Members an adult has marked as children; the user is never one. */
   const children = new Set<string>();
+  /** Children added without email, who sign in with codes. */
+  const childAccounts = new Set<string>();
 
   /** The app asks for its household's members, or whether the user is a child. */
   async function membersEndpoint(route: Route) {
@@ -168,7 +172,11 @@ export async function fakeSupabase(page: Page) {
       route,
       userIds
         .filter((id) => wanted.length === 0 || wanted.includes(id))
-        .map((id) => ({ user_id: id, is_child: children.has(id) })),
+        .map((id) => ({
+          user_id: id,
+          is_child: children.has(id),
+          signs_in_with_code: childAccounts.has(id),
+        })),
     );
   }
 
@@ -646,6 +654,27 @@ export async function fakeSupabase(page: Page) {
     });
   }
 
+  /** Every code is the same here; the real one is random (`issue_child_sign_in_code()`). */
+  function signInCode() {
+    return {
+      code: CHILD_SIGN_IN_CODE,
+      expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
+    };
+  }
+
+  /** Like the add-child Edge Function. */
+  async function addChild(route: Route) {
+    if (!ownHousehold) return reply(route, 403, { error: 'not_an_adult' });
+    const { displayName } = route.request().postDataJSON() as { displayName: string };
+    const childId = `e2e-child-${String(childAccounts.size)}`;
+    profiles.set(childId, displayName);
+    members.set(ownHousehold.id, [...(members.get(ownHousehold.id) ?? []), childId]);
+    children.add(childId);
+    childAccounts.add(childId);
+    const { code, expires_at } = signInCode();
+    return reply(route, 200, { code, expiresAt: expires_at });
+  }
+
   const endpoints: Record<string, (route: Route) => Promise<void>> = {
     '/auth/v1/signup': (route) => logInWith(route),
     '/auth/v1/token': (route) => logInWith(route),
@@ -656,6 +685,12 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/create_household': createHousehold,
     '/rest/v1/rpc/join_household': joinHousehold,
     '/rest/v1/rpc/set_member_is_child': setMemberIsChild,
+    '/rest/v1/rpc/household_invite_code': (route) =>
+      reply(route, 200, ownHousehold?.invite_code ?? null),
+    '/rest/v1/rpc/new_child_sign_in_code': (route) => replyWithRows(route, [signInCode()]),
+    '/functions/v1/add-child': addChild,
+    // The fake has one user, Anna, so no code signs anyone in.
+    '/functions/v1/child-sign-in': (route) => reply(route, 401, { error: 'unknown_code' }),
     '/rest/v1/rpc/complete_task': completeTask,
     '/rest/v1/rpc/pick_up_task': setPickedUp(user.id),
     '/rest/v1/rpc/put_back_task': setPickedUp(null),

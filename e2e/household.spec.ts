@@ -29,6 +29,15 @@ test('new user can create a household and see its invite code', async ({ page })
   await expect(memberList(page)).toHaveText(['Anna (you)']);
   await expectNoA11yViolations(page, 'household');
 
+  await page.getByLabel("Child's name").fill('Ben');
+  await page.getByRole('button', { name: 'Add child' }).click();
+  const code = page.getByRole('region', { name: "Ben's sign-in code" });
+  await expect(code.getByText('KX7P-29QF')).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Ben is a child' })).toBeChecked();
+  await page.getByRole('button', { name: 'New sign-in code for Ben' }).click();
+  await expect(code).toBeVisible();
+  await expectNoA11yViolations(page, 'household with a child sign-in code');
+
   await page.getByRole('link', { name: 'Shared tasks' }).click();
   await expect(page.getByRole('heading', { name: 'Shared tasks' })).toBeVisible();
   await expect(page.getByText('Hello, Anna')).toBeVisible();

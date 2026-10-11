@@ -45,5 +45,22 @@ export const household: Messages['household'] = {
     childrenHint:
       'Lapset näkevät vain tehtävät, joihin on merkitty ”Lapset voivat tehdä sen”. Aikuiset päättävät, kuka on lapsi.',
     setChildFailed: 'Muutosta ei voitu tallentaa. Yritä uudelleen.',
+    newCode: 'Uusi kirjautumiskoodi',
+    newCodeFor: (name: string) => `Uusi kirjautumiskoodi: ${name}`,
+    newCodeFailed: 'Uutta koodia ei voitu tehdä. Yritä uudelleen.',
+  },
+  addChild: {
+    heading: 'Lisää lapsi ilman sähköpostia',
+    hint: 'Lapsi kirjautuu omalla laitteellaan kertakäyttöisellä koodilla, jonka annat hänelle.',
+    label: 'Lapsen nimi',
+    submit: 'Lisää lapsi',
+    nameRequired: 'Kirjoita lapsen nimi.',
+    failed: 'Lasta ei voitu lisätä. Yritä uudelleen.',
+  },
+  signInCode: {
+    heading: (name: string) => `Kirjautumiskoodi: ${name}`,
+    howTo: (name: string) =>
+      `Avaa HomeFlow laitteella, jota ${name} käyttää, valitse ”Minulla on lapsen koodi” ja kirjoita tämä koodi.`,
+    expires: (time: string) => `Koodi toimii kerran, kello ${time} asti.`,
   },
 };

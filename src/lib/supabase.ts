@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient, FunctionsHttpError, type SupabaseClient } from '@supabase/supabase-js';
 
 import { parseEnv } from '@/lib/env';
 
@@ -15,4 +15,9 @@ export function getSupabaseClient(): SupabaseClient {
     client = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   }
   return client;
+}
+
+/** The HTTP status an Edge Function answered with when `functions.invoke()` failed, or null if it didn't answer. */
+export function functionErrorStatus(error: unknown): number | null {
+  return error instanceof FunctionsHttpError ? (error.context as Response).status : null;
 }

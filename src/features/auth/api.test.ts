@@ -17,14 +17,20 @@ const supabase = vi.hoisted(() => {
         signUp: vi.fn(),
         signOut: vi.fn(),
         onAuthStateChange: vi.fn(),
+        verifyOtp: vi.fn(),
       },
       from: vi.fn(() => query),
+      functions: { invoke: vi.fn() },
     },
   };
 });
 
 const getSupabaseClient = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/supabase', () => ({ getSupabaseClient }));
+vi.mock('@/lib/supabase', () => ({
+  getSupabaseClient,
+  // Tests describe an Edge Function's answer as an error with its status.
+  functionErrorStatus: (error: { status?: number } | null) => error?.status ?? null,
+}));
 
 // setup.ts replaces the auth api with a fake for every test; this file tests the real one.
 const api = await vi.importActual<typeof authApi>('@/features/auth/api');
@@ -37,6 +43,39 @@ describe('auth api', () => {
     getSupabaseClient.mockReturnValue(supabase.client);
     query.select.mockReturnValue(query);
     query.eq.mockReturnValue(query);
+  });
+
+  it('signs a child in with their code, through the child-sign-in Edge Function', async () => {
+    supabase.client.functions.invoke.mockResolvedValueOnce({
+      data: { tokenHash: 'token-hash' },
+      error: null,
+    });
+    auth.verifyOtp.mockResolvedValueOnce({ error: null });
+
+    await api.signInWithChildCode('KX7P-29QF');
+
+    expect(supabase.client.functions.invoke).toHaveBeenCalledWith('child-sign-in', {
+      body: { code: 'KX7P-29QF' },
+    });
+    expect(auth.verifyOtp).toHaveBeenCalledWith({ token_hash: 'token-hash', type: 'email' });
+  });
+
+  it('explains an unknown child code and passes other failures on', async () => {
+    supabase.client.functions.invoke.mockResolvedValueOnce({ data: null, error: { status: 401 } });
+    await expect(api.signInWithChildCode('ABCD-EFGH')).rejects.toMatchObject({
+      reason: 'unknown-child-code',
+    });
+
+    const offline = { message: 'offline' };
+    supabase.client.functions.invoke.mockResolvedValueOnce({ data: null, error: offline });
+    await expect(api.signInWithChildCode('ABCD-EFGH')).rejects.toBe(offline);
+
+    supabase.client.functions.invoke.mockResolvedValueOnce({
+      data: { tokenHash: 'token-hash' },
+      error: null,
+    });
+    auth.verifyOtp.mockResolvedValueOnce({ error: { code: 'otp_expired', message: 'Expired' } });
+    await expect(api.signInWithChildCode('KX7P-29QF')).rejects.toMatchObject({ reason: 'other' });
   });
 
   it('logs in with email and password', async () => {

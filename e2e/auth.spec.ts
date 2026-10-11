@@ -25,3 +25,16 @@ test('user can create an account, stay logged in, log out and log back in', asyn
   await page.getByRole('button', { name: 'Log in' }).click();
   await expect(page.getByRole('heading', { name: 'Set up your household' })).toBeVisible();
 });
+
+test('a child is told when their sign-in code does not work', async ({ page }) => {
+  await fakeSupabase(page);
+  await page.goto('/login');
+
+  await page.getByRole('button', { name: 'I have a child code' }).click();
+  await page.getByLabel('Sign-in code').fill('abcd-efgh');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  await expect(page.getByRole('alert')).toHaveText(
+    "This code doesn't work. Ask an adult in your family for a new one.",
+  );
+});

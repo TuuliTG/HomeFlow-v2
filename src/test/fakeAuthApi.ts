@@ -16,6 +16,8 @@ let requestsFail = false;
 let loadingProfilesFails = false;
 const profiles = new Map<string, Profile>();
 const listeners = new Set<(user: AuthUser | null) => void>();
+/** One-time sign-in codes of children without email → the child. */
+const childCodes = new Map<string, AuthUser>();
 
 function userFor(email: string): AuthUser {
   return { id: `user:${email}`, email };
@@ -36,6 +38,12 @@ export const fakeAuthBackend = {
     loadingProfilesFails = false;
     profiles.clear();
     listeners.clear();
+    childCodes.clear();
+  },
+  /** Lets `code` sign in the child once (like `take_child_sign_in_code()`), replacing their earlier code. */
+  setChildCode(child: AuthUser, code: string) {
+    for (const [earlier, user] of childCodes) if (user.id === child.id) childCodes.delete(earlier);
+    childCodes.set(code, child);
   },
   /** Starts the next render already logged in, optionally with a saved profile. */
   logInAs(email: string, displayName?: string): AuthUser {
@@ -83,6 +91,18 @@ export const createAccount: typeof authApi.createAccount = (email, password) => 
   }
   passwords.set(email, password);
   setCurrentUser(userFor(email));
+  return Promise.resolve();
+};
+
+export const signInWithChildCode: typeof authApi.signInWithChildCode = (code) => {
+  if (requestsFail) return Promise.reject(new Error('Network error'));
+  const key = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  const child = childCodes.get(key);
+  if (!child) {
+    return Promise.reject(new LoginError('unknown-child-code', 'Unknown, used or expired code'));
+  }
+  childCodes.delete(key);
+  setCurrentUser(child);
   return Promise.resolve();
 };
 

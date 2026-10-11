@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Navigate } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ChildCodeForm } from '@/features/auth/ChildCodeForm';
 import { DisplayNameForm } from '@/features/auth/DisplayNameForm';
 import { PasswordForm } from '@/features/auth/PasswordForm';
 import { useOwnProfile } from '@/features/auth/useOwnProfile';
@@ -9,8 +11,8 @@ import { useAuth } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /**
- * Log in with email and password (or create an account). A first-time user then picks a display name;
- * anyone who already has one is sent on to the app.
+ * Log in with email and password (or create an account), or as a child with a sign-in code. A first-time
+ * user then picks a display name; anyone who already has one is sent on to the app.
  */
 export function LoginPage() {
   const { status, user } = useAuth();
@@ -23,8 +25,37 @@ export function LoginPage() {
         title={user ? t.auth.welcomeTitle : t.auth.logInTitle}
         description={user ? t.auth.welcomeDescription : t.auth.logInDescription}
       />
-      {status === 'ready' && (user ? <ProfileStep userId={user.id} /> : <PasswordForm />)}
+      {status === 'ready' && (user ? <ProfileStep userId={user.id} /> : <LoginForms />)}
     </main>
+  );
+}
+
+function LoginForms() {
+  const [withChildCode, setWithChildCode] = useState(false);
+  const t = useMessages();
+
+  if (withChildCode) {
+    return (
+      <ChildCodeForm
+        onBack={() => {
+          setWithChildCode(false);
+        }}
+      />
+    );
+  }
+  return (
+    <div className="flex flex-col gap-6">
+      <PasswordForm />
+      <button
+        type="button"
+        onClick={() => {
+          setWithChildCode(true);
+        }}
+        className="rounded-lg border border-slate-300 px-4 py-2.5 font-medium text-slate-700 hover:bg-slate-100"
+      >
+        {t.auth.childCode.open}
+      </button>
+    </div>
   );
 }
 

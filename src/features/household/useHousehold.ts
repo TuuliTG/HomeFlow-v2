@@ -4,7 +4,9 @@ import {
   createHousehold,
   fetchHouseholdMembers,
   fetchOwnHousehold,
+  addChild,
   joinHousehold,
+  newChildSignInCode,
   setMemberIsChild,
 } from '@/features/household/api';
 
@@ -63,4 +65,18 @@ export function useJoinHousehold(userId: string) {
       queryClient.setQueryData(householdKey(userId), household);
     },
   });
+}
+
+/** Adds a child without email to the household; resolves to their first sign-in code. */
+export function useAddChild(householdId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: addChild,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: membersKey(householdId) }),
+  });
+}
+
+/** Makes a new sign-in code for a child who signs in with codes. */
+export function useNewChildSignInCode() {
+  return useMutation({ mutationFn: newChildSignInCode });
 }
