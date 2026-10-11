@@ -1,6 +1,13 @@
-import type { NewTask, TaskType } from '@/features/tasks/task';
+import { DEFAULT_POINTS, type NewTask, type TaskType } from '@/features/tasks/task';
 
-const DEFAULT_POINTS = '3';
+/**
+ * A task's points as the field shows them. A shared task waiting for points starts empty, so an adult
+ * editing it chooses them rather than awarding the default by accident.
+ */
+function pointsValue(task: NewTask): string {
+  if (task.points !== null) return String(task.points);
+  return task.isPrivate ? String(DEFAULT_POINTS) : '';
+}
 
 /** The form's field values (strings, as inputs hold them) for a task, or for a new one. */
 export function fieldValues(task: NewTask | undefined) {
@@ -9,7 +16,7 @@ export function fieldValues(task: NewTask | undefined) {
       title: '',
       description: '',
       type: 'physical' as TaskType,
-      points: DEFAULT_POINTS,
+      points: String(DEFAULT_POINTS),
       repeat: '',
       dueOn: '',
       isPrivate: false,
@@ -19,7 +26,7 @@ export function fieldValues(task: NewTask | undefined) {
     title: task.title,
     description: task.description ?? '',
     type: task.type,
-    points: task.points === null ? DEFAULT_POINTS : String(task.points),
+    points: pointsValue(task),
     repeat: task.repeatEveryDays === null ? '' : String(task.repeatEveryDays),
     dueOn: task.dueOn ?? '',
     isPrivate: task.isPrivate,
@@ -34,7 +41,8 @@ export function taskInput(values: FieldValues, isChild: boolean) {
   return {
     title: values.title,
     type: values.type,
-    points: values.isPrivate ? null : values.points,
+    // A private task earns nothing; a child's shared task waits for an adult to award its points.
+    points: values.isPrivate || isChild ? null : values.points,
     repeatEveryDays: values.repeat === '' ? null : Number(values.repeat),
     dueOn: values.dueOn === '' ? null : values.dueOn,
     description: values.description.trim() === '' ? null : values.description,

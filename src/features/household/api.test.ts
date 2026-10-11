@@ -67,16 +67,28 @@ describe('household api', () => {
   it('lists members in joining order with their display names', async () => {
     query.order.mockResolvedValue({
       data: [
-        { user_id: 'u2', is_child: true, signs_in_with_code: true },
-        { user_id: 'u1', is_child: false, signs_in_with_code: false },
+        { user_id: 'u2', is_child: true, signs_in_with_code: true, can_add_tasks: false },
+        { user_id: 'u1', is_child: false, signs_in_with_code: false, can_add_tasks: false },
       ],
       error: null,
     });
     query.in.mockResolvedValue({ data: [{ id: 'u1', display_name: 'Anna' }], error: null });
 
     await expect(api.fetchHouseholdMembers('h1')).resolves.toEqual([
-      { userId: 'u2', displayName: null, isChild: true, signsInWithCode: true },
-      { userId: 'u1', displayName: 'Anna', isChild: false, signsInWithCode: false },
+      {
+        userId: 'u2',
+        displayName: null,
+        isChild: true,
+        signsInWithCode: true,
+        canAddTasks: false,
+      },
+      {
+        userId: 'u1',
+        displayName: 'Anna',
+        isChild: false,
+        signsInWithCode: false,
+        canAddTasks: true,
+      },
     ]);
     expect(query.eq).toHaveBeenCalledWith('household_id', 'h1');
     expect(query.order).toHaveBeenCalledWith('joined_at');
@@ -88,7 +100,7 @@ describe('household api', () => {
     await expect(api.fetchHouseholdMembers('h1')).rejects.toBe(failure);
 
     query.order.mockResolvedValueOnce({
-      data: [{ user_id: 'u1', is_child: false, signs_in_with_code: false }],
+      data: [{ user_id: 'u1', is_child: false, signs_in_with_code: false, can_add_tasks: false }],
       error: null,
     });
     query.in.mockResolvedValueOnce({ data: null, error: failure });

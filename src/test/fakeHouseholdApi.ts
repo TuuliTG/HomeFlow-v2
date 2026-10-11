@@ -14,6 +14,8 @@ const households: StoredHousehold[] = [];
 const memberships = new Map<string, string>();
 /** Members an adult has marked as children. */
 const children = new Set<string>();
+/** Children an adult lets add tasks. */
+const childrenAddingTasks = new Set<string>();
 /** Children an adult added without email, who sign in with codes. */
 const childAccounts = new Set<string>();
 let codesMade = 0;
@@ -49,6 +51,7 @@ export const fakeHouseholdBackend = {
     memberships.clear();
     children.clear();
     childAccounts.clear();
+    childrenAddingTasks.clear();
     codesMade = 0;
     requestsFail = false;
     loadingFails = false;
@@ -67,6 +70,13 @@ export const fakeHouseholdBackend = {
     else children.delete(userId);
   },
   isChild: (userId: string) => children.has(userId),
+  /** Lets a child add tasks or stops them, like `set_member_can_add_tasks()` without its checks. */
+  setCanAddTasks(userId: string, canAdd: boolean) {
+    if (canAdd) childrenAddingTasks.add(userId);
+    else childrenAddingTasks.delete(userId);
+  },
+  /** Adults always; children when an adult lets them. */
+  canAddTasks: (userId: string) => !children.has(userId) || childrenAddingTasks.has(userId),
   /** The household's members' user ids, in the order they joined. */
   memberIdsOf: (householdId: string) =>
     [...memberships].flatMap(([userId, memberOf]) => (memberOf === householdId ? [userId] : [])),
@@ -120,6 +130,20 @@ export const addChild: typeof householdApi.addChild = (displayName) => {
   return Promise.resolve(issueCode(child));
 };
 
+/** Like `set_member_can_add_tasks()`: an adult, for a child in their household. */
+export const setMemberCanAddTasks: typeof householdApi.setMemberCanAddTasks = (
+  memberId,
+  canAdd,
+) => {
+  const householdId = adultHouseholdId();
+  if (requestsFail || !householdId) return Promise.reject(new Error('Not allowed'));
+  if (!children.has(memberId) || memberships.get(memberId) !== householdId) {
+    return Promise.reject(new Error('No such child'));
+  }
+  fakeHouseholdBackend.setCanAddTasks(memberId, canAdd);
+  return Promise.resolve();
+};
+
 export const newChildSignInCode: typeof householdApi.newChildSignInCode = (childId) => {
   const householdId = adultHouseholdId();
   if (requestsFail || !householdId) return Promise.reject(new Error('Not allowed'));
@@ -142,6 +166,7 @@ export const fetchHouseholdMembers: typeof householdApi.fetchHouseholdMembers = 
         displayName: fakeAuthBackend.displayNameOf(userId),
         isChild: children.has(userId),
         signsInWithCode: childAccounts.has(userId),
+        canAddTasks: fakeHouseholdBackend.canAddTasks(userId),
       })),
   );
 

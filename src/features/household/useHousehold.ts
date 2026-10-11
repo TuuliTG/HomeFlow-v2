@@ -7,6 +7,7 @@ import {
   addChild,
   joinHousehold,
   newChildSignInCode,
+  setMemberCanAddTasks,
   setMemberIsChild,
 } from '@/features/household/api';
 
@@ -79,4 +80,14 @@ export function useAddChild(householdId: string) {
 /** Makes a new sign-in code for a child who signs in with codes. */
 export function useNewChildSignInCode() {
   return useMutation({ mutationFn: newChildSignInCode });
+}
+
+/** Lets a child add tasks, or stops them. */
+export function useSetMemberCanAddTasks(householdId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ memberId, canAddTasks }: { memberId: string; canAddTasks: boolean }) =>
+      setMemberCanAddTasks(memberId, canAddTasks),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: membersKey(householdId) }),
+  });
 }

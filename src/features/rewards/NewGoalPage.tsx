@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { CancelLink } from '@/components/ui/CancelLink';
+import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { inputClassName } from '@/components/ui/formStyles';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
@@ -10,10 +11,12 @@ import {
   GOAL_TITLE_MAX_LENGTH,
   type GoalScope,
   goalScopes,
+  type GoalSetter,
   MAX_TARGET_POINTS,
+  nameOf,
   newGoalSchema,
 } from '@/features/rewards/goal';
-import { useAddGoal } from '@/features/rewards/useGoals';
+import { useAddGoal, useGoalSetters } from '@/features/rewards/useGoals';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -31,15 +34,46 @@ function fieldOf(path: PropertyKey | undefined): FieldName {
   return path === 'targetPoints' || path === 'minPointsPerMember' ? path : 'title';
 }
 
+/** Only adults set goals, for the family or for one member (ADR 0007). */
 export function NewGoalPage() {
   const user = useLoggedInUser();
-  const addGoal = useAddGoal(user.id);
+  const setters = useGoalSetters(user.id);
+  const messages = useMessages();
+
+  return (
+    <>
+      <PageHeader
+        eyebrow={messages.rewards.eyebrow}
+        title={messages.rewards.newGoal}
+        description={messages.rewards.form.description}
+      />
+      {setters.isPending ? (
+        <LoadingMessage />
+      ) : setters.isError ? (
+        <p role="alert" className="text-sm text-red-700">
+          {messages.rewards.loadFailed}
+        </p>
+      ) : setters.isAdult ? (
+        <NewGoalForm userId={user.id} members={setters.data} />
+      ) : (
+        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+          {messages.rewards.form.onlyAdults}
+        </p>
+      )}
+    </>
+  );
+}
+
+function NewGoalForm({ userId, members }: { userId: string; members: GoalSetter[] }) {
+  const addGoal = useAddGoal(userId);
   const navigate = useNavigate();
   const messages = useMessages();
   const t = messages.rewards.form;
   const [title, setTitle] = useState('');
   const [targetPoints, setTargetPoints] = useState(DEFAULT_TARGET_POINTS);
   const [scope, setScope] = useState<GoalScope>('shared');
+  /** Whose personal goal it is; the user's own unless they pick another member. */
+  const [ownerId, setOwnerId] = useState(userId);
   /** Points each member must earn towards a family goal, or '' for no minimum. */
   const [minPointsPerMember, setMinPointsPerMember] = useState('');
   const [error, setError] = useState<FormError | null>(null);
@@ -65,6 +99,7 @@ export function NewGoalPage() {
       title,
       targetPoints,
       scope,
+      ownerId: scope === 'personal' ? ownerId : null,
       minPointsPerMember:
         scope === 'shared' && minPointsPerMember !== '' ? Number(minPointsPerMember) : null,
     });
@@ -85,11 +120,6 @@ export function NewGoalPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow={messages.rewards.eyebrow}
-        title={messages.rewards.newGoal}
-        description={t.description}
-      />
       <form
         onSubmit={handleSubmit}
         onChange={() => {
@@ -147,6 +177,10 @@ export function NewGoalPage() {
           <p className="text-sm text-slate-600">{t.scopeHints[scope]}</p>
         </div>
 
+        {scope === 'personal' && (
+          <GoalOwnerField members={members} userId={userId} value={ownerId} onChange={setOwnerId} />
+        )}
+
         {scope === 'shared' && (
           <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
             {t.minimum}
@@ -192,5 +226,37 @@ export function NewGoalPage() {
         </div>
       </form>
     </>
+  );
+}
+
+interface GoalOwnerFieldProps {
+  members: GoalSetter[];
+  userId: string;
+  value: string;
+  onChange: (ownerId: string) => void;
+}
+
+/** Whose personal goal it is: the user's own ("Me") or another member's, e.g. a child's. */
+function GoalOwnerField({ members, userId, value, onChange }: GoalOwnerFieldProps) {
+  const messages = useMessages();
+  const t = messages.rewards.form;
+  return (
+    <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+      {t.whose}
+      <select
+        name="ownerId"
+        value={value}
+        onChange={(event) => {
+          onChange(event.target.value);
+        }}
+        className={`${inputClassName} w-fit`}
+      >
+        {members.map((member) => (
+          <option key={member.id} value={member.id}>
+            {member.id === userId ? t.me : nameOf(member, messages)}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

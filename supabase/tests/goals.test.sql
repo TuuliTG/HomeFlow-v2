@@ -3,7 +3,7 @@
 -- before the goals were set don't count. (now() is the same all through the transaction.)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(26);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -66,19 +66,24 @@ select results_eq(
 );
 select throws_ok(
   $$ insert into public.goals (title, target_points, owner_id)
-     values ('Sweets', 2, '11111111-1111-1111-1111-111111111111') $$,
+     values ('Sweets', 2, '33333333-3333-3333-3333-333333333333') $$,
   '42501', null,
-  'nobody sets a personal goal for someone else'
+  'nobody sets a personal goal for someone outside their household'
+);
+select lives_ok(
+  $$ insert into public.goals (title, target_points, owner_id)
+     values ('Sweets', 2, '11111111-1111-1111-1111-111111111111') $$,
+  'an adult can set a personal goal for another member'
 );
 select throws_ok(
   format('select public.claim_goal_reward(%L)', current_setting('test.book')),
   'P0002', null,
   'other members cannot claim someone''s personal goal'
 );
-delete from public.goals where id = current_setting('test.book')::uuid;
+delete from public.goals where title = 'Sweets';
 select is(
-  (select count(*)::integer from public.goals where id = current_setting('test.book')::uuid),
-  1, 'other members cannot delete someone''s personal goal'
+  (select count(*)::integer from public.goals where title = 'Sweets'),
+  0, 'an adult can delete any open goal, also someone''s personal one'
 );
 select throws_ok(
   $$ insert into public.goals (title, target_points) values ('Holiday', 0) $$,

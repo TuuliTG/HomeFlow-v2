@@ -79,6 +79,15 @@ describe('suggestionAsTask', () => {
     });
   });
 
+  it("labels a private task, and a child's task waiting for points", () => {
+    expect(suggestionPointsLabel(suggestion('Diary', { points: null, isPrivate: true }), en)).toBe(
+      'Private',
+    );
+    expect(suggestionPointsLabel(suggestion('Tidy my room', { points: null }), en)).toBe(
+      'Waiting for points',
+    );
+  });
+
   it('keeps a private task private and without points', () => {
     expect(
       suggestionAsTask(suggestion('Buy a present', { points: null, isPrivate: true })),
@@ -93,7 +102,6 @@ describe('suggestionPointsLabel', () => {
   it.each([
     [1, '1 point'],
     [3, '3 points'],
-    [null, 'Private'],
   ])('labels %j points as %s', (points, label) => {
     expect(suggestionPointsLabel(suggestion('Dust', { points }), en)).toBe(label);
   });

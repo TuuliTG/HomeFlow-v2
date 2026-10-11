@@ -4,9 +4,9 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
-import type { Task } from '@/features/tasks/task';
+import { canChange, type Task } from '@/features/tasks/task';
 import { TaskForm } from '@/features/tasks/TaskForm';
-import { useDeleteTask, useIsChild, useTasks, useUpdateTask } from '@/features/tasks/useTasks';
+import { useDeleteTask, useMembership, useTasks, useUpdateTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -14,8 +14,11 @@ export function EditTaskPage() {
   const user = useLoggedInUser();
   const { taskId } = useParams();
   const tasks = useTasks(user.id);
-  const isChild = useIsChild(user.id);
-  const task = tasks.data?.find((candidate) => candidate.id === taskId);
+  const membership = useMembership(user.id);
+  const isChild = membership.data?.isChild ?? false;
+  const found = tasks.data?.find((candidate) => candidate.id === taskId);
+  // A child reaching an adult's task by its address sees it as unavailable, like the database.
+  const task = found && canChange(found, user.id, isChild) ? found : undefined;
   const t = useMessages();
 
   return (
@@ -25,9 +28,9 @@ export function EditTaskPage() {
         title={t.taskForm.edit.title}
         description={t.taskForm.edit.description}
       />
-      {task && !isChild.isPending ? (
-        <EditTask task={task} userId={user.id} isChild={isChild.data ?? false} />
-      ) : tasks.isPending || isChild.isPending ? (
+      {task && !membership.isPending ? (
+        <EditTask task={task} userId={user.id} isChild={isChild} />
+      ) : tasks.isPending || membership.isPending ? (
         <LoadingMessage />
       ) : (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">

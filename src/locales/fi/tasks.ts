@@ -42,9 +42,20 @@ export const tasks: Messages['tasks'] = {
     if (days % 7 === 0) return `${String(days / 7)} viikon välein`;
     return `${String(days)} päivän välein`;
   },
+  award: {
+    heading: 'Odottaa pisteitä',
+    hint: 'Lapset lisäsivät nämä tehtävät. Valitse, minkä arvoinen kukin oli; pisteet saa tehtävän tekijä.',
+    notDoneYet: 'Ei vielä tehty',
+    doneBy: (name: string) => `Teki: ${name}`,
+    pointsFor: (title: string) => `Pisteet tehtävästä ${title}`,
+    award: 'Anna pisteet',
+    awardLabel: (title: string) => `Anna pisteet: ${title}`,
+    failed: 'Pisteitä ei voitu antaa. Yritä uudelleen.',
+  },
   card: {
     private: 'Yksityinen',
     forChildren: 'Lapsille',
+    waitingForPoints: 'Odottaa pisteitä',
     addedBy: {
       you: 'Lisääjä: sinä',
       someone: 'Lisääjä: joku',

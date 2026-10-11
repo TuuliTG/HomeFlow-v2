@@ -20,7 +20,7 @@ export function NewsCard({ item, userId }: { item: NewsItem; userId: string }) {
           <span className="font-semibold">{item.title}</span>
         </p>
         <p className="text-slate-500">
-          {t.common.points(item.points)} ·{' '}
+          {item.points === null ? t.tasks.card.waitingForPoints : t.common.points(item.points)} ·{' '}
           <span className={item.type === 'meta' ? 'text-purple-700' : undefined}>
             {t.common.taskTypes[item.type]}
           </span>{' '}

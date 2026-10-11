@@ -3,6 +3,7 @@ export const taskForm = {
   create: {
     description: 'Adding a task is meta work, and it counts.',
     submit: 'Create task',
+    askAnAdult: 'Ask an adult in your family to let you add tasks.',
   },
   edit: {
     title: 'Edit task',
@@ -32,6 +33,7 @@ export const taskForm = {
   forChildren: 'Children can do it',
   forChildrenHint: 'Children in your household see only the tasks they can do.',
   points: 'Points',
+  adultAwardsPoints: 'An adult in your family chooses the points once you have done it.',
   repeats: 'Repeats',
   doesNotRepeat: "Doesn't repeat",
   dueDate: 'Due date',

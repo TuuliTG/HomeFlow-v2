@@ -83,7 +83,8 @@ describe('tasks for children', () => {
   });
 
   it("are every task a child adds, so they aren't asked", async () => {
-    logInAsChild();
+    const ben = logInAsChild();
+    fakeHouseholdBackend.setCanAddTasks(ben.id, true);
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
@@ -116,18 +117,27 @@ describe('tasks for children', () => {
     expect(within(task).queryByText('For children')).not.toBeInTheDocument();
   });
 
-  it('stay for children when a child edits one', async () => {
-    logInAsChild();
+  it('stay for children when a child edits one they added', async () => {
+    const ben = logInAsChild();
+    fakeHouseholdBackend.setCanAddTasks(ben.id, true);
+    fakeTasksBackend.addTaskAs(ben.id, {
+      title: 'Tidy my room',
+      type: 'physical',
+      points: null,
+      forChildren: true,
+    });
     const user = userEvent.setup();
     renderAppAt('/');
 
-    await user.click(await screen.findByRole('link', { name: 'Edit: Feed the cat' }));
+    await user.click(await screen.findByRole('link', { name: 'Edit: Tidy my room' }));
     const title = await screen.findByLabelText('Task');
     expect(screen.queryByRole('checkbox', { name: 'Children can do it' })).not.toBeInTheDocument();
-    await user.type(title, ' twice');
+    await user.type(title, ' and desk');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-    expect(await screen.findByRole('listitem', { name: 'Feed the cat twice' })).toBeInTheDocument();
-    expect(tasks[0]).toMatchObject({ forChildren: true });
+    expect(
+      await screen.findByRole('listitem', { name: 'Tidy my room and desk' }),
+    ).toBeInTheDocument();
+    expect(tasks.at(-1)).toMatchObject({ forChildren: true, points: null });
   });
 });

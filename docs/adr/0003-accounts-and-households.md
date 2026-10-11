@@ -23,6 +23,10 @@ little personal data as possible, and joining a family must be low effort withou
   member as a child or back with `set_member_is_child()` (security definer). Children can't change it, and nobody
   changes themselves, so a household always keeps an adult (the caller's row is locked, so two adults can't make
   each other children at once). Children see only tasks for children (ADR 0004).
+- **What children may do**: by default only the family's tasks for children. An adult can let a child add tasks
+  (`can_add_tasks`, ADR 0004), e.g. an older child who wants private tasks of their own. It is off for every child
+  at first, including children from before it existed, and kept if a child is made an adult and back. Only adults
+  add and delete goals (ADR 0007).
 - **Children without email**: an adult adds one by name on the household page. The `add-child` Edge Function
   creates their Supabase Auth user with an address that can't receive mail (`<uuid>@child.homeflow.invalid`) and
   no password, then `add_child()` (service role only) adds them as a child with `signs_in_with_code`. They sign in

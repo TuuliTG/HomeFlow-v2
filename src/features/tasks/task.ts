@@ -18,6 +18,11 @@ export function titleKey(title: string): string {
   return title.trim().toLowerCase();
 }
 
+/** The points a shared task can earn, and what a new one starts with. */
+export const MIN_POINTS = 1;
+export const MAX_POINTS = 10;
+export const DEFAULT_POINTS = 3;
+
 /** How many recently done tasks the board shows with "Show completed". */
 export const HOUSEHOLD_COMPLETED_LIMIT = 30;
 
@@ -44,12 +49,15 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
         .max(DESCRIPTION_MAX_LENGTH, errors.descriptionTooLong(DESCRIPTION_MAX_LENGTH))
         .nullable(),
       type: z.enum(taskTypes),
-      /** Null for a private task: only shared tasks earn points. */
+      /**
+       * Null for a private task, which earns none, and for a child's shared task until an adult awards
+       * its points.
+       */
       points: z.coerce
         .number()
         .int(errors.pointsRange)
-        .min(1, errors.pointsRange)
-        .max(10, errors.pointsRange)
+        .min(MIN_POINTS, errors.pointsRange)
+        .max(MAX_POINTS, errors.pointsRange)
         .nullable(),
       /** Days after it is done that the task comes back; null for a one-off task. */
       repeatEveryDays: z.number().int().min(1).max(365).nullable(),
@@ -66,7 +74,7 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
        */
       forChildren: z.boolean(),
     })
-    .refine((task) => (task.points === null) === task.isPrivate, {
+    .refine((task) => !task.isPrivate || task.points === null, {
       path: ['points'],
       message: errors.onlySharedHavePoints,
     });
@@ -91,6 +99,11 @@ export interface Task extends NewTask {
  */
 export function isToDoBy(task: Task, userId: string): boolean {
   return task.isPrivate || task.pickedUpBy === userId;
+}
+
+/** Whether the user may edit or delete the task: adults any, a child only one they added (`private.can_change_task()`). */
+export function canChange(task: Task, userId: string, isChild: boolean): boolean {
+  return !isChild || task.createdBy === userId;
 }
 
 /** A task the household has added before, to add again with the same details (`task_suggestions()`). */

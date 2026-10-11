@@ -180,6 +180,8 @@ export const fakeTasksBackend = {
         ...task,
         id: `task:${String(tasks.length)}`,
         dueOn: addDays(completedOn, task.repeatEveryDays),
+        // Like complete_task(): a child's task waits for points again.
+        points: fakeHouseholdBackend.isChild(task.createdBy) ? null : task.points,
         pickedUpBy: null,
         previousTaskId: task.id,
         createdAt: new Date().toISOString(),

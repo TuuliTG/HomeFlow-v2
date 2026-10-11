@@ -8,7 +8,7 @@ const newsRowsSchema = z.array(
     id: z.string(),
     title: z.string(),
     type: z.enum(workTypes),
-    points: z.number(),
+    points: z.number().nullable(),
     completed_at: z.string(),
     completed_by: z.string().nullable(),
     task_likes: z.array(z.object({ user_id: z.string() })),

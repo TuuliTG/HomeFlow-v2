@@ -39,7 +39,7 @@ const completedTaskRowsSchema = z.array(
 const COMPLETED_TASKS_LIMIT = 20;
 const profileRowsSchema = z.array(z.object({ id: z.string(), display_name: z.string() }));
 
-async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>> {
+export async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>> {
   if (userIds.length === 0) return new Map();
   const { data, error } = await getSupabaseClient()
     .from('profiles')
@@ -140,9 +140,12 @@ export async function fetchHouseholdCompletedTasks(): Promise<HouseholdCompleted
   }));
 }
 
-const pointsRowsSchema = z.array(z.object({ points: z.number() }));
+const pointsRowsSchema = z.array(z.object({ points: z.number().nullable() }));
 
-/** All the points `userId` has earned by marking shared tasks done; private tasks have none. */
+/**
+ * All the points `userId` has earned by marking shared tasks done; private tasks have none, and a child's
+ * task waiting for an adult to award its points has none yet.
+ */
 export async function fetchTotalPoints(userId: string): Promise<number> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
@@ -150,7 +153,7 @@ export async function fetchTotalPoints(userId: string): Promise<number> {
     .eq('completed_by', userId)
     .eq('is_private', false);
   if (error) throw error;
-  return pointsRowsSchema.parse(data).reduce((total, row) => total + row.points, 0);
+  return pointsRowsSchema.parse(data).reduce((total, row) => total + (row.points ?? 0), 0);
 }
 
 const suggestionRowsSchema = z.array(

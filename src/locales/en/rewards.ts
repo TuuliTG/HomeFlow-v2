@@ -11,12 +11,13 @@ export const rewards = {
   sections: {
     family: {
       heading: 'Family goals',
-      empty: 'No family goals yet. Set one everyone can work towards together, like a trip out.',
+      empty:
+        'No family goals yet. An adult can set one everyone works towards together, like a trip out.',
     },
     yours: {
       heading: 'Your goals',
       empty:
-        'Set a goal of your own, like a treat. Only your points count, and the family can cheer you on.',
+        'No goals of your own yet, like a treat. An adult sets them; only your points count, and the family can cheer you on.',
     },
     // Shown only when other members have goals.
     members: { heading: "Family members' goals", empty: null },
@@ -55,11 +56,14 @@ export const rewards = {
     rewardPlaceholder: 'e.g. Pizza night',
     pointsNeeded: 'Points needed',
     whoFor: "Who it's for",
-    scopes: { shared: 'The family', personal: 'Just me' },
+    scopes: { shared: 'The family', personal: 'One person' },
     scopeHints: {
       shared: "Everyone's points count towards it, and the whole family sees it.",
-      personal: 'Only your points count towards it. The family sees it too and can cheer you on.',
+      personal: 'Only their points count towards it. The family sees it too and can cheer them on.',
     },
+    whose: 'Whose goal',
+    me: 'Me',
+    onlyAdults: 'Only adults set goals. Ask an adult in your family for one.',
     minimum: 'Minimum points from each member (optional)',
     minimumHint:
       'The goal is reached only once everyone has earned at least this much, so nobody does it all alone.',

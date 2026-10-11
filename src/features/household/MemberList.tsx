@@ -1,10 +1,10 @@
-import { useState } from 'react';
-
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import type { HouseholdMember, SignInCode } from '@/features/household/household';
+import { SavingCheckbox } from '@/features/household/SavingCheckbox';
 import {
   useHouseholdMembers,
   useNewChildSignInCode,
+  useSetMemberCanAddTasks,
   useSetMemberIsChild,
 } from '@/features/household/useHousehold';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -16,24 +16,83 @@ interface MemberListProps {
   onSignInCode: (childName: string, signInCode: SignInCode) => void;
 }
 
+/** What the user can change about a member; each is left out when they can't. */
+interface MemberActions {
+  /** Marks the member as a child or an adult, settling once the members are reloaded. */
+  setIsChild?: (isChild: boolean) => Promise<void>;
+  /** Lets a child add tasks or stops them, settling once the members are reloaded. */
+  setCanAddTasks?: (canAddTasks: boolean) => Promise<void>;
+  /** Makes a new sign-in code for a child without email. */
+  newCode?: (childName: string) => void;
+}
+
+/**
+ * What an adult can change about each member, and how saving is going. An adult decides for the others,
+ * never for themselves, so the household keeps an adult. A failure shows as `failure`, so saves settle
+ * either way.
+ */
+function useMemberActions(
+  householdId: string,
+  currentUserId: string,
+  onSignInCode: MemberListProps['onSignInCode'],
+) {
+  const setIsChild = useSetMemberIsChild(householdId);
+  const setCanAddTasks = useSetMemberCanAddTasks(householdId);
+  const newCode = useNewChildSignInCode();
+  const t = useMessages().household.members;
+
+  function actionsFor(member: HouseholdMember, isAdult: boolean): MemberActions {
+    if (!isAdult || member.userId === currentUserId) return {};
+    const memberId = member.userId;
+    return {
+      setIsChild: (isChild) => setIsChild.mutateAsync({ memberId, isChild }).catch(() => undefined),
+      ...(member.isChild && {
+        setCanAddTasks: (canAdd: boolean) =>
+          setCanAddTasks.mutateAsync({ memberId, canAddTasks: canAdd }).catch(() => undefined),
+      }),
+      ...(member.signsInWithCode && {
+        newCode: (childName: string) => {
+          newCode.mutate(memberId, {
+            onSuccess: (signInCode) => {
+              onSignInCode(childName, signInCode);
+            },
+          });
+        },
+      }),
+    };
+  }
+
+  return {
+    actionsFor,
+    isSaving: setIsChild.isPending || setCanAddTasks.isPending,
+    isMakingCode: newCode.isPending,
+    failure:
+      (setIsChild.isError && t.setChildFailed) ||
+      (setCanAddTasks.isError && t.setCanAddTasksFailed) ||
+      (newCode.isError && t.newCodeFailed),
+  };
+}
+
 export function MemberList({ householdId, currentUserId, onSignInCode }: MemberListProps) {
   const members = useHouseholdMembers(householdId);
-  const setIsChild = useSetMemberIsChild(householdId);
-  const newCode = useNewChildSignInCode();
-  const t = useMessages();
-  const isAdult = members.data?.some(
-    (member) => member.userId === currentUserId && !member.isChild,
+  const { actionsFor, isSaving, isMakingCode, failure } = useMemberActions(
+    householdId,
+    currentUserId,
+    onSignInCode,
   );
+  const t = useMessages().household.members;
+  const isAdult =
+    members.data?.some((member) => member.userId === currentUserId && !member.isChild) ?? false;
 
   return (
     <section aria-labelledby="members" className="flex flex-col gap-3">
       <h2 id="members" className="font-semibold text-slate-900">
-        {t.household.members.heading}
+        {t.heading}
       </h2>
       {members.isPending && <LoadingMessage />}
       {members.isError && (
         <p role="alert" className="text-sm text-red-700">
-          {t.household.members.loadFailed}
+          {t.loadFailed}
         </p>
       )}
       {members.data && (
@@ -43,41 +102,19 @@ export function MemberList({ householdId, currentUserId, onSignInCode }: MemberL
               key={member.userId}
               member={member}
               isYou={member.userId === currentUserId}
-              // An adult decides for the others, never for themselves, so the household keeps an adult.
-              onChildChange={
-                isAdult && member.userId !== currentUserId
-                  ? (isChild) =>
-                      // A failure shows through isError below.
-                      setIsChild
-                        .mutateAsync({ memberId: member.userId, isChild })
-                        .catch(() => undefined)
-                  : undefined
-              }
-              isSaving={setIsChild.isPending}
-              isMakingCode={newCode.isPending}
-              onNewCode={
-                isAdult && member.signsInWithCode
-                  ? (childName) => {
-                      newCode.mutate(member.userId, {
-                        onSuccess: (signInCode) => {
-                          onSignInCode(childName, signInCode);
-                        },
-                      });
-                    }
-                  : undefined
-              }
+              actions={actionsFor(member, isAdult)}
+              isSaving={isSaving}
+              isMakingCode={isMakingCode}
             />
           ))}
         </ul>
       )}
-      {(setIsChild.isError || newCode.isError) && (
+      {failure && (
         <p role="alert" className="text-sm text-red-700">
-          {setIsChild.isError
-            ? t.household.members.setChildFailed
-            : t.household.members.newCodeFailed}
+          {failure}
         </p>
       )}
-      {members.data && <p className="text-sm text-slate-600">{t.household.members.childrenHint}</p>}
+      {members.data && <p className="text-sm text-slate-600">{t.childrenHint}</p>}
     </section>
   );
 }
@@ -85,75 +122,64 @@ export function MemberList({ householdId, currentUserId, onSignInCode }: MemberL
 interface MemberRowProps {
   member: HouseholdMember;
   isYou: boolean;
-  /**
-   * Lets the user mark the member as a child or an adult, settling once the members are reloaded; left
-   * out when they can't.
-   */
-  onChildChange: ((isChild: boolean) => Promise<void>) | undefined;
+  actions: MemberActions;
   isSaving: boolean;
-  /** Makes a new sign-in code for a child without email; left out for anyone else. */
-  onNewCode: ((childName: string) => void) | undefined;
   /** A code is being made, so another tap wouldn't replace it before it shows. */
   isMakingCode: boolean;
 }
 
-function MemberRow({
-  member,
-  isYou,
-  onChildChange,
-  isSaving,
-  onNewCode,
-  isMakingCode,
-}: MemberRowProps) {
-  const t = useMessages();
-  const name = member.displayName ?? t.common.newMember;
-  /** The choice being saved, shown straight away; null once the saved one has loaded. */
-  const [savingIsChild, setSavingIsChild] = useState<boolean | null>(null);
+function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRowProps) {
+  const { common, household } = useMessages();
+  const t = household.members;
+  const name = member.displayName ?? common.newMember;
+  const { newCode, setIsChild, setCanAddTasks } = actions;
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3 text-slate-900">
       <div className="flex flex-col items-start gap-1">
         <span>
-          {member.displayName ?? <span className="text-slate-500">{t.common.newMember}</span>}
-          {isYou && <span className="text-slate-500">{t.household.members.you}</span>}
+          {member.displayName ?? <span className="text-slate-500">{common.newMember}</span>}
+          {isYou && <span className="text-slate-500">{t.you}</span>}
         </span>
-        {onNewCode && (
+        {newCode && (
           <button
             type="button"
-            aria-label={t.household.members.newCodeFor(name)}
+            aria-label={t.newCodeFor(name)}
             disabled={isMakingCode}
             onClick={() => {
-              onNewCode(name);
+              newCode(name);
             }}
             className="text-brand-600 text-sm font-medium underline disabled:opacity-60"
           >
-            {t.household.members.newCode}
+            {t.newCode}
           </button>
         )}
       </div>
-      {onChildChange ? (
-        <label className="flex shrink-0 items-center gap-2 text-sm font-medium text-slate-700">
-          <input
-            type="checkbox"
-            aria-label={t.household.members.isChild(name)}
-            checked={savingIsChild ?? member.isChild}
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        {setIsChild ? (
+          <SavingCheckbox
+            label={t.child}
+            ariaLabel={t.isChild(name)}
+            checked={member.isChild}
             disabled={isSaving}
-            onChange={(event) => {
-              setSavingIsChild(event.target.checked);
-              void onChildChange(event.target.checked).finally(() => {
-                setSavingIsChild(null);
-              });
-            }}
-            className="accent-brand-600 size-4"
+            onChange={setIsChild}
           />
-          {t.household.members.child}
-        </label>
-      ) : (
-        member.isChild && (
-          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
-            {t.household.members.child}
-          </span>
-        )
-      )}
+        ) : (
+          member.isChild && (
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+              {t.child}
+            </span>
+          )
+        )}
+        {setCanAddTasks && (
+          <SavingCheckbox
+            label={t.canAddTasks}
+            ariaLabel={t.canAddTasksFor(name)}
+            checked={member.canAddTasks}
+            disabled={isSaving}
+            onChange={setCanAddTasks}
+          />
+        )}
+      </div>
     </li>
   );
 }

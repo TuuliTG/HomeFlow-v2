@@ -176,6 +176,7 @@ export async function fakeSupabase(page: Page) {
           user_id: id,
           is_child: children.has(id),
           signs_in_with_code: childAccounts.has(id),
+          can_add_tasks: false,
         })),
     );
   }
@@ -245,6 +246,17 @@ export async function fakeSupabase(page: Page) {
             task_likes: likes.filter((like) => like.task_id === task.id),
             task_comments: comments.filter((comment) => comment.task_id === task.id),
           })),
+      );
+    }
+    // Adults are asked to award the points of children's tasks waiting for them (`points=is.null`); everyone
+    // here is an adult, so none wait.
+    if (new URL(request.url()).searchParams.get('points') === 'is.null') {
+      return reply(
+        route,
+        200,
+        tasks.filter(
+          (task) => task.household_id === householdId && !task.is_private && task.points === null,
+        ),
       );
     }
     // "Show completed" asks for the household's done shared tasks (`completed_at=not.is.null`), newest first.

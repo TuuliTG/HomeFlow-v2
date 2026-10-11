@@ -18,6 +18,7 @@ vi.mock('@/features/tasks/api', () => import('@/test/fakeTasksApi'));
 vi.mock('@/features/tasks/favouritesApi', () => import('@/test/fakeFavouritesApi'));
 vi.mock('@/features/tasks/liveApi', () => import('@/test/fakeLiveApi'));
 vi.mock('@/features/tasks/membershipApi', () => import('@/test/fakeMembershipApi'));
+vi.mock('@/features/tasks/pointsApi', () => import('@/test/fakePointsApi'));
 vi.mock('@/features/tasks/remindersApi', () => import('@/test/fakeRemindersApi'));
 
 // jsdom has no matchMedia; behave like a browser tab where no media query matches.

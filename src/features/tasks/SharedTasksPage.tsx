@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
+import { PointsToAward } from '@/features/tasks/PointsToAward';
 import { useTasks } from '@/features/tasks/useTasks';
 import { today } from '@/lib/dates';
 import {
@@ -29,6 +30,7 @@ export function SharedTasksPage() {
         <PageHeader eyebrow={t.eyebrow} title={t.board.title} description={t.board.description} />
         <NewTaskLink />
       </div>
+      <PointsToAward />
       <div className="flex flex-col gap-3">
         <FilterChoice filter={filter} onChange={setFilter} />
         <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />

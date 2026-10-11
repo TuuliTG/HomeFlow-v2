@@ -5,7 +5,7 @@ import type { Messages } from '@/lib/i18n/i18n';
 export const GOAL_TITLE_MAX_LENGTH = 80;
 export const MAX_TARGET_POINTS = 10000;
 
-/** Who a goal is for: the whole family (everyone's points count) or just the user (only theirs do). */
+/** Who a goal is for: the whole family (everyone's points count) or one member (only theirs do). */
 export const goalScopes = ['shared', 'personal'] as const;
 
 export type GoalScope = (typeof goalScopes)[number];
@@ -30,6 +30,8 @@ export function newGoalSchema(t: Messages) {
         .min(1, targetPointsMessage)
         .max(MAX_TARGET_POINTS, targetPointsMessage),
       scope: z.enum(goalScopes),
+      /** Whose personal goal it is (an adult can set one for anyone in the family); null for a family goal. */
+      ownerId: z.string().nullable(),
       /**
        * For a family goal, the points each member must earn towards it before it is reached, so one
        * member can't reach it alone; null for none (and always for a personal goal).
@@ -84,8 +86,8 @@ export interface Goal {
   claimedAt: string | null;
 }
 
-/** Members claim and delete family goals and their own; someone else's personal goal is theirs. */
-export function isManagedBy(goal: Goal, userId: string): boolean {
+/** Members claim family goals and their own; someone else's personal goal is theirs to claim. */
+export function isClaimableBy(goal: Goal, userId: string): boolean {
   return goal.owner === null || goal.owner.id === userId;
 }
 
@@ -101,4 +103,9 @@ export function membersShortOfMinimum(goal: Goal): (GoalMember & { pointsNeeded:
   return goal.memberPoints.flatMap(({ points, ...member }) =>
     points < minimum ? [{ ...member, pointsNeeded: minimum - points }] : [],
   );
+}
+
+/** A member of the household for setting goals: only adults set them, also for a child (ADR 0007). */
+export interface GoalSetter extends GoalMember {
+  isChild: boolean;
 }

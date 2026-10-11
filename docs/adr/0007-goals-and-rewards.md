@@ -1,6 +1,6 @@
 # 0007. Goals and rewards
 
-- **Updated:** 2026-10-10
+- **Updated:** 2026-10-11
 
 ## Context
 
@@ -13,7 +13,10 @@ together, and members want small personal goals of their own; both must make cle
   `claimed_at`/`claimed_by`). **`owner_id` null is a family goal**: everyone's points count and the whole household
   sees it. Otherwise it is the owner's **personal goal**: only their points count, but **the whole household sees
   it** (with the owner's name), so the family can follow and celebrate someone working towards it. Only the owner
-  claims or deletes it, and nobody sets a personal goal for someone else (insert policy).
+  claims it.
+- **Only adults add and delete goals** (insert and delete policies, ADR 0003), so children's rewards are the
+  parents' call. An adult can set a personal goal for any member of the household, e.g. a child; the child still
+  claims it. Adults delete any open goal.
 - **Minimum per member**: a family goal can set `min_points_per_member` (1 to `target_points`, family goals only),
   so one member can't reach it alone. It is reached only when the total reaches the target _and_ every current
   member has earned the minimum (`private.goal_member_points()`, `private.goal_is_reached()`); members who left
@@ -27,15 +30,13 @@ together, and members want small personal goals of their own; both must make cle
   reset or argue about, and setting a new goal starts it from zero.
 - **Claiming**: `claim_goal_reward(goal_id)` (security definer) claims an open family goal or the user's own,
   once `goal_is_reached()`, and only once (row lock); any member can claim a family goal. Claimed goals stay as
-  history ("Rewards claimed") and can't be deleted; members delete open family goals and their own (delete
-  policy). Undoing a task after a claim doesn't unclaim it.
+  history ("Rewards claimed") and can't be deleted. Undoing a task after a claim doesn't unclaim it.
 - The Rewards screen refetches goals when it opens (TanStack Query default), so tasks done elsewhere show up; no
   live updates for goals.
 
 ## Consequences
 
-- Goals can't be edited yet (delete and set a new one); there are no goals for someone else, e.g. a parent for
-  a child.
+- Goals can't be edited yet (delete and set a new one). A child can't suggest a goal; they ask an adult.
 
 ## Alternatives considered
 
