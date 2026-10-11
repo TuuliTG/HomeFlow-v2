@@ -94,6 +94,11 @@ function TaskDetails({
             {t.tasks.card.private}
           </span>
         )}
+        {task.forChildren && !task.isPrivate && (
+          <span className={`${tagClassName} bg-emerald-100 text-emerald-800`}>
+            {t.tasks.card.forChildren}
+          </span>
+        )}
         {task.repeatEveryDays !== null && (
           <span className={`${tagClassName} bg-sky-100 text-sky-800`}>
             {t.tasks.repeat(task.repeatEveryDays)}

@@ -1,7 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 
-import { fetchTasks, subscribeToTaskChanges } from '@/features/tasks/api';
+import { fetchTasks } from '@/features/tasks/api';
+import { subscribeToTaskChanges } from '@/features/tasks/liveApi';
 import type { Task } from '@/features/tasks/task';
 import { tasksKey } from '@/features/tasks/useTasks';
 

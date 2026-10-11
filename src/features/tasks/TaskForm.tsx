@@ -11,13 +11,12 @@ import {
   type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
-import { PrivateTaskField } from '@/features/tasks/PrivateTaskField';
+import { fieldValues, taskInput } from '@/features/tasks/taskFormValues';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
+import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
 import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 import { useMessages } from '@/lib/i18n/i18n';
-
-const DEFAULT_POINTS = '3';
 
 type FieldName = 'title' | 'description' | 'points' | 'dueOn';
 
@@ -40,33 +39,12 @@ interface TaskFormProps {
   suggestions?: TaskSuggestion[];
   /** The household's favourite tasks, offered to add again; leave out when editing. */
   favourites?: FavouriteTasks;
+  /** A child's tasks are always for children, so they aren't asked. */
+  isChild: boolean;
   submitLabel: string;
   isSaving: boolean;
   /** Saves the task; a rejection shows "We couldn't save the task." */
   onSave: (task: NewTask) => Promise<void>;
-}
-
-/** The form's field values (strings, as inputs hold them) for a task, or for a new one. */
-function fieldValues(task: NewTask | undefined) {
-  if (!task)
-    return {
-      title: '',
-      description: '',
-      type: 'physical' as TaskType,
-      points: DEFAULT_POINTS,
-      repeat: '',
-      dueOn: '',
-      isPrivate: false,
-    };
-  return {
-    title: task.title,
-    description: task.description ?? '',
-    type: task.type,
-    points: task.points === null ? DEFAULT_POINTS : String(task.points),
-    repeat: task.repeatEveryDays === null ? '' : String(task.repeatEveryDays),
-    dueOn: task.dueOn ?? '',
-    isPrivate: task.isPrivate,
-  };
 }
 
 /** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
@@ -75,6 +53,7 @@ export function TaskForm({
   prefill,
   suggestions = [],
   favourites,
+  isChild,
   submitLabel,
   isSaving,
   onSave,
@@ -88,6 +67,7 @@ export function TaskForm({
   const [repeatEveryDays, setRepeatEveryDays] = useState(initialValues.repeat);
   const [dueOn, setDueOn] = useState(initialValues.dueOn);
   const [isPrivate, setIsPrivate] = useState(initialValues.isPrivate);
+  const [forChildren, setForChildren] = useState(initialValues.forChildren);
   const [error, setError] = useState<FormError | null>(null);
   const t = useMessages();
   const errorId = useId();
@@ -117,20 +97,16 @@ export function TaskForm({
     setRepeatEveryDays(values.repeat);
     setDueOn(values.dueOn);
     setIsPrivate(values.isPrivate);
+    setForChildren(values.forChildren);
     setError(null);
   }
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
-    const parsed = newTaskSchema(t).safeParse({
-      title,
-      type,
-      points: isPrivate ? null : points,
-      repeatEveryDays: repeatEveryDays === '' ? null : Number(repeatEveryDays),
-      dueOn: dueOn === '' ? null : dueOn,
-      description: description.trim() === '' ? null : description,
-      isPrivate,
-    });
+    const values = { title, description, type, points, repeat: repeatEveryDays, dueOn };
+    const parsed = newTaskSchema(t).safeParse(
+      taskInput({ ...values, isPrivate, forChildren }, isChild),
+    );
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
       const field = fieldOf(issue?.path[0]);
@@ -181,7 +157,14 @@ export function TaskForm({
 
       <TaskTypeField value={type} onChange={setType} />
 
-      {!initial && <PrivateTaskField checked={isPrivate} onChange={setIsPrivate} />}
+      <TaskAudienceFields
+        canBePrivate={!initial}
+        isChild={isChild}
+        isPrivate={isPrivate}
+        onPrivateChange={setIsPrivate}
+        forChildren={forChildren}
+        onForChildrenChange={setForChildren}
+      />
 
       {!isPrivate && (
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">

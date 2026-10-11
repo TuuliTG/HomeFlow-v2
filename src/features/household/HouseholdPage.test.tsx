@@ -74,6 +74,58 @@ describe('household page', () => {
     expect(await screen.findByText('New member (no name yet)')).toBeInTheDocument();
   });
 
+  it('lets an adult mark another member as a child, and back', async () => {
+    const user = userEvent.setup();
+    const { name } = logInWithHousehold();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, name);
+    renderAppAt('/household');
+
+    const benIsChild = await screen.findByRole('checkbox', { name: 'Ben is a child' });
+    expect(screen.queryByRole('checkbox', { name: 'Anna is a child' })).not.toBeInTheDocument();
+    await user.click(benIsChild);
+    await vi.waitFor(() => {
+      expect(fakeHouseholdBackend.isChild(ben.id)).toBe(true);
+    });
+    expect(benIsChild).toBeChecked();
+
+    await user.click(benIsChild);
+    await vi.waitFor(() => {
+      expect(benIsChild).not.toBeChecked();
+    });
+    expect(fakeHouseholdBackend.isChild(ben.id)).toBe(false);
+  });
+
+  it('shows a child who the children are, without letting them change it', async () => {
+    const anna = fakeAuthBackend.addProfile('anna@example.com', 'Anna');
+    fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
+    const ben = fakeAuthBackend.logInAs('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(ben.id, true);
+    renderAppAt('/household');
+
+    const members = await screen.findByRole('region', { name: 'Members' });
+    const [annaItem, benItem] = await within(members).findAllByRole('listitem');
+    expect(annaItem).toHaveTextContent(/^Anna$/);
+    expect(benItem).toHaveTextContent(/^Ben \(you\)Child$/);
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('says so when marking a child fails', async () => {
+    const user = userEvent.setup();
+    const { name } = logInWithHousehold();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, name);
+    renderAppAt('/household');
+
+    const benIsChild = await screen.findByRole('checkbox', { name: 'Ben is a child' });
+    fakeHouseholdBackend.failRequests();
+    await user.click(benIsChild);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't save that change.");
+    expect(benIsChild).not.toBeChecked();
+  });
+
   it('keeps the app usable when the household cannot be loaded', async () => {
     logInWithHousehold();
     fakeHouseholdBackend.failLoading();

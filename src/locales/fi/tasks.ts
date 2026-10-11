@@ -44,6 +44,7 @@ export const tasks: Messages['tasks'] = {
   },
   card: {
     private: 'Yksityinen',
+    forChildren: 'Lapsille',
     addedBy: {
       you: 'Lisääjä: sinä',
       someone: 'Lisääjä: joku',

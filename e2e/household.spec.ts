@@ -48,7 +48,10 @@ test('new user can join a household with its invite code', async ({ page }) => {
   await expect(
     page.getByRole('heading', { level: 1, name: EXISTING_HOUSEHOLD.name }),
   ).toBeVisible();
-  await expect(memberList(page)).toHaveText(['Ben', 'Anna (you)']);
+  // Ben's row also has the "Child" choice, which only an adult has for the other members.
+  await expect(memberList(page)).toHaveText([/^Ben/, 'Anna (you)']);
+  await page.getByRole('checkbox', { name: 'Ben is a child' }).check();
+  await expect(page.getByRole('checkbox', { name: 'Ben is a child' })).toBeChecked();
 
   await page.getByRole('link', { name: 'Shared tasks' }).click();
   const bensTask = page.getByRole('listitem', { name: EXISTING_HOUSEHOLD.task });

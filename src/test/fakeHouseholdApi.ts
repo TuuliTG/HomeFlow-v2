@@ -9,6 +9,8 @@ import { fakeAuthBackend } from '@/test/fakeAuthApi';
 const households: Household[] = [];
 /** User id → household id, in the order members joined. */
 const memberships = new Map<string, string>();
+/** Members an adult has marked as children. */
+const children = new Set<string>();
 let requestsFail = false;
 let loadingFails = false;
 
@@ -39,6 +41,7 @@ export const fakeHouseholdBackend = {
   reset() {
     households.length = 0;
     memberships.clear();
+    children.clear();
     requestsFail = false;
     loadingFails = false;
   },
@@ -50,6 +53,12 @@ export const fakeHouseholdBackend = {
     return household;
   },
   householdIdOf: (userId: string) => memberships.get(userId) ?? null,
+  /** Marks the member as a child or an adult, like `set_member_is_child()` without its checks. */
+  setChild(userId: string, isChild: boolean) {
+    if (isChild) children.add(userId);
+    else children.delete(userId);
+  },
+  isChild: (userId: string) => children.has(userId),
   /** The household's members' user ids, in the order they joined. */
   memberIdsOf: (householdId: string) =>
     [...memberships].flatMap(([userId, memberOf]) => (memberOf === householdId ? [userId] : [])),
@@ -77,8 +86,23 @@ export const fetchHouseholdMembers: typeof householdApi.fetchHouseholdMembers = 
         ([, memberOf]) =>
           memberOf === householdId && memberships.get(loggedInUserId()) === householdId,
       )
-      .map(([userId]) => ({ userId, displayName: fakeAuthBackend.displayNameOf(userId) })),
+      .map(([userId]) => ({
+        userId,
+        displayName: fakeAuthBackend.displayNameOf(userId),
+        isChild: children.has(userId),
+      })),
   );
+
+/** Like `set_member_is_child()`: only an adult, for another member of their household. */
+export const setMemberIsChild: typeof householdApi.setMemberIsChild = (memberId, isChild) => {
+  const userId = loggedInUserId();
+  if (requestsFail) return Promise.reject(new Error('Network error'));
+  if (children.has(userId) || memberId === userId) return Promise.reject(new Error('Not allowed'));
+  if (memberships.get(memberId) !== memberships.get(userId))
+    return Promise.reject(new Error('Not in your household'));
+  fakeHouseholdBackend.setChild(memberId, isChild);
+  return Promise.resolve();
+};
 
 export const createHousehold: typeof householdApi.createHousehold = (name) => {
   if (requestsFail) return Promise.reject(new Error('Network error'));

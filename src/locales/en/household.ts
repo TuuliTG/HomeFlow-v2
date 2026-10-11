@@ -39,5 +39,10 @@ export const household = {
     heading: 'Members',
     loadFailed: "We couldn't load the members.",
     you: ' (you)',
+    child: 'Child',
+    isChild: (name: string) => `${name} is a child`,
+    childrenHint:
+      'Children see only the tasks marked “Children can do it”. Adults decide who is a child.',
+    setChildFailed: "We couldn't save that change. Try again.",
   },
 };

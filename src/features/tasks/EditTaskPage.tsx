@@ -6,7 +6,7 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import type { Task } from '@/features/tasks/task';
 import { TaskForm } from '@/features/tasks/TaskForm';
-import { useDeleteTask, useTasks, useUpdateTask } from '@/features/tasks/useTasks';
+import { useDeleteTask, useIsChild, useTasks, useUpdateTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -14,6 +14,7 @@ export function EditTaskPage() {
   const user = useLoggedInUser();
   const { taskId } = useParams();
   const tasks = useTasks(user.id);
+  const isChild = useIsChild(user.id);
   const task = tasks.data?.find((candidate) => candidate.id === taskId);
   const t = useMessages();
 
@@ -24,9 +25,9 @@ export function EditTaskPage() {
         title={t.taskForm.edit.title}
         description={t.taskForm.edit.description}
       />
-      {task ? (
-        <EditTask task={task} userId={user.id} />
-      ) : tasks.isPending ? (
+      {task && !isChild.isPending ? (
+        <EditTask task={task} userId={user.id} isChild={isChild.data ?? false} />
+      ) : tasks.isPending || isChild.isPending ? (
         <LoadingMessage />
       ) : (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
@@ -40,7 +41,7 @@ export function EditTaskPage() {
   );
 }
 
-function EditTask({ task, userId }: { task: Task; userId: string }) {
+function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChild: boolean }) {
   const updateTask = useUpdateTask(userId);
   const navigate = useNavigate();
   const t = useMessages();
@@ -49,6 +50,7 @@ function EditTask({ task, userId }: { task: Task; userId: string }) {
     <div className="flex flex-col gap-8">
       <TaskForm
         initial={task}
+        isChild={isChild}
         submitLabel={t.taskForm.edit.submit}
         isSaving={updateTask.isPending}
         onSave={async (changed) => {
@@ -98,9 +100,12 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
           type="button"
           disabled={deleteTask.isPending}
           onClick={() => {
-            deleteTask.mutate(task.id, {
-              onSuccess: () => void navigate(paths.taskList(task.isPrivate)),
-            });
+            // Not mutate()'s onSuccess: the refetch after deleting removes the task, which unmounts
+            // this form before that callback would run. A failure shows through isError.
+            deleteTask.mutateAsync(task.id).then(
+              () => navigate(paths.taskList(task.isPrivate)),
+              () => undefined,
+            );
           }}
           className="rounded-lg bg-red-700 px-4 py-2.5 font-semibold text-white hover:bg-red-900 disabled:opacity-60"
         >

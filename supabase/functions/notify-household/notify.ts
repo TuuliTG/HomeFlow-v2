@@ -19,13 +19,20 @@ export interface TaskAdded {
   isRepeat: boolean;
   /** Seen only by whoever added it, so the family isn't told about it. */
   isPrivate: boolean;
+  /** Children see only tasks available for them, so they aren't told about the others. */
+  forChildren: boolean;
+}
+
+export interface HouseholdMember {
+  userId: string;
+  isChild: boolean;
 }
 
 export interface NotifyDependencies extends PushDependencies {
   /** The task, read from the database rather than trusted from the webhook payload. */
   taskById: (taskId: string) => Promise<TaskAdded | null>;
-  /** User ids of everyone in the household. */
-  membersOf: (householdId: string) => Promise<string[]>;
+  /** Everyone in the household. */
+  membersOf: (householdId: string) => Promise<HouseholdMember[]>;
   displayNameOf: (userId: string) => Promise<string | null>;
 }
 
@@ -49,9 +56,9 @@ function messageFor(creatorName: string | null, taskTitle: string): PushMessage 
 }
 
 /**
- * Notifies every household member except whoever added the task, and forgets dead devices. The next
- * occurrence of a repeating task isn't news and a private task isn't the family's, so neither
- * notifies anyone.
+ * Notifies every household member who can see the task except whoever added it, and forgets dead
+ * devices. The next occurrence of a repeating task isn't news and a private task isn't the family's,
+ * so neither notifies anyone; an adults-only task doesn't notify children.
  */
 export async function notifyHousehold(
   taskId: string,
@@ -60,7 +67,9 @@ export async function notifyHousehold(
   const task = await deps.taskById(taskId);
   if (!task || task.isRepeat || task.isPrivate) return nothingSent;
   const members = await deps.membersOf(task.householdId);
-  const recipients = members.filter((userId) => userId !== task.createdBy);
+  const recipients = members
+    .filter(({ userId, isChild }) => userId !== task.createdBy && (task.forChildren || !isChild))
+    .map(({ userId }) => userId);
   if (recipients.length === 0) return nothingSent;
 
   const creatorName = task.createdBy ? await deps.displayNameOf(task.createdBy) : null;

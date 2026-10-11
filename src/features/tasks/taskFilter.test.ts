@@ -16,6 +16,7 @@ function task(title: string, dueOn: string | null, pickedUpBy: string | null = n
     repeatEveryDays: null,
     dueOn,
     isPrivate: false,
+    forChildren: false,
     createdBy: 'anna',
     creatorName: 'Anna',
     pickedUpBy,

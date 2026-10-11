@@ -1,9 +1,9 @@
 import type * as tasksApi from '@/features/tasks/api';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
+import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import {
   deliver,
   fakeTasksBackend,
-  listeners,
   openTaskOf,
   isVisible,
   requestsFailing,
@@ -13,8 +13,8 @@ import {
 
 /**
  * In-memory stand-in for `@/features/tasks/api`, installed for every unit test in `setup.ts`.
- * Like the database, it shows the logged-in user only their own household's open tasks, and private
- * tasks only to whoever added them.
+ * Like the database, it shows the logged-in user only their own household's open tasks, private
+ * tasks only to whoever added them, and children only tasks for children.
  */
 
 /** Like `order by due_on asc nulls last`; a stable sort keeps newest first within a date. */
@@ -42,6 +42,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           repeatEveryDays,
           dueOn,
           isPrivate,
+          forChildren,
           createdBy,
           pickedUpBy,
         }) => ({
@@ -53,6 +54,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           repeatEveryDays,
           dueOn,
           isPrivate,
+          forChildren,
           createdBy,
           creatorName: fakeAuthBackend.displayNameOf(createdBy),
           pickedUpBy,
@@ -84,9 +86,9 @@ export const fetchTaskSuggestions: typeof tasksApi.fetchTaskSuggestions = () => 
   const suggestions = [...byTitle.values()].map((occurrences) => {
     const added = occurrences.filter((task) => task.previousTaskId === null);
     const newest = occurrences.reduce((a, b) => (b.createdAt >= a.createdAt ? b : a));
-    const { title, description, type, points, repeatEveryDays, isPrivate } = newest;
+    const { title, description, type, points, repeatEveryDays, isPrivate, forChildren } = newest;
     return {
-      suggestion: { title, description, type, points, repeatEveryDays, isPrivate },
+      suggestion: { title, description, type, points, repeatEveryDays, isPrivate, forChildren },
       timesAdded: added.length,
       isOpen: occurrences.some((task) => !task.completed),
       lastAddedAt:
@@ -108,12 +110,12 @@ export const fetchTaskSuggestions: typeof tasksApi.fetchTaskSuggestions = () => 
   );
 };
 
-export const addTask: typeof tasksApi.addTask = (task) => {
-  const user = fakeAuthBackend.currentUser();
-  if (requestsFailing() || !user) return Promise.reject(new Error('Network error'));
-  fakeTasksBackend.addTaskAs(user.id, task);
-  return Promise.resolve();
-};
+export const addTask: typeof tasksApi.addTask = (task) =>
+  asCurrentUser((userId) => {
+    if (!task.forChildren && fakeHouseholdBackend.isChild(userId))
+      throw new Error('A child adds only tasks for children');
+    fakeTasksBackend.addTaskAs(userId, task);
+  });
 
 export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) =>
   asCurrentUser((userId) => {
@@ -181,6 +183,8 @@ export const putBackTask: typeof tasksApi.putBackTask = (taskId) =>
 export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
   asCurrentUser((userId) => {
     const task = openTaskOf(userId, taskId);
+    if (!details.forChildren && fakeHouseholdBackend.isChild(userId))
+      throw new Error('Only adults can make a task adults-only');
     Object.assign(task, details);
     deliver(task, { kind: 'changed' });
   });
@@ -203,10 +207,3 @@ export const undoCompleteTask: typeof tasksApi.undoCompleteTask = (taskId) =>
     task.completed = null;
     deliver(task, { kind: 'changed' });
   });
-
-export const subscribeToTaskChanges: typeof tasksApi.subscribeToTaskChanges = (onChange) => {
-  listeners.add(onChange);
-  return () => {
-    listeners.delete(onChange);
-  };
-};

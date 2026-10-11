@@ -23,6 +23,7 @@ const taskRowsSchema = z.array(
     due_on: z.string().nullable(),
     picked_up_by: z.string().nullable(),
     is_private: z.boolean(),
+    for_children: z.boolean(),
   }),
 );
 const completedTaskRowsSchema = z.array(
@@ -36,12 +37,6 @@ const completedTaskRowsSchema = z.array(
 );
 /** How many of the user's completed tasks the Me screen shows. */
 const COMPLETED_TASKS_LIMIT = 20;
-const newTaskRowSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  created_by: z.string().nullable(),
-  previous_task_id: z.string().nullable(),
-});
 const profileRowsSchema = z.array(z.object({ id: z.string(), display_name: z.string() }));
 
 async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>> {
@@ -56,14 +51,14 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
 
 /**
  * The household's open tasks (not yet done): soonest due first, then those without a due date, each
- * newest first. Row Level Security limits them to the user's household, and private tasks to whoever
- * added them.
+ * newest first. Row Level Security limits them to the user's household, private tasks to whoever
+ * added them, and a child's to tasks for children.
  */
 export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -77,9 +72,18 @@ export async function fetchTasks(): Promise<Task[]> {
   ]);
   const nameOf = (userId: string | null) => (userId ? (names.get(userId) ?? null) : null);
   return rows.map(
-    ({ created_by, repeat_every_days, due_on, picked_up_by, is_private, ...task }) => ({
+    ({
+      created_by,
+      repeat_every_days,
+      due_on,
+      picked_up_by,
+      is_private,
+      for_children,
+      ...task
+    }) => ({
       ...task,
       isPrivate: is_private,
+      forChildren: for_children,
       repeatEveryDays: repeat_every_days,
       dueOn: due_on,
       createdBy: created_by,
@@ -157,6 +161,7 @@ const suggestionRowsSchema = z.array(
     points: z.number().nullable(),
     repeat_every_days: z.number().nullable(),
     is_private: z.boolean(),
+    for_children: z.boolean(),
     times_added: z.number(),
     is_open: z.boolean(),
   }),
@@ -171,10 +176,11 @@ export async function fetchTaskSuggestions(): Promise<TaskSuggestion[]> {
   if (result.error) throw result.error;
   return suggestionRowsSchema
     .parse(result.data)
-    .map(({ repeat_every_days, is_private, times_added, is_open, ...task }) => ({
+    .map(({ repeat_every_days, is_private, for_children, times_added, is_open, ...task }) => ({
       ...task,
       repeatEveryDays: repeat_every_days,
       isPrivate: is_private,
+      forChildren: for_children,
       timesAdded: times_added,
       isOpen: is_open,
     }));
@@ -185,11 +191,18 @@ export async function addTask({
   repeatEveryDays,
   dueOn,
   isPrivate,
+  forChildren,
   ...task
 }: NewTask): Promise<void> {
   const { error } = await getSupabaseClient()
     .from('tasks')
-    .insert({ ...task, repeat_every_days: repeatEveryDays, due_on: dueOn, is_private: isPrivate });
+    .insert({
+      ...task,
+      repeat_every_days: repeatEveryDays,
+      due_on: dueOn,
+      is_private: isPrivate,
+      for_children: forChildren,
+    });
   if (error) throw error;
 }
 
@@ -218,12 +231,12 @@ export async function putBackTask(taskId: string): Promise<void> {
 }
 
 /**
- * Replaces an open task's details. Any member of the household can edit a shared task; whether it is
- * private stays as it was when it was added.
+ * Replaces an open task's details. Any member of the household can edit a shared task they see; whether
+ * it is private stays as it was when it was added. Only adults can make a task adults-only.
  */
 export async function updateTask(
   taskId: string,
-  { title, description, type, points, dueOn, repeatEveryDays }: NewTask,
+  { title, description, type, points, dueOn, repeatEveryDays, forChildren }: NewTask,
 ): Promise<void> {
   const { error } = await getSupabaseClient().rpc('update_task', {
     task_id: taskId,
@@ -233,6 +246,7 @@ export async function updateTask(
     task_points: points,
     task_due_on: dueOn,
     task_repeat_every_days: repeatEveryDays,
+    task_for_children: forChildren,
   });
   if (error) throw error;
 }
@@ -247,57 +261,4 @@ export async function deleteTask(taskId: string): Promise<void> {
 export async function undoCompleteTask(taskId: string): Promise<void> {
   const { error } = await getSupabaseClient().rpc('undo_complete_task', { task_id: taskId });
   if (error) throw error;
-}
-
-/** A change to the household's tasks, as delivered live. */
-export type TaskChange =
-  | {
-      kind: 'added';
-      id: string;
-      title: string;
-      createdBy: string | null;
-      /** Added automatically as the next occurrence of a repeating task that was just done. */
-      isRepeat: boolean;
-    }
-  /** A task was changed or deleted. */
-  | { kind: 'changed' };
-
-/**
- * Calls `onChange` for each task added to, changed in or deleted from the household while subscribed
- * (Supabase Realtime, which applies Row Level Security per subscriber except to deletes). Returns an
- * unsubscribe function.
- */
-export function subscribeToTaskChanges(onChange: (change: TaskChange) => void): () => void {
-  const client = getSupabaseClient();
-  // A unique topic per subscription: a channel that is still leaving would otherwise be reused.
-  const channel = client
-    .channel(`household-tasks:${crypto.randomUUID()}`)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload) => {
-      const row = newTaskRowSchema.safeParse(payload.new);
-      if (row.success) {
-        onChange({
-          kind: 'added',
-          id: row.data.id,
-          title: row.data.title,
-          createdBy: row.data.created_by,
-          isRepeat: row.data.previous_task_id !== null,
-        });
-      }
-    })
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tasks' }, () => {
-      onChange({ kind: 'changed' });
-    })
-    // Realtime can't apply Row Level Security to deletes, so these come from every household and
-    // carry only the id. They only trigger a refetch, which RLS does scope.
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'tasks' }, () => {
-      onChange({ kind: 'changed' });
-    })
-    .subscribe((status, error) => {
-      if ((['CHANNEL_ERROR', 'TIMED_OUT'] as string[]).includes(status)) {
-        console.warn('Live task updates are unavailable', status, error);
-      }
-    });
-  return () => {
-    void client.removeChannel(channel);
-  };
 }

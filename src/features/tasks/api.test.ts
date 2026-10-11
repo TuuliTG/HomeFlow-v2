@@ -13,15 +13,11 @@ const supabase = vi.hoisted(() => {
     insert: vi.fn(),
     not: vi.fn(),
   };
-  const channel = { on: vi.fn(), subscribe: vi.fn() };
   return {
     query,
-    channel,
     client: {
       from: vi.fn(() => query),
       rpc: vi.fn(),
-      channel: vi.fn(() => channel),
-      removeChannel: vi.fn(),
     },
   };
 });
@@ -31,7 +27,7 @@ vi.mock('@/lib/supabase', () => ({ getSupabaseClient }));
 
 // setup.ts replaces the tasks api with a fake for every test; this file tests the real one.
 const api = await vi.importActual<typeof tasksApi>('@/features/tasks/api');
-const { client, query, channel } = supabase;
+const { client, query } = supabase;
 const failure = { message: 'boom' };
 const newTask = {
   title: 'Vacuum',
@@ -41,6 +37,7 @@ const newTask = {
   repeatEveryDays: null,
   dueOn: null,
   isPrivate: false,
+  forChildren: false,
 } as const;
 const row = {
   id: 't1',
@@ -53,6 +50,7 @@ const row = {
   due_on: null,
   picked_up_by: null,
   is_private: false,
+  for_children: false,
 };
 
 /** The tasks query's result: it is ordered twice (due date, then newest), then awaited. */
@@ -233,6 +231,7 @@ describe('tasks api', () => {
       description: 'Use the small nozzle.',
       repeatEveryDays: 7,
       dueOn: '2026-10-10',
+      forChildren: true,
     });
 
     expect(client.rpc).toHaveBeenCalledWith('update_task', {
@@ -243,6 +242,7 @@ describe('tasks api', () => {
       task_points: 3,
       task_due_on: '2026-10-10',
       task_repeat_every_days: 7,
+      task_for_children: true,
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
@@ -267,6 +267,15 @@ describe('tasks api', () => {
     const [task] = await api.fetchTasks();
 
     expect(task).toMatchObject({ isPrivate: true });
+  });
+
+  it('reads whether children can do a task', async () => {
+    respondWithTasks({ data: [{ ...row, for_children: true }], error: null });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const [task] = await api.fetchTasks();
+
+    expect(task).toMatchObject({ forChildren: true });
   });
 
   it('skips the name lookup when there are no tasks', async () => {
@@ -294,7 +303,13 @@ describe('tasks api', () => {
   it('adds a task, leaving household and creator to the database', async () => {
     query.insert.mockResolvedValue({ error: null });
 
-    await api.addTask({ ...newTask, repeatEveryDays: 7, dueOn: '2026-10-10', isPrivate: true });
+    await api.addTask({
+      ...newTask,
+      repeatEveryDays: 7,
+      dueOn: '2026-10-10',
+      isPrivate: true,
+      forChildren: true,
+    });
 
     expect(client.from).toHaveBeenCalledWith('tasks');
     expect(query.insert).toHaveBeenCalledWith({
@@ -305,6 +320,7 @@ describe('tasks api', () => {
       repeat_every_days: 7,
       due_on: '2026-10-10',
       is_private: true,
+      for_children: true,
     });
   });
 
@@ -329,58 +345,5 @@ describe('tasks api', () => {
     client.rpc.mockResolvedValue({ data: null, error: failure });
 
     await expect(api.completeTask('t1', '2026-10-08')).rejects.toBe(failure);
-  });
-
-  it('delivers task changes in the household live, until unsubscribed', () => {
-    channel.on.mockReturnValue(channel);
-    channel.subscribe.mockReturnValue(channel);
-    const onChange = vi.fn();
-
-    const unsubscribe = api.subscribeToTaskChanges(onChange);
-    const [[event, inserts, onInsert], [, updates, onUpdate], [, deletes, onDelete]] = channel.on
-      .mock.calls as [
-      [string, unknown, (payload: { new: unknown }) => void],
-      [string, unknown, () => void],
-      [string, unknown, () => void],
-    ];
-    const inserted = { ...row, household_id: 'h1', created_at: '2026-10-08T04:00:00Z' };
-    onInsert({ new: { ...inserted, previous_task_id: null } });
-    onInsert({ new: { ...inserted, id: 't2', previous_task_id: 't1' } });
-    onInsert({ new: { id: 't3' } });
-    onUpdate();
-    onDelete();
-    unsubscribe();
-
-    expect(client.channel).toHaveBeenCalledWith(expect.stringMatching(/^household-tasks:/));
-    expect(event).toBe('postgres_changes');
-    expect(inserts).toEqual({ event: 'INSERT', schema: 'public', table: 'tasks' });
-    expect(updates).toEqual({ event: 'UPDATE', schema: 'public', table: 'tasks' });
-    expect(deletes).toEqual({ event: 'DELETE', schema: 'public', table: 'tasks' });
-    expect(onChange.mock.calls).toEqual([
-      [{ kind: 'added', id: 't1', title: 'Vacuum', createdBy: 'u1', isRepeat: false }],
-      [{ kind: 'added', id: 't2', title: 'Vacuum', createdBy: 'u1', isRepeat: true }],
-      [{ kind: 'changed' }],
-      [{ kind: 'changed' }],
-    ]);
-    expect(client.removeChannel).toHaveBeenCalledWith(channel);
-  });
-
-  it('warns when live updates cannot connect', () => {
-    channel.on.mockReturnValue(channel);
-    channel.subscribe.mockReturnValue(channel);
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-
-    api.subscribeToTaskChanges(vi.fn());
-    const [[onStatus]] = channel.subscribe.mock.calls as [
-      [(status: string, error?: Error) => void],
-    ];
-    onStatus('SUBSCRIBED');
-    onStatus('CHANNEL_ERROR', new Error('boom'));
-
-    expect(warn).toHaveBeenCalledExactlyOnceWith(
-      'Live task updates are unavailable',
-      'CHANNEL_ERROR',
-      new Error('boom'),
-    );
   });
 });

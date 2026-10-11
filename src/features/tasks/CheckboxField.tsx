@@ -1,22 +1,23 @@
 import { useId } from 'react';
 
-import { useMessages } from '@/lib/i18n/i18n';
-
-interface PrivateTaskFieldProps {
+interface CheckboxFieldProps {
+  name: string;
+  label: string;
+  /** Explains what checking it means, below the check mark. */
+  hint: string;
   checked: boolean;
-  onChange: (isPrivate: boolean) => void;
+  onChange: (checked: boolean) => void;
 }
 
-/** The check mark that keeps a new task to its creator, without points, instead of sharing it with the family. */
-export function PrivateTaskField({ checked, onChange }: PrivateTaskFieldProps) {
+/** A check mark with its label and a hint, for a yes-or-no choice on the task form. */
+export function CheckboxField({ name, label, hint, checked, onChange }: CheckboxFieldProps) {
   const hintId = useId();
-  const t = useMessages();
   return (
     <div className="flex flex-col gap-1">
       <label className="flex items-center gap-2 text-sm font-medium text-slate-800">
         <input
           type="checkbox"
-          name="isPrivate"
+          name={name}
           aria-describedby={hintId}
           checked={checked}
           onChange={(event) => {
@@ -24,10 +25,10 @@ export function PrivateTaskField({ checked, onChange }: PrivateTaskFieldProps) {
           }}
           className="accent-brand-600 size-4"
         />
-        {t.taskForm.keepPrivate}
+        {label}
       </label>
       <p id={hintId} className="text-sm text-slate-600">
-        {t.taskForm.privateHint}
+        {hint}
       </p>
     </div>
   );

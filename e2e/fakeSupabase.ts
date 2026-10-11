@@ -37,6 +37,7 @@ interface TaskRow {
   due_on: string | null;
   picked_up_by: string | null;
   is_private: boolean;
+  for_children: boolean;
   created_at: string;
   completed_at: string | null;
   completed_by: string | null;
@@ -111,6 +112,7 @@ export async function fakeSupabase(page: Page) {
       due_on: null,
       picked_up_by: null,
       is_private: false,
+      for_children: false,
       created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
@@ -155,13 +157,34 @@ export async function fakeSupabase(page: Page) {
     return reply(route, 200, existing.id);
   }
 
+  /** Members an adult has marked as children; the user is never one. */
+  const children = new Set<string>();
+
+  /** The app asks for its household's members, or whether the user is a child. */
   async function membersEndpoint(route: Route) {
     const userIds = ownHousehold ? (members.get(ownHousehold.id) ?? []) : [];
-    return reply(
+    const wanted = filterIds(new URL(route.request().url()).searchParams.get('user_id'));
+    return replyWithRows(
       route,
-      200,
-      userIds.map((id) => ({ user_id: id })),
+      userIds
+        .filter((id) => wanted.length === 0 || wanted.includes(id))
+        .map((id) => ({ user_id: id, is_child: children.has(id) })),
     );
+  }
+
+  /** Like set_member_is_child(), for another member of the user's household. */
+  async function setMemberIsChild(route: Route) {
+    const { member_id, is_child } = route.request().postDataJSON() as {
+      member_id: string;
+      is_child: boolean;
+    };
+    const others = ownHousehold ? (members.get(ownHousehold.id) ?? []) : [];
+    if (member_id === user.id || !others.includes(member_id)) {
+      return reply(route, 400, { code: 'P0002', message: 'No other member with this id' });
+    }
+    if (is_child) children.add(member_id);
+    else children.delete(member_id);
+    return reply(route, 204);
   }
 
   async function tasksEndpoint(route: Route) {
@@ -170,7 +193,14 @@ export async function fakeSupabase(page: Page) {
       if (!ownHousehold) return reply(route, 400, { code: '23502', message: 'No household' });
       const task = request.postDataJSON() as Pick<
         TaskRow,
-        'title' | 'description' | 'type' | 'points' | 'repeat_every_days' | 'due_on' | 'is_private'
+        | 'title'
+        | 'description'
+        | 'type'
+        | 'points'
+        | 'repeat_every_days'
+        | 'due_on'
+        | 'is_private'
+        | 'for_children'
       >;
       tasks.unshift({
         ...task,
@@ -303,6 +333,7 @@ export async function fakeSupabase(page: Page) {
       task_points: number | null;
       task_due_on: string | null;
       task_repeat_every_days: number | null;
+      task_for_children: boolean;
     };
     const task = ownOpenTask(body.task_id);
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
@@ -313,6 +344,7 @@ export async function fakeSupabase(page: Page) {
       points: body.task_points,
       due_on: body.task_due_on,
       repeat_every_days: body.task_repeat_every_days,
+      for_children: body.task_for_children,
     });
     return reply(route, 204);
   }
@@ -473,6 +505,7 @@ export async function fakeSupabase(page: Page) {
         points: newest.points,
         repeat_every_days: newest.repeat_every_days,
         is_private: newest.is_private,
+        for_children: newest.for_children,
         times_added: occurrences.length,
         is_open: occurrences.some((task) => task.completed_at === null),
       };
@@ -622,6 +655,7 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/household_members': membersEndpoint,
     '/rest/v1/rpc/create_household': createHousehold,
     '/rest/v1/rpc/join_household': joinHousehold,
+    '/rest/v1/rpc/set_member_is_child': setMemberIsChild,
     '/rest/v1/rpc/complete_task': completeTask,
     '/rest/v1/rpc/pick_up_task': setPickedUp(user.id),
     '/rest/v1/rpc/put_back_task': setPickedUp(null),

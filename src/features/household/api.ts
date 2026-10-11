@@ -11,7 +11,7 @@ import { getSupabaseClient } from '@/lib/supabase';
 const NO_DATA_FOUND = 'P0002';
 
 const householdRowSchema = z.object({ id: z.string(), name: z.string(), invite_code: z.string() });
-const memberRowsSchema = z.array(z.object({ user_id: z.string() }));
+const memberRowsSchema = z.array(z.object({ user_id: z.string(), is_child: z.boolean() }));
 const profileRowsSchema = z.array(z.object({ id: z.string(), display_name: z.string() }));
 
 function toHousehold(row: unknown): Household {
@@ -34,18 +34,35 @@ export async function fetchHouseholdMembers(householdId: string): Promise<Househ
   const client = getSupabaseClient();
   const members = await client
     .from('household_members')
-    .select('user_id')
+    .select('user_id, is_child')
     .eq('household_id', householdId)
     .order('joined_at');
   if (members.error) throw members.error;
-  const userIds = memberRowsSchema.parse(members.data).map((row) => row.user_id);
+  const rows = memberRowsSchema.parse(members.data);
+  const userIds = rows.map((row) => row.user_id);
 
   const profiles = await client.from('profiles').select('id, display_name').in('id', userIds);
   if (profiles.error) throw profiles.error;
   const names = new Map(
     profileRowsSchema.parse(profiles.data).map((row) => [row.id, row.display_name]),
   );
-  return userIds.map((userId) => ({ userId, displayName: names.get(userId) ?? null }));
+  return rows.map(({ user_id, is_child }) => ({
+    userId: user_id,
+    displayName: names.get(user_id) ?? null,
+    isChild: is_child,
+  }));
+}
+
+/**
+ * Marks another member of the user's household as a child or an adult. Only adults can, and not for
+ * themselves; a new child gives back the adults-only tasks they picked up.
+ */
+export async function setMemberIsChild(memberId: string, isChild: boolean): Promise<void> {
+  const { error } = await getSupabaseClient().rpc('set_member_is_child', {
+    member_id: memberId,
+    is_child: isChild,
+  });
+  if (error) throw error;
 }
 
 /** Creates a household with the user as its first member. */
