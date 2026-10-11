@@ -49,6 +49,13 @@ export const household: Messages['household'] = {
     newCodeFor: (name: string) => `Uusi kirjautumiskoodi: ${name}`,
     newCodeFailed: 'Uutta koodia ei voitu tehdä. Yritä uudelleen.',
   },
+  family: {
+    heading: 'Perheesi',
+    adultHint:
+      'Kutsu perheenjäseniä, valitse kuka on lapsi tai lisää lapsi ilman sähköpostia, joka kirjautuu koodilla.',
+    childHint: 'Katso, keitä perheeseesi kuuluu.',
+    link: (name: string) => `Avaa ${name}`,
+  },
   addChild: {
     heading: 'Lisää lapsi ilman sähköpostia',
     hint: 'Lapsi kirjautuu omalla laitteellaan kertakäyttöisellä koodilla, jonka annat hänelle.',
@@ -60,7 +67,7 @@ export const household: Messages['household'] = {
   signInCode: {
     heading: (name: string) => `Kirjautumiskoodi: ${name}`,
     howTo: (name: string) =>
-      `Avaa HomeFlow laitteella, jota ${name} käyttää, valitse ”Minulla on lapsen koodi” ja kirjoita tämä koodi.`,
+      `Avaa HomeFlow laitteella, jota ${name} käyttää, valitse ”Kirjaudu lapsen koodilla” ja kirjoita tämä koodi.`,
     expires: (time: string) => `Koodi toimii kerran, kello ${time} asti.`,
   },
 };

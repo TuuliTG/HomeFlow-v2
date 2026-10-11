@@ -37,7 +37,8 @@ export const auth: Messages['auth'] = {
     other: 'Se ei onnistunut. Yritä hetken päästä uudelleen.',
   },
   childCode: {
-    open: 'Minulla on lapsen koodi',
+    open: 'Kirjaudu lapsen koodilla',
+    openHint: 'Ei sähköpostia? Perheesi aikuinen lisää sinut HomeFlow’hun ja antaa sinulle koodin.',
     heading: 'Kirjaudu lapsen koodilla',
     label: 'Kirjautumiskoodi',
     hint: 'Perheesi aikuinen voi tehdä sinulle koodin kotitaloussivulla.',

@@ -37,7 +37,8 @@ export const auth = {
     other: "That didn't work. Try again in a moment.",
   },
   childCode: {
-    open: 'I have a child code',
+    open: 'Sign in with a child code',
+    openHint: 'No email? An adult in your family adds you in HomeFlow and gives you a code.',
     heading: 'Sign in with a child code',
     label: 'Sign-in code',
     hint: 'An adult in your family can make one for you on the household page.',

@@ -30,7 +30,7 @@ test('a child is told when their sign-in code does not work', async ({ page }) =
   await fakeSupabase(page);
   await page.goto('/login');
 
-  await page.getByRole('button', { name: 'I have a child code' }).click();
+  await page.getByRole('button', { name: 'Sign in with a child code' }).click();
   await page.getByLabel('Sign-in code').fill('abcd-efgh');
   await page.getByRole('button', { name: 'Sign in' }).click();
 

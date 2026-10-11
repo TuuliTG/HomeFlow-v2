@@ -45,11 +45,12 @@ export function HouseholdPage() {
     <>
       <PageHeader eyebrow={t.eyebrow} title={name} />
       <div className="flex flex-col gap-6">
+        {/* The two ways to bring someone in: inviting them, or adding a child without email. */}
         {isAdult && <InviteCode code={inviteCode} />}
-        <MemberList householdId={id} currentUserId={user.id} onSignInCode={showCode} />
+        {isAdult && <AddChildForm householdId={id} onAdded={showCode} />}
         {/* Announced to screen readers when a code appears or changes. */}
         <div aria-live="polite">{shownCode && <SignInCodeCard {...shownCode} />}</div>
-        {isAdult && <AddChildForm householdId={id} onAdded={showCode} />}
+        <MemberList householdId={id} currentUserId={user.id} onSignInCode={showCode} />
       </div>
     </>
   );

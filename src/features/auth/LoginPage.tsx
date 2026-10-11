@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Navigate } from 'react-router';
 
 import { paths } from '@/app/paths';
@@ -32,6 +32,7 @@ export function LoginPage() {
 
 function LoginForms() {
   const [withChildCode, setWithChildCode] = useState(false);
+  const hintId = useId();
   const t = useMessages();
 
   if (withChildCode) {
@@ -46,15 +47,21 @@ function LoginForms() {
   return (
     <div className="flex flex-col gap-6">
       <PasswordForm />
-      <button
-        type="button"
-        onClick={() => {
-          setWithChildCode(true);
-        }}
-        className="rounded-lg border border-slate-300 px-4 py-2.5 font-medium text-slate-700 hover:bg-slate-100"
-      >
-        {t.auth.childCode.open}
-      </button>
+      <div className="flex flex-col gap-2 border-t border-slate-200 pt-6">
+        <button
+          type="button"
+          aria-describedby={hintId}
+          onClick={() => {
+            setWithChildCode(true);
+          }}
+          className="rounded-lg border border-slate-300 px-4 py-2.5 font-medium text-slate-700 hover:bg-slate-100"
+        >
+          {t.auth.childCode.open}
+        </button>
+        <p id={hintId} className="text-center text-sm text-slate-600">
+          {t.auth.childCode.openHint}
+        </p>
+      </div>
     </div>
   );
 }

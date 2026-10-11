@@ -48,6 +48,13 @@ export const household = {
     newCodeFor: (name: string) => `New sign-in code for ${name}`,
     newCodeFailed: "We couldn't make a new code. Try again.",
   },
+  family: {
+    heading: 'Your family',
+    adultHint:
+      'Invite family members, choose who is a child, or add a child without email who signs in with a code.',
+    childHint: "See who's in your family.",
+    link: (name: string) => `Open ${name}`,
+  },
   addChild: {
     heading: 'Add a child without email',
     hint: 'They sign in on their own device with a one-time code you give them.',
@@ -59,7 +66,7 @@ export const household = {
   signInCode: {
     heading: (name: string) => `${name}'s sign-in code`,
     howTo: (name: string) =>
-      `On ${name}'s device, open HomeFlow, choose “I have a child code” and enter this code.`,
+      `On ${name}'s device, open HomeFlow, choose “Sign in with a child code” and enter this code.`,
     expires: (time: string) => `It works once, until ${time}.`,
   },
 };
