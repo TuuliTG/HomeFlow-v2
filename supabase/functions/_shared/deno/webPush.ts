@@ -1,19 +1,17 @@
-// Deno-only half of _shared/push.ts (ADR 0005): the Supabase service-role client and web-push, for the
+// Deno-only half of _shared/push.ts (ADR 0005): web-push, and the service-role client from supabaseAdmin.ts, for the
 // Edge Functions' index.ts files. Type-checked with `deno check`, like them.
-import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
 import webpush from 'npm:web-push@3.6.7';
 
 import type { DeviceSubscription, PushDependencies, PushMessage } from '../push.ts';
+import { supabase } from './supabaseAdmin.ts';
+
+export { supabase };
 
 /** Push services that don't answer within this time count as failed for that device. */
 const SEND_TIMEOUT_MS = 10_000;
 const ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
 const env = (name: string) => Deno.env.get(name) ?? '';
-
-// The service role bypasses Row Level Security: the functions read every member's devices. It is
-// injected by Supabase and never leaves the server.
-export const supabase = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'));
 
 async function subscriptionsOf(userIds: string[]): Promise<DeviceSubscription[]> {
   const { data, error } = await supabase
