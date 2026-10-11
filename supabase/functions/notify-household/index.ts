@@ -2,7 +2,12 @@
 // a push notification to the other household members' devices. The logic lives in notify.ts.
 import { isAuthorized } from '../_shared/push.ts';
 import { configureVapid, pushDependencies, supabase } from '../_shared/deno/webPush.ts';
-import { notifyHousehold, parseAddedTaskId, type TaskAdded } from './notify.ts';
+import {
+  type HouseholdMember,
+  notifyHousehold,
+  parseAddedTaskId,
+  type TaskAdded,
+} from './notify.ts';
 
 // Supabase's Edge Runtime keeps the function alive for promises handed to waitUntil.
 declare const EdgeRuntime: { waitUntil: (promise: Promise<unknown>) => void };
@@ -10,7 +15,7 @@ declare const EdgeRuntime: { waitUntil: (promise: Promise<unknown>) => void };
 async function taskById(taskId: string): Promise<TaskAdded | null> {
   const { data, error } = await supabase
     .from('tasks')
-    .select('household_id, title, created_by, previous_task_id, is_private')
+    .select('household_id, title, created_by, previous_task_id, is_private, for_children')
     .eq('id', taskId)
     .maybeSingle();
   if (error) throw error;
@@ -20,6 +25,7 @@ async function taskById(taskId: string): Promise<TaskAdded | null> {
     created_by: string | null;
     previous_task_id: string | null;
     is_private: boolean;
+    for_children: boolean;
   } | null;
   return row
     ? {
@@ -28,17 +34,21 @@ async function taskById(taskId: string): Promise<TaskAdded | null> {
         createdBy: row.created_by,
         isRepeat: row.previous_task_id !== null,
         isPrivate: row.is_private,
+        forChildren: row.for_children,
       }
     : null;
 }
 
-async function membersOf(householdId: string): Promise<string[]> {
+async function membersOf(householdId: string): Promise<HouseholdMember[]> {
   const { data, error } = await supabase
     .from('household_members')
-    .select('user_id')
+    .select('user_id, is_child')
     .eq('household_id', householdId);
   if (error) throw error;
-  return data.map((row: { user_id: string }) => row.user_id);
+  return data.map((row: { user_id: string; is_child: boolean }) => ({
+    userId: row.user_id,
+    isChild: row.is_child,
+  }));
 }
 
 async function displayNameOf(userId: string): Promise<string | null> {

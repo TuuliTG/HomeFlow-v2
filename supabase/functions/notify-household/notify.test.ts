@@ -11,7 +11,10 @@ const task = {
   createdBy: 'anna',
   isRepeat: false,
   isPrivate: false,
+  forChildren: false,
 };
+
+const adult = (userId: string) => ({ userId, isChild: false });
 
 function device(userId: string, endpoint = `https://push.example.com/${userId}`) {
   return { userId, endpoint, p256dh: 'key', auth: 'secret' };
@@ -28,7 +31,9 @@ function fakeDeps(overrides: Partial<NotifyDependencies> = {}) {
   };
   return {
     taskById: vi.fn((taskId: string) => Promise.resolve(taskId === 't1' ? task : null)),
-    membersOf: vi.fn(() => Promise.resolve(['anna', 'ben', 'carol'])),
+    membersOf: vi.fn(() =>
+      Promise.resolve([adult('anna'), adult('ben'), { userId: 'carol', isChild: true }]),
+    ),
     displayNameOf: vi.fn((userId: string) => Promise.resolve(userId === 'anna' ? 'Anna' : null)),
     subscriptionsOf: vi.fn((userIds: string[]) =>
       Promise.resolve(userIds.flatMap((userId) => subscriptions[userId] ?? [])),
@@ -40,12 +45,12 @@ function fakeDeps(overrides: Partial<NotifyDependencies> = {}) {
 }
 
 describe('notify household', () => {
-  it("tells every other member's devices who added which task", async () => {
+  it("tells every other adult's devices who added which task", async () => {
     const deps = fakeDeps();
 
     await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 2, removed: 0, failed: 0 });
 
-    expect(deps.subscriptionsOf).toHaveBeenCalledWith(['ben', 'carol']);
+    expect(deps.subscriptionsOf).toHaveBeenCalledWith(['ben']);
     expect(deps.send).toHaveBeenCalledTimes(2);
     expect(deps.send).toHaveBeenCalledWith(device('ben', 'https://push.example.com/ben-phone'), {
       title: 'HomeFlow',
@@ -94,8 +99,17 @@ describe('notify household', () => {
     expect(deps.membersOf).not.toHaveBeenCalled();
   });
 
+  it('tells children about tasks available for them', async () => {
+    const deps = fakeDeps();
+    vi.mocked(deps.taskById).mockResolvedValue({ ...task, forChildren: true });
+
+    await notifyHousehold('t1', deps);
+
+    expect(deps.subscriptionsOf).toHaveBeenCalledWith(['ben', 'carol']);
+  });
+
   it("doesn't notify anyone when the creator is alone in the household", async () => {
-    const deps = fakeDeps({ membersOf: () => Promise.resolve(['anna']) });
+    const deps = fakeDeps({ membersOf: () => Promise.resolve([adult('anna')]) });
 
     await expect(notifyHousehold('t1', deps)).resolves.toEqual({ sent: 0, removed: 0, failed: 0 });
     expect(deps.subscriptionsOf).not.toHaveBeenCalled();
