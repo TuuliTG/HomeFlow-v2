@@ -3,19 +3,14 @@ import { type SyntheticEvent, useState } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
 import { createAccount, logIn } from '@/features/auth/api';
-import { LoginError, type LoginFailureReason } from '@/features/auth/loginError';
+import { failureMessage, LoginError } from '@/features/auth/loginError';
 import { emailSchema, PASSWORD_MIN_LENGTH, passwordSchema } from '@/features/auth/validation';
-import { type Messages, useMessages } from '@/lib/i18n/i18n';
+import { useMessages } from '@/lib/i18n/i18n';
 
 const errorId = 'login-error';
 const hintId = 'password-hint';
 
 type Mode = 'log-in' | 'create-account';
-
-function failureMessage(reason: LoginFailureReason, t: Messages): string {
-  const message = t.auth.failures[reason];
-  return typeof message === 'string' ? message : message(PASSWORD_MIN_LENGTH);
-}
 
 /** Log in with email and password, or create an account (ADR 0003). */
 export function PasswordForm() {

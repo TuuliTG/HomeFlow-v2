@@ -32,7 +32,7 @@ select results_eq(
   'the creator is its first member'
 );
 select matches(
-  (select invite_code from public.households),
+  public.household_invite_code(),
   '^[A-HJ-NP-Z2-9]{8}$',
   'the household gets an 8-character invite code without look-alike characters'
 );

@@ -1,7 +1,8 @@
 export interface Household {
   id: string;
   name: string;
-  inviteCode: string;
+  /** For adults to share; null for a child (`household_invite_code()`). */
+  inviteCode: string | null;
 }
 
 export interface HouseholdMember {
@@ -10,6 +11,15 @@ export interface HouseholdMember {
   displayName: string | null;
   /** Children see only tasks for children; an adult in the household decides who is one. */
   isChild: boolean;
+  /** A child an adult added without email, who signs in with one-time codes the adults make. */
+  signsInWithCode: boolean;
+}
+
+/** A one-time code a child signs in with on their own device (ADR 0003). */
+export interface SignInCode {
+  code: string;
+  /** ISO timestamp; the code works once, until then. */
+  expiresAt: string;
 }
 
 /** No household has the invite code the user entered. */

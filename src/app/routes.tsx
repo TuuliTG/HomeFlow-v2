@@ -6,6 +6,7 @@ import { OnboardingGate } from '@/app/OnboardingGate';
 import { paths } from '@/app/paths';
 import { AuthProvider } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/auth/LoginPage';
+import { FamilySettings } from '@/features/household/FamilySettings';
 import { HouseholdPage } from '@/features/household/HouseholdPage';
 import { HouseholdSetupPage } from '@/features/household/HouseholdSetupPage';
 import { NewsPage } from '@/features/news/NewsPage';
@@ -48,6 +49,7 @@ export const routes: RouteObject[] = [
             element: (
               <>
                 <MyTasksPage />
+                <FamilySettings />
                 <NotificationSettings />
                 <LanguageSettings />
               </>

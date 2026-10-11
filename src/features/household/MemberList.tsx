@@ -1,18 +1,25 @@
 import { useState } from 'react';
 
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
-import type { HouseholdMember } from '@/features/household/household';
-import { useHouseholdMembers, useSetMemberIsChild } from '@/features/household/useHousehold';
+import type { HouseholdMember, SignInCode } from '@/features/household/household';
+import {
+  useHouseholdMembers,
+  useNewChildSignInCode,
+  useSetMemberIsChild,
+} from '@/features/household/useHousehold';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface MemberListProps {
   householdId: string;
   currentUserId: string;
+  /** Shows a new sign-in code an adult made for a child without email. */
+  onSignInCode: (childName: string, signInCode: SignInCode) => void;
 }
 
-export function MemberList({ householdId, currentUserId }: MemberListProps) {
+export function MemberList({ householdId, currentUserId, onSignInCode }: MemberListProps) {
   const members = useHouseholdMembers(householdId);
   const setIsChild = useSetMemberIsChild(householdId);
+  const newCode = useNewChildSignInCode();
   const t = useMessages();
   const isAdult = members.data?.some(
     (member) => member.userId === currentUserId && !member.isChild,
@@ -47,13 +54,27 @@ export function MemberList({ householdId, currentUserId }: MemberListProps) {
                   : undefined
               }
               isSaving={setIsChild.isPending}
+              isMakingCode={newCode.isPending}
+              onNewCode={
+                isAdult && member.signsInWithCode
+                  ? (childName) => {
+                      newCode.mutate(member.userId, {
+                        onSuccess: (signInCode) => {
+                          onSignInCode(childName, signInCode);
+                        },
+                      });
+                    }
+                  : undefined
+              }
             />
           ))}
         </ul>
       )}
-      {setIsChild.isError && (
+      {(setIsChild.isError || newCode.isError) && (
         <p role="alert" className="text-sm text-red-700">
-          {t.household.members.setChildFailed}
+          {setIsChild.isError
+            ? t.household.members.setChildFailed
+            : t.household.members.newCodeFailed}
         </p>
       )}
       {members.data && <p className="text-sm text-slate-600">{t.household.members.childrenHint}</p>}
@@ -70,19 +91,45 @@ interface MemberRowProps {
    */
   onChildChange: ((isChild: boolean) => Promise<void>) | undefined;
   isSaving: boolean;
+  /** Makes a new sign-in code for a child without email; left out for anyone else. */
+  onNewCode: ((childName: string) => void) | undefined;
+  /** A code is being made, so another tap wouldn't replace it before it shows. */
+  isMakingCode: boolean;
 }
 
-function MemberRow({ member, isYou, onChildChange, isSaving }: MemberRowProps) {
+function MemberRow({
+  member,
+  isYou,
+  onChildChange,
+  isSaving,
+  onNewCode,
+  isMakingCode,
+}: MemberRowProps) {
   const t = useMessages();
   const name = member.displayName ?? t.common.newMember;
   /** The choice being saved, shown straight away; null once the saved one has loaded. */
   const [savingIsChild, setSavingIsChild] = useState<boolean | null>(null);
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3 text-slate-900">
-      <span>
-        {member.displayName ?? <span className="text-slate-500">{t.common.newMember}</span>}
-        {isYou && <span className="text-slate-500">{t.household.members.you}</span>}
-      </span>
+      <div className="flex flex-col items-start gap-1">
+        <span>
+          {member.displayName ?? <span className="text-slate-500">{t.common.newMember}</span>}
+          {isYou && <span className="text-slate-500">{t.household.members.you}</span>}
+        </span>
+        {onNewCode && (
+          <button
+            type="button"
+            aria-label={t.household.members.newCodeFor(name)}
+            disabled={isMakingCode}
+            onClick={() => {
+              onNewCode(name);
+            }}
+            className="text-brand-600 text-sm font-medium underline disabled:opacity-60"
+          >
+            {t.household.members.newCode}
+          </button>
+        )}
+      </div>
       {onChildChange ? (
         <label className="flex shrink-0 items-center gap-2 text-sm font-medium text-slate-700">
           <input

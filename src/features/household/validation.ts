@@ -12,3 +12,7 @@ export const inviteCodeSchema = z
   .string()
   .transform((code) => code.replace(/[\s-]/g, '').toUpperCase())
   .pipe(z.string().regex(/^[A-HJ-NP-Z2-9]{8}$/));
+
+/** Matches the `profiles.display_name` check constraint, which a child's name goes into. */
+export const CHILD_NAME_MAX_LENGTH = 50;
+export const childNameSchema = z.string().trim().min(1).max(CHILD_NAME_MAX_LENGTH);

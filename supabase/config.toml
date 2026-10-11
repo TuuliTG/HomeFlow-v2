@@ -424,3 +424,13 @@ verify_jwt = false
 # secret (x-webhook-secret) itself, so it doesn't require a user JWT.
 [functions.send-reminders]
 verify_jwt = false
+
+# An adult adds a child without email (ADR 0003). The gateway checks the adult's JWT, and the function looks the
+# user up from it.
+[functions.add-child]
+verify_jwt = true
+
+# A child signs in with a one-time code (ADR 0003). They have no session yet, so it doesn't require a user JWT; the
+# code itself is the credential.
+[functions.child-sign-in]
+verify_jwt = false

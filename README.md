@@ -12,8 +12,9 @@ or the family's favourite tasks (starred on the form or any task) (private ones 
 tasks by when they are due (overdue, today, tomorrow, the next five days by date, later, no due date) and the
 board can be filtered to today, this week, no due date or tasks available to pick up; the Shared tasks board updates
 live and members can get push notifications, including reminders they set for their own tasks ([ADR 0004](docs/adr/0004-tasks.md), [ADR 0005](docs/adr/0005-push-notifications.md)).
-Adults can mark other members as children on the household page; children see and do only the tasks an adult marked
-"Children can do it" ([ADR 0003](docs/adr/0003-accounts-and-households.md)).
+Adults can mark other members as children on the household page, or add a child without email who signs in on their
+own device with a one-time code; children see and do only the tasks an adult marked "Children can do it"
+([ADR 0003](docs/adr/0003-accounts-and-households.md)).
 The Rewards screen holds family goals (optionally with a minimum from each member) and personal goals that points
 from shared tasks count towards; a reached goal's reward is claimed and kept as history ([ADR 0007](docs/adr/0007-goals-and-rewards.md)).
 The app speaks English and Finnish: the browser's language by default, changeable on the Me screen
@@ -97,6 +98,9 @@ production and every PR to a preview URL. Details are in [AGENTS.md](AGENTS.md) 
      email yet): in the **SQL Editor** run
      `update auth.users set encrypted_password = extensions.crypt('new password', extensions.gen_salt('bf')) where email = 'you@example.com';`
      and share the new password with its owner, who can then log in with it.
+   - **Children without email** ([ADR 0003](docs/adr/0003-accounts-and-households.md)): deploy their Edge
+     Functions with `npx supabase functions deploy add-child child-sign-in` (settings from `supabase/config.toml`;
+     they need no secrets).
    - Accept Supabase's DPA (Organization → Legal documents).
 2. **Vercel:** import the GitHub repo and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (real values, for
    both Production and Preview; redeploy after changing them). Optionally add `VITE_VAPID_PUBLIC_KEY` to show the

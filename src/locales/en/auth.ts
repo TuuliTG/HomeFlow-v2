@@ -33,7 +33,18 @@ export const auth = {
     'needs-email-confirmation':
       'HomeFlow is set up to confirm emails, which it can’t send yet. Ask the person who runs HomeFlow to turn off “Confirm email” in Supabase.',
     'too-many-attempts': 'Too many attempts. Wait a few minutes and try again.',
+    'unknown-child-code': "This code doesn't work. Ask an adult in your family for a new one.",
     other: "That didn't work. Try again in a moment.",
+  },
+  childCode: {
+    open: 'Sign in with a child code',
+    openHint: 'No email? An adult in your family adds you in HomeFlow and gives you a code.',
+    heading: 'Sign in with a child code',
+    label: 'Sign-in code',
+    hint: 'An adult in your family can make one for you on the household page.',
+    invalid: 'Enter the 8-character code.',
+    submit: 'Sign in',
+    back: 'Log in with email instead',
   },
   yourName: 'Your name',
   nameHint: 'This is how your family will see you in HomeFlow.',

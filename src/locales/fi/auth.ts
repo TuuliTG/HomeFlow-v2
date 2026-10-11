@@ -33,7 +33,18 @@ export const auth: Messages['auth'] = {
     'needs-email-confirmation':
       'HomeFlow on asetettu vahvistamaan sähköpostit, mutta se ei voi vielä lähettää niitä. Pyydä HomeFlow’n ylläpitäjää poistamaan “Confirm email” käytöstä Supabasessa.',
     'too-many-attempts': 'Liian monta yritystä. Odota muutama minuutti ja yritä uudelleen.',
+    'unknown-child-code': 'Koodi ei toimi. Pyydä perheesi aikuiselta uusi koodi.',
     other: 'Se ei onnistunut. Yritä hetken päästä uudelleen.',
+  },
+  childCode: {
+    open: 'Kirjaudu lapsen koodilla',
+    openHint: 'Ei sähköpostia? Perheesi aikuinen lisää sinut HomeFlow’hun ja antaa sinulle koodin.',
+    heading: 'Kirjaudu lapsen koodilla',
+    label: 'Kirjautumiskoodi',
+    hint: 'Perheesi aikuinen voi tehdä sinulle koodin kotitaloussivulla.',
+    invalid: 'Kirjoita 8-merkkinen koodi.',
+    submit: 'Kirjaudu',
+    back: 'Kirjaudu sähköpostilla',
   },
   yourName: 'Nimesi',
   nameHint: 'Tällä nimellä perheesi näkee sinut HomeFlow’ssa.',
