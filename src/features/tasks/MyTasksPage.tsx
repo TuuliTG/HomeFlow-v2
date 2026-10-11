@@ -143,7 +143,7 @@ function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }
           {canUndo && (
             <button
               type="button"
-              aria-label={`${t.undo}: ${task.title}`}
+              aria-label={t.undoLabel(task.title)}
               disabled={undo.isPending}
               onClick={() => {
                 undo.mutate(task.id);

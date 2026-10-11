@@ -197,7 +197,7 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Link
             to={paths.editTask(task.id)}
-            aria-label={`${t.edit}: ${task.title}`}
+            aria-label={t.editLabel(task.title)}
             className="text-brand-900 mr-auto rounded-lg px-1 py-1.5 text-sm font-semibold underline-offset-2 hover:underline"
           >
             {t.edit}

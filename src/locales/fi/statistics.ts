@@ -9,7 +9,7 @@ export const statistics: Messages['statistics'] = {
   description:
     'Koko perheen ansaitsemat pisteet ja luomat tehtävät. Yksityisiä tehtäviä ei lasketa.',
   period: 'Ajanjakso',
-  periods: { week: 'Tämä viikko', month: 'Tämä kuukausi', all: 'Kaikki' },
+  periods: { week: 'Tämä viikko', month: 'Tämä kuukausi', all: 'Koko ajalta' },
   workType: 'Työn tyyppi',
   pointsFilters: { all: 'Kaikki', ...common.taskTypes },
   loadFailed: 'Tilastoja ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',

@@ -25,7 +25,7 @@ export function TaskFavouriteStar({ title, currentUserId }: TaskFavouriteStarPro
         </span>
       )}
       <FavouriteStarButton
-        label={`${t.tasks.favourite}: ${title}`}
+        label={t.tasks.favouriteLabel(title)}
         variant="plain"
         isFavourite={favourites.data?.includes(titleKey(title)) ?? false}
         disabled={favourites.data === undefined}

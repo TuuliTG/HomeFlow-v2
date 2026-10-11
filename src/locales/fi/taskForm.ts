@@ -57,7 +57,7 @@ export const taskForm: Messages['taskForm'] = {
     remindMe: 'Muistuta minua',
     remindMeLabel: (title) => `Muistuta minua: ${title}`,
     formLabel: (title) => `Muistutus: ${title}`,
-    remindMeAt: 'Muistuta minua',
+    remindMeAt: 'Muistutuksen aika',
     hint: 'Saat ilmoituksen jokaiselle laitteelle, jossa olet laittanut ilmoitukset päälle.',
     pastTime: 'Valitse tuleva ajankohta.',
     tooFar: 'Valitse ajankohta seuraavan vuoden sisältä.',

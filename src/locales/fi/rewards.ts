@@ -30,7 +30,7 @@ export const rewards: Messages['rewards'] = {
     minimumFromEach: (minimum) => `Vähintään ${common.points(minimum)} jokaiselta jäseneltä`,
     progress: (points, target) => `${String(points)} / ${String(target)} pistettä`,
     progressLabel: (title) => `Edistyminen: ${title}`,
-    progressValue: (points, target) => `${String(points)} / ${String(target)} pistettä`,
+    progressValue: (points, target) => `${String(points)} pistettä ${String(target)}:stä`,
     pointsToGo: (missing) => `Vielä ${common.points(missing)}`,
     membersShort: (count) =>
       `Pisteitä on tarpeeksi! ${count === 1 ? 'Yhden jäsenen' : `${String(count)} jäsenen`} pitää vielä ansaita osuutensa.`,

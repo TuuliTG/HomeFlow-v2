@@ -56,6 +56,7 @@ export const tasks = {
       named: (name: string) => `Picked up by ${name}`,
     },
     edit: 'Edit',
+    editLabel: (title: string) => `Edit: ${title}`,
     pickUp: 'Pick up',
     putBack: 'Put back',
     markDone: 'Mark done',
@@ -69,6 +70,7 @@ export const tasks = {
     yesIDidIt: 'Yes, I did it',
   },
   favourite: 'Favourite',
+  favouriteLabel: (title: string) => `Favourite: ${title}`,
   notSaved: 'Not saved',
   completed: {
     heading: 'Completed',
@@ -98,6 +100,7 @@ export const tasks = {
     completedEmpty: 'Tasks you mark done will show up here.',
     doneOn: (date: string) => `Done ${date}`,
     undo: 'Undo',
+    undoLabel: (title: string) => `Undo: ${title}`,
     undoFailed:
       "We couldn't undo this. Tasks can be undone for an hour, before their next one is done.",
   },

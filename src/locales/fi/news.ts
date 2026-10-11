@@ -4,10 +4,11 @@ import { common } from '@/locales/fi/common';
 export const news: Messages['news'] = {
   eyebrow: 'Uutiset',
   title: 'Mitä perhe on tehnyt',
-  description: 'Viime viikon aikana tehdyt yhteiset tehtävät. Anna peukku tai kirjoita kommentti.',
+  description:
+    'Viimeisen viikon aikana tehdyt yhteiset tehtävät. Anna peukku tai kirjoita kommentti.',
   loadFailed: 'Uutisia ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
   empty:
-    'Viime viikolla ei ole vielä tehty yhteisiä tehtäviä. Kun joku merkitsee tehtävän tehdyksi, se näkyy tässä.',
+    'Viimeisen viikon aikana ei ole vielä tehty yhteisiä tehtäviä. Kun joku merkitsee tehtävän tehdyksi, se näkyy tässä.',
   pointsEarned: 'Ansaitut pisteet',
   tasksDone: 'Tehdyt tehtävät',
   // "Anna: 10 pistettä (…)" rather than a verb, which would have to agree with "Sinä".
@@ -19,7 +20,7 @@ export const news: Messages['news'] = {
   completed: { you: 'teit tehtävän', other: 'teki tehtävän' },
   thumbsUp: 'Peukku',
   thumbsUpLabel: (title) => `Peukku: ${title}`,
-  likedBy: (names) => `Peukun antoi ${common.joinNames(names)}`,
+  likedBy: (names) => `Peukku: ${common.joinNames(names)}`,
   likeFailed: 'Peukkua ei voitu tallentaa. Yritä uudelleen.',
   comments: 'Kommentit',
   comment: 'Kommentoi',

@@ -13,6 +13,6 @@ export const notifications: Messages['notifications'] = {
     on: 'Saat tälle laitteelle ilmoituksen, kun joku kotitaloudestasi lisää tehtävän.',
   },
   turnOn: 'Laita ilmoitukset päälle',
-  turnOff: 'Laita ilmoitukset pois',
+  turnOff: 'Laita ilmoitukset pois päältä',
   changeFailed: 'Ilmoituksia ei voitu muuttaa. Yritä uudelleen.',
 };
