@@ -1,5 +1,5 @@
 import type * as liveApi from '@/features/tasks/liveApi';
-import { type NewTask, titleKey } from '@/features/tasks/task';
+import { type NewTask, type TaskHelper, titleKey } from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 
@@ -17,6 +17,14 @@ export interface StoredTask extends NewTask {
   createdAt: string;
   /** Who marked it done and when (ISO timestamp); null while open. */
   completed: { by: string; at: string } | null;
+  /** Who helped whoever marked it done, and their shares of its points (`task_helpers`). */
+  helpers: { userId: string; points: number }[];
+}
+
+/** One member's points from a done task, like a row of `private.task_credits`. */
+export interface Credit {
+  userId: string;
+  points: number;
 }
 
 /** A task as tests describe it: repeating, due date, description and privacy are optional. */
@@ -77,6 +85,25 @@ function addDays(isoDate: string, days: number): string {
   const date = new Date(`${isoDate}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Who earned the points of a done shared task, like `private.task_credits`: the doer what the helpers
+ * didn't get, and each helper their share. None for an open or private task.
+ */
+export function creditsOf(task: StoredTask): Credit[] {
+  if (!task.completed || task.isPrivate) return [];
+  const helped = task.helpers.reduce((total, helper) => total + helper.points, 0);
+  return [{ userId: task.completed.by, points: (task.points ?? 0) - helped }, ...task.helpers];
+}
+
+/** A task's helpers with their names, like the embedded `task_helpers`. */
+export function helpersOf(task: StoredTask): TaskHelper[] {
+  return task.helpers.map(({ userId, points }) => ({
+    userId,
+    name: fakeAuthBackend.displayNameOf(userId),
+    points,
+  }));
 }
 
 export function openTaskOf(userId: string, taskId: string): StoredTask {
@@ -150,6 +177,7 @@ export const fakeTasksBackend = {
         previousTaskId: null,
         createdAt: new Date().toISOString(),
         completed: null,
+        helpers: [],
       },
       false,
     );
@@ -186,6 +214,7 @@ export const fakeTasksBackend = {
         previousTaskId: task.id,
         createdAt: new Date().toISOString(),
         completed: null,
+        helpers: [],
       },
       true,
     );

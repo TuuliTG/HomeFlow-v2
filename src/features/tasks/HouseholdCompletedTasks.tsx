@@ -4,6 +4,7 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import type { HouseholdCompletedTask } from '@/features/tasks/task';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
+import { TaskHelpersLine } from '@/features/tasks/TaskHelpersLine';
 import { useHouseholdCompletedTasks, useMembership } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
@@ -69,6 +70,7 @@ function CompletedTasksBody({
               {doneByLabel(task, userId, t)} · {t.common.shortDate(new Date(task.completedAt))}
               {` · ${task.points === null ? t.tasks.card.waitingForPoints : t.common.points(task.points)}`}
             </span>
+            <TaskHelpersLine helpers={task.helpers} />
           </div>
           <div className="flex shrink-0 items-center gap-1">
             {canAddTasks && (

@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-11
+- **Updated:** 2026-10-11 (helping with a task)
 
 ## Context
 
@@ -56,8 +56,17 @@ next one back rather than follow a fixed calendar.
   (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
   the next occurrence it created, unless that one is already done.
-- **Points**: the Me screen shows the total points of every shared task the user has marked done, summed when read
-  (`fetchTotalPoints`), not stored. Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
+- **Points**: the Me screen shows the user's total points, summed when read (`own_total_points()`), not stored.
+  Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
+- **Helping**: whoever marked a shared task with points done can say, for a week (as long as it is in the News), who
+  helped them and give each helper a share of its points (`task_helpers`, written only by `set_task_helpers()`, which
+  replaces the helpers; "Who helped?" on the Me page's Completed list). Shares are 1–10 and together at most the
+  task's points, and come out of the doer's points, so a task is worth the same however many helped: adding helpers
+  can't inflate totals or skew fairness. Only the doer chooses, since they give away their own points; a helper is
+  any other member, also a child helping with an adults-only task (they get the points without seeing the task). The
+  form suggests an even split. `private.task_credits` (a view only security definer functions read) credits the doer
+  the rest and each helper their share; statistics, goals and `own_total_points()` count it, and News adds up the
+  same from the embedded helpers. Undoing a task removes its helpers; a repeat doesn't copy them.
 - The board (the **Shared tasks** page) shows open shared tasks, soonest due first and tasks without a due date last (newest first within a date).
   It and the Me page's _To do_ group them under headings like an agenda (`groupByDueDate`): Overdue, Today, Tomorrow,
   each of the next five days by date, Later and No due date, leaving out empty groups. Grouping is done in the app

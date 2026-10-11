@@ -1,6 +1,6 @@
 # 0008. News and praise
 
-- **Updated:** 2026-10-10
+- **Updated:** 2026-10-11
 
 ## Context
 
@@ -12,7 +12,8 @@ Seeing what others in the family have done, and thanking them for it, is positiv
 - A **News** tab (`/news`, `src/features/news`) lists the household's shared tasks done in the last seven local days
   (`newsStart()`), newest first, grouped by the day they were done (Today, Yesterday, "Thu 8 Oct"). Each day starts
   with each member's points that day, physical and meta work apart ("Ben earned 10 points: 7 physical, 3 meta work"),
-  added up in the browser from the same rows (`groupByDay()`); a family does far fewer than the 1000-row API limit
+  helpers' shares counted as theirs rather than the doer's (ADR 0004), added up in the browser from the same rows
+  (`groupByDay()`); a family does far fewer than the 1000-row API limit
   in a week.
 - **Thumbs up**: `task_likes` (one per member and task, primary key `(task_id, user_id)`). A member can like a done
   shared task someone else did, never their own work, and take back only their own like.

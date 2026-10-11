@@ -21,6 +21,12 @@ export interface NewsComment {
   createdAt: string;
 }
 
+/** Someone who helped with a task, and their share of its points. */
+interface NewsHelper {
+  person: NewsPerson;
+  points: number;
+}
+
 /** A shared task someone in the household has done, with the thumbs up and comments it got. */
 export interface NewsItem {
   taskId: string;
@@ -31,6 +37,8 @@ export interface NewsItem {
   /** ISO timestamp. */
   completedAt: string;
   doneBy: NewsPerson;
+  /** Their shares come out of the task's points; the rest is the doer's. */
+  helpers: NewsHelper[];
   likedBy: NewsPerson[];
   /** Oldest first. */
   comments: NewsComment[];
@@ -63,17 +71,25 @@ function dayLabel(date: string, todayDate: string, t: Messages): string {
   return t.common.shortDate(fromIsoDate(date));
 }
 
+/** Who earned the item's points: the doer what the helpers didn't get, and each helper their share. */
+function creditsOf({ doneBy, helpers, points }: NewsItem): NewsHelper[] {
+  const helped = helpers.reduce((total, helper) => total + helper.points, 0);
+  return [{ person: doneBy, points: (points ?? 0) - helped }, ...helpers];
+}
+
 function summarise(items: NewsItem[]): DaySummary[] {
   const byMember = new Map<string | null, DaySummary>();
-  for (const { doneBy, type, points } of items) {
-    const summary = byMember.get(doneBy.userId) ?? {
-      member: doneBy,
-      physicalPoints: 0,
-      metaPoints: 0,
-    };
-    if (type === 'meta') summary.metaPoints += points ?? 0;
-    else summary.physicalPoints += points ?? 0;
-    byMember.set(doneBy.userId, summary);
+  for (const item of items) {
+    for (const { person, points } of creditsOf(item)) {
+      const summary = byMember.get(person.userId) ?? {
+        member: person,
+        physicalPoints: 0,
+        metaPoints: 0,
+      };
+      if (item.type === 'meta') summary.metaPoints += points;
+      else summary.physicalPoints += points;
+      byMember.set(person.userId, summary);
+    }
   }
   const total = (summary: DaySummary) => summary.physicalPoints + summary.metaPoints;
   return [...byMember.values()].sort((a, b) => total(b) - total(a));

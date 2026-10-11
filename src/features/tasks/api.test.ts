@@ -116,7 +116,7 @@ describe('tasks api', () => {
     ]);
   });
 
-  it("reads the user's completed tasks, newest first", async () => {
+  it("reads the user's completed tasks, newest first, with who helped", async () => {
     query.order.mockReturnValueOnce(query);
     query.limit.mockResolvedValueOnce({
       data: [
@@ -126,13 +126,18 @@ describe('tasks api', () => {
           type: 'physical',
           points: 3,
           completed_at: '2026-10-08T12:00:00Z',
+          task_helpers: [{ user_id: 'u2', points: 1 }],
         },
       ],
       error: null,
     });
+    query.in.mockResolvedValueOnce({ data: [{ id: 'u2', display_name: 'Ben' }], error: null });
 
     const tasks = await api.fetchCompletedTasks('u1');
 
+    expect(query.select).toHaveBeenCalledWith(
+      'id, title, type, points, completed_at, task_helpers(user_id, points)',
+    );
     expect(query.eq).toHaveBeenCalledWith('completed_by', 'u1');
     expect(query.order).toHaveBeenCalledWith('completed_at', { ascending: false });
     expect(query.limit).toHaveBeenCalledWith(20);
@@ -143,11 +148,12 @@ describe('tasks api', () => {
         type: 'physical',
         points: 3,
         completedAt: '2026-10-08T12:00:00Z',
+        helpers: [{ userId: 'u2', name: 'Ben', points: 1 }],
       },
     ]);
   });
 
-  it("reads the household's recently done tasks with who did them", async () => {
+  it("reads the household's recently done tasks with who did them and who helped", async () => {
     query.order.mockReturnValueOnce(query);
     query.limit.mockResolvedValueOnce({
       data: [
@@ -158,11 +164,18 @@ describe('tasks api', () => {
           points: 3,
           completed_at: '2026-10-08T12:00:00Z',
           completed_by: 'u2',
+          task_helpers: [{ user_id: 'u3', points: 2 }],
         },
       ],
       error: null,
     });
-    query.in.mockResolvedValueOnce({ data: [{ id: 'u2', display_name: 'Ben' }], error: null });
+    query.in.mockResolvedValueOnce({
+      data: [
+        { id: 'u2', display_name: 'Ben' },
+        { id: 'u3', display_name: 'Carl' },
+      ],
+      error: null,
+    });
 
     const tasks = await api.fetchHouseholdCompletedTasks();
 
@@ -178,6 +191,7 @@ describe('tasks api', () => {
         completedAt: '2026-10-08T12:00:00Z',
         completedBy: 'u2',
         completerName: 'Ben',
+        helpers: [{ userId: 'u3', name: 'Carl', points: 2 }],
       },
     ]);
 
@@ -186,21 +200,14 @@ describe('tasks api', () => {
     await expect(api.fetchHouseholdCompletedTasks()).rejects.toBe(failure);
   });
 
-  it("adds up the points of the user's completed tasks", async () => {
-    query.eq.mockReturnValueOnce(query).mockResolvedValueOnce({
-      data: [{ points: 3 }, { points: 5 }, { points: null }],
-      error: null,
-    });
+  it("reads the user's points from the database", async () => {
+    client.rpc.mockResolvedValueOnce({ data: 8, error: null });
 
-    await expect(api.fetchTotalPoints('u1')).resolves.toBe(8);
-    expect(query.select).toHaveBeenCalledWith('points');
-    expect(query.eq.mock.calls).toEqual([
-      ['completed_by', 'u1'],
-      ['is_private', false],
-    ]);
+    await expect(api.fetchTotalPoints()).resolves.toBe(8);
+    expect(client.rpc).toHaveBeenCalledWith('own_total_points');
 
-    query.eq.mockReturnValueOnce(query).mockResolvedValueOnce({ data: null, error: failure });
-    await expect(api.fetchTotalPoints('u1')).rejects.toBe(failure);
+    client.rpc.mockResolvedValueOnce({ data: null, error: failure });
+    await expect(api.fetchTotalPoints()).rejects.toBe(failure);
   });
 
   it('passes errors on when completed tasks cannot be read', async () => {

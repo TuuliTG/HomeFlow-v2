@@ -20,6 +20,7 @@ import { SharedTasksPage } from '@/features/tasks/SharedTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
 import { EditTaskPage } from '@/features/tasks/EditTaskPage';
 import { MyTasksPage } from '@/features/tasks/MyTasksPage';
+import { TaskHelpersPage } from '@/features/tasks/TaskHelpersPage';
 import { LanguageProvider } from '@/lib/i18n/LanguageProvider';
 
 export const routes: RouteObject[] = [
@@ -44,6 +45,7 @@ export const routes: RouteObject[] = [
           { path: paths.tasks, element: <SharedTasksPage /> },
           { path: paths.newTask, element: <CreateTaskPage /> },
           { path: paths.editTask(':taskId'), element: <EditTaskPage /> },
+          { path: paths.taskHelpers(':taskId'), element: <TaskHelpersPage /> },
           {
             path: paths.me,
             element: (

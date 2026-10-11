@@ -2,7 +2,9 @@ import type * as tasksApi from '@/features/tasks/api';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import {
+  creditsOf,
   deliver,
+  helpersOf,
   fakeTasksBackend,
   openTaskOf,
   isVisible,
@@ -68,9 +70,11 @@ export const fetchCompletedTasks: typeof tasksApi.fetchCompletedTasks = (userId)
   if (requestsFailing()) return Promise.reject(new Error('Network error'));
   return Promise.resolve(
     tasks
-      .flatMap(({ id, title, type, points, completed }) =>
-        completed?.by === userId ? [{ id, title, type, points, completedAt: completed.at }] : [],
-      )
+      .flatMap((task) => {
+        const { id, title, type, points, completed } = task;
+        if (completed?.by !== userId) return [];
+        return [{ id, title, type, points, completedAt: completed.at, helpers: helpersOf(task) }];
+      })
       .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
   );
 };
@@ -143,6 +147,7 @@ export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdComplet
                 completedAt: completed.at,
                 completedBy: completed.by,
                 completerName: fakeAuthBackend.displayNameOf(completed.by),
+                helpers: helpersOf(task),
               },
             ]
           : [];
@@ -151,14 +156,17 @@ export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdComplet
   );
 };
 
-export const fetchTotalPoints: typeof tasksApi.fetchTotalPoints = (userId) => {
-  if (requestsFailing()) return Promise.reject(new Error('Network error'));
+/** Like `own_total_points()`: the user's credits in their household, also from tasks they can't see. */
+export const fetchTotalPoints: typeof tasksApi.fetchTotalPoints = () => {
+  const user = fakeAuthBackend.currentUser();
+  if (requestsFailing() || !user) return Promise.reject(new Error('Network error'));
+  const householdId = fakeHouseholdBackend.householdIdOf(user.id);
   return Promise.resolve(
-    tasks.reduce(
-      (total, task) =>
-        total + (task.completed?.by === userId && !task.isPrivate ? (task.points ?? 0) : 0),
-      0,
-    ),
+    tasks
+      .filter((task) => task.householdId === householdId)
+      .flatMap(creditsOf)
+      .filter((credit) => credit.userId === user.id)
+      .reduce((total, credit) => total + credit.points, 0),
   );
 };
 
@@ -220,5 +228,6 @@ export const undoCompleteTask: typeof tasksApi.undoCompleteTask = (taskId) =>
     if (next?.completed) throw new Error('The next occurrence is already done');
     if (next) tasks.splice(tasks.indexOf(next), 1);
     task.completed = null;
+    task.helpers = [];
     deliver(task, { kind: 'changed' });
   });

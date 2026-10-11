@@ -1,10 +1,19 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 
+import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
-import { type CompletedTask, isToDoBy, UNDO_WINDOW_MS } from '@/features/tasks/task';
+import {
+  canChooseHelpers,
+  type CompletedTask,
+  doersShare,
+  isToDoBy,
+  UNDO_WINDOW_MS,
+} from '@/features/tasks/task';
+import { TaskHelpersLine } from '@/features/tasks/TaskHelpersLine';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import {
   useCompletedTasks,
@@ -125,9 +134,9 @@ function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }
   const { common, tasks } = useMessages();
   const t = tasks.me;
   // Checked when the item appears; the database has the final say.
-  const [canUndo] = useState(
-    () => Date.now() - new Date(task.completedAt).getTime() < UNDO_WINDOW_MS,
-  );
+  const [now] = useState(Date.now);
+  const canUndo = now - new Date(task.completedAt).getTime() < UNDO_WINDOW_MS;
+  const ownPoints = doersShare(task);
 
   return (
     <li className="flex flex-col gap-1 px-4 py-3 text-sm">
@@ -136,8 +145,18 @@ function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }
           <span className="font-medium text-slate-900">{task.title}</span>
           <span className="text-slate-500">
             {t.doneOn(common.shortDate(new Date(task.completedAt)))}
-            {task.points !== null && ` · ${common.points(task.points)}`}
+            {ownPoints !== null && ` · ${common.points(ownPoints)}`}
           </span>
+          <TaskHelpersLine helpers={task.helpers} />
+          {canChooseHelpers(task, now) && (
+            <Link
+              to={paths.taskHelpers(task.id)}
+              aria-label={tasks.helpers.whoHelpedLabel(task.title)}
+              className="text-brand-900 flex min-h-11 w-fit items-center font-semibold hover:underline"
+            >
+              {tasks.helpers.whoHelped}
+            </Link>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {canUndo && (

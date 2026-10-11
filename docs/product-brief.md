@@ -26,6 +26,7 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
   opt-in); a **private** check mark keeps a task to yourself, without points. Creating a task gets positive
   feedback and counts towards _tasks created_ (no points).
 - **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
+  On a done task, _Who helped?_ gives helpers (a child who helped, an adult who shared it) part of its points.
 - **News** — what the family has done in the last week, by day: each member's points that day (physical and meta
   work apart) and each shared task done. Members give a thumbs up to others' work and comment on it.
 - **Rewards** — shared goals (for the whole family or the members an adult picks, e.g. two siblings; their points

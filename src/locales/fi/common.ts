@@ -19,6 +19,8 @@ export const common: Messages['common'] = {
     names.length <= 1
       ? names.join('')
       : `${names.slice(0, -1).join(', ')} ja ${names.at(-1) ?? ''}`,
+  helpedBy: (shares) => `Apuna: ${common.joinNames(shares)}`,
+  share: (name, count) => `${name} (${common.points(count)})`,
   today: 'Tänään',
   tomorrow: 'Huomenna',
   yesterday: 'Eilen',

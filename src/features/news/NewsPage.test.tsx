@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
+import { fakeHelpersBackend } from '@/test/fakeHelpersApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeNewsBackend } from '@/test/fakeNewsApi';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
@@ -43,6 +44,24 @@ function card(name: string) {
 }
 
 describe('news page', () => {
+  it('names who helped, crediting them their share of the points', async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    const laundry = doTask(anna.id, anna.id, { title: 'Laundry', points: 5 });
+    fakeHelpersBackend.setHelpersAs(anna.id, laundry, [{ userId: ben.id, points: 2 }]);
+    renderAppAt('/news');
+
+    const today = await screen.findByRole('region', { name: 'Today' });
+    expect(
+      within(card('You completed Laundry')).getByText('Helped by Ben (2 points)'),
+    ).toBeVisible();
+    expect(
+      within(within(today).getByRole('list', { name: 'Points earned' }))
+        .getAllByRole('listitem')
+        .map((summary) => summary.textContent),
+    ).toEqual(['You earned 3 points of physical work', 'Ben earned 2 points of physical work']);
+  });
+
   it("shows what everyone did each day, with each member's points that day", async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();

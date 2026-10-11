@@ -1,6 +1,6 @@
 # 0006. Statistics and fairness
 
-- **Updated:** 2026-10-10
+- **Updated:** 2026-10-11
 
 ## Context
 
@@ -10,9 +10,10 @@ history grows past what one API request returns.
 
 ## Decisions
 
-- **Counted in the database**: `household_statistics(since)` (security invoker, so Row Level Security scopes it to
-  the caller's household) returns, per member and in the order they joined, their display name, the shared tasks
-  they _did_ (`completed_at >= since`) and the points those earned, how many of those were meta work tasks
+- **Counted in the database**: `household_statistics(since)` (security definer, scoped to the caller's household,
+  so children's numbers count tasks they can't see) returns, per member and in the order they joined, their display
+  name, the shared tasks they _did_ (`completed_at >= since`), also those they helped with, and the points those
+  earned (their credits in `private.task_credits`, ADR 0004), how many of those were meta work tasks
   (`meta_done`, `meta_points`; physical work is the rest), and the shared tasks they _created_
   (`created_at >= since`), all in their current household; `since` null means all time. Totals aren't cut short by
   the 1000-row API limit. Private tasks never count; people who left the household aren't listed.

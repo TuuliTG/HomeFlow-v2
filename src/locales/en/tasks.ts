@@ -116,6 +116,24 @@ export const tasks = {
     undoFailed:
       "We couldn't undo this. Tasks can be undone for an hour, before their next one is done.",
   },
+  /** Saying who helped with a task the user did, and sharing its points with them. */
+  helpers: {
+    eyebrow: 'Completed',
+    title: 'Who helped?',
+    description: (title: string, points: string) =>
+      `Give whoever helped with ${title} some of its ${points}. What you give comes out of your points, so the task is worth the same.`,
+    whoHelped: 'Who helped?',
+    whoHelpedLabel: (title: string) => `Who helped with ${title}?`,
+    helped: (name: string) => `${name} helped`,
+    pointsFor: (name: string) => `Points for ${name}`,
+    youKeep: (kept: string) => `You keep ${kept}.`,
+    tooMany: (points: string) => `Together that's more than the task's ${points}.`,
+    noOneElse: 'Nobody else is in your household yet.',
+    unavailable: 'You can say who helped for a week after marking a shared task with points done.',
+    loadFailed:
+      "We couldn't load the task and your household. Check your connection and reload the page.",
+    saveFailed: "We couldn't save who helped. Try again.",
+  },
   activity: {
     added: (name: string, title: string) => `${name} added ${title}`,
     dismiss: 'Dismiss',
