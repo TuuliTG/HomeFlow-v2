@@ -183,13 +183,38 @@ describe('statistics page', () => {
     expect(screen.getByRole('checkbox', { name: 'Cleo' })).toBeDisabled();
   });
 
-  it('has no members to choose between in a family of two', async () => {
+  it('compares whoever the address names, everyone when it names no one here', async () => {
     logInAsFamilyMember();
-    addBen();
-    renderAppAt('/statistics');
+    const ben = addBen();
+    const cleo = fakeAuthBackend.addProfile('cleo@example.com', 'Cleo');
+    fakeHouseholdBackend.addMember(cleo.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(cleo.id, true);
+    const { router } = renderAppAt(`/statistics?compare=${ben.id},someone-who-left`);
+
+    await screen.findByRole('region', { name: 'Tasks created' });
+    expect(rows('Tasks created')).toEqual(['Ben0 tasks']);
+
+    await router.navigate('/statistics?compare=adults');
+    await vi.waitFor(() => {
+      expect(rows('Tasks created')).toEqual(['You0 tasks', 'Ben0 tasks']);
+    });
+    expect(screen.getByRole('radio', { name: 'Adults' })).toBeChecked();
+
+    await router.navigate('/statistics?compare=someone-who-left');
+    await vi.waitFor(() => {
+      expect(rows('Tasks created')).toEqual(['You0 tasks', 'Ben0 tasks', 'Cleo0 tasks']);
+    });
+  });
+
+  it('has no members to choose between in a family of two, whatever the address says', async () => {
+    logInAsFamilyMember();
+    const ben = addBen();
+    fakeHouseholdBackend.setChild(ben.id, true);
+    renderAppAt('/statistics?compare=children');
 
     await screen.findByRole('region', { name: 'Points earned' });
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(rows('Tasks created')).toEqual(['You0 tasks', 'Ben0 tasks']);
   });
 
   it('leaves out private tasks', async () => {

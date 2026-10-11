@@ -122,10 +122,14 @@ function StatisticsBody({
       </p>
     );
   }
-  const compared = comparedMembers(contributions.data, comparison);
+  // With two members or fewer there is no choice to make, so an address from elsewhere can't hide anyone.
+  const canCompare = contributions.data.length > 2;
+  const compared = canCompare
+    ? comparedMembers(contributions.data, comparison)
+    : contributions.data;
   return (
     <div className="flex flex-col gap-6">
-      {contributions.data.length > 2 && (
+      {canCompare && (
         <CompareMembers
           contributions={contributions.data}
           comparison={comparison}
