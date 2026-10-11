@@ -1,6 +1,6 @@
 # 0006. Statistics and fairness
 
-- **Updated:** 2026-10-10
+- **Updated:** 2026-10-11
 
 ## Context
 
@@ -11,7 +11,7 @@ history grows past what one API request returns.
 ## Decisions
 
 - **Counted in the database**: `household_statistics(since)` (security invoker, so Row Level Security scopes it to
-  the caller's household) returns, per member and in the order they joined, their display name, the shared tasks
+  the caller's household) returns, per member and in the order they joined, their display name, whether they are a child, the shared tasks
   they _did_ (`completed_at >= since`) and the points those earned, how many of those were meta work tasks
   (`meta_done`, `meta_points`; physical work is the rest), and the shared tasks they _created_
   (`created_at >= since`), all in their current household; `since` null means all time. Totals aren't cut short by
@@ -24,6 +24,11 @@ history grows past what one API request returns.
 - **Points by task type**: a toggle (_All_, _Physical_, _Meta work_, kept in the address as `?work=`) shows the
   points of one task type with its own ranking and fairness score; under _All_ each member's bar is split into
   physical and meta work points.
+- **Who is compared**: with more than two members, the family can compare _Everyone_, only the _Adults_ or only
+  the _Children_ (offered when there are both), or tick members one by one; at least one stays ticked. Rankings and
+  fairness scores cover only those compared (`comparedMembers()`), so e.g. the adults can see how they share the work
+  between them. Kept in the address as `?compare=adults` or `?compare=<user id>,<user id>`; a choice matching no one
+  (e.g. members who left) compares everyone.
 - **Fairness score** (0–100) per metric: each member's share compared with an equal share. The score is
   `100 × (1 − d / dmax)`, where `d` is half the sum of `|share − 1/n|` and `dmax = 1 − 1/n` (one member has it all),
   so 100 is perfectly even and 0 is one member having it all. ≥ 80 is _Balanced_, ≥ 50 _Slightly uneven_, below that
