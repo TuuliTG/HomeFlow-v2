@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-10
+- **Updated:** 2026-10-11
 
 ## Context
 
@@ -22,6 +22,14 @@ next one back rather than follow a fixed calendar.
   previous page). **Private tasks have no points** (`points` is null exactly when `is_private`, a check
   constraint) and statistics count only shared tasks, both done and created (ADR 0006). A private task whose creator
   deletes their account or leaves stays hidden from everyone.
+- **Tasks for children**: `for_children` (default false: adults only), chosen on the task form by adults ("Children
+  can do it", not offered for their private tasks) and changeable when editing; the next occurrence keeps it. A
+  child (ADR 0003) sees and acts only on tasks for children, and every task they add is one (insert policy;
+  `update_task()` refuses a child making one adults-only). `private.can_see_task()` holds the visibility rule
+  (household, private, children) for the select policy and every security definer function acting on any open
+  task. A child never holds an adults-only task: making one adults-only, or marking its picker as a child, puts it
+  back and removes their reminder (`private.put_back_adults_tasks()`); a new child's private tasks become theirs
+  for children. Statistics and goals still count every shared task; a child's News lists only tasks for children.
 - **Least privilege**: members can read and insert tasks; every change goes through a function. Marking done uses
   `complete_task(task_id, completed_on)` (security definer). In one transaction it marks an open task in the
   caller's household done and, if it repeats, inserts the **next occurrence**, due

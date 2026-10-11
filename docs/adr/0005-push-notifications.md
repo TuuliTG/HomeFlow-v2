@@ -1,6 +1,6 @@
 # 0005. Push notifications
 
-- **Updated:** 2026-10-09
+- **Updated:** 2026-10-11
 
 ## Context
 
@@ -15,8 +15,8 @@ for apps added to the home screen (iOS 16.4+).
   owner and saved through `save_push_subscription()`, which moves an endpoint to whoever is logged in now. Logging
   out unsubscribes the device.
 - The **`notify-household` Edge Function**, called by a Database Webhook on task insert with a shared secret, reads
-  the task with the service role and notifies every member except its creator. It skips private tasks and the next
-  occurrences of repeating tasks, and forgets subscriptions the push service reports gone (404/410).
+  the task with the service role and notifies every member except its creator, and children only of tasks for
+  children (ADR 0004). It skips private tasks and the next occurrences of repeating tasks, and forgets subscriptions the push service reports gone (404/410).
 - The **`send-reminders` Edge Function** sends task reminders (ADR 0004). **Supabase Cron** calls it every minute
   with the same shared secret, so reminders arrive within about a minute of their time.
 - The functions use the **service role**, which has only the table privileges migrations grant it

@@ -51,8 +51,8 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
 
 /**
  * The household's open tasks (not yet done): soonest due first, then those without a due date, each
- * newest first. Row Level Security limits them to the user's household, and private tasks to whoever
- * added them.
+ * newest first. Row Level Security limits them to the user's household, private tasks to whoever
+ * added them, and a child's to tasks for children.
  */
 export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
