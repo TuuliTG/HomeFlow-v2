@@ -54,6 +54,7 @@ export function MemberList({ householdId, currentUserId, onSignInCode }: MemberL
                   : undefined
               }
               isSaving={setIsChild.isPending}
+              isMakingCode={newCode.isPending}
               onNewCode={
                 isAdult && member.signsInWithCode
                   ? (childName) => {
@@ -92,9 +93,18 @@ interface MemberRowProps {
   isSaving: boolean;
   /** Makes a new sign-in code for a child without email; left out for anyone else. */
   onNewCode: ((childName: string) => void) | undefined;
+  /** A code is being made, so another tap wouldn't replace it before it shows. */
+  isMakingCode: boolean;
 }
 
-function MemberRow({ member, isYou, onChildChange, isSaving, onNewCode }: MemberRowProps) {
+function MemberRow({
+  member,
+  isYou,
+  onChildChange,
+  isSaving,
+  onNewCode,
+  isMakingCode,
+}: MemberRowProps) {
   const t = useMessages();
   const name = member.displayName ?? t.common.newMember;
   /** The choice being saved, shown straight away; null once the saved one has loaded. */
@@ -110,10 +120,11 @@ function MemberRow({ member, isYou, onChildChange, isSaving, onNewCode }: Member
           <button
             type="button"
             aria-label={t.household.members.newCodeFor(name)}
+            disabled={isMakingCode}
             onClick={() => {
               onNewCode(name);
             }}
-            className="text-brand-600 text-sm font-medium underline"
+            className="text-brand-600 text-sm font-medium underline disabled:opacity-60"
           >
             {t.household.members.newCode}
           </button>

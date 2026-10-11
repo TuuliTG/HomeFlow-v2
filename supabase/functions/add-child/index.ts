@@ -11,6 +11,16 @@ async function userIdFromToken(token: string): Promise<string | null> {
   return error ? null : data.user.id;
 }
 
+async function isAdult(userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('household_members')
+    .select('is_child')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as { is_child: boolean } | null)?.is_child === false;
+}
+
 async function createChildLogin(): Promise<string> {
   const { data, error } = await supabase.auth.admin.createUser({
     email: `${crypto.randomUUID()}@${CHILD_EMAIL_DOMAIN}`,
@@ -42,6 +52,7 @@ async function addChildToHousehold(
 serveJson('add-child', async (request) =>
   addChild(request.headers.get('authorization'), await request.json().catch(() => null), {
     userIdFromToken,
+    isAdult,
     createChildLogin,
     deleteLogin,
     addChild: addChildToHousehold,

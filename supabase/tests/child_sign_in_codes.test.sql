@@ -2,7 +2,7 @@
 -- Anna adds Ben to her household as a child, as the add-child Edge Function does; Carol has her own household.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(21);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -105,6 +105,15 @@ select throws_ok(
   'P0002', null,
   'there are no codes for someone in another household'
 );
+
+-- Carol, an adult in her own household, can't make a code for Ben.
+set local request.jwt.claims = '{"sub": "33333333-3333-3333-3333-333333333333", "role": "authenticated"}';
+select throws_ok(
+  $$ select * from public.new_child_sign_in_code('22222222-2222-2222-2222-222222222222') $$,
+  'P0002', null,
+  'an adult cannot make a code for a child in another household'
+);
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 
 set local role service_role;
 select results_eq(

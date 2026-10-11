@@ -26,6 +26,9 @@ Object.defineProperty(window, 'matchMedia', {
   value: (query: string) => ({ matches: false, media: query }),
 });
 
+// jsdom doesn't lay pages out, so it has no scrolling; every browser HomeFlow supports does.
+Element.prototype.scrollIntoView = () => undefined;
+
 afterEach(() => {
   cleanup();
   localStorage.clear();

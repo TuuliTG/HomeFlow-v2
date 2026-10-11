@@ -9,6 +9,7 @@ function fakeDeps(overrides: Partial<AddChildDependencies> = {}) {
     userIdFromToken: vi.fn((token: string) =>
       Promise.resolve(token === 'anna-token' ? 'anna' : null),
     ),
+    isAdult: vi.fn(() => Promise.resolve(true)),
     createChildLogin: vi.fn(() => Promise.resolve('ben')),
     deleteLogin: vi.fn(() => Promise.resolve()),
     addChild: vi.fn(() => Promise.resolve(code)),
@@ -55,7 +56,17 @@ describe('add child', () => {
     },
   );
 
-  it('removes the login again when the user is not an adult', async () => {
+  it('makes no login for a child or someone without a household', async () => {
+    const deps = fakeDeps({ isAdult: () => Promise.resolve(false) });
+
+    await expect(addChild('Bearer anna-token', { displayName: 'Ben' }, deps)).resolves.toEqual({
+      status: 403,
+      body: { error: 'not_an_adult' },
+    });
+    expect(deps.createChildLogin).not.toHaveBeenCalled();
+  });
+
+  it('removes the login again when the user stopped being an adult meanwhile', async () => {
     const deps = fakeDeps({ addChild: () => Promise.reject(new NotAnAdultError()) });
 
     await expect(addChild('Bearer anna-token', { displayName: 'Ben' }, deps)).resolves.toEqual({
@@ -71,5 +82,17 @@ describe('add child', () => {
 
     await expect(addChild('Bearer anna-token', { displayName: 'Ben' }, deps)).rejects.toBe(failure);
     expect(deps.deleteLogin).toHaveBeenCalledWith('ben');
+  });
+
+  it('reports why adding failed even when removing the login fails too', async () => {
+    const failure = new Error('Database down');
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const deps = fakeDeps({
+      addChild: () => Promise.reject(failure),
+      deleteLogin: () => Promise.reject(new Error('Auth down')),
+    });
+
+    await expect(addChild('Bearer anna-token', { displayName: 'Ben' }, deps)).rejects.toBe(failure);
+    expect(error).toHaveBeenCalledOnce();
   });
 });

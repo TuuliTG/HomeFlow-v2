@@ -47,7 +47,8 @@ export function HouseholdPage() {
       <div className="flex flex-col gap-6">
         {isAdult && <InviteCode code={inviteCode} />}
         <MemberList householdId={id} currentUserId={user.id} onSignInCode={showCode} />
-        {shownCode && <SignInCodeCard {...shownCode} />}
+        {/* Announced to screen readers when a code appears or changes. */}
+        <div aria-live="polite">{shownCode && <SignInCodeCard {...shownCode} />}</div>
         {isAdult && <AddChildForm householdId={id} onAdded={showCode} />}
       </div>
     </>

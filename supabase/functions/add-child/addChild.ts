@@ -25,6 +25,8 @@ export class NotAnAdultError extends Error {
 export interface AddChildDependencies {
   /** The user the access token belongs to, or null for a missing or invalid one. */
   userIdFromToken: (token: string) => Promise<string | null>;
+  /** Whether the user is an adult in a household, checked before a login is made for nothing. */
+  isAdult: (userId: string) => Promise<boolean>;
   /** Creates a login for the child, with an address that receives no mail; resolves to its user id. */
   createChildLogin: () => Promise<string>;
   deleteLogin: (userId: string) => Promise<void>;
@@ -54,11 +56,17 @@ export async function addChild(
     return failure(400, 'invalid_name');
   }
 
+  if (!(await deps.isAdult(adultId))) return failure(403, 'not_an_adult');
+
   const childId = await deps.createChildLogin();
   try {
     return { status: 200, body: await deps.addChild(adultId, childId, displayName) };
   } catch (error) {
-    await deps.deleteLogin(childId);
+    // Failing to clean up mustn't hide why adding failed; the stray login can't sign in anyway.
+    await deps.deleteLogin(childId).catch((deleteError: unknown) => {
+      console.error('add-child: could not remove the unused login', childId, deleteError);
+    });
+    // add_child() checks again, in case the user was made a child meanwhile.
     if (error instanceof NotAnAdultError) return failure(403, 'not_an_adult');
     throw error;
   }

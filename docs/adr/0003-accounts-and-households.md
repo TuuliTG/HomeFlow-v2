@@ -41,7 +41,8 @@ little personal data as possible, and joining a family must be low effort withou
   (the owner resets passwords with SQL, see README). Both need custom SMTP to fix.
 - A child with their own email still joins as an adult until an adult marks them.
 - A child without email who logs out, or whose device storage is cleared, needs a new code from an adult. Guessing
-  a code needs about 2^40 tries within 15 minutes; there is no further rate limit.
+  a code means trying a share of 32^8 (about 10^12) codes within 15 minutes, fewer the more codes are live at once;
+  there is no further rate limit.
 - Invite codes can't be rotated yet; there is no leaving a household or deleting an account in the app.
 - Supporting several households per user means replacing `current_household_id()` and the unique membership.
 

@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 
 import type { SignInCode } from '@/features/household/household';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -16,10 +16,16 @@ function readable(code: string): string {
 /** A child's one-time sign-in code, for an adult to give them, with how and until when to use it. */
 export function SignInCodeCard({ childName, signInCode }: SignInCodeCardProps) {
   const headingId = useId();
+  const ref = useRef<HTMLElement>(null);
   const t = useMessages();
   const copy = t.household.signInCode;
+  // A new code shows below the member list, possibly off screen on a phone: bring it into view.
+  useEffect(() => {
+    ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [signInCode.code]);
   return (
     <section
+      ref={ref}
       aria-labelledby={headingId}
       className="bg-brand-50 flex flex-col gap-2 rounded-2xl border border-indigo-200 p-4"
     >

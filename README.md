@@ -15,7 +15,6 @@ live and members can get push notifications, including reminders they set for th
 Adults can mark other members as children on the household page, or add a child without email who signs in on their
 own device with a one-time code; children see and do only the tasks an adult marked "Children can do it"
 ([ADR 0003](docs/adr/0003-accounts-and-households.md)).
-
 The Rewards screen holds family goals (optionally with a minimum from each member) and personal goals that points
 from shared tasks count towards; a reached goal's reward is claimed and kept as history ([ADR 0007](docs/adr/0007-goals-and-rewards.md)).
 The app speaks English and Finnish: the browser's language by default, changeable on the Me screen
