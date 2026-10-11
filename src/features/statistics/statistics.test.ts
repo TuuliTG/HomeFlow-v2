@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  comparedMembers,
+  comparisonOf,
   fairnessOf,
+  groupOf,
+  hasMemberGroups,
   type MemberContribution,
   periodStart,
   rankBy,
@@ -86,5 +90,42 @@ describe('fairnessOf', () => {
   it('has no score for a single member or when there is nothing yet', () => {
     expect(fairnessOf([points(3)], 'points')).toBeNull();
     expect(fairnessOf([points(0), points(0)], 'points')).toBeNull();
+  });
+});
+
+describe('comparing members', () => {
+  const ben = { ...anna, userId: 'ben', displayName: 'Ben' };
+  const cleo = { ...anna, userId: 'cleo', displayName: 'Cleo', isChild: true };
+  const dan = { ...anna, userId: 'dan', displayName: 'Dan', isChild: true };
+  const family = [anna, ben, cleo, dan];
+
+  it('compares everyone, only the adults, only the children, or members chosen one by one', () => {
+    expect(comparedMembers(family, 'everyone')).toEqual(family);
+    expect(comparedMembers(family, 'adults')).toEqual([anna, ben]);
+    expect(comparedMembers(family, 'children')).toEqual([cleo, dan]);
+    expect(comparedMembers(family, ['dan', 'anna'])).toEqual([anna, dan]);
+  });
+
+  it('compares everyone when no one matches', () => {
+    expect(comparedMembers([anna, ben], 'children')).toEqual([anna, ben]);
+    expect(comparedMembers(family, ['someone-who-left'])).toEqual(family);
+  });
+
+  it('names the group the members make, if any', () => {
+    expect(groupOf(family, family)).toBe('everyone');
+    expect(groupOf(family, [cleo, dan])).toBe('children');
+    expect(groupOf(family, [anna, cleo])).toBeNull();
+  });
+
+  it('compares members as a group when they make one, otherwise one by one', () => {
+    expect(comparisonOf(family, [anna, ben])).toBe('adults');
+    expect(comparisonOf(family, family)).toBe('everyone');
+    expect(comparisonOf(family, [anna, cleo, dan])).toEqual(['anna', 'cleo', 'dan']);
+  });
+
+  it('has groups to compare only with both adults and children', () => {
+    expect(hasMemberGroups(family)).toBe(true);
+    expect(hasMemberGroups([anna, ben])).toBe(false);
+    expect(hasMemberGroups([cleo, dan])).toBe(false);
   });
 });

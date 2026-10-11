@@ -38,6 +38,73 @@ export interface MemberContribution {
   created: number;
 }
 
+/** The groups of members the Statistics screen can compare at once. */
+export const memberGroups = ['everyone', 'adults', 'children'] as const;
+
+export type MemberGroup = (typeof memberGroups)[number];
+
+/** Who the Statistics screen compares: a group of members, or members chosen one by one by user id. */
+export type Comparison = MemberGroup | readonly string[];
+
+function membersOf(
+  contributions: MemberContribution[],
+  comparison: Comparison,
+): MemberContribution[] {
+  switch (comparison) {
+    case 'everyone':
+      return contributions;
+    case 'adults':
+      return contributions.filter((member) => !member.isChild);
+    case 'children':
+      return contributions.filter((member) => member.isChild);
+    default:
+      return contributions.filter((member) => comparison.includes(member.userId));
+  }
+}
+
+/**
+ * The members compared, in the order they joined; everyone when no one matches (e.g. children in a
+ * family without any, or members who have left).
+ */
+export function comparedMembers(
+  contributions: MemberContribution[],
+  comparison: Comparison,
+): MemberContribution[] {
+  const members = membersOf(contributions, comparison);
+  return members.length > 0 ? members : contributions;
+}
+
+/** The group that is exactly these members, if there is one. */
+export function groupOf(
+  contributions: MemberContribution[],
+  members: MemberContribution[],
+): MemberGroup | null {
+  return (
+    memberGroups.find((group) => {
+      const inGroup = membersOf(contributions, group);
+      return (
+        inGroup.length === members.length && inGroup.every((member) => members.includes(member))
+      );
+    }) ?? null
+  );
+}
+
+/** How to compare these members: as a group when they make one, otherwise one by one. */
+export function comparisonOf(
+  contributions: MemberContribution[],
+  members: MemberContribution[],
+): Comparison {
+  return groupOf(contributions, members) ?? members.map((member) => member.userId);
+}
+
+/** Whether the family has both adults and children, so comparing either group on its own means something. */
+export function hasMemberGroups(contributions: MemberContribution[]): boolean {
+  return (
+    contributions.some((member) => member.isChild) &&
+    contributions.some((member) => !member.isChild)
+  );
+}
+
 /** What the Statistics screen compares members by, each on its own. */
 export type Metric = 'points' | 'physicalPoints' | 'metaPoints' | 'created';
 

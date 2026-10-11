@@ -129,6 +129,69 @@ describe('statistics page', () => {
     expect(router.state.location.search).toBe('?period=all');
   });
 
+  it('compares only the adults, the children or members chosen one by one, kept in the address', async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    const cleo = fakeAuthBackend.addProfile('cleo@example.com', 'Cleo');
+    fakeHouseholdBackend.addMember(cleo.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(cleo.id, true);
+    addTask(anna.id, 'Vacuum', 5);
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Tidy room',
+      type: 'physical',
+      points: 2,
+      forChildren: true,
+    });
+    fakeTasksBackend.completeTaskAs(ben.id, 'task:0', '2026-10-09');
+    fakeTasksBackend.completeTaskAs(cleo.id, 'task:1', '2026-10-09');
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/statistics');
+
+    await screen.findByRole('region', { name: 'Points earned' });
+    expect(screen.getByRole('radio', { name: 'Everyone' })).toBeChecked();
+    expect(rows('Points earned')).toEqual([
+      'Ben5 points · 1 task done',
+      'Cleo2 points · 1 task done',
+      'You0 points · 0 tasks done',
+    ]);
+
+    await user.click(screen.getByRole('radio', { name: 'Adults' }));
+    expect(rows('Points earned')).toEqual([
+      'Ben5 points · 1 task done',
+      'You0 points · 0 tasks done',
+    ]);
+    expect(metric('Points earned')).toHaveTextContent('Fairness0/ 100Uneven');
+    expect(rows('Tasks created')).toEqual(['You2 tasks', 'Ben0 tasks']);
+    expect(screen.getByRole('checkbox', { name: 'Cleo' })).not.toBeChecked();
+    expect(router.state.location.search).toBe('?compare=adults');
+
+    await user.click(screen.getByRole('checkbox', { name: 'Cleo' }));
+    await user.click(screen.getByRole('checkbox', { name: 'You' }));
+    expect(rows('Points earned')).toEqual([
+      'Ben5 points · 1 task done',
+      'Cleo2 points · 1 task done',
+    ]);
+    expect(screen.getByRole('radio', { name: 'Everyone' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Adults' })).not.toBeChecked();
+    expect(router.state.location.search).toBe(
+      `?compare=${encodeURIComponent(`${ben.id},${cleo.id}`)}`,
+    );
+
+    await user.click(screen.getByRole('checkbox', { name: 'Ben' }));
+    expect(rows('Points earned')).toEqual(['Cleo2 points · 1 task done']);
+    expect(screen.getByRole('radio', { name: 'Children' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Cleo' })).toBeDisabled();
+  });
+
+  it('has no members to choose between in a family of two', async () => {
+    logInAsFamilyMember();
+    addBen();
+    renderAppAt('/statistics');
+
+    await screen.findByRole('region', { name: 'Points earned' });
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
   it('leaves out private tasks', async () => {
     const anna = logInAsFamilyMember();
     addBen();
