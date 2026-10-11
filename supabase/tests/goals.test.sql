@@ -3,7 +3,7 @@
 -- before the goals were set don't count. (now() is the same all through the transaction.)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -208,6 +208,21 @@ select throws_ok(
 select is(
   (select count(*)::integer from public.goal_participants),
   7, 'members see who takes part in their household''s goals only'
+);
+select throws_ok(
+  $$ select public.add_shared_goal('Holiday', 5, '[{"user_id": "22222222-2222-2222-2222-222222222222"},
+       {"user_id": "22222222-2222-2222-2222-222222222222"}]') $$,
+  '23514', null,
+  'nobody takes part twice'
+);
+-- Ben deletes his account: he no longer takes part, and his points stop counting.
+reset role;
+delete from auth.users where id = '22222222-2222-2222-2222-222222222222';
+set local role authenticated;
+select results_eq(
+  $$ select points, participants from public.household_goals() where title = 'Bike' $$,
+  $$ values (0, '[]'::jsonb) $$,
+  'a participant who deletes their account stops taking part'
 );
 
 -- Carl's household is separate.

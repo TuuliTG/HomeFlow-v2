@@ -65,7 +65,7 @@ export const rewards: Messages['rewards'] = {
     participantsHint:
       'Voit pyytää jokaiselta vähimmäismäärän, esimerkiksi nuoremmalta lapselta vähemmän. Tavoite saavutetaan vasta, kun jokainen on ansainnut omansa, jottei kukaan tee kaikkea yksin.',
     minimum: 'Vähintään',
-    minimumFor: (name) => `Vähimmäispisteet: ${name} (vapaaehtoinen)`,
+    minimumFor: (name) => `Vähintään (vapaaehtoinen): ${name}`,
     submit: 'Aseta tavoite',
     checkDetails: 'Tarkista tavoitteen tiedot.',
     saveFailed: 'Tavoitetta ei voitu tallentaa. Yritä uudelleen.',

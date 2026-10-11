@@ -49,8 +49,8 @@ create policy "Adults can add personal goals for their household"
 
 -- Sets a shared goal for the chosen members of the household, each with an optional minimum:
 -- participants = [{"user_id": "…", "min_points": 3 | null}, …]. Only adults can. Raises insufficient_privilege
--- (42501) for a child or someone outside the household, and check_violation (23514) for no participants, a minimum
--- below 1, or minimums that together are more than the target. Returns the new goal's id.
+-- (42501) for a child or someone outside the household, and check_violation (23514) for no participants, someone
+-- listed twice, a minimum below 1, or minimums that together are more than the target. Returns the new goal's id.
 create function public.add_shared_goal(title text, target_points integer, participants jsonb)
 returns uuid
 language plpgsql
@@ -75,6 +75,12 @@ begin
       )
   ) then
     raise exception 'Only members of the household take part' using errcode = '42501';
+  end if;
+  if (
+    select count(distinct c.user_id)
+      from jsonb_to_recordset(add_shared_goal.participants) as c (user_id uuid, min_points integer)
+  ) <> jsonb_array_length(add_shared_goal.participants) then
+    raise exception 'Someone is listed twice' using errcode = '23514';
   end if;
   if (
     select coalesce(sum(c.min_points), 0)
@@ -122,9 +128,9 @@ as $$
     );
 $$;
 
--- What each participant of a shared goal who is still in the household has earned towards it, with their minimum,
--- in the order they joined (same points as goal_points()). Participants who have left aren't listed, though their
--- points still count towards the total.
+-- What each participant of a shared goal has earned towards it, with their minimum, in the order they joined (same
+-- points as goal_points()). A member leaves only by deleting their account, which removes them as a participant, and
+-- their tasks no longer say who did them, so their points stop counting.
 create function private.goal_participant_points(goal public.goals)
 returns table (user_id uuid, display_name text, points integer, min_points integer, joined_at timestamptz)
 language sql
@@ -148,8 +154,8 @@ $$;
 revoke execute on function private.goal_participant_points(public.goals) from public;
 grant execute on function private.goal_participant_points(public.goals) to authenticated;
 
--- A goal is reached when its points reach the target and every participant still in the household has earned their
--- minimum, if they have one.
+-- A goal is reached when its points reach the target and every participant has earned their minimum, if they have
+-- one.
 create or replace function private.goal_is_reached(goal public.goals)
 returns boolean
 language sql

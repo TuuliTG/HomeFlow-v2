@@ -44,7 +44,7 @@ function pointsOf(goal: StoredGoal, doneBy = goal.ownerId): number {
     .reduce((total, task) => total + (task.points ?? 0), 0);
 }
 
-/** What each participant still in the household has earned towards a shared goal, in the order they joined. */
+/** What each participant has earned towards a shared goal, in the order they joined. */
 function participantPointsOf(goal: StoredGoal): Goal['participants'] {
   return fakeHouseholdBackend.memberIdsOf(goal.householdId).flatMap((id) => {
     const participant = goal.participants.find(({ userId }) => userId === id);

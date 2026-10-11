@@ -19,12 +19,14 @@ together, and members want small personal goals of their own; both must make cle
   claims it. Shared goals are added only by `add_shared_goal(title, target_points, participants)` (security
   definer), which checks the caller is an adult and every participant is in the household, and inserts the goal
   and its participants together; `goal_participants` has no insert grant. Adults delete any open goal.
-- **Minimum per participant**: each participant can have their own `min_points` (≥ 1, together at most
-  `target_points`), so one member can't reach it alone and a younger child can be asked for less. A goal is reached
-  only when the total reaches the target _and_ every participant still in the household has earned their minimum
-  (`private.goal_participant_points()`, `private.goal_is_reached()`); participants who left still count towards
-  the total but aren't required. Someone who joins later isn't added to existing goals. When this replaced the
-  single `min_points_per_member`, existing shared goals got every then-current member as a participant with it.
+- **Minimum per participant**: each participant can have their own `min_points` (≥ 1; `add_shared_goal()` checks
+  they add up to at most `target_points`), so one member can't reach it alone and a younger child can be asked for
+  less. A goal is reached only when the total reaches the target _and_ every participant has earned their minimum
+  (`private.goal_participant_points()`, `private.goal_is_reached()`). Someone who joins later isn't added to
+  existing goals. A member leaves only by deleting their account: they stop taking part and, since their tasks no
+  longer say who did them, their points stop counting (adults can delete a goal nobody can reach any more). When
+  this replaced the single `min_points_per_member`, existing shared goals got every then-current member as a
+  participant with that minimum each, even where those add up to more than the target.
 - **Progress is counted, not stored**: `private.goal_points(goal)` sums the points of shared tasks done from the
   goal's `created_at` until it was claimed (by its owner for a personal goal). `household_goals()` (security
   invoker) returns the household's goals with their points, `reached`, `owner_name` and, for shared goals,

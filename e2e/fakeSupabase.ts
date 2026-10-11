@@ -588,7 +588,7 @@ export async function fakeSupabase(page: Page) {
       .reduce((total, task) => total + (task.points ?? 0), 0);
   }
 
-  /** Like goal_participant_points(): what each participant still in the household has earned. */
+  /** Like goal_participant_points(): what each participant has earned. */
   function participantPoints(goal: GoalRow) {
     return (members.get(goal.household_id) ?? []).flatMap((id) => {
       const participant = goal.participants.find(({ user_id }) => user_id === id);

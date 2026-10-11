@@ -95,8 +95,7 @@ export interface Goal {
    */
   points: number;
   /**
-   * Who takes part in a shared goal and is still in the household, in the order they joined; empty for
-   * a personal goal.
+   * Who takes part in a shared goal, in the order they joined; empty for a personal goal.
    */
   participants: GoalParticipant[];
   /** Whether the points reach the target and every participant has earned their minimum. */
