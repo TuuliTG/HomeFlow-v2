@@ -1,13 +1,10 @@
 import { z } from 'zod';
 
+import type { Messages } from '@/lib/i18n/i18n';
+
 export const taskTypes = ['physical', 'meta'] as const;
 
 export type TaskType = (typeof taskTypes)[number];
-
-export const taskTypeLabels: Record<TaskType, string> = {
-  physical: 'Physical',
-  meta: 'Meta work',
-};
 
 export const TITLE_MAX_LENGTH = 80;
 
@@ -30,55 +27,46 @@ export const UNDO_WINDOW_MS = 60 * 60 * 1000;
 /** How often a task can repeat, in days; offered as choices when creating a task. */
 export const repeatChoices = [1, 2, 3, 7, 14, 30] as const;
 
-/** "Every day", "Every 3 days", "Every week", "Every 2 weeks". */
-export function repeatLabel(days: number): string {
-  if (days === 1) return 'Every day';
-  if (days === 7) return 'Every week';
-  if (days % 7 === 0) return `Every ${String(days / 7)} weeks`;
-  return `Every ${String(days)} days`;
-}
+/** Checks a task's details, explaining what to fix in the user's language. */
+export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
+  z
+    .object({
+      title: z
+        .string()
+        .trim()
+        .min(1, errors.titleRequired)
+        .max(TITLE_MAX_LENGTH, errors.titleTooLong(TITLE_MAX_LENGTH)),
+      /** More detail when the title isn't enough; null when there is none. */
+      description: z
+        .string()
+        .trim()
+        .min(1)
+        .max(DESCRIPTION_MAX_LENGTH, errors.descriptionTooLong(DESCRIPTION_MAX_LENGTH))
+        .nullable(),
+      type: z.enum(taskTypes),
+      /** Null for a private task: only shared tasks earn points. */
+      points: z.coerce
+        .number()
+        .int(errors.pointsRange)
+        .min(1, errors.pointsRange)
+        .max(10, errors.pointsRange)
+        .nullable(),
+      /** Days after it is done that the task comes back; null for a one-off task. */
+      repeatEveryDays: z.number().int().min(1).max(365).nullable(),
+      /** Local date (YYYY-MM-DD) the task should be done by, if any. */
+      dueOn: z.iso.date(errors.invalidDueDate).nullable(),
+      /**
+       * Seen only by whoever added it, not shared with the family. Chosen when adding the task. Private
+       * tasks have no points and don't count in statistics.
+       */
+      isPrivate: z.boolean(),
+    })
+    .refine((task) => (task.points === null) === task.isPrivate, {
+      path: ['points'],
+      message: errors.onlySharedHavePoints,
+    });
 
-export const newTaskSchema = z
-  .object({
-    title: z
-      .string()
-      .trim()
-      .min(1, 'Give the task a name.')
-      .max(TITLE_MAX_LENGTH, `Keep the name to ${TITLE_MAX_LENGTH} characters or fewer.`),
-    /** More detail when the title isn't enough; null when there is none. */
-    description: z
-      .string()
-      .trim()
-      .min(1)
-      .max(
-        DESCRIPTION_MAX_LENGTH,
-        `Keep the description to ${String(DESCRIPTION_MAX_LENGTH)} characters or fewer.`,
-      )
-      .nullable(),
-    type: z.enum(taskTypes),
-    /** Null for a private task: only shared tasks earn points. */
-    points: z.coerce
-      .number()
-      .int('Points must be a whole number from 1 to 10.')
-      .min(1, 'Points must be a whole number from 1 to 10.')
-      .max(10, 'Points must be a whole number from 1 to 10.')
-      .nullable(),
-    /** Days after it is done that the task comes back; null for a one-off task. */
-    repeatEveryDays: z.number().int().min(1).max(365).nullable(),
-    /** Local date (YYYY-MM-DD) the task should be done by, if any. */
-    dueOn: z.iso.date('Pick a valid due date.').nullable(),
-    /**
-     * Seen only by whoever added it, not shared with the family. Chosen when adding the task. Private
-     * tasks have no points and don't count in statistics.
-     */
-    isPrivate: z.boolean(),
-  })
-  .refine((task) => (task.points === null) === task.isPrivate, {
-    path: ['points'],
-    message: 'Only shared tasks have points.',
-  });
-
-export type NewTask = z.infer<typeof newTaskSchema>;
+export type NewTask = z.infer<ReturnType<typeof newTaskSchema>>;
 
 export interface Task extends NewTask {
   id: string;

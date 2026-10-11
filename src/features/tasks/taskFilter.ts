@@ -7,23 +7,6 @@ export const taskFilters = ['all', 'today', 'week', 'undated', 'available'] as c
 /** Which tasks the board shows; kept in the address as `?show=<filter>`, except `all`. */
 export type TaskFilter = (typeof taskFilters)[number];
 
-export const taskFilterLabels: Record<TaskFilter, string> = {
-  all: 'All',
-  today: 'Today',
-  week: 'This week',
-  undated: 'No due date',
-  available: 'Available',
-};
-
-/** What the board says when the filter leaves nothing to show. */
-export const taskFilterEmptyMessages: Record<TaskFilter, string> = {
-  all: 'No tasks yet. Create the first one!',
-  today: 'Nothing is due today.',
-  week: 'Nothing is due this week.',
-  undated: 'Every task has a due date.',
-  available: 'Every task has been picked up.',
-};
-
 export function parseTaskFilter(value: string | null): TaskFilter {
   return taskFilters.find((filter) => filter === value) ?? 'all';
 }

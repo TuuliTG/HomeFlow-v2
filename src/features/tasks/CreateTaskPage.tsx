@@ -12,6 +12,7 @@ import {
   useTaskSuggestions,
 } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
+import { useMessages } from '@/lib/i18n/i18n';
 
 export function CreateTaskPage() {
   const user = useLoggedInUser();
@@ -20,6 +21,7 @@ export function CreateTaskPage() {
   const favourites = useFavouriteTasks(user.id);
   const setFavourite = useSetFavouriteTask(user.id);
   const navigate = useNavigate();
+  const t = useMessages();
   const [searchParams] = useSearchParams();
   /** The name of an earlier task to add again (`paths.addTaskAgain`). */
   const againTitle = searchParams.get('again');
@@ -29,9 +31,9 @@ export function CreateTaskPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Tasks"
-        title="New task"
-        description="Adding a task is meta work, and it counts."
+        eyebrow={t.tasks.eyebrow}
+        title={t.tasks.newTask}
+        description={t.taskForm.create.description}
       />
       {againTitle !== null && suggestions.isPending ? (
         <LoadingMessage />
@@ -46,7 +48,7 @@ export function CreateTaskPage() {
               setFavourite.mutate({ title, isFavourite });
             },
           }}
-          submitLabel="Create task"
+          submitLabel={t.taskForm.create.submit}
           isSaving={addTask.isPending}
           onSave={async (task) => {
             await addTask.mutateAsync(task);

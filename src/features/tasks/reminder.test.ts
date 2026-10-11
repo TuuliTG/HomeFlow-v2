@@ -5,6 +5,7 @@ import {
   suggestedReminderTime,
   toDateTimeLocal,
 } from '@/features/tasks/reminder';
+import { en } from '@/locales/en';
 
 // Thu 9 Oct 2026, 14:20 local time.
 const now = new Date(2026, 9, 9, 14, 20);
@@ -24,6 +25,6 @@ describe('reminder times', () => {
     [new Date(2026, 9, 10, 9, 5), 'Reminder tomorrow at 9:05'],
     [new Date(2026, 9, 17, 9, 0), 'Reminder Sat 17 Oct at 9:00'],
   ])('describes %s', (remindAt, description) => {
-    expect(describeReminder(remindAt.toISOString(), now)).toBe(description);
+    expect(describeReminder(remindAt.toISOString(), now, en)).toBe(description);
   });
 });

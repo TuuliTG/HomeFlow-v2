@@ -1,4 +1,5 @@
-import { addDays, formatShortDate, fromIsoDate, toIsoDate } from '@/lib/dates';
+import { addDays, fromIsoDate, toIsoDate } from '@/lib/dates';
+import type { Messages } from '@/lib/i18n/i18n';
 
 /** How many days back the news goes, today included. */
 const NEWS_DAYS = 7;
@@ -35,7 +36,7 @@ export interface NewsItem {
 }
 
 /** The points one member earned in a day, physical and meta work apart. */
-export interface DaySummary {
+interface DaySummary {
   member: NewsPerson;
   physicalPoints: number;
   metaPoints: number;
@@ -55,10 +56,10 @@ export function newsStart(todayDate: string): Date {
   return fromIsoDate(addDays(todayDate, 1 - NEWS_DAYS));
 }
 
-function dayLabel(date: string, todayDate: string): string {
-  if (date === todayDate) return 'Today';
-  if (date === addDays(todayDate, -1)) return 'Yesterday';
-  return formatShortDate(fromIsoDate(date));
+function dayLabel(date: string, todayDate: string, t: Messages): string {
+  if (date === todayDate) return t.common.today;
+  if (date === addDays(todayDate, -1)) return t.common.yesterday;
+  return t.common.shortDate(fromIsoDate(date));
 }
 
 function summarise(items: NewsItem[]): DaySummary[] {
@@ -78,13 +79,13 @@ function summarise(items: NewsItem[]): DaySummary[] {
 }
 
 /** Splits news items, newest first, by the local day they were done, with each member's points that day. */
-export function groupByDay(items: NewsItem[], todayDate: string): NewsDay[] {
+export function groupByDay(items: NewsItem[], todayDate: string, t: Messages): NewsDay[] {
   const days: (NewsDay & { date: string })[] = [];
   for (const item of items) {
     const date = toIsoDate(new Date(item.completedAt));
     const last = days.at(-1);
     if (last?.date === date) last.items.push(item);
-    else days.push({ date, label: dayLabel(date, todayDate), summaries: [], items: [item] });
+    else days.push({ date, label: dayLabel(date, todayDate, t), summaries: [], items: [item] });
   }
   return days.map(({ label, items: dayItems }) => ({
     label,
@@ -93,35 +94,11 @@ export function groupByDay(items: NewsItem[], todayDate: string): NewsDay[] {
   }));
 }
 
-function pointsText(points: number): string {
-  return points === 1 ? '1 point' : `${String(points)} points`;
-}
-
-/** "Ben earned 10 points: 7 physical, 3 meta work", or "You earned 3 points of meta work". */
-export function describeSummary(summary: DaySummary, name: string): string {
-  const { physicalPoints, metaPoints } = summary;
-  if (metaPoints === 0) return `${name} earned ${pointsText(physicalPoints)} of physical work`;
-  if (physicalPoints === 0) return `${name} earned ${pointsText(metaPoints)} of meta work`;
-  return `${name} earned ${pointsText(physicalPoints + metaPoints)}: ${String(physicalPoints)} physical, ${String(metaPoints)} meta work`;
-}
-
-/** "Anna", "Anna and Ben", "Anna, Ben and Carl". */
-export function joinNames(names: string[]): string {
-  if (names.length <= 1) return names.join('');
-  return `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''}`;
-}
-
 /** Comments are trimmed and 1–500 characters, like `task_comments.body`. */
 export const COMMENT_MAX_LENGTH = 500;
 
-/** "14:05", the local time of an ISO timestamp. */
-export function formatTime(timestamp: string): string {
-  const date = new Date(timestamp);
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}
-
 /** How a person is named to the user: "You", their display name, or "Someone". */
-export function nameFor(person: NewsPerson, userId: string): string {
-  if (person.userId === userId) return 'You';
-  return person.name ?? 'Someone';
+export function nameFor(person: NewsPerson, userId: string, t: Messages): string {
+  if (person.userId === userId) return t.common.you;
+  return person.name ?? t.common.someone;
 }

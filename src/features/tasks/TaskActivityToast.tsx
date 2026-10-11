@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import { TASK_ACTIVITY_DURATION_MS, useTaskActivity } from '@/features/tasks/useTaskActivity';
 import { useLoggedInUser } from '@/lib/auth';
+import { useMessages } from '@/lib/i18n/i18n';
 
 /**
  * Live updates while the app is open: refreshes the task board when anyone in the household adds a
@@ -11,6 +12,7 @@ import { useLoggedInUser } from '@/lib/auth';
 export function TaskActivityToast() {
   const user = useLoggedInUser();
   const { activity, dismiss } = useTaskActivity(user.id);
+  const { common, tasks } = useMessages();
 
   useEffect(() => {
     if (!activity) return;
@@ -29,7 +31,11 @@ export function TaskActivityToast() {
         ].join(' ')}
       >
         <p role="status" className="min-w-0 truncate">
-          {activity && <span key={activity.id}>{activity.message}</span>}
+          {activity && (
+            <span key={activity.id}>
+              {tasks.activity.added(activity.creatorName ?? common.someone, activity.title)}
+            </span>
+          )}
         </p>
         {activity && (
           <button
@@ -38,7 +44,7 @@ export function TaskActivityToast() {
             className="shrink-0 rounded-full px-2 py-0.5 text-slate-300 hover:bg-slate-700 hover:text-white"
           >
             <span aria-hidden="true">✕</span>
-            <span className="sr-only">Dismiss</span>
+            <span className="sr-only">{tasks.activity.dismiss}</span>
           </button>
         )}
       </div>

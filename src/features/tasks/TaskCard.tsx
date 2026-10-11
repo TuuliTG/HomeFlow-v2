@@ -5,7 +5,8 @@ import { paths } from '@/app/paths';
 
 import { describeDueDate } from '@/features/tasks/dueDate';
 import { today } from '@/lib/dates';
-import { isToDoBy, repeatLabel, type Task, taskTypeLabels } from '@/features/tasks/task';
+import { type Messages, useMessages } from '@/lib/i18n/i18n';
+import { isToDoBy, type Task } from '@/features/tasks/task';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
 import { useCompleteTask, usePickUpTask, usePutBackTask } from '@/features/tasks/useTasks';
@@ -17,16 +18,23 @@ interface TaskCardProps {
   titleLevel: 3 | 4;
 }
 
-/** "you", their name, or "someone" if they haven't chosen a name or have deleted their account. */
-function personLabel(userId: string | null, name: string | null, currentUserId: string): string {
-  if (userId === currentUserId) return 'you';
-  return name ?? 'someone';
+type ByPerson = Messages['tasks']['card']['addedBy'];
+
+/** "Added by you", by their name, or by "someone" if they haven't chosen a name or have deleted their account. */
+function byPerson(
+  phrases: ByPerson,
+  person: { userId: string | null; name: string | null },
+  currentUserId: string,
+): string {
+  if (person.userId === currentUserId) return phrases.you;
+  return person.name === null ? phrases.someone : phrases.named(person.name);
 }
 
 const tagClassName = 'w-fit rounded-full px-2 py-0.5 text-xs font-medium';
 
 export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
   const titleId = useId();
+  const t = useMessages();
 
   return (
     <li
@@ -42,7 +50,9 @@ export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
         />
         <div className="-mt-2 -mr-2 flex shrink-0 items-center gap-1">
           {task.points !== null && (
-            <span className="text-brand-900 text-sm font-semibold">{task.points} points</span>
+            <span className="text-brand-900 text-sm font-semibold">
+              {t.common.points(task.points)}
+            </span>
           )}
           <TaskFavouriteStar title={task.title} currentUserId={currentUserId} />
         </div>
@@ -60,6 +70,7 @@ function TaskDetails({
   titleLevel,
 }: TaskCardProps & { titleId: string }) {
   const isMeta = task.type === 'meta';
+  const t = useMessages();
   const Title = titleLevel === 3 ? 'h3' : 'h4';
   return (
     <div className="flex flex-col gap-1">
@@ -76,46 +87,49 @@ function TaskDetails({
             isMeta ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700',
           ].join(' ')}
         >
-          {taskTypeLabels[task.type]}
+          {t.common.taskTypes[task.type]}
         </span>
         {task.isPrivate && (
-          <span className={`${tagClassName} bg-amber-100 text-amber-900`}>Private</span>
+          <span className={`${tagClassName} bg-amber-100 text-amber-900`}>
+            {t.tasks.card.private}
+          </span>
         )}
         {task.repeatEveryDays !== null && (
           <span className={`${tagClassName} bg-sky-100 text-sky-800`}>
-            {repeatLabel(task.repeatEveryDays)}
+            {t.tasks.repeat(task.repeatEveryDays)}
           </span>
         )}
       </div>
       {task.dueOn !== null && (
         <span className="text-xs font-medium text-slate-700">
-          {describeDueDate(task.dueOn, today())}
+          {describeDueDate(task.dueOn, today(), t)}
         </span>
       )}
       <span className="text-xs text-slate-500">
-        Added by {personLabel(task.createdBy, task.creatorName, currentUserId)}
+        {byPerson(
+          t.tasks.card.addedBy,
+          { userId: task.createdBy, name: task.creatorName },
+          currentUserId,
+        )}
       </span>
       {task.pickedUpBy !== null && (
         <span className="text-brand-900 text-xs font-medium">
-          Picked up by {personLabel(task.pickedUpBy, task.pickerName, currentUserId)}
+          {byPerson(
+            t.tasks.card.pickedUpBy,
+            { userId: task.pickedUpBy, name: task.pickerName },
+            currentUserId,
+          )}
         </span>
       )}
     </div>
   );
 }
 
-const failureMessages = {
-  complete: "We couldn't mark the task done. Try again.",
-  pickUp: "We couldn't pick up the task. Someone may have taken it first.",
-  putBack: "We couldn't put the task back. Try again.",
-};
+type Action = keyof Messages['tasks']['card']['failures'];
 
-/** The message for the first action that failed, if any. */
-function failureMessage(failed: Record<keyof typeof failureMessages, boolean>): string | undefined {
-  const action = (Object.keys(failureMessages) as (keyof typeof failureMessages)[]).find(
-    (key) => failed[key],
-  );
-  return action && failureMessages[action];
+/** The action that failed first, if any. */
+function failedAction(failed: Record<Action, boolean>): Action | undefined {
+  return (['complete', 'pickUp', 'putBack'] as const).find((action) => failed[action]);
 }
 
 /**
@@ -133,11 +147,13 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
   const completeTask = useCompleteTask(currentUserId);
   const pickUpTask = usePickUpTask(currentUserId);
   const putBackTask = usePutBackTask(currentUserId);
+  const { common, tasks } = useMessages();
+  const t = tasks.card;
   const [isConfirming, setIsConfirming] = useState(false);
   const isSomeoneElses = task.pickedUpBy !== null && task.pickedUpBy !== currentUserId;
   const pickUp = pickUpAction(task, currentUserId);
   const isBusy = completeTask.isPending || pickUpTask.isPending || putBackTask.isPending;
-  const failure = failureMessage({
+  const failure = failedAction({
     complete: completeTask.isError,
     pickUp: pickUpTask.isError,
     putBack: putBackTask.isError,
@@ -166,29 +182,29 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
     <>
       {failure && (
         <p role="alert" className="text-xs text-red-700">
-          {failure}
+          {t.failures[failure]}
         </p>
       )}
       {isConfirming ? (
         <ConfirmTakeOver
-          pickerName={task.pickerName ?? 'Someone'}
+          pickerName={task.pickerName ?? common.someone}
           onConfirm={markDone}
           onCancel={() => {
             setIsConfirming(false);
           }}
         />
       ) : (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Link
             to={paths.editTask(task.id)}
-            aria-label={`Edit: ${task.title}`}
+            aria-label={t.editLabel(task.title)}
             className="text-brand-900 mr-auto rounded-lg px-1 py-1.5 text-sm font-semibold underline-offset-2 hover:underline"
           >
-            Edit
+            {t.edit}
           </Link>
           {pickUp === 'putBack' &&
             button(
-              'Put back',
+              t.putBack,
               () => {
                 putBackTask.mutate(task.id);
               },
@@ -196,14 +212,14 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
             )}
           {pickUp === 'pickUp' &&
             button(
-              'Pick up',
+              t.pickUp,
               () => {
                 pickUpTask.mutate(task.id);
               },
               'border-brand-600 text-brand-900 hover:bg-brand-50',
             )}
           {button(
-            'Mark done',
+            t.markDone,
             () => {
               // Taking over someone else's task is allowed, but shouldn't happen by accident.
               if (isSomeoneElses) setIsConfirming(true);
@@ -225,27 +241,28 @@ interface ConfirmTakeOverProps {
 
 /** Asks before marking done a task another member has picked up. */
 function ConfirmTakeOver({ pickerName, onConfirm, onCancel }: ConfirmTakeOverProps) {
+  const t = useMessages();
   return (
     <div
       role="group"
-      aria-label={`Mark done for ${pickerName}?`}
+      aria-label={t.tasks.card.confirmTakeOverLabel(pickerName)}
       className="flex flex-col gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900"
     >
-      <p>{pickerName} has picked this up. Mark it done anyway?</p>
+      <p>{t.tasks.card.confirmTakeOver(pickerName)}</p>
       <div className="flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100"
         >
-          Cancel
+          {t.common.cancel}
         </button>
         <button
           type="button"
           onClick={onConfirm}
           className="bg-brand-600 hover:bg-brand-900 rounded-lg px-3 py-1.5 font-semibold text-white"
         >
-          Yes, I did it
+          {t.tasks.card.yesIDidIt}
         </button>
       </div>
     </div>

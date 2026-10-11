@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { Messages } from '@/lib/i18n/i18n';
+
 export const GOAL_TITLE_MAX_LENGTH = 80;
 export const MAX_TARGET_POINTS = 10000;
 
@@ -8,53 +10,47 @@ export const goalScopes = ['shared', 'personal'] as const;
 
 export type GoalScope = (typeof goalScopes)[number];
 
-export const goalScopeLabels: Record<GoalScope, string> = {
-  shared: 'The family',
-  personal: 'Just me',
-};
+/** Checks a new goal, explaining what to fix in the user's language. */
+export function newGoalSchema(t: Messages) {
+  const { errors } = t.rewards.form;
+  const targetPointsMessage = errors.targetPointsRange(MAX_TARGET_POINTS);
+  const minimumMessage = errors.minimumRange;
+  return z
+    .object({
+      /** The reward, e.g. "Pizza night". */
+      title: z
+        .string()
+        .trim()
+        .min(1, errors.rewardRequired)
+        .max(GOAL_TITLE_MAX_LENGTH, errors.rewardTooLong(GOAL_TITLE_MAX_LENGTH)),
+      /** The points that reach the goal. */
+      targetPoints: z.coerce
+        .number()
+        .int(targetPointsMessage)
+        .min(1, targetPointsMessage)
+        .max(MAX_TARGET_POINTS, targetPointsMessage),
+      scope: z.enum(goalScopes),
+      /**
+       * For a family goal, the points each member must earn towards it before it is reached, so one
+       * member can't reach it alone; null for none (and always for a personal goal).
+       */
+      minPointsPerMember: z
+        .number(minimumMessage)
+        .int(minimumMessage)
+        .min(1, minimumMessage)
+        .nullable(),
+    })
+    .refine((goal) => goal.minPointsPerMember === null || goal.scope === 'shared', {
+      path: ['minPointsPerMember'],
+      message: errors.minimumOnlyForFamily,
+    })
+    .refine(
+      (goal) => goal.minPointsPerMember === null || goal.minPointsPerMember <= goal.targetPoints,
+      { path: ['minPointsPerMember'], message: minimumMessage },
+    );
+}
 
-const targetPointsMessage = `Points needed must be a whole number from 1 to ${String(MAX_TARGET_POINTS)}.`;
-const minimumMessage =
-  'The minimum from each member must be a whole number from 1 to the points needed.';
-
-export const newGoalSchema = z
-  .object({
-    /** The reward, e.g. "Pizza night". */
-    title: z
-      .string()
-      .trim()
-      .min(1, 'Name the reward.')
-      .max(
-        GOAL_TITLE_MAX_LENGTH,
-        `Keep the reward to ${String(GOAL_TITLE_MAX_LENGTH)} characters or fewer.`,
-      ),
-    /** The points that reach the goal. */
-    targetPoints: z.coerce
-      .number()
-      .int(targetPointsMessage)
-      .min(1, targetPointsMessage)
-      .max(MAX_TARGET_POINTS, targetPointsMessage),
-    scope: z.enum(goalScopes),
-    /**
-     * For a family goal, the points each member must earn towards it before it is reached, so one
-     * member can't reach it alone; null for none (and always for a personal goal).
-     */
-    minPointsPerMember: z
-      .number(minimumMessage)
-      .int(minimumMessage)
-      .min(1, minimumMessage)
-      .nullable(),
-  })
-  .refine((goal) => goal.minPointsPerMember === null || goal.scope === 'shared', {
-    path: ['minPointsPerMember'],
-    message: 'Only family goals ask for a minimum from each member.',
-  })
-  .refine(
-    (goal) => goal.minPointsPerMember === null || goal.minPointsPerMember <= goal.targetPoints,
-    { path: ['minPointsPerMember'], message: minimumMessage },
-  );
-
-export type NewGoal = z.infer<typeof newGoalSchema>;
+export type NewGoal = z.infer<ReturnType<typeof newGoalSchema>>;
 
 /** A member of the household, as goals name them. */
 export interface GoalMember {
@@ -94,8 +90,8 @@ export function isManagedBy(goal: Goal, userId: string): boolean {
 }
 
 /** A member's display name, or "A family member" if they haven't chosen one. */
-export function nameOf(member: GoalMember): string {
-  return member.name ?? 'A family member';
+export function nameOf(member: GoalMember, t: Messages): string {
+  return member.name ?? t.rewards.aFamilyMember;
 }
 
 /** The members who have earned less than a family goal's minimum, with how many points they still need. */

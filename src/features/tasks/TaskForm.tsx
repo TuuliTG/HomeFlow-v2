@@ -8,7 +8,6 @@ import {
   type NewTask,
   newTaskSchema,
   repeatChoices,
-  repeatLabel,
   type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
@@ -16,6 +15,7 @@ import { PrivateTaskField } from '@/features/tasks/PrivateTaskField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
+import { useMessages } from '@/lib/i18n/i18n';
 
 const DEFAULT_POINTS = '3';
 
@@ -89,6 +89,7 @@ export function TaskForm({
   const [dueOn, setDueOn] = useState(initialValues.dueOn);
   const [isPrivate, setIsPrivate] = useState(initialValues.isPrivate);
   const [error, setError] = useState<FormError | null>(null);
+  const t = useMessages();
   const errorId = useId();
   const repeatHintId = useId();
   const titleRef = useRef<HTMLInputElement>(null);
@@ -121,7 +122,7 @@ export function TaskForm({
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
-    const parsed = newTaskSchema.safeParse({
+    const parsed = newTaskSchema(t).safeParse({
       title,
       type,
       points: isPrivate ? null : points,
@@ -133,12 +134,12 @@ export function TaskForm({
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
       const field = fieldOf(issue?.path[0]);
-      setError({ field, message: issue?.message ?? 'Check the task details.' });
+      setError({ field, message: issue?.message ?? t.taskForm.errors.checkDetails });
       fieldRefs[field].current?.focus();
       return;
     }
     onSave(parsed.data).catch(() => {
-      setError({ field: null, message: "We couldn't save the task. Try again." });
+      setError({ field: null, message: t.taskForm.errors.saveFailed });
     });
   }
 
@@ -162,14 +163,14 @@ export function TaskForm({
       />
 
       <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-        Description (optional)
+        {t.taskForm.description}
         <textarea
           name="description"
           ref={descriptionRef}
           rows={2}
           maxLength={DESCRIPTION_MAX_LENGTH}
           {...errorPropsFor('description')}
-          placeholder="e.g. The bins are behind the garage"
+          placeholder={t.taskForm.descriptionPlaceholder}
           value={description}
           onChange={(event) => {
             setDescription(event.target.value);
@@ -184,7 +185,7 @@ export function TaskForm({
 
       {!isPrivate && (
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-          Points
+          {t.taskForm.points}
           <input
             type="number"
             name="points"
@@ -204,7 +205,7 @@ export function TaskForm({
 
       <div className="flex gap-3">
         <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
-          Repeats
+          {t.taskForm.repeats}
           <select
             name="repeatEveryDays"
             aria-describedby={repeatEveryDays === '' ? undefined : repeatHintId}
@@ -214,16 +215,16 @@ export function TaskForm({
             }}
             className={inputClassName}
           >
-            <option value="">Doesn&apos;t repeat</option>
+            <option value="">{t.taskForm.doesNotRepeat}</option>
             {repeatChoices.map((days) => (
               <option key={days} value={days}>
-                {repeatLabel(days)}
+                {t.tasks.repeat(days)}
               </option>
             ))}
           </select>
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
-          Due date
+          {t.taskForm.dueDate}
           <input
             type="date"
             name="dueOn"
@@ -239,8 +240,7 @@ export function TaskForm({
       </div>
       {repeatEveryDays !== '' && (
         <p id={repeatHintId} className="-mt-3 text-sm text-slate-600">
-          Each time it&apos;s done, it comes back{' '}
-          {Number(repeatEveryDays) === 1 ? '1 day' : `${repeatEveryDays} days`} later.
+          {t.taskForm.repeatHint(Number(repeatEveryDays))}
         </p>
       )}
 

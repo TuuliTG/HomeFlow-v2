@@ -6,6 +6,9 @@ import {
   type Metric,
   rankBy,
 } from '@/features/statistics/statistics';
+import { type Messages, useMessages } from '@/lib/i18n/i18n';
+
+type WorkType = 'physical' | 'meta';
 
 interface MetricDetails {
   title: string;
@@ -21,7 +24,7 @@ interface MetricDetails {
 }
 
 interface BarSegment {
-  label: string;
+  kind: WorkType;
   value: number;
   className: string;
 }
@@ -29,54 +32,53 @@ interface BarSegment {
 const PHYSICAL_BAR = 'bg-brand-600';
 const META_BAR = 'bg-meta-500';
 
-const metricDetails: Record<Metric, MetricDetails> = {
-  points: {
-    title: 'Points earned',
-    description: 'From doing shared tasks, physical and meta work.',
-    summary: ({ points, done }) => pointsSummary(points, done),
-    empty: 'No points earned yet in this period.',
-    bar: ({ physicalPoints, metaPoints }) => [
-      { label: 'physical', value: physicalPoints, className: PHYSICAL_BAR },
-      { label: 'meta work', value: metaPoints, className: META_BAR },
-    ],
-    legend: [
-      { label: 'Physical', className: PHYSICAL_BAR },
-      { label: 'Meta work', className: META_BAR },
-    ],
-  },
-  physicalPoints: {
-    title: 'Points earned',
-    description: 'From doing physical tasks: cleaning, cooking, fixing.',
-    summary: ({ physicalPoints, physicalDone }) => pointsSummary(physicalPoints, physicalDone),
-    empty: 'No physical work points yet in this period.',
-    bar: ({ physicalPoints }) => [
-      { label: 'physical', value: physicalPoints, className: PHYSICAL_BAR },
-    ],
-  },
-  metaPoints: {
-    title: 'Points earned',
-    description: 'From doing meta work tasks: planning, booking, remembering.',
-    summary: ({ metaPoints, metaDone }) => pointsSummary(metaPoints, metaDone),
-    empty: 'No meta work points yet in this period.',
-    bar: ({ metaPoints }) => [{ label: 'meta work', value: metaPoints, className: META_BAR }],
-  },
-  created: {
-    title: 'Tasks created',
-    description: 'Adding shared tasks is meta work: planning and remembering.',
-    summary: ({ created }) => countOf(created, 'task'),
-    empty: 'No tasks created yet in this period.',
-    bar: ({ created }) => [{ label: 'tasks', value: created, className: META_BAR }],
-  },
-};
-
-/** "12 points · 3 tasks done" */
-function pointsSummary(points: number, done: number): string {
-  return `${countOf(points, 'point')} · ${countOf(done, 'task')} done`;
-}
-
-/** "1 point", "3 points". */
-function countOf(count: number, noun: string): string {
-  return `${String(count)} ${noun}${count === 1 ? '' : 's'}`;
+function metricDetails(metric: Metric, t: Messages): MetricDetails {
+  const { pointsSummary } = t.statistics;
+  const { description, empty } = t.statistics.metrics[metric];
+  const pointsTitle = t.statistics.pointsEarned;
+  switch (metric) {
+    case 'points':
+      return {
+        title: pointsTitle,
+        description,
+        empty,
+        summary: ({ points, done }) => pointsSummary(points, done),
+        bar: ({ physicalPoints, metaPoints }) => [
+          { kind: 'physical', value: physicalPoints, className: PHYSICAL_BAR },
+          { kind: 'meta', value: metaPoints, className: META_BAR },
+        ],
+        legend: [
+          { label: t.common.taskTypes.physical, className: PHYSICAL_BAR },
+          { label: t.common.taskTypes.meta, className: META_BAR },
+        ],
+      };
+    case 'physicalPoints':
+      return {
+        title: pointsTitle,
+        description,
+        empty,
+        summary: ({ physicalPoints, physicalDone }) => pointsSummary(physicalPoints, physicalDone),
+        bar: ({ physicalPoints }) => [
+          { kind: 'physical', value: physicalPoints, className: PHYSICAL_BAR },
+        ],
+      };
+    case 'metaPoints':
+      return {
+        title: pointsTitle,
+        description,
+        empty,
+        summary: ({ metaPoints, metaDone }) => pointsSummary(metaPoints, metaDone),
+        bar: ({ metaPoints }) => [{ kind: 'meta', value: metaPoints, className: META_BAR }],
+      };
+    case 'created':
+      return {
+        title: t.statistics.tasksCreated,
+        description,
+        empty,
+        summary: ({ created }) => t.statistics.tasksCount(created),
+        bar: ({ created }) => [{ kind: 'meta', value: created, className: META_BAR }],
+      };
+  }
 }
 
 /** One metric: its fairness score and each member's share, most first; `children` go above them. */
@@ -91,8 +93,9 @@ export function MetricSection({
   userId: string;
   children?: ReactNode;
 }) {
-  const { title, description, summary, empty, bar, legend } = metricDetails[metric];
-  const headingId = `${title.toLowerCase().replaceAll(' ', '-')}-heading`;
+  const t = useMessages();
+  const { title, description, summary, empty, bar, legend } = metricDetails(metric, t);
+  const headingId = `${metric}-heading`;
   const most = Math.max(1, ...contributions.map((member) => member[metric]));
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
@@ -106,15 +109,18 @@ export function MetricSection({
       <div className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
         <FairnessScore contributions={contributions} metric={metric} empty={empty} />
         {legend && <Legend entries={legend} />}
-        <ol aria-label={`${title} by member`} className="flex flex-col divide-y divide-slate-200">
+        <ol
+          aria-label={t.statistics.byMember(title)}
+          className="flex flex-col divide-y divide-slate-200"
+        >
           {rankBy(contributions, metric).map((member) => (
             <li
               key={member.userId}
-              aria-label={memberName(member, userId)}
+              aria-label={memberName(member, userId, t)}
               className="flex flex-col gap-2 px-4 py-3 text-sm"
             >
               <div className="flex items-baseline justify-between gap-4">
-                <span className="font-medium text-slate-900">{memberName(member, userId)}</span>
+                <span className="font-medium text-slate-900">{memberName(member, userId, t)}</span>
                 <span className="text-slate-600">{summary(member)}</span>
               </div>
               <Bar segments={bar(member)} most={most} />
@@ -128,21 +134,22 @@ export function MetricSection({
 
 /** A member's share against whoever has most; a split bar says what each colour is worth. */
 function Bar({ segments, most }: { segments: BarSegment[]; most: number }) {
+  const t = useMessages();
   const split = segments.length > 1;
   return (
     <div
       role={split ? 'img' : undefined}
       aria-label={
         split
-          ? segments.map(({ label, value }) => countOf(value, `${label} point`)).join(', ')
+          ? segments.map(({ kind, value }) => t.statistics.barParts[kind](value)).join(', ')
           : undefined
       }
       aria-hidden={split ? undefined : true}
       className="flex h-2 overflow-hidden rounded-full bg-slate-100"
     >
-      {segments.map(({ label, value, className }) => (
+      {segments.map(({ kind, value, className }) => (
         <div
-          key={label}
+          key={kind}
           className={`h-full ${className}`}
           style={{ width: `${String((value / most) * 100)}%` }}
         />
@@ -174,21 +181,26 @@ function FairnessScore({
   metric: Metric;
   empty: string;
 }) {
+  const t = useMessages().statistics;
   if (contributions.length < 2) return null;
   const fairness = fairnessOf(contributions, metric);
   if (!fairness) return <p className="px-4 py-3 text-sm text-slate-600">{empty}</p>;
   return (
     <p className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600">
-      Fairness
+      {t.fairness}
       <span className="text-lg font-bold text-slate-900">{fairness.score}</span>/ 100
       <span className="bg-brand-50 text-brand-900 ml-auto rounded-full px-3 py-1 font-semibold">
-        {fairness.label}
+        {t.fairnessLabels[fairness.label]}
       </span>
     </p>
   );
 }
 
-function memberName({ userId, displayName }: MemberContribution, currentUserId: string): string {
-  if (userId === currentUserId) return 'You';
-  return displayName ?? 'New member (no name yet)';
+function memberName(
+  { userId, displayName }: MemberContribution,
+  currentUserId: string,
+  t: Messages,
+): string {
+  if (userId === currentUserId) return t.common.you;
+  return displayName ?? t.common.newMember;
 }

@@ -9,11 +9,10 @@ import {
   filterTasks,
   parseTaskFilter,
   type TaskFilter,
-  taskFilterEmptyMessages,
-  taskFilterLabels,
   taskFilters,
 } from '@/features/tasks/taskFilter';
 import { useLoggedInUser } from '@/lib/auth';
+import { useMessages } from '@/lib/i18n/i18n';
 import { useSearchParam } from '@/lib/useSearchParam';
 
 const SHOW_COMPLETED_PARAM = 'completed';
@@ -22,20 +21,17 @@ const FILTER_PARAM = 'show';
 export function SharedTasksPage() {
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM);
   const [filter, setFilter] = useFilterParam();
+  const t = useMessages().tasks;
 
   return (
     <>
       <div className="flex items-start justify-between gap-4">
-        <PageHeader
-          eyebrow="Tasks"
-          title="Shared tasks"
-          description="Pick any task. New tasks earn bonus points for variety and fairness. Your private tasks are on your Me page."
-        />
+        <PageHeader eyebrow={t.eyebrow} title={t.board.title} description={t.board.description} />
         <NewTaskLink />
       </div>
       <div className="flex flex-col gap-3">
         <FilterChoice filter={filter} onChange={setFilter} />
-        <Switch label="Show completed" checked={showCompleted} onChange={setShowCompleted} />
+        <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       </div>
       <TaskList filter={filter} />
       {showCompleted && <HouseholdCompletedTasks />}
@@ -66,11 +62,12 @@ interface FilterChoiceProps {
 
 /** One tap to pick which tasks the board shows. */
 function FilterChoice({ filter, onChange }: FilterChoiceProps) {
+  const t = useMessages().tasks.board;
   return (
     <fieldset className="flex flex-wrap items-center gap-2">
-      <legend className="sr-only">Show</legend>
+      <legend className="sr-only">{t.show}</legend>
       <span aria-hidden="true" className="text-sm font-medium text-slate-700">
-        Show:
+        {t.show}:
       </span>
       {taskFilters.map((option) => (
         <label
@@ -87,7 +84,7 @@ function FilterChoice({ filter, onChange }: FilterChoiceProps) {
             }}
             className="sr-only"
           />
-          {taskFilterLabels[option]}
+          {t.filters[option]}
         </label>
       ))}
     </fieldset>
@@ -120,24 +117,25 @@ function Switch({ label, checked, onChange }: SwitchProps) {
 function TaskList({ filter }: { filter: TaskFilter }) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
+  const t = useMessages().tasks.board;
 
   // A failed refresh keeps showing the tasks already loaded.
   if (tasks.data === undefined) {
     if (!tasks.isError) return <LoadingMessage />;
     return (
       <p role="alert" className="text-sm text-red-700">
-        We couldn&apos;t load the tasks. Check your connection and reload the page.
+        {t.loadFailed}
       </p>
     );
   }
   // Private tasks are listed only on the Me page.
   const shared = tasks.data.filter((task) => !task.isPrivate);
   if (shared.length === 0) {
-    return <EmptyMessage>{taskFilterEmptyMessages.all}</EmptyMessage>;
+    return <EmptyMessage>{t.empty.all}</EmptyMessage>;
   }
   const shown = filterTasks(shared, filter, today());
   if (shown.length === 0) {
-    return <EmptyMessage>{taskFilterEmptyMessages[filter]}</EmptyMessage>;
+    return <EmptyMessage>{t.empty[filter]}</EmptyMessage>;
   }
   return <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />;
 }

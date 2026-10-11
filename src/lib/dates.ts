@@ -13,10 +13,6 @@ export function fromIsoDate(isoDate: string): Date {
   return new Date(year, month - 1, day);
 }
 
-// Spelled out rather than Intl-formatted: browsers disagree on the punctuation ("Fri, 17 Oct").
-const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 /** Today's date where the user is. */
 export function today(): string {
   return toIsoDate(new Date());
@@ -26,9 +22,4 @@ export function addDays(isoDate: string, days: number): string {
   const date = fromIsoDate(isoDate);
   date.setDate(date.getDate() + days);
   return toIsoDate(date);
-}
-
-/** "Thu 8 Oct". */
-export function formatShortDate(date: Date): string {
-  return `${weekdays[date.getDay()] ?? ''} ${String(date.getDate())} ${months[date.getMonth()] ?? ''}`;
 }

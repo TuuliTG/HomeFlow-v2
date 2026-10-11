@@ -8,9 +8,12 @@ import { tasksKey } from '@/features/tasks/useTasks';
 /** How long a message stays up unless dismissed. */
 export const TASK_ACTIVITY_DURATION_MS = 6000;
 
+/** A task another member added: the toast says "Ben added Book dentist". */
 export interface TaskActivity {
   id: string;
-  message: string;
+  title: string;
+  /** Their display name, if they have chosen one. */
+  creatorName: string | null;
 }
 
 /**
@@ -34,11 +37,8 @@ export function useTaskActivity(userId: string) {
           .catch(() => [] as Task[]);
         if (change.kind !== 'added' || change.isRepeat || change.createdBy === userId) return;
         void tasks.then((list) => {
-          const creatorName = list.find((task) => task.id === change.id)?.creatorName;
-          setActivity({
-            id: change.id,
-            message: `${creatorName ?? 'Someone'} added ${change.title}`,
-          });
+          const creatorName = list.find((task) => task.id === change.id)?.creatorName ?? null;
+          setActivity({ id: change.id, title: change.title, creatorName });
         });
       }),
     [queryClient, userId],

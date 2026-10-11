@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { SingleFieldForm } from '@/components/ui/SingleFieldForm';
 import { useSaveOwnProfile } from '@/features/auth/useOwnProfile';
 import { DISPLAY_NAME_MAX_LENGTH, displayNameSchema } from '@/features/auth/validation';
+import { useMessages } from '@/lib/i18n/i18n';
 
 interface DisplayNameFormProps {
   userId: string;
@@ -12,30 +13,31 @@ interface DisplayNameFormProps {
 export function DisplayNameForm({ userId }: DisplayNameFormProps) {
   const [error, setError] = useState<string | null>(null);
   const saveProfile = useSaveOwnProfile(userId);
+  const t = useMessages();
 
   function handleSubmit(name: string) {
     const parsed = displayNameSchema.safeParse(name);
     if (!parsed.success) {
-      setError('Enter your name.');
+      setError(t.auth.enterName);
       return;
     }
     setError(null);
     saveProfile.mutate(parsed.data, {
       onError: () => {
-        setError("We couldn't save your name. Try again.");
+        setError(t.auth.nameNotSaved);
       },
     });
   }
 
   return (
     <SingleFieldForm
-      label="Your name"
-      submitLabel="Save"
+      label={t.auth.yourName}
+      submitLabel={t.common.save}
       inputProps={{ name: 'name', autoComplete: 'given-name', maxLength: DISPLAY_NAME_MAX_LENGTH }}
       error={error}
       isPending={saveProfile.isPending}
       onSubmit={handleSubmit}
-      hint="This is how your family will see you in HomeFlow."
+      hint={t.auth.nameHint}
     />
   );
 }

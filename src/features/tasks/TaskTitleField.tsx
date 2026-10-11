@@ -8,6 +8,7 @@ import {
   suggestionPointsLabel,
 } from '@/features/tasks/suggestions';
 import { TITLE_MAX_LENGTH, type TaskSuggestion, titleKey } from '@/features/tasks/task';
+import { useMessages } from '@/lib/i18n/i18n';
 
 /** The tasks the household has starred, offered on the New task form to add again. */
 export interface FavouriteTasks {
@@ -53,6 +54,7 @@ export function TaskTitleField({
   const [picked, setPicked] = useState<TaskSuggestion | null>(null);
   const matches = isListOpen ? matchingSuggestions(suggestions, value) : [];
   const optionId = (index: number) => `${listId}-${String(index)}`;
+  const t = useMessages();
 
   function pick(suggestion: TaskSuggestion) {
     setIsListOpen(false);
@@ -87,7 +89,7 @@ export function TaskTitleField({
       )}
       <div className="relative flex items-end gap-2">
         <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
-          Task
+          {t.taskForm.task}
           <input
             type="text"
             name="title"
@@ -100,7 +102,7 @@ export function TaskTitleField({
             aria-controls={listId}
             aria-activedescendant={matches[activeIndex] ? optionId(activeIndex) : undefined}
             autoComplete="off"
-            placeholder="e.g. Take out the recycling"
+            placeholder={t.taskForm.titlePlaceholder}
             value={value}
             onChange={(event) => {
               onChange(event.target.value);
@@ -125,9 +127,7 @@ export function TaskTitleField({
         />
       </div>
       {picked?.isOpen && (
-        <p className="text-sm text-amber-800">
-          {picked.title} is already on the board. You can still add it again.
-        </p>
+        <p className="text-sm text-amber-800">{t.taskForm.alreadyOnBoard(picked.title)}</p>
       )}
     </div>
   );
@@ -135,9 +135,10 @@ export function TaskTitleField({
 
 /** The star by the name field, for the task being named. */
 function TitleFavouriteStar({ title, favourites }: { title: string; favourites: FavouriteTasks }) {
+  const t = useMessages();
   return (
     <FavouriteStarButton
-      label="Favourite"
+      label={t.tasks.favourite}
       variant="field"
       isFavourite={favourites.keys?.includes(titleKey(title)) ?? false}
       disabled={title.trim() === ''}
@@ -157,15 +158,14 @@ interface FavouriteTaskListProps {
 /** The household's favourite tasks, each a button that fills in the form, or how to add some. */
 function FavouriteTaskList({ suggestions, onPick }: FavouriteTaskListProps) {
   const headingId = useId();
+  const t = useMessages();
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-2">
       <h2 id={headingId} className="text-sm font-medium text-slate-700">
-        Favourites
+        {t.taskForm.favourites}
       </h2>
       {suggestions.length === 0 ? (
-        <p className="text-sm text-slate-600">
-          Tap the star by a task&apos;s name to keep it here for next time.
-        </p>
+        <p className="text-sm text-slate-600">{t.taskForm.noFavourites}</p>
       ) : (
         <ul className="flex flex-wrap gap-2">
           {suggestions.map((suggestion) => (
@@ -178,7 +178,7 @@ function FavouriteTaskList({ suggestions, onPick }: FavouriteTaskListProps) {
                 className="hover:border-brand-600 hover:bg-brand-50 min-h-11 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
               >
                 {suggestion.title}
-                <span className="text-slate-500"> · {suggestionPointsLabel(suggestion)}</span>
+                <span className="text-slate-500"> · {suggestionPointsLabel(suggestion, t)}</span>
               </button>
             </li>
           ))}
@@ -198,11 +198,12 @@ interface SuggestionListProps {
 
 /** Earlier tasks matching the name being typed, below the input. */
 function SuggestionList({ id, matches, activeIndex, optionId, onPick }: SuggestionListProps) {
+  const t = useMessages();
   return (
     <div
       id={id}
       role="listbox"
-      aria-label="Earlier tasks"
+      aria-label={t.taskForm.earlierTasks}
       hidden={matches.length === 0}
       className="absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
     >
@@ -228,8 +229,8 @@ function SuggestionList({ id, matches, activeIndex, optionId, onPick }: Suggesti
         >
           <span>{suggestion.title}</span>
           <span className="shrink-0 text-slate-500">
-            {suggestion.isOpen ? 'On the board · ' : ''}
-            {suggestionPointsLabel(suggestion)}
+            {suggestion.isOpen ? t.taskForm.onTheBoard : ''}
+            {suggestionPointsLabel(suggestion, t)}
           </span>
         </div>
       ))}

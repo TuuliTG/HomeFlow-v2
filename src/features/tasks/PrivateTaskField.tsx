@@ -1,5 +1,7 @@
 import { useId } from 'react';
 
+import { useMessages } from '@/lib/i18n/i18n';
+
 interface PrivateTaskFieldProps {
   checked: boolean;
   onChange: (isPrivate: boolean) => void;
@@ -8,6 +10,7 @@ interface PrivateTaskFieldProps {
 /** The check mark that keeps a new task to its creator, without points, instead of sharing it with the family. */
 export function PrivateTaskField({ checked, onChange }: PrivateTaskFieldProps) {
   const hintId = useId();
+  const t = useMessages();
   return (
     <div className="flex flex-col gap-1">
       <label className="flex items-center gap-2 text-sm font-medium text-slate-800">
@@ -21,10 +24,10 @@ export function PrivateTaskField({ checked, onChange }: PrivateTaskFieldProps) {
           }}
           className="accent-brand-600 size-4"
         />
-        Keep it private
+        {t.taskForm.keepPrivate}
       </label>
       <p id={hintId} className="text-sm text-slate-600">
-        Only you can see it. It isn&apos;t shared with your family and earns no points.
+        {t.taskForm.privateHint}
       </p>
     </div>
   );

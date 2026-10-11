@@ -1,4 +1,5 @@
 import { type NewTask, type TaskSuggestion, titleKey } from '@/features/tasks/task';
+import type { Messages } from '@/lib/i18n/i18n';
 
 /** How many matching tasks are listed while the user types a name. */
 export const MATCHING_SUGGESTIONS_LIMIT = 5;
@@ -55,7 +56,6 @@ export function suggestionAsTask({
 }
 
 /** "1 point", "3 points", or "Private" for a private task, which has none. */
-export function suggestionPointsLabel({ points }: TaskSuggestion): string {
-  if (points === null) return 'Private';
-  return points === 1 ? '1 point' : `${String(points)} points`;
+export function suggestionPointsLabel({ points }: TaskSuggestion, t: Messages): string {
+  return points === null ? t.taskForm.private : t.common.points(points);
 }

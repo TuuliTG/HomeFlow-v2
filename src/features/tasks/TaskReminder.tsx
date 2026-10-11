@@ -9,6 +9,7 @@ import {
 } from '@/features/tasks/reminder';
 import type { Task } from '@/features/tasks/task';
 import { useClearReminder, useReminders, useSetReminder } from '@/features/tasks/useTasks';
+import { type Messages, useMessages } from '@/lib/i18n/i18n';
 
 interface TaskReminderProps {
   task: Task;
@@ -31,6 +32,8 @@ export function TaskReminder({ task, currentUserId }: TaskReminderProps) {
   const isReturningFocus = useRef(false);
   const openButton = useRef<HTMLButtonElement>(null);
   const reminder = reminders.data?.find((candidate) => candidate.taskId === task.id);
+  const messages = useMessages();
+  const t = messages.taskForm.reminder;
 
   useEffect(() => {
     if (draft !== null || !isReturningFocus.current) return;
@@ -54,7 +57,7 @@ export function TaskReminder({ task, currentUserId }: TaskReminderProps) {
   if (reminders.isError) {
     return (
       <p role="alert" className="text-xs text-red-700">
-        We couldn&apos;t load your reminder.
+        {t.loadFailed}
       </p>
     );
   }
@@ -63,48 +66,48 @@ export function TaskReminder({ task, currentUserId }: TaskReminderProps) {
       {reminder ? (
         <>
           <span className="mr-auto text-xs font-medium text-slate-700">
-            {describeReminder(reminder.remindAt, new Date())}
+            {describeReminder(reminder.remindAt, new Date(), messages)}
           </span>
           <button
             ref={openButton}
             type="button"
-            aria-label={`Change reminder: ${task.title}`}
+            aria-label={t.changeLabel(task.title)}
             onClick={() => {
               setDraft(toDateTimeLocal(new Date(reminder.remindAt)));
             }}
             className={linkButtonClassName}
           >
-            Change
+            {t.change}
           </button>
           <button
             type="button"
-            aria-label={`Remove reminder: ${task.title}`}
+            aria-label={t.removeLabel(task.title)}
             disabled={clearReminder.isPending}
             onClick={() => {
               clearReminder.mutate(task.id);
             }}
             className={linkButtonClassName}
           >
-            Remove
+            {t.remove}
           </button>
         </>
       ) : (
         <button
           ref={openButton}
           type="button"
-          aria-label={`Remind me: ${task.title}`}
+          aria-label={t.remindMeLabel(task.title)}
           disabled={reminders.isPending}
           onClick={() => {
             setDraft(suggestedReminderTime(new Date()));
           }}
           className={linkButtonClassName}
         >
-          Remind me
+          {t.remindMe}
         </button>
       )}
       {clearReminder.isError && (
         <p role="alert" className="w-full text-xs text-red-700">
-          We couldn&apos;t remove the reminder. Try again.
+          {t.removeFailed}
         </p>
       )}
     </div>
@@ -117,10 +120,10 @@ interface ReminderFormProps extends TaskReminderProps {
 }
 
 /** Why the chosen time can't be used, if it can't. */
-function invalidTimeMessage(remindAt: Date): string | null {
+function invalidTimeMessage(remindAt: Date, t: Messages): string | null {
   const time = remindAt.getTime();
-  if (Number.isNaN(time) || time <= Date.now()) return 'Pick a time in the future.';
-  if (time > Date.now() + MAX_REMINDER_AHEAD_MS) return 'Pick a time within the next year.';
+  if (Number.isNaN(time) || time <= Date.now()) return t.taskForm.reminder.pastTime;
+  if (time > Date.now() + MAX_REMINDER_AHEAD_MS) return t.taskForm.reminder.tooFar;
   return null;
 }
 
@@ -131,6 +134,8 @@ function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFo
   const setReminder = useSetReminder(currentUserId);
   const [value, setValue] = useState(initialValue);
   const [invalidTime, setInvalidTime] = useState<string | null>(null);
+  const messages = useMessages();
+  const t = messages.taskForm.reminder;
   // Fixed while the form is open; the database has the final say.
   const [limits] = useState(() => {
     const now = new Date();
@@ -147,7 +152,7 @@ function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFo
   function save(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     const remindAt = new Date(value);
-    const message = invalidTimeMessage(remindAt);
+    const message = invalidTimeMessage(remindAt, messages);
     setInvalidTime(message);
     if (message) return;
     setReminder.mutate(
@@ -156,17 +161,16 @@ function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFo
     );
   }
 
-  const failure =
-    invalidTime ?? (setReminder.isError ? "We couldn't save the reminder. Try again." : null);
+  const failure = invalidTime ?? (setReminder.isError ? t.saveFailed : null);
   return (
     <form
-      aria-label={`Reminder: ${task.title}`}
+      aria-label={t.formLabel(task.title)}
       onSubmit={save}
       noValidate
       className="flex flex-col gap-2 rounded-xl bg-slate-50 p-3 text-sm"
     >
       <label htmlFor={inputId} className="font-medium text-slate-900">
-        Remind me at
+        {t.remindMeAt}
       </label>
       <input
         ref={input}
@@ -183,7 +187,7 @@ function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFo
         className={inputClassName}
       />
       <p id={hintId} className="text-xs text-slate-600">
-        You&apos;ll get a notification on each device where you&apos;ve turned notifications on.
+        {t.hint}
       </p>
       {failure && (
         <p role="alert" className="text-xs text-red-700">
@@ -196,14 +200,14 @@ function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFo
           onClick={onClose}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100"
         >
-          Cancel
+          {messages.common.cancel}
         </button>
         <button
           type="submit"
           disabled={setReminder.isPending}
           className="bg-brand-600 hover:bg-brand-900 rounded-lg px-3 py-1.5 font-semibold text-white disabled:opacity-60"
         >
-          Save reminder
+          {t.save}
         </button>
       </div>
     </form>

@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { groupByDueDate } from '@/features/tasks/dueDate';
+import { en } from '@/locales/en';
 
 /** Wednesday 7 October 2026. */
 const TODAY = '2026-10-07';
 
 function dueDatesByGroup(dueDates: (string | null)[]) {
   const items = dueDates.map((dueOn) => ({ dueOn }));
-  return groupByDueDate(items, TODAY).map(({ label, items: grouped }) => [
+  return groupByDueDate(items, TODAY, en).map(({ label, items: grouped }) => [
     label,
     grouped.map((item) => item.dueOn),
   ]);
@@ -40,7 +41,7 @@ describe('groupByDueDate', () => {
 
   it('marks only the overdue group as overdue', () => {
     expect(
-      groupByDueDate([{ dueOn: '2026-10-06' }, { dueOn: TODAY }], TODAY).map(
+      groupByDueDate([{ dueOn: '2026-10-06' }, { dueOn: TODAY }], TODAY, en).map(
         (group) => group.isOverdue,
       ),
     ).toEqual([true, false]);
@@ -58,12 +59,12 @@ describe('groupByDueDate', () => {
       { title: 'Vacuum', dueOn: '2026-10-07' },
       { title: 'Dust', dueOn: '2026-10-07' },
     ];
-    expect(groupByDueDate(items, TODAY)[0]?.items).toEqual(items);
+    expect(groupByDueDate(items, TODAY, en)[0]?.items).toEqual(items);
   });
 
   it('crosses month and year ends', () => {
     expect(
-      groupByDueDate([{ dueOn: '2027-01-01' }, { dueOn: '2027-01-02' }], '2026-12-31').map(
+      groupByDueDate([{ dueOn: '2027-01-01' }, { dueOn: '2027-01-02' }], '2026-12-31', en).map(
         (group) => group.label,
       ),
     ).toEqual(['Tomorrow', 'Sat 2 Jan']);

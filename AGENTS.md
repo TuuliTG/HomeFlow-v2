@@ -37,6 +37,8 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node ≥ 22.12 (`.
   from components (ESLint enforces the import ban). Validate external data with Zod.
 - Every Supabase table has Row Level Security enabled with explicit policies. Scope family data with
   `household_id = (select private.current_household_id())` ([ADR 0003](docs/adr/0003-accounts-and-households.md)).
+- User-facing text goes in `src/locales/en/` and every other language (`fi`), never inline: read it with
+  `useMessages()` from `@/lib/i18n/i18n`, or pass `t: Messages` to helpers (ADR 0002).
 - Mobile first: design for ~390px wide, then enhance with `md:` breakpoints. Accessible by default (roles, labels, contrast).
 - Import with the `@/` alias. Add dependencies with `npm install <pkg>` (exact versions are saved automatically).
 
