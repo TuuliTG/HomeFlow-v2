@@ -19,8 +19,7 @@ next one back rather than follow a fixed calendar.
   A private task is the creator's own to do: it is listed only in their My tasks (Me page), without picking it up,
   and has no Pick up or Put back. The Shared tasks board and its "Show completed" leave out even the creator's
   own private tasks, and saving or deleting one returns to the Me page (Cancel on the task form goes back to the
-  previous page). **Private tasks have no points** (`points` is null exactly when `is_private`, a check
-  constraint) and statistics count only shared tasks, both done and created (ADR 0006). A private task whose creator
+  previous page). **Private tasks have no points** (`tasks_private_without_points`) and statistics count only shared tasks, both done and created (ADR 0006). A private task whose creator
   deletes their account or leaves stays hidden from everyone.
 - **Tasks for children**: `for_children` (default false: adults only), chosen on the task form by adults ("Children
   can do it", not offered for their private tasks) and changeable when editing; the next occurrence keeps it. A
@@ -34,6 +33,14 @@ next one back rather than follow a fixed calendar.
   Statistics and goals count every shared task for everyone (`household_statistics()`, `private.goal_points()` and
   `private.goal_member_points()` are security definer and return no task titles); a child's News lists only tasks
   for children.
+- **Children adding tasks**: adults always add tasks; a child only when an adult allows it
+  (`household_members.can_add_tasks`, `set_member_can_add_tasks()`, ADR 0003), shared or private. **A child's shared
+  task has no points** until an adult awards them (`award_task_points()`, adults only, once), so a child can't pick
+  their own reward: they add it, do it, and an adult decides what it was worth from the **Waiting for points** list
+  on the Shared tasks page. The insert policy refuses points from a child (and a shared task without points from an
+  adult); a child's edit never sets them; the next occurrence of a child's repeating task waits for points again.
+  Until then it earns nothing in totals, statistics, goals or News. Children edit and delete only tasks they added
+  (`private.can_change_task()`).
 - **Least privilege**: members can read and insert tasks; every change goes through a function. Marking done uses
   `complete_task(task_id, completed_on)` (security definer). In one transaction it marks an open task in the
   caller's household done and, if it repeats, inserts the **next occurrence**, due
@@ -44,7 +51,8 @@ next one back rather than follow a fixed calendar.
   open task. A task someone has picked up can't be taken by another member (55006); only they can put it back. Anyone
   can still mark any task done (credited to whoever does), so a task left picked up never blocks the family, but
   the app asks first ("Ben has picked this up. Mark it done anyway?").
-- **Fixing mistakes**: any member can edit (`update_task()`) or delete (`delete_task()`) an open task; done tasks
+- **Fixing mistakes**: any adult, and a child for their own tasks, can edit (`update_task()`) or delete
+  (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
   the next occurrence it created, unless that one is already done.
 - **Points**: the Me screen shows the total points of every shared task the user has marked done, summed when read
