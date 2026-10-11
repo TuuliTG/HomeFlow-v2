@@ -100,9 +100,12 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
           type="button"
           disabled={deleteTask.isPending}
           onClick={() => {
-            deleteTask.mutate(task.id, {
-              onSuccess: () => void navigate(paths.taskList(task.isPrivate)),
-            });
+            // Not mutate()'s onSuccess: the refetch after deleting removes the task, which unmounts
+            // this form before that callback would run. A failure shows through isError.
+            deleteTask.mutateAsync(task.id).then(
+              () => navigate(paths.taskList(task.isPrivate)),
+              () => undefined,
+            );
           }}
           className="rounded-lg bg-red-700 px-4 py-2.5 font-semibold text-white hover:bg-red-900 disabled:opacity-60"
         >
