@@ -5,14 +5,14 @@ export const rewards: Messages['rewards'] = {
   eyebrow: 'Palkinnot',
   title: 'Palkinnot ja tavoitteet',
   description:
-    'Yhteisistä tehtävistä saa pisteitä. Tavoitteen asettamisen jälkeen ansaitut pisteet lasketaan siihen: perheen tavoitteisiin kaikkien pisteet, omiin tavoitteisiisi vain sinun.',
+    'Yhteisistä tehtävistä saa pisteitä. Tavoitteen asettamisen jälkeen ansaitut pisteet lasketaan siihen: yhteisiin tavoitteisiin kaikkien mukana olevien pisteet, omiin tavoitteisiisi vain sinun.',
   newGoal: 'Uusi tavoite',
   loadFailed: 'Tavoitteita ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
   sections: {
-    family: {
-      heading: 'Perheen tavoitteet',
+    shared: {
+      heading: 'Yhteiset tavoitteet',
       empty:
-        'Perheellä ei ole vielä tavoitteita. Aikuinen voi asettaa tavoitteen, jota kohti kaikki tekevät töitä yhdessä, vaikkapa retki.',
+        'Yhteisiä tavoitteita ei ole vielä. Aikuinen voi asettaa koko perheelle tai muutamalle teistä tavoitteen, jota kohti tehdään töitä yhdessä, vaikkapa retki.',
     },
     yours: {
       heading: 'Omat tavoitteesi',
@@ -22,28 +22,29 @@ export const rewards: Messages['rewards'] = {
     members: { heading: 'Perheenjäsenten tavoitteet', empty: null },
   },
   claimedHeading: 'Lunastetut palkinnot',
-  owner: { family: 'Perhe', yours: 'Sinun', named: (name) => name },
+  owner: { shared: 'Yhteinen', yours: 'Sinun', named: (name) => name },
   claimedOn: (date) => `Lunastettu ${date}`,
   aFamilyMember: 'Perheenjäsen',
   goal: {
     othersGoal: (name) => `Tavoitteen asettaja: ${name}`,
-    minimumFromEach: (minimum) => `Vähintään ${common.points(minimum)} jokaiselta jäseneltä`,
     progress: (points, target) => `${String(points)} / ${String(target)} pistettä`,
     progressLabel: (title) => `Edistyminen: ${title}`,
     progressValue: (points, target) => `${String(points)} pistettä ${String(target)}:stä`,
     pointsToGo: (missing) => `Vielä ${common.points(missing)}`,
-    membersShort: (count) =>
-      `Pisteitä on tarpeeksi! ${count === 1 ? 'Yhden jäsenen' : `${String(count)} jäsenen`} pitää vielä ansaita osuutensa.`,
+    participantsShort: (count) =>
+      `Pisteitä on tarpeeksi! ${count === 1 ? 'Yhden' : String(count)} mukana olevan pitää vielä ansaita osuutensa.`,
     othersReached: (name) => `${name} saavutti tämän tavoitteen!`,
-    memberPointsLabel: (title) => `Jäsenten pisteet tavoitteeseen ${title}`,
-    memberDone: ', valmis',
+    participantsReached: 'Tavoite saavutettu! Joku mukana olevista lunastaa palkinnon.',
+    participantsLabel: (title) => `Mukana olevien pisteet tavoitteeseen ${title}`,
+    participantPoints: (points) => common.points(points),
+    participantDone: ', valmis',
     reached: 'Tavoite saavutettu!',
     claim: 'Lunasta palkinto',
     claimLabel: (title) => `Lunasta palkinto: ${title}`,
     claimFailed: 'Palkintoa ei voitu lunastaa. Tarkista yhteys ja yritä uudelleen.',
     deleteLabel: (title) => `Poista tavoite: ${title}`,
-    confirmDelete: (title, isFamilyGoal) =>
-      `Poistetaanko “${title}”${isFamilyGoal ? ' koko kotitaloudelta' : ''}? Poistoa ei voi perua.`,
+    confirmDelete: (title, isShared) =>
+      `Poistetaanko “${title}”${isShared ? ' kaikilta mukana olevilta' : ''}? Poistoa ei voi perua.`,
     deleteFailed: 'Tavoitetta ei voitu poistaa. Yritä uudelleen.',
   },
   form: {
@@ -52,17 +53,19 @@ export const rewards: Messages['rewards'] = {
     rewardPlaceholder: 'esim. Pizzailta',
     pointsNeeded: 'Tarvittavat pisteet',
     whoFor: 'Kenelle',
-    scopes: { shared: 'Perheelle', personal: 'Yhdelle' },
+    scopes: { shared: 'Yhdessä', personal: 'Yhdelle' },
     scopeHints: {
-      shared: 'Kaikkien pisteet lasketaan siihen, ja koko perhe näkee sen.',
+      shared: 'Siihen lasketaan kaikkien mukana olevien pisteet, ja koko perhe näkee sen.',
       personal: 'Siihen lasketaan vain hänen pisteensä. Perhe näkee senkin ja voi kannustaa.',
     },
     whose: 'Kenen tavoite',
     me: 'Minä',
     onlyAdults: 'Vain aikuiset asettavat tavoitteita. Pyydä perheesi aikuiselta tavoitetta.',
-    minimum: 'Vähimmäispisteet jokaiselta jäseneltä (vapaaehtoinen)',
-    minimumHint:
-      'Tavoite saavutetaan vasta, kun jokainen on ansainnut vähintään näin paljon, jottei kukaan tee kaikkea yksin.',
+    participants: 'Ketkä ovat mukana',
+    participantsHint:
+      'Voit pyytää jokaiselta vähimmäismäärän, esimerkiksi nuoremmalta lapselta vähemmän. Tavoite saavutetaan vasta, kun jokainen on ansainnut omansa, jottei kukaan tee kaikkea yksin.',
+    minimum: 'Vähintään',
+    minimumFor: (name) => `Vähimmäispisteet: ${name} (vapaaehtoinen)`,
     submit: 'Aseta tavoite',
     checkDetails: 'Tarkista tavoitteen tiedot.',
     saveFailed: 'Tavoitetta ei voitu tallentaa. Yritä uudelleen.',
@@ -71,9 +74,10 @@ export const rewards: Messages['rewards'] = {
       rewardTooLong: (max) => `Palkinnon nimessä saa olla enintään ${String(max)} merkkiä.`,
       targetPointsRange: (max) =>
         `Tarvittavien pisteiden pitää olla kokonaisluku 1–${String(max)}.`,
-      minimumRange:
-        'Jokaisen jäsenen vähimmäispisteiden pitää olla kokonaisluku yhdestä tarvittaviin pisteisiin.',
-      minimumOnlyForFamily: 'Vähimmäispisteet jäsentä kohden koskevat vain perheen tavoitteita.',
+      participantsRequired: 'Valitse, ketkä ovat mukana.',
+      minimumRange: 'Vähimmäispisteiden pitää olla kokonaisluku, vähintään 1.',
+      minimumsTooHigh:
+        'Vähimmäispisteitä saa olla yhteensä enintään tarvittavien pisteiden verran.',
     },
   },
 };

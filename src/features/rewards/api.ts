@@ -10,20 +10,24 @@ const goalRowsSchema = z.array(
     target_points: z.number(),
     owner_id: z.string().nullable(),
     owner_name: z.string().nullable(),
-    min_points_per_member: z.number().nullable(),
     claimed_at: z.string().nullable(),
     points: z.number(),
     reached: z.boolean(),
-    member_points: z
+    participants: z
       .array(
-        z.object({ user_id: z.string(), display_name: z.string().nullable(), points: z.number() }),
+        z.object({
+          user_id: z.string(),
+          display_name: z.string().nullable(),
+          points: z.number(),
+          min_points: z.number().nullable(),
+        }),
       )
       .nullable(),
   }),
 );
 
 /**
- * The household's family goals and every member's personal goals, with the points towards each and
+ * The household's shared goals and every member's personal goals, with the points towards each and
  * whether each is reached: open goals first (newest first), then claimed ones. Counted by
  * `household_goals()` in the database, which also decides whether a goal is reached.
  */
@@ -36,26 +40,37 @@ export async function fetchGoals(): Promise<Goal[]> {
     title: row.title,
     targetPoints: row.target_points,
     owner: row.owner_id === null ? null : { id: row.owner_id, name: row.owner_name },
-    minPointsPerMember: row.min_points_per_member,
     points: row.points,
-    memberPoints: (row.member_points ?? []).map(({ user_id, display_name, points }) => ({
+    participants: (row.participants ?? []).map(({ user_id, display_name, points, min_points }) => ({
       id: user_id,
       name: display_name,
       points,
+      minPoints: min_points,
     })),
     reached: row.reached,
     claimedAt: row.claimed_at,
   }));
 }
 
-/** Sets a goal for the family, or for one member; only adults can. */
-export async function addGoal({ title, targetPoints, ownerId, minPointsPerMember }: NewGoal) {
-  const { error } = await getSupabaseClient().from('goals').insert({
-    title,
-    target_points: targetPoints,
-    owner_id: ownerId,
-    min_points_per_member: minPointsPerMember,
-  });
+/**
+ * Sets a goal shared by the chosen members, each with their minimum, or a personal goal for one member;
+ * only adults can.
+ */
+export async function addGoal({ title, targetPoints, ownerId, participants }: NewGoal) {
+  const client = getSupabaseClient();
+  const { error } =
+    ownerId === null
+      ? await client.rpc('add_shared_goal', {
+          title,
+          target_points: targetPoints,
+          participants: participants.map(({ userId, minPoints }) => ({
+            user_id: userId,
+            min_points: minPoints,
+          })),
+        })
+      : await client
+          .from('goals')
+          .insert({ title, target_points: targetPoints, owner_id: ownerId });
   if (error) throw error;
 }
 

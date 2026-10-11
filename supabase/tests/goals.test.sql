@@ -3,7 +3,7 @@
 -- before the goals were set don't count. (now() is the same all through the transaction.)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(26);
+select plan(30);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -14,7 +14,7 @@ insert into public.profiles (id, display_name) values ('11111111-1111-1111-1111-
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "33333333-3333-3333-3333-333333333333", "role": "authenticated"}';
 select public.create_household('The Joneses');
-insert into public.goals (title, target_points) values ('Cinema trip', 5);
+select public.add_shared_goal('Cinema trip', 5, '[{"user_id": "33333333-3333-3333-3333-333333333333"}]');
 
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.create_household('The Smiths');
@@ -22,13 +22,16 @@ insert into public.tasks (title, type, points) values
   ('Vacuum', 'physical', 3), ('Book dentist', 'meta', 2), ('Mow the lawn', 'physical', 4),
   ('Old chore', 'physical', 9);
 insert into public.tasks (title, type, points, is_private) values ('Buy a present', 'meta', null, true);
-insert into public.goals (title, target_points) values ('Pizza night', 5);
 insert into public.goals (title, target_points, owner_id)
   values ('New book', 3, '11111111-1111-1111-1111-111111111111');
 
 reset role;
 insert into public.household_members (household_id, user_id)
   select household_id, '22222222-2222-2222-2222-222222222222' from public.tasks where title = 'Vacuum';
+set local role authenticated;
+select public.add_shared_goal('Pizza night', 5, '[{"user_id": "11111111-1111-1111-1111-111111111111"},
+  {"user_id": "22222222-2222-2222-2222-222222222222"}]');
+reset role;
 -- Anna did the meta work and her private task, Ben vacuumed; the old chore was done before the goals were set.
 update public.tasks set completed_by = '11111111-1111-1111-1111-111111111111', completed_at = now()
   where title in ('Book dentist', 'Buy a present');
@@ -86,19 +89,24 @@ select is(
   0, 'an adult can delete any open goal, also someone''s personal one'
 );
 select throws_ok(
-  $$ insert into public.goals (title, target_points) values ('Holiday', 0) $$,
+  $$ select public.add_shared_goal('Holiday', 0, '[{"user_id": "11111111-1111-1111-1111-111111111111"}]') $$,
   '23514', null,
   'a goal needs at least one point'
 );
 select throws_ok(
-  $$ insert into public.goals (title, target_points, household_id)
-     values ('Theirs', 2, (select id from public.households limit 1)) $$,
+  $$ insert into public.goals (title, target_points) values ('Holiday', 5) $$,
+  '42501', null,
+  'shared goals are added only with their participants'
+);
+select throws_ok(
+  $$ insert into public.goals (title, target_points, owner_id, household_id)
+     values ('Theirs', 2, '22222222-2222-2222-2222-222222222222', (select id from public.households limit 1)) $$,
   '42501', null,
   'the household always comes from the default'
 );
 select lives_ok(
   format('select public.claim_goal_reward(%L)', current_setting('test.pizza')),
-  'any member can claim a reached family goal'
+  'a participant can claim a reached shared goal'
 );
 select results_eq(
   $$ select claimed_by::text, claimed_at is not null from public.goals where title = 'Pizza night' $$,
@@ -140,47 +148,66 @@ select lives_ok(
   'members can claim their own reached personal goal'
 );
 
--- Family goals asking for a minimum from each member. Anna has 6 points since the goals were set and Ben 3.
-insert into public.goals (title, target_points, min_points_per_member) values
-  ('Movie night', 8, 3), ('Zoo trip', 8, 4);
+-- Shared goals for chosen members, each with their own minimum. Anna has 6 points since the goals were set and
+-- Ben 3.
+select public.add_shared_goal('Movie night', 8, '[{"user_id": "11111111-1111-1111-1111-111111111111", "min_points": 3},
+  {"user_id": "22222222-2222-2222-2222-222222222222", "min_points": 2}]');
+select public.add_shared_goal('Zoo trip', 8, '[{"user_id": "11111111-1111-1111-1111-111111111111", "min_points": 2},
+  {"user_id": "22222222-2222-2222-2222-222222222222", "min_points": 4}]');
+select public.add_shared_goal('Bike', 3, '[{"user_id": "22222222-2222-2222-2222-222222222222"}]');
 select results_eq(
-  $$ select title, points, reached, member_points from public.household_goals()
-     where min_points_per_member is not null order by title $$,
+  $$ select title, points, reached, participants from public.household_goals()
+     where title in ('Movie night', 'Zoo trip', 'Bike') order by title $$,
   $$ values
-    ('Movie night', 9, true, '[{"user_id": "11111111-1111-1111-1111-111111111111", "display_name": "Anna", "points": 6},
-                              {"user_id": "22222222-2222-2222-2222-222222222222", "display_name": null, "points": 3}]'::jsonb),
-    ('Zoo trip', 9, false, '[{"user_id": "11111111-1111-1111-1111-111111111111", "display_name": "Anna", "points": 6},
-                             {"user_id": "22222222-2222-2222-2222-222222222222", "display_name": null, "points": 3}]'::jsonb) $$,
-  'a goal with a minimum is reached only once every member has earned it, and lists what each has earned'
+    ('Bike', 3, true, '[{"user_id": "22222222-2222-2222-2222-222222222222", "display_name": null, "points": 3, "min_points": null}]'::jsonb),
+    ('Movie night', 9, true, '[{"user_id": "11111111-1111-1111-1111-111111111111", "display_name": "Anna", "points": 6, "min_points": 3},
+                              {"user_id": "22222222-2222-2222-2222-222222222222", "display_name": null, "points": 3, "min_points": 2}]'::jsonb),
+    ('Zoo trip', 9, false, '[{"user_id": "11111111-1111-1111-1111-111111111111", "display_name": "Anna", "points": 6, "min_points": 2},
+                             {"user_id": "22222222-2222-2222-2222-222222222222", "display_name": null, "points": 3, "min_points": 4}]'::jsonb) $$,
+  'only participants'' points count, and a goal is reached once each has earned their own minimum'
 );
 select throws_ok(
   $$ select public.claim_goal_reward(id) from public.goals where title = 'Zoo trip' $$,
   '23514', null,
-  'a goal cannot be claimed while a member has earned less than the minimum'
+  'a goal cannot be claimed while a participant has earned less than their minimum'
 );
 select lives_ok(
   $$ select public.claim_goal_reward(id) from public.goals where title = 'Movie night' $$,
-  'a goal is claimed once every member has earned the minimum'
+  'a goal is claimed once every participant has earned their minimum'
+);
+select throws_ok(
+  $$ select public.claim_goal_reward(id) from public.goals where title = 'Bike' $$,
+  'P0002', null,
+  'members who don''t take part in a shared goal cannot claim it'
 );
 select is(
-  (select member_points from public.household_goals() where title = 'New book'),
-  null, 'personal goals list no member points'
+  (select participants from public.household_goals() where title = 'New book'),
+  null, 'personal goals list no participants'
 );
 select throws_ok(
-  $$ insert into public.goals (title, target_points, owner_id, min_points_per_member)
-     values ('Sweets', 5, '11111111-1111-1111-1111-111111111111', 2) $$,
+  $$ select public.add_shared_goal('Holiday', 5, '[]') $$,
   '23514', null,
-  'only family goals ask for a minimum from each member'
+  'a shared goal needs someone to take part'
 );
 select throws_ok(
-  $$ insert into public.goals (title, target_points, min_points_per_member) values ('Holiday', 5, 6) $$,
+  $$ select public.add_shared_goal('Holiday', 5, '[{"user_id": "11111111-1111-1111-1111-111111111111", "min_points": 3},
+       {"user_id": "22222222-2222-2222-2222-222222222222", "min_points": 3}]') $$,
   '23514', null,
-  'the minimum is at most the goal''s points'
+  'the minimums together are at most the goal''s points'
 );
 select throws_ok(
-  $$ insert into public.goals (title, target_points, min_points_per_member) values ('Holiday', 5, 0) $$,
+  $$ select public.add_shared_goal('Holiday', 5, '[{"user_id": "11111111-1111-1111-1111-111111111111", "min_points": 0}]') $$,
   '23514', null,
-  'the minimum is at least one point'
+  'a minimum is at least one point'
+);
+select throws_ok(
+  $$ select public.add_shared_goal('Holiday', 5, '[{"user_id": "33333333-3333-3333-3333-333333333333"}]') $$,
+  '42501', null,
+  'only members of the household take part'
+);
+select is(
+  (select count(*)::integer from public.goal_participants),
+  7, 'members see who takes part in their household''s goals only'
 );
 
 -- Carl's household is separate.

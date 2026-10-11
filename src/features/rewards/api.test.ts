@@ -20,7 +20,7 @@ describe('goals api', () => {
     query.delete.mockReturnValue(query);
   });
 
-  it('reads the goals with their points, telling family goals from personal ones and whose they are', async () => {
+  it('reads the goals with their points, telling shared goals from personal ones and whose they are', async () => {
     client.rpc.mockResolvedValue({
       data: [
         {
@@ -29,14 +29,13 @@ describe('goals api', () => {
           target_points: 30,
           owner_id: null,
           owner_name: null,
-          min_points_per_member: 5,
           created_at: '2026-10-01T10:00:00Z',
           claimed_at: null,
           points: 12,
           reached: false,
-          member_points: [
-            { user_id: 'u1', display_name: 'Anna', points: 9 },
-            { user_id: 'u2', display_name: null, points: 3 },
+          participants: [
+            { user_id: 'u1', display_name: 'Anna', points: 9, min_points: null },
+            { user_id: 'u2', display_name: null, points: 3, min_points: 5 },
           ],
         },
         {
@@ -45,12 +44,11 @@ describe('goals api', () => {
           target_points: 5,
           owner_id: 'u1',
           owner_name: 'Anna',
-          min_points_per_member: null,
           created_at: '2026-10-01T10:00:00Z',
           claimed_at: '2026-10-09T10:00:00Z',
           points: 6,
           reached: true,
-          member_points: null,
+          participants: null,
         },
       ],
       error: null,
@@ -62,11 +60,10 @@ describe('goals api', () => {
         title: 'Pizza night',
         targetPoints: 30,
         owner: null,
-        minPointsPerMember: 5,
         points: 12,
-        memberPoints: [
-          { id: 'u1', name: 'Anna', points: 9 },
-          { id: 'u2', name: null, points: 3 },
+        participants: [
+          { id: 'u1', name: 'Anna', points: 9, minPoints: null },
+          { id: 'u2', name: null, points: 3, minPoints: 5 },
         ],
         reached: false,
         claimedAt: null,
@@ -76,9 +73,8 @@ describe('goals api', () => {
         title: 'New book',
         targetPoints: 5,
         owner: { id: 'u1', name: 'Anna' },
-        minPointsPerMember: null,
         points: 6,
-        memberPoints: [],
+        participants: [],
         reached: true,
         claimedAt: '2026-10-09T10:00:00Z',
       },
@@ -86,7 +82,8 @@ describe('goals api', () => {
     expect(client.rpc).toHaveBeenCalledWith('household_goals');
   });
 
-  it('sets a family goal without an owner, with its minimum per member, and a personal goal for a member', async () => {
+  it('sets a shared goal with its participants and their minimums, and a personal goal for a member', async () => {
+    client.rpc.mockResolvedValue({ data: 'g1', error: null });
     query.insert.mockResolvedValue({ error: null });
 
     await api.addGoal({
@@ -94,28 +91,32 @@ describe('goals api', () => {
       targetPoints: 30,
       scope: 'shared',
       ownerId: null,
-      minPointsPerMember: 5,
+      participants: [
+        { userId: 'u1', minPoints: null },
+        { userId: 'u2', minPoints: 5 },
+      ],
     });
     await api.addGoal({
       title: 'New book',
       targetPoints: 5,
       scope: 'personal',
       ownerId: 'u1',
-      minPointsPerMember: null,
+      participants: [],
     });
 
-    expect(client.from).toHaveBeenCalledWith('goals');
-    expect(query.insert).toHaveBeenNthCalledWith(1, {
+    expect(client.rpc).toHaveBeenCalledWith('add_shared_goal', {
       title: 'Pizza night',
       target_points: 30,
-      owner_id: null,
-      min_points_per_member: 5,
+      participants: [
+        { user_id: 'u1', min_points: null },
+        { user_id: 'u2', min_points: 5 },
+      ],
     });
-    expect(query.insert).toHaveBeenNthCalledWith(2, {
+    expect(client.from).toHaveBeenCalledWith('goals');
+    expect(query.insert).toHaveBeenCalledExactlyOnceWith({
       title: 'New book',
       target_points: 5,
       owner_id: 'u1',
-      min_points_per_member: null,
     });
   });
 
@@ -141,9 +142,9 @@ describe('goals api', () => {
       api.addGoal({
         title: 'Holiday',
         targetPoints: 5,
-        scope: 'shared',
-        ownerId: null,
-        minPointsPerMember: null,
+        scope: 'personal',
+        ownerId: 'u1',
+        participants: [],
       }),
     ).rejects.toBe(failure);
     await expect(api.deleteGoal('g1')).rejects.toBe(failure);

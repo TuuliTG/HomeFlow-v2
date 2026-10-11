@@ -6,7 +6,7 @@ import { EXISTING_HOUSEHOLD, fakeSupabase, logInAsNewUser } from './fakeSupabase
 // See auth.spec.ts: the Supabase fake can't intercept requests that go through the service worker.
 test.use({ serviceWorkers: 'block' });
 
-test("family member sets family goals, with a minimum from each member, and a personal one, follows others' goals, earns the points and claims the reward", async ({
+test("family member sets shared goals, with a minimum from a participant, and a personal one, follows others' goals, earns the points and claims the reward", async ({
   page,
 }) => {
   await fakeSupabase(page);
@@ -26,7 +26,7 @@ test("family member sets family goals, with a minimum from each member, and a pe
   await page.getByRole('link', { name: 'New goal' }).click();
   await page.getByLabel('Reward').fill('Zoo trip');
   await page.getByLabel('Points needed').fill('5');
-  await page.getByLabel(/Minimum points from each member/).fill('1');
+  await page.getByLabel('Minimum points from Ben (optional)').fill('1');
   await page.getByRole('button', { name: 'Set goal' }).click();
 
   await page.getByRole('link', { name: 'New goal' }).click();
@@ -35,8 +35,8 @@ test("family member sets family goals, with a minimum from each member, and a pe
   await page.getByRole('group', { name: "Who it's for" }).getByText('One person').click();
   await page.getByRole('button', { name: 'Set goal' }).click();
 
-  const familyGoals = page.getByRole('region', { name: 'Family goals' });
-  const pizza = familyGoals.getByRole('listitem', { name: 'Pizza night' });
+  const sharedGoals = page.getByRole('region', { name: 'Shared goals' });
+  const pizza = sharedGoals.getByRole('listitem', { name: 'Pizza night' });
   await expect(pizza).toContainText('0 / 5 points');
   const book = page.getByRole('region', { name: 'Your goals' }).getByRole('listitem', {
     name: 'New book',
@@ -59,8 +59,8 @@ test("family member sets family goals, with a minimum from each member, and a pe
 
   await expect(pizza).toContainText('Goal reached!');
   // Ben hasn't done his share of the zoo trip yet.
-  const zoo = familyGoals.getByRole('listitem', { name: 'Zoo trip' });
-  await expect(zoo).toContainText('Enough points! One member still needs to earn their share.');
+  const zoo = sharedGoals.getByRole('listitem', { name: 'Zoo trip' });
+  await expect(zoo).toContainText('Enough points! One person still needs to earn their share.');
   await expect(zoo).toContainText('Ben0 / 1');
   await expect(zoo.getByRole('button', { name: /Claim reward/ })).toHaveCount(0);
   await expect(book).toContainText('5 / 20 points');
