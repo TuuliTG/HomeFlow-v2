@@ -46,6 +46,8 @@ export const rewards = {
     claim: 'Claim reward',
     claimLabel: (title: string) => `Claim reward: ${title}`,
     claimFailed: "We couldn't claim the reward. Check your connection and try again.",
+    edit: 'Edit',
+    editLabel: (title: string) => `Edit goal: ${title}`,
     deleteLabel: (title: string) => `Delete goal: ${title}`,
     confirmDelete: (title: string, isShared: boolean) =>
       `Delete “${title}”${isShared ? ' for everyone taking part' : ''}? This can't be undone.`,
@@ -73,6 +75,14 @@ export const rewards = {
     submit: 'Set goal',
     checkDetails: 'Check the goal details.',
     saveFailed: "We couldn't save the goal. Try again.",
+    edit: {
+      title: 'Edit goal',
+      description:
+        "Change the reward, the points or who it's for. Points already earned still count.",
+      submit: 'Save changes',
+      notFound: "This goal can't be changed: it may have been claimed or deleted.",
+      backToRewards: 'Back to rewards',
+    },
     errors: {
       rewardRequired: 'Name the reward.',
       rewardTooLong: (max: number) => `Keep the reward to ${String(max)} characters or fewer.`,

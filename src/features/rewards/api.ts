@@ -74,6 +74,27 @@ export async function addGoal({ title, targetPoints, ownerId, participants }: Ne
   if (error) throw error;
 }
 
+/**
+ * Changes an open goal's reward, points and who it is for, replacing a shared goal's participants; only
+ * adults can. Points earned since the goal was set still count.
+ */
+export async function updateGoal(
+  goalId: string,
+  { title, targetPoints, ownerId, participants }: NewGoal,
+): Promise<void> {
+  const { error } = await getSupabaseClient().rpc('update_goal', {
+    goal_id: goalId,
+    title,
+    target_points: targetPoints,
+    owner_id: ownerId,
+    participants: participants.map(({ userId, minPoints }) => ({
+      user_id: userId,
+      min_points: minPoints,
+    })),
+  });
+  if (error) throw error;
+}
+
 const memberRowsSchema = z.array(z.object({ user_id: z.string(), is_child: z.boolean() }));
 const profileRowsSchema = z.array(z.object({ id: z.string(), display_name: z.string() }));
 

@@ -6,6 +6,7 @@ import { inputClassName } from '@/components/ui/formStyles';
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
 import {
   GOAL_TITLE_MAX_LENGTH,
+  type Goal,
   type GoalScope,
   goalScopes,
   type GoalSetter,
@@ -15,7 +16,12 @@ import {
   newGoalSchema,
   type NewParticipant,
 } from '@/features/rewards/goal';
-import { everyoneTakingPart, participantsOf } from '@/features/rewards/participantChoices';
+import {
+  choicesOf,
+  everyoneTakingPart,
+  type ParticipantChoices,
+  participantsOf,
+} from '@/features/rewards/participantChoices';
 import { ParticipantsField } from '@/features/rewards/ParticipantsField';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -42,9 +48,45 @@ function fieldOf(path: readonly PropertyKey[], participants: NewParticipant[]): 
   return participant ? `minPoints:${participant.userId}` : 'participants';
 }
 
+/** The form's inputs as typed. */
+interface FormValues {
+  title: string;
+  targetPoints: string;
+  scope: GoalScope;
+  ownerId: string;
+  choices: ParticipantChoices;
+}
+
+/** What the form starts with: the goal being changed, or a new goal shared by everyone. */
+function startingValues(
+  initial: Goal | undefined,
+  userId: string,
+  members: GoalSetter[],
+): FormValues {
+  if (!initial) {
+    return {
+      title: '',
+      targetPoints: DEFAULT_TARGET_POINTS,
+      scope: 'shared',
+      ownerId: userId,
+      choices: everyoneTakingPart(members),
+    };
+  }
+  const { title, targetPoints, owner, participants } = initial;
+  return {
+    title,
+    targetPoints: String(targetPoints),
+    scope: owner ? 'personal' : 'shared',
+    ownerId: owner?.id ?? userId,
+    choices: owner ? everyoneTakingPart(members) : choicesOf(participants),
+  };
+}
+
 interface GoalFormProps {
   userId: string;
   members: GoalSetter[];
+  /** The open goal being changed; a new goal starts empty, shared by everyone. */
+  initial?: Goal;
   submitLabel: string;
   isSaving: boolean;
   /** Saves the goal; a rejection shows that saving failed. */
@@ -52,15 +94,23 @@ interface GoalFormProps {
 }
 
 /** The reward, the points that reach it and who it is for (ADR 0007). */
-export function GoalForm({ userId, members, submitLabel, isSaving, onSave }: GoalFormProps) {
+export function GoalForm({
+  userId,
+  members,
+  initial,
+  submitLabel,
+  isSaving,
+  onSave,
+}: GoalFormProps) {
   const messages = useMessages();
   const t = messages.rewards.form;
-  const [title, setTitle] = useState('');
-  const [targetPoints, setTargetPoints] = useState(DEFAULT_TARGET_POINTS);
-  const [scope, setScope] = useState<GoalScope>('shared');
+  const [start] = useState(() => startingValues(initial, userId, members));
+  const [title, setTitle] = useState(start.title);
+  const [targetPoints, setTargetPoints] = useState(start.targetPoints);
+  const [scope, setScope] = useState(start.scope);
   /** Whose personal goal it is; the user's own unless they pick another member. */
-  const [ownerId, setOwnerId] = useState(userId);
-  const [choices, setChoices] = useState(() => everyoneTakingPart(members));
+  const [ownerId, setOwnerId] = useState(start.ownerId);
+  const [choices, setChoices] = useState(start.choices);
   const [error, setError] = useState<FormError | null>(null);
   const errorId = useId();
 
