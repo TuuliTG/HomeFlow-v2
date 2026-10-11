@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import {
   fairnessOf,
   type MemberContribution,
+  memberName,
   type Metric,
   rankBy,
 } from '@/features/statistics/statistics';
@@ -194,13 +195,4 @@ function FairnessScore({
       </span>
     </p>
   );
-}
-
-function memberName(
-  { userId, displayName }: MemberContribution,
-  currentUserId: string,
-  t: Messages,
-): string {
-  if (userId === currentUserId) return t.common.you;
-  return displayName ?? t.common.newMember;
 }

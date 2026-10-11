@@ -1,3 +1,5 @@
+import type { Messages } from '@/lib/i18n/i18n';
+
 /** The periods the Statistics screen can show, from the start of each until now. */
 export const periods = ['week', 'month', 'all'] as const;
 
@@ -76,4 +78,14 @@ export function fairnessOf(contributions: MemberContribution[], metric: Metric):
   const score = Math.round(100 * (1 - distance / (1 - evenShare)));
   const label = score >= 80 ? 'balanced' : score >= 50 ? 'slightlyUneven' : 'uneven';
   return { score, label };
+}
+
+/** "You" for the logged-in user, otherwise the member's display name. */
+export function memberName(
+  { userId, displayName }: MemberContribution,
+  currentUserId: string,
+  t: Messages,
+): string {
+  if (userId === currentUserId) return t.common.you;
+  return displayName ?? t.common.newMember;
 }
