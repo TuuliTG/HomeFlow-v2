@@ -5,39 +5,17 @@ import { inputClassName } from '@/components/ui/formStyles';
 import { createAccount, logIn } from '@/features/auth/api';
 import { LoginError, type LoginFailureReason } from '@/features/auth/loginError';
 import { emailSchema, PASSWORD_MIN_LENGTH, passwordSchema } from '@/features/auth/validation';
+import { type Messages, useMessages } from '@/lib/i18n/i18n';
 
 const errorId = 'login-error';
 const hintId = 'password-hint';
 
 type Mode = 'log-in' | 'create-account';
 
-const failureMessages: Record<LoginFailureReason, string> = {
-  'wrong-credentials': 'Wrong email or password.',
-  'account-exists': 'There is already an account with this email. Log in instead.',
-  'weak-password': `Choose a stronger password (at least ${PASSWORD_MIN_LENGTH} characters).`,
-  'needs-email-confirmation':
-    'HomeFlow is set up to confirm emails, which it can’t send yet. Ask the person who runs HomeFlow to turn off “Confirm email” in Supabase.',
-  'too-many-attempts': 'Too many attempts. Wait a few minutes and try again.',
-  other: "That didn't work. Try again in a moment.",
-};
-
-const copy: Record<
-  Mode,
-  { heading: string; submit: string; switchPrompt: string; switchLabel: string }
-> = {
-  'log-in': {
-    heading: 'Log in',
-    submit: 'Log in',
-    switchPrompt: 'New to HomeFlow?',
-    switchLabel: 'Create an account',
-  },
-  'create-account': {
-    heading: 'Create your account',
-    submit: 'Create account',
-    switchPrompt: 'Already have an account?',
-    switchLabel: 'Log in instead',
-  },
-};
+function failureMessage(reason: LoginFailureReason, t: Messages): string {
+  const message = t.auth.failures[reason];
+  return typeof message === 'string' ? message : message(PASSWORD_MIN_LENGTH);
+}
 
 /** Log in with email and password, or create an account (ADR 0003). */
 export function PasswordForm() {
@@ -46,6 +24,8 @@ export function PasswordForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const isCreating = mode === 'create-account';
+  const t = useMessages();
+  const copy = isCreating ? t.auth.createAccount : t.auth.logIn;
 
   const submit = useMutation({
     mutationFn: (input: { email: string; password: string }) =>
@@ -53,7 +33,7 @@ export function PasswordForm() {
         ? logIn(input.email, input.password)
         : createAccount(input.email, input.password),
     onError: (submitError) => {
-      setError(failureMessages[submitError instanceof LoginError ? submitError.reason : 'other']);
+      setError(failureMessage(submitError instanceof LoginError ? submitError.reason : 'other', t));
     },
   });
 
@@ -61,11 +41,11 @@ export function PasswordForm() {
     event.preventDefault();
     const parsedEmail = emailSchema.safeParse(email.trim());
     if (!parsedEmail.success) {
-      setError('Enter a valid email address.');
+      setError(t.auth.invalidEmail);
       return;
     }
     if (isCreating && !passwordSchema.safeParse(password).success) {
-      setError(`Use at least ${PASSWORD_MIN_LENGTH} characters for your password.`);
+      setError(t.auth.shortPassword(PASSWORD_MIN_LENGTH));
       return;
     }
     setError(null);
@@ -87,10 +67,10 @@ export function PasswordForm() {
       noValidate
     >
       <h2 id="login-form-heading" className="font-semibold text-slate-900">
-        {copy[mode].heading}
+        {copy.heading}
       </h2>
       <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-        Email
+        {t.auth.email}
         <input
           type="email"
           name="email"
@@ -106,7 +86,7 @@ export function PasswordForm() {
       </label>
       <div className="flex flex-col gap-1">
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-          Password
+          {t.auth.password}
           <input
             type="password"
             name="password"
@@ -122,7 +102,7 @@ export function PasswordForm() {
         </label>
         {isCreating && (
           <p id={hintId} className="text-xs text-slate-500">
-            At least {PASSWORD_MIN_LENGTH} characters. Your browser or phone can save it for you.
+            {t.auth.passwordHint(PASSWORD_MIN_LENGTH)}
           </p>
         )}
       </div>
@@ -136,12 +116,12 @@ export function PasswordForm() {
         disabled={submit.isPending}
         className="bg-brand-600 hover:bg-brand-900 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
       >
-        {copy[mode].submit}
+        {copy.submit}
       </button>
       <p className="text-center text-sm text-slate-600">
-        {copy[mode].switchPrompt}{' '}
+        {copy.switchPrompt}{' '}
         <button type="button" onClick={switchMode} className="text-brand-600 font-medium underline">
-          {copy[mode].switchLabel}
+          {copy.switchLabel}
         </button>
       </p>
     </form>

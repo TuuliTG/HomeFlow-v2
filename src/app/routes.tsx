@@ -14,17 +14,21 @@ import { turnOffNotificationsOnThisDevice } from '@/features/notifications/usePu
 import { NewGoalPage } from '@/features/rewards/NewGoalPage';
 import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
+import { LanguageSettings } from '@/app/LanguageSettings';
 import { SharedTasksPage } from '@/features/tasks/SharedTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
 import { EditTaskPage } from '@/features/tasks/EditTaskPage';
 import { MyTasksPage } from '@/features/tasks/MyTasksPage';
+import { LanguageProvider } from '@/lib/i18n/LanguageProvider';
 
 export const routes: RouteObject[] = [
   {
     element: (
-      <AuthProvider beforeLogOut={turnOffNotificationsOnThisDevice}>
-        <Outlet />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider beforeLogOut={turnOffNotificationsOnThisDevice}>
+          <Outlet />
+        </AuthProvider>
+      </LanguageProvider>
     ),
     children: [
       { path: paths.login, element: <LoginPage /> },
@@ -45,6 +49,7 @@ export const routes: RouteObject[] = [
               <>
                 <MyTasksPage />
                 <NotificationSettings />
+                <LanguageSettings />
               </>
             ),
           },

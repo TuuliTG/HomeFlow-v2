@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { useMessages } from '@/lib/i18n/i18n';
 import { isHomeScreenApp, isIos } from '@/lib/platform';
 
 const DISMISSED_KEY = 'homeflow:install-hint-dismissed';
@@ -26,21 +27,23 @@ function rememberDismissal() {
  * open like an app and is required for notifications on iOS.
  */
 export function InstallHint() {
+  const t = useMessages().app.installHint;
   const [visible, setVisible] = useState(() => isIos() && !isHomeScreenApp() && !wasDismissed());
 
   if (!visible) return null;
 
   return (
     <aside
-      aria-label="Add HomeFlow to your Home Screen"
+      aria-label={t.title}
       className="bg-brand-50 mb-4 flex items-start gap-3 rounded-2xl border border-indigo-200 p-4 text-sm text-slate-700"
     >
       <div className="flex flex-col gap-1">
         {/* Not a heading: the hint sits above the page's h1 and shouldn't break the heading order. */}
-        <p className="font-semibold text-slate-900">Add HomeFlow to your Home Screen</p>
+        <p className="font-semibold text-slate-900">{t.title}</p>
         <p>
-          Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>. HomeFlow then opens
-          like an app and can send you notifications.
+          {t.tapShare} <strong>{t.share}</strong>
+          {t.then} <strong>{t.addToHomeScreen}</strong>
+          {t.benefit}
         </p>
       </div>
       <button
@@ -51,7 +54,7 @@ export function InstallHint() {
         }}
         className="text-brand-600 shrink-0 rounded-lg px-2 py-1 font-medium hover:bg-indigo-100"
       >
-        Got it
+        {t.gotIt}
       </button>
     </aside>
   );

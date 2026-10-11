@@ -14,6 +14,8 @@ board can be filtered to today, this week, no due date or tasks available to pic
 live and members can get push notifications, including reminders they set for their own tasks ([ADR 0004](docs/adr/0004-tasks.md), [ADR 0005](docs/adr/0005-push-notifications.md)).
 The Rewards screen holds family goals (optionally with a minimum from each member) and personal goals that points
 from shared tasks count towards; a reached goal's reward is claimed and kept as history ([ADR 0007](docs/adr/0007-goals-and-rewards.md)).
+The app speaks English and Finnish: the browser's language by default, changeable on the Me screen
+([ADR 0002](docs/adr/0002-stack-and-architecture.md)).
 Work in progress is tracked in [plan.md](plan.md).
 
 ## Tech stack
@@ -64,7 +66,8 @@ a few minutes. After you add or change a migration, run `npm run db:reset` so th
 src/app/            shell, routing, providers
 src/features/<x>/   feature code: components, hooks, api.ts, tests
 src/components/ui/  shared presentational components
-src/lib/            infrastructure (env, Supabase client, push message format)
+src/lib/            infrastructure (env, Supabase client, push message format, i18n)
+src/locales/<lang>/ the app's texts, one folder per language (English is the source)
 src/sw.ts           service worker: offline cache and push notifications
 e2e/                Playwright specs
 supabase/           Supabase config, SQL migrations and tests, Edge Functions

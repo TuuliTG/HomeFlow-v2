@@ -2,6 +2,7 @@ import { useId } from 'react';
 
 import { type DueGroup, groupByDueDate } from '@/features/tasks/dueDate';
 import { today } from '@/lib/dates';
+import { useMessages } from '@/lib/i18n/i18n';
 import type { Task } from '@/features/tasks/task';
 import { TaskCard } from '@/features/tasks/TaskCard';
 
@@ -18,9 +19,10 @@ interface DueTaskGroupsProps {
  * and No due date.
  */
 export function DueTaskGroups({ tasks, currentUserId, headingLevel }: DueTaskGroupsProps) {
+  const t = useMessages();
   return (
     <div className="flex flex-col gap-6 pt-2">
-      {groupByDueDate(tasks, today()).map((group) => (
+      {groupByDueDate(tasks, today(), t).map((group) => (
         <DueTaskGroup
           key={group.label}
           group={group}

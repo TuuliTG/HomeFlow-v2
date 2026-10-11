@@ -5,15 +5,14 @@ import { MetricSection } from '@/features/statistics/MetricSection';
 import {
   type MemberContribution,
   type Period,
-  periodLabels,
   periods,
   type PointsFilter,
-  pointsFilterLabels,
   pointsFilters,
   pointsMetrics,
 } from '@/features/statistics/statistics';
 import { useContributions } from '@/features/statistics/useContributions';
 import { useLoggedInUser } from '@/lib/auth';
+import { useMessages } from '@/lib/i18n/i18n';
 import { useSearchParam } from '@/lib/useSearchParam';
 
 const PERIOD_PARAM = 'period';
@@ -41,19 +40,16 @@ export function StatisticsPage() {
   const user = useLoggedInUser();
   const [period, setPeriod] = usePeriodParam();
   const contributions = useContributions(user.id, period);
+  const t = useMessages().statistics;
 
   return (
     <>
-      <PageHeader
-        eyebrow="Statistics"
-        title="Fairness & progress"
-        description="Points earned and tasks created across the family. Private tasks don't count."
-      />
+      <PageHeader eyebrow={t.eyebrow} title={t.title} description={t.description} />
       <div className="mb-6">
         <SegmentedChoice
-          legend="Period"
+          legend={t.period}
           options={periods}
-          labels={periodLabels}
+          labels={t.periods}
           value={period}
           onChange={setPeriod}
         />
@@ -72,12 +68,13 @@ function PointsSection({
   userId: string;
 }) {
   const [filter, setFilter] = usePointsFilterParam();
+  const t = useMessages().statistics;
   return (
     <MetricSection metric={pointsMetrics[filter]} contributions={contributions} userId={userId}>
       <SegmentedChoice
-        legend="Work type"
+        legend={t.workType}
         options={pointsFilters}
-        labels={pointsFilterLabels}
+        labels={t.pointsFilters}
         value={filter}
         onChange={setFilter}
       />
@@ -92,11 +89,12 @@ function StatisticsBody({
   contributions: ReturnType<typeof useContributions>;
   userId: string;
 }) {
+  const t = useMessages().statistics;
   if (contributions.data === undefined) {
     if (!contributions.isError) return <LoadingMessage />;
     return (
       <p role="alert" className="text-sm text-red-700">
-        We couldn&apos;t load the statistics. Check your connection and reload the page.
+        {t.loadFailed}
       </p>
     );
   }
@@ -104,7 +102,7 @@ function StatisticsBody({
     <div className="flex flex-col gap-6">
       {contributions.data.length < 2 && (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
-          Invite your family to see how the work is shared.
+          {t.inviteFamily}
         </p>
       )}
       <PointsSection contributions={contributions.data} userId={userId} />

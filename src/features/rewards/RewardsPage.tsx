@@ -7,27 +7,12 @@ import { GoalCard } from '@/features/rewards/GoalCard';
 import { type Goal, nameOf } from '@/features/rewards/goal';
 import { useGoals } from '@/features/rewards/useGoals';
 import { useLoggedInUser } from '@/lib/auth';
+import { type Messages, useMessages } from '@/lib/i18n/i18n';
 
 const emptyClassName =
   'rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600';
 
-const claimedDateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
-
-type Section = 'family' | 'yours' | 'members';
-
-const sections: Record<Section, { heading: string; empty: string | null }> = {
-  family: {
-    heading: 'Family goals',
-    empty: 'No family goals yet. Set one everyone can work towards together, like a trip out.',
-  },
-  yours: {
-    heading: 'Your goals',
-    empty:
-      'Set a goal of your own, like a treat. Only your points count, and the family can cheer you on.',
-  },
-  // Shown only when other members have goals.
-  members: { heading: "Family members' goals", empty: null },
-};
+type Section = keyof Messages['rewards']['sections'];
 
 function sectionOf(goal: Goal, userId: string): Section {
   if (goal.owner === null) return 'family';
@@ -35,25 +20,24 @@ function sectionOf(goal: Goal, userId: string): Section {
 }
 
 /** Whose a claimed reward was: "Family", "Yours" or "Ben's". */
-function ownerLabel(goal: Goal, userId: string): string {
-  if (goal.owner === null) return 'Family';
-  return goal.owner.id === userId ? 'Yours' : `${nameOf(goal.owner)}'s`;
+function ownerLabel(goal: Goal, userId: string, t: Messages): string {
+  const { owner } = t.rewards;
+  if (goal.owner === null) return owner.family;
+  return goal.owner.id === userId ? owner.yours : owner.named(nameOf(goal.owner, t));
 }
 
 export function RewardsPage() {
+  const t = useMessages().rewards;
   return (
     <>
       <div className="flex items-start justify-between gap-4">
-        <PageHeader
-          eyebrow="Rewards"
-          title="Rewards & goals"
-          description="Doing shared tasks earns points. Points earned after a goal is set count towards it: everyone's for family goals, yours for your own."
-        />
+        <PageHeader eyebrow={t.eyebrow} title={t.title} description={t.description} />
         <Link
           to={paths.newGoal}
           className="bg-brand-600 hover:bg-brand-900 shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-white"
         >
-          <span aria-hidden="true">+ </span>New goal
+          <span aria-hidden="true">+ </span>
+          {t.newGoal}
         </Link>
       </div>
       <Goals />
@@ -64,13 +48,14 @@ export function RewardsPage() {
 function Goals() {
   const user = useLoggedInUser();
   const goals = useGoals(user.id);
+  const t = useMessages();
 
   // A failed refresh keeps showing the goals already loaded.
   if (goals.data === undefined) {
     if (!goals.isError) return <LoadingMessage />;
     return (
       <p role="alert" className="text-sm text-red-700">
-        We couldn&apos;t load the goals. Check your connection and reload the page.
+        {t.rewards.loadFailed}
       </p>
     );
   }
@@ -100,7 +85,7 @@ function GoalSection({
   goals: Goal[];
   userId: string;
 }) {
-  const { heading, empty } = sections[section];
+  const { heading, empty } = useMessages().rewards.sections[section];
   const headingId = `${section}-goals-heading`;
   if (goals.length === 0 && empty === null) return null;
   return (
@@ -122,18 +107,19 @@ function GoalSection({
 }
 
 function ClaimedRewards({ goals, userId }: { goals: Goal[]; userId: string }) {
+  const t = useMessages();
   return (
     <section aria-labelledby="claimed-heading" className="flex flex-col gap-3">
       <h2 id="claimed-heading" className="text-lg font-semibold text-slate-900">
-        Rewards claimed
+        {t.rewards.claimedHeading}
       </h2>
       <ul className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
         {goals.map((goal) => (
           <li key={goal.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
             <span className="font-medium text-slate-900">{goal.title}</span>
             <span className="shrink-0 text-slate-500">
-              {ownerLabel(goal, userId)} · Claimed{' '}
-              {claimedDateFormat.format(new Date(goal.claimedAt ?? ''))}
+              {ownerLabel(goal, userId, t)} ·{' '}
+              {t.rewards.claimedOn(t.common.dayAndMonth(new Date(goal.claimedAt ?? '')))}
             </span>
           </li>
         ))}

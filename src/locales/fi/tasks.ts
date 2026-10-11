@@ -1,0 +1,103 @@
+import type { Messages } from '@/locales/en';
+
+export const tasks: Messages['tasks'] = {
+  eyebrow: 'Tehtävät',
+  newTask: 'Uusi tehtävä',
+  board: {
+    title: 'Yhteiset tehtävät',
+    description:
+      'Valitse mikä tahansa tehtävä. Uusista tehtävistä saa lisäpisteitä vaihtelusta ja reiluudesta. Omat yksityiset tehtäväsi ovat Minä-sivulla.',
+    showCompleted: 'Näytä tehdyt',
+    show: 'Näytä',
+    loadFailed: 'Tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
+    filters: {
+      all: 'Kaikki',
+      today: 'Tänään',
+      week: 'Tällä viikolla',
+      undated: 'Ei määräpäivää',
+      available: 'Vapaat',
+    },
+    empty: {
+      all: 'Ei vielä tehtäviä. Luo ensimmäinen!',
+      today: 'Tänään ei ole mitään tehtävää.',
+      week: 'Tällä viikolla ei ole mitään tehtävää.',
+      undated: 'Kaikilla tehtävillä on määräpäivä.',
+      available: 'Kaikki tehtävät on jo varattu.',
+    },
+  },
+  due: {
+    today: 'Määräpäivä tänään',
+    tomorrow: 'Määräpäivä huomenna',
+    on: (date) => `Määräpäivä ${date}`,
+    was: (date) => `Määräpäivä oli ${date}`,
+  },
+  dueGroups: {
+    overdue: 'Myöhässä',
+    later: 'Myöhemmin',
+    noDueDate: 'Ei määräpäivää',
+  },
+  repeat: (days) => {
+    if (days === 1) return 'Joka päivä';
+    if (days === 7) return 'Joka viikko';
+    if (days % 7 === 0) return `${String(days / 7)} viikon välein`;
+    return `${String(days)} päivän välein`;
+  },
+  card: {
+    private: 'Yksityinen',
+    addedBy: {
+      you: 'Lisännyt: sinä',
+      someone: 'Lisännyt: joku',
+      named: (name) => `Lisännyt: ${name}`,
+    },
+    pickedUpBy: {
+      you: 'Varannut: sinä',
+      someone: 'Varannut: joku',
+      named: (name) => `Varannut: ${name}`,
+    },
+    edit: 'Muokkaa',
+    pickUp: 'Varaa',
+    putBack: 'Peru varaus',
+    markDone: 'Tehty',
+    failures: {
+      complete: 'Tehtävää ei voitu merkitä tehdyksi. Yritä uudelleen.',
+      pickUp: 'Tehtävää ei voitu varata. Joku on ehkä ehtinyt ensin.',
+      putBack: 'Varausta ei voitu perua. Yritä uudelleen.',
+    },
+    confirmTakeOverLabel: (name) => `Merkitäänkö tehdyksi, vaikka ${name} on varannut sen?`,
+    confirmTakeOver: (name) => `${name} on varannut tämän. Merkitäänkö se silti tehdyksi?`,
+    yesIDidIt: 'Kyllä, tein sen',
+  },
+  favourite: 'Suosikki',
+  notSaved: 'Ei tallennettu',
+  completed: {
+    heading: 'Tehdyt',
+    loadFailed: 'Tehtyjä tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
+    empty: 'Mitään ei ole vielä tehty.',
+    doneBy: { you: 'Tehnyt: sinä', someone: 'Tehnyt: joku', named: (name) => `Tehnyt: ${name}` },
+    addAgain: 'Lisää uudelleen',
+    addAgainLabel: (title) => `Lisää uudelleen: ${title}`,
+  },
+  me: {
+    eyebrow: 'Minä',
+    title: 'Omat tehtävät',
+    description: 'Varaamasi tehtävät, yksityiset tehtäväsi ja se, mitä olet tehnyt.',
+    pointsEarned: 'Ansaitut pisteet',
+    pointsLoadFailed: 'Pisteitäsi ei voitu ladata.',
+    toDo: 'Tehtävänä',
+    loadFailed: 'Tehtäviäsi ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
+    nothingPickedUp: 'Et ole vielä varannut mitään. Valitse tehtävä yhteisistä tehtävistä.',
+    completed: 'Tehdyt',
+    completedTasks: 'Tehdyt tehtävät',
+    completedLoadFailed:
+      'Tehtyjä tehtäviäsi ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
+    completedEmpty: 'Tehdyiksi merkitsemäsi tehtävät näkyvät tässä.',
+    doneOn: (date) => `Tehty ${date}`,
+    undo: 'Kumoa',
+    undoFailed:
+      'Tätä ei voitu kumota. Tehdyksi merkinnän voi kumota tunnin ajan, kunnes seuraava kerta on tehty.',
+  },
+  activity: {
+    added: (name, title) => `${name} lisäsi tehtävän ${title}`,
+    dismiss: 'Sulje',
+  },
+};

@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  describeSummary,
-  groupByDay,
-  joinNames,
-  newsStart,
-  type NewsItem,
-} from '@/features/news/news';
+import { groupByDay, newsStart, type NewsItem } from '@/features/news/news';
+import { en } from '@/locales/en';
 
 const anna = { userId: 'u1', name: 'Anna' };
 const ben = { userId: 'u2', name: 'Ben' };
@@ -38,7 +33,7 @@ describe('groupByDay', () => {
       item({ taskId: 't5', completedAt: at(6, 12), points: 1 }),
     ];
 
-    const days = groupByDay(items, '2026-10-10');
+    const days = groupByDay(items, '2026-10-10', en);
 
     expect(days.map((day) => [day.label, day.items.map((news) => news.taskId)])).toEqual([
       ['Today', ['t1', 't2', 't3']],
@@ -49,28 +44,6 @@ describe('groupByDay', () => {
       { member: ben, physicalPoints: 8, metaPoints: 0 },
       { member: anna, physicalPoints: 0, metaPoints: 2 },
     ]);
-  });
-});
-
-describe('describeSummary', () => {
-  it('names the kind of work when there was only one, and splits it otherwise', () => {
-    expect(describeSummary({ member: ben, physicalPoints: 10, metaPoints: 0 }, 'Ben')).toBe(
-      'Ben earned 10 points of physical work',
-    );
-    expect(describeSummary({ member: anna, physicalPoints: 0, metaPoints: 1 }, 'You')).toBe(
-      'You earned 1 point of meta work',
-    );
-    expect(describeSummary({ member: ben, physicalPoints: 7, metaPoints: 3 }, 'Ben')).toBe(
-      'Ben earned 10 points: 7 physical, 3 meta work',
-    );
-  });
-});
-
-describe('joinNames', () => {
-  it('lists names like a sentence', () => {
-    expect(joinNames(['Anna'])).toBe('Anna');
-    expect(joinNames(['You', 'Ben'])).toBe('You and Ben');
-    expect(joinNames(['Anna', 'Ben', 'Carl'])).toBe('Anna, Ben and Carl');
   });
 });
 

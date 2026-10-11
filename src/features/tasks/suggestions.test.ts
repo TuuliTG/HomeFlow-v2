@@ -8,6 +8,7 @@ import {
   suggestionPointsLabel,
 } from '@/features/tasks/suggestions';
 import type { TaskSuggestion } from '@/features/tasks/task';
+import { en } from '@/locales/en';
 
 function suggestion(title: string, details: Partial<TaskSuggestion> = {}): TaskSuggestion {
   return {
@@ -91,6 +92,6 @@ describe('suggestionPointsLabel', () => {
     [3, '3 points'],
     [null, 'Private'],
   ])('labels %j points as %s', (points, label) => {
-    expect(suggestionPointsLabel(suggestion('Dust', { points }))).toBe(label);
+    expect(suggestionPointsLabel(suggestion('Dust', { points }), en)).toBe(label);
   });
 });

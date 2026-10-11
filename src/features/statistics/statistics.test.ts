@@ -54,22 +54,22 @@ describe('rankBy', () => {
 
 describe('fairnessOf', () => {
   it('is 100 and balanced when everyone has as much', () => {
-    expect(fairnessOf([points(4), points(4)], 'points')).toEqual({ score: 100, label: 'Balanced' });
+    expect(fairnessOf([points(4), points(4)], 'points')).toEqual({ score: 100, label: 'balanced' });
   });
 
   it('is 0 when one member has it all', () => {
     expect(fairnessOf([points(5), points(0), points(0)], 'points')).toEqual({
       score: 0,
-      label: 'Uneven',
+      label: 'uneven',
     });
   });
 
   it('falls in between for uneven shares', () => {
     expect(fairnessOf([points(3), points(1)], 'points')).toEqual({
       score: 50,
-      label: 'Slightly uneven',
+      label: 'slightlyUneven',
     });
-    expect(fairnessOf([points(9), points(1)], 'points')).toEqual({ score: 20, label: 'Uneven' });
+    expect(fairnessOf([points(9), points(1)], 'points')).toEqual({ score: 20, label: 'uneven' });
   });
 
   it('scores each metric on its own', () => {

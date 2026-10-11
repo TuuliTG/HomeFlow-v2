@@ -2,19 +2,21 @@ import { NavLink } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { ChartIcon, CheckListIcon, NewsIcon, StarIcon, UserIcon } from '@/components/ui/icons';
+import { useMessages } from '@/lib/i18n/i18n';
 
 const navItems = [
-  { to: paths.me, label: 'Me', Icon: UserIcon },
-  { to: paths.tasks, label: 'Shared tasks', Icon: CheckListIcon },
-  { to: paths.news, label: 'News', Icon: NewsIcon },
-  { to: paths.rewards, label: 'Rewards', Icon: StarIcon },
-  { to: paths.statistics, label: 'Statistics', Icon: ChartIcon },
+  { to: paths.me, label: 'me', Icon: UserIcon },
+  { to: paths.tasks, label: 'tasks', Icon: CheckListIcon },
+  { to: paths.news, label: 'news', Icon: NewsIcon },
+  { to: paths.rewards, label: 'rewards', Icon: StarIcon },
+  { to: paths.statistics, label: 'statistics', Icon: ChartIcon },
 ] as const;
 
 export function MainNav() {
+  const t = useMessages();
   return (
     <nav
-      aria-label="Main"
+      aria-label={t.app.nav.label}
       className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] md:sticky md:top-0 md:h-dvh md:w-56 md:border-t-0 md:border-r md:pt-6"
     >
       <ul className="flex justify-around md:flex-col md:gap-1 md:px-3">
@@ -33,7 +35,7 @@ export function MainNav() {
               }
             >
               <Icon className="size-6" />
-              {label}
+              {t.app.nav[label]}
             </NavLink>
           </li>
         ))}

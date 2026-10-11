@@ -1,6 +1,7 @@
 import { FavouriteStarButton } from '@/features/tasks/FavouriteStarButton';
 import { titleKey } from '@/features/tasks/task';
 import { useFavouriteTasks, useSetFavouriteTask } from '@/features/tasks/useTasks';
+import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskFavouriteStarProps {
   /** The task's name: favourites are by name, so every task with it is starred. */
@@ -15,15 +16,16 @@ interface TaskFavouriteStarProps {
 export function TaskFavouriteStar({ title, currentUserId }: TaskFavouriteStarProps) {
   const favourites = useFavouriteTasks(currentUserId);
   const setFavourite = useSetFavouriteTask(currentUserId);
+  const t = useMessages();
   return (
     <span className="flex items-center">
       {setFavourite.isError && (
         <span role="alert" className="text-xs text-red-700">
-          Not saved
+          {t.tasks.notSaved}
         </span>
       )}
       <FavouriteStarButton
-        label={`Favourite: ${title}`}
+        label={`${t.tasks.favourite}: ${title}`}
         variant="plain"
         isFavourite={favourites.data?.includes(titleKey(title)) ?? false}
         disabled={favourites.data === undefined}

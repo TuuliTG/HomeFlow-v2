@@ -1,5 +1,5 @@
 /** Reminder times: instants stored as ISO timestamps, entered and shown in the user's own time zone. */
-import { formatShortDate } from '@/lib/dates';
+import type { Messages } from '@/lib/i18n/i18n';
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
@@ -23,14 +23,14 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 /** "Reminder today at 18:00", "Reminder tomorrow at 9:05" or "Reminder Sat 17 Oct at 9:00". */
-export function describeReminder(remindAt: string, now: Date): string {
+export function describeReminder(remindAt: string, now: Date, t: Messages): string {
   const date = new Date(remindAt);
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
   const day = isSameDay(date, now)
-    ? 'today'
+    ? t.taskForm.reminder.today
     : isSameDay(date, tomorrow)
-      ? 'tomorrow'
-      : formatShortDate(date);
-  return `Reminder ${day} at ${String(date.getHours())}:${pad(date.getMinutes())}`;
+      ? t.taskForm.reminder.tomorrow
+      : t.common.shortDate(date);
+  return t.taskForm.reminder.at(day, t.common.time(date));
 }

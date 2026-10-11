@@ -3,12 +3,6 @@ export const periods = ['week', 'month', 'all'] as const;
 
 export type Period = (typeof periods)[number];
 
-export const periodLabels: Record<Period, string> = {
-  week: 'This week',
-  month: 'This month',
-  all: 'All time',
-};
-
 /** When `period` started on the user's local calendar (weeks start on Monday); null for all time. */
 export function periodStart(period: Period, now: Date): Date | null {
   switch (period) {
@@ -49,12 +43,6 @@ export const pointsFilters = ['all', 'physical', 'meta'] as const;
 
 export type PointsFilter = (typeof pointsFilters)[number];
 
-export const pointsFilterLabels: Record<PointsFilter, string> = {
-  all: 'All',
-  physical: 'Physical',
-  meta: 'Meta work',
-};
-
 export const pointsMetrics: Record<PointsFilter, Metric> = {
   all: 'points',
   physical: 'physicalPoints',
@@ -64,7 +52,7 @@ export const pointsMetrics: Record<PointsFilter, Metric> = {
 /** How evenly a metric is shared: 100 when everyone has as much, 0 when one member has it all. */
 export interface Fairness {
   score: number;
-  label: 'Balanced' | 'Slightly uneven' | 'Uneven';
+  label: 'balanced' | 'slightlyUneven' | 'uneven';
 }
 
 /** Most first; a stable sort keeps members with equal values in the order they joined. */
@@ -86,6 +74,6 @@ export function fairnessOf(contributions: MemberContribution[], metric: Metric):
   const distance =
     values.reduce((total, value) => total + Math.abs(value / sum - evenShare), 0) / 2;
   const score = Math.round(100 * (1 - distance / (1 - evenShare)));
-  const label = score >= 80 ? 'Balanced' : score >= 50 ? 'Slightly uneven' : 'Uneven';
+  const label = score >= 80 ? 'balanced' : score >= 50 ? 'slightlyUneven' : 'uneven';
   return { score, label };
 }

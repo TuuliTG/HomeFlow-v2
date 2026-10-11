@@ -1,4 +1,5 @@
-import { type TaskType, taskTypeLabels, taskTypes } from '@/features/tasks/task';
+import { type TaskType, taskTypes } from '@/features/tasks/task';
+import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskTypeFieldProps {
   value: TaskType;
@@ -7,9 +8,10 @@ interface TaskTypeFieldProps {
 
 /** Physical or meta work, as a choice of radio buttons. */
 export function TaskTypeField({ value, onChange }: TaskTypeFieldProps) {
+  const t = useMessages();
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-1 text-sm font-medium text-slate-700">Type</legend>
+      <legend className="mb-1 text-sm font-medium text-slate-700">{t.taskForm.type}</legend>
       <div className="flex gap-3">
         {taskTypes.map((option) => (
           <label
@@ -26,7 +28,7 @@ export function TaskTypeField({ value, onChange }: TaskTypeFieldProps) {
               }}
               className="accent-brand-600"
             />
-            {taskTypeLabels[option]}
+            {t.common.taskTypes[option]}
           </label>
         ))}
       </div>

@@ -1,6 +1,6 @@
 # 0002. Stack and architecture
 
-- **Updated:** 2026-10-08
+- **Updated:** 2026-10-11
 
 ## Context
 
@@ -19,9 +19,18 @@ maintained by agents, so strict types and a predictable structure matter more th
   `getSupabaseClient()`; components never call Supabase (ESLint enforces it).
 - **PWA** with `vite-plugin-pwa` and our own service worker (`src/sw.ts`), installable to the home screen.
 - **Vercel** hosts the static build.
+- **Languages** (English and Finnish) without an i18n library: each language is a typed object in
+  `src/locales/<code>/`, one file per area, with English (`src/locales/en`) as the source and its type
+  `Messages`. Texts that take values are functions, so plurals, word order and date formats (`common.shortDate`,
+  `common.time`) live with the language. Components read texts with `useMessages()` from `@/lib/i18n/i18n`;
+  helpers that build text take `t: Messages` (e.g. `groupByDueDate`, `newTaskSchema(t)`). The language is the one
+  chosen on the Me page (stored per device in `localStorage`), else the browser's, else English; `<html lang>`
+  follows it. Adding one: copy `src/locales/en`, translate, register it in `src/lib/i18n/languages.ts`.
 
 ## Consequences
 
+- TypeScript fails the build when a language is missing a text or gives a function the wrong shape. Unit tests
+  without `LanguageProvider` see English. Push notification texts are built server-side and are still English.
 - No servers to run; the free tiers are enough for now.
 - Security rests on RLS policies, so each one needs pgTAP tests.
 - No SSR; the service worker's cache must be kept in mind when debugging stale content.
@@ -30,3 +39,5 @@ maintained by agents, so strict types and a predictable structure matter more th
 
 - Next.js (SSR not needed), React Native (app stores not needed), Firebase (NoSQL makes points and fairness
   queries harder), own Node API (more to host and secure).
+- i18next with JSON files for languages: a dependency and string keys that need extra setup to type-check, more
+  than a few hundred short texts need. Worth revisiting if translators need a translation service.
