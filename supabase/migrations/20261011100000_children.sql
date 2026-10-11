@@ -23,8 +23,9 @@ revoke execute on function private.is_child(uuid) from public;
 grant execute on function private.is_child(uuid) to authenticated;
 
 -- Whether the user may see and act on the task: in their household, shared or their own private task, and available
--- for children if they are a child. The select policy below and every security definer function acting on any open
--- task use it, so the rule is in one place.
+-- for children if they are a child. The security definer functions acting on a task use it. The select policy spells
+-- the same rule out instead: a function with SET isn't inlined, so in a policy it would run for every row of every
+-- household rather than letting the household index narrow the rows first.
 create function private.can_see_task(task public.tasks)
 returns boolean
 language sql
@@ -42,7 +43,11 @@ grant execute on function private.can_see_task(public.tasks) to authenticated;
 drop policy "Members can view their household's shared tasks and their own private ones" on public.tasks;
 create policy "Members can view the tasks of their household they may see"
   on public.tasks for select to authenticated
-  using ((select private.can_see_task(tasks)));
+  using (
+    household_id = (select private.current_household_id())
+    and (not is_private or created_by = (select auth.uid()))
+    and (for_children or not (select private.is_child((select auth.uid()))))
+  );
 
 -- A child's tasks are always available for children, so they don't lose sight of a task they add.
 drop policy "Members can add tasks to their household" on public.tasks;
@@ -83,7 +88,10 @@ begin
   if is_child is null then
     raise exception 'Choose child or adult' using errcode = '22023';
   end if;
-  if (select private.current_household_id()) is null or private.is_child(auth.uid()) then
+  -- Locking the adult's own row means two adults marking each other at once can't both succeed and leave the
+  -- household without an adult: the second waits, then finds itself a child (or the two deadlock and one fails).
+  perform 1 from public.household_members m where m.user_id = auth.uid() and not m.is_child for share;
+  if not found then
     raise exception 'Only an adult in the household can change who is a child' using errcode = '42501';
   end if;
   update public.household_members m set is_child = set_member_is_child.is_child
@@ -105,9 +113,9 @@ revoke execute on function public.set_member_is_child(uuid, boolean) from public
 grant execute on function public.set_member_is_child(uuid, boolean) to authenticated;
 
 -- The functions below bypass Row Level Security, so each now checks private.can_see_task(). They are as before
--- (20261009110000_private_tasks.sql) apart from that, complete_task() copying for_children, and update_task()
--- setting it. put_back_task() and undo_complete_task() only act on tasks the user picked up or marked done, and a
--- child never holds an adults-only task, so they stay as they are.
+-- (20261009110000_private_tasks.sql, 20261008200000_edit_delete_undo_tasks.sql, 20261009140000_task_reminders.sql)
+-- apart from that, complete_task() copying for_children, and update_task() setting it. put_back_task() only gives
+-- back a task, so it stays as it is.
 
 create or replace function public.complete_task(task_id uuid, completed_on date)
 returns uuid
@@ -300,3 +308,85 @@ $$;
 
 revoke execute on function public.task_suggestions() from public, anon;
 grant execute on function public.task_suggestions() to authenticated;
+
+-- A child can undo only a task they can still see, and not when that would delete a next occurrence an adult has
+-- since made adults-only. Otherwise as before (20261008200000_edit_delete_undo_tasks.sql).
+create or replace function public.undo_complete_task(task_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  done public.tasks;
+begin
+  select * into done from public.tasks t
+    where t.id = undo_complete_task.task_id
+      and private.can_see_task(t)
+      and t.completed_by = auth.uid()
+      and t.completed_at > now() - interval '1 hour'
+    for update;
+  if done.id is null or exists (
+    select 1 from public.tasks t where t.previous_task_id = done.id and not private.can_see_task(t)
+  ) then
+    raise exception 'You have not marked this task done in the last hour' using errcode = 'P0002';
+  end if;
+  if exists (
+    select 1 from public.tasks t where t.previous_task_id = done.id and t.completed_at is not null
+  ) then
+    raise exception 'The next occurrence of this task is already done' using errcode = '55006';
+  end if;
+  delete from public.tasks t where t.previous_task_id = done.id;
+  update public.tasks t set completed_at = null, completed_by = null where t.id = done.id;
+end;
+$$;
+
+-- As before (20261009140000_task_reminders.sql), for a task the user can see.
+create or replace function public.set_task_reminder(task_id uuid, remind_at timestamptz)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if remind_at is null or remind_at < now() - interval '1 minute' or remind_at > now() + interval '1 year' then
+    raise exception 'A reminder must be within the next year' using errcode = '22023';
+  end if;
+  if not exists (
+    select 1 from public.tasks t
+      where t.id = set_task_reminder.task_id
+        and private.can_see_task(t)
+        and private.is_task_to_do_by(t, auth.uid())
+  ) then
+    raise exception 'No open task of yours with this id' using errcode = 'P0002';
+  end if;
+  insert into public.task_reminders (task_id, user_id, remind_at)
+  values (set_task_reminder.task_id, auth.uid(), set_task_reminder.remind_at)
+  on conflict on constraint task_reminders_pkey do update set remind_at = excluded.remind_at;
+end;
+$$;
+
+-- As before (20261009140000_task_reminders.sql), and never sends a child the title of an adults-only task.
+create or replace function public.take_due_reminders()
+returns table (user_id uuid, task_title text)
+language sql
+security definer
+set search_path = ''
+as $$
+  with due as (
+    delete from public.task_reminders r where r.remind_at <= now()
+      returning r.task_id, r.user_id, r.remind_at
+  )
+  select due.user_id, t.title
+    from due join public.tasks t on t.id = due.task_id
+    where private.is_task_to_do_by(t, due.user_id) and due.remind_at > now() - interval '1 hour'
+      and (t.for_children or not private.is_child(due.user_id));
+$$;
+
+-- Statistics and goals count every shared task, also for a child who can't see some of them: the family's fairness
+-- and progress are the same for everyone. They return only numbers and names, never task titles, and stay scoped to
+-- the caller's household (household_statistics() by current_household_id(), the goal helpers by a goal row the
+-- caller could read or claim_goal_reward() chose).
+alter function public.household_statistics(timestamptz) security definer;
+alter function private.goal_points(public.goals) security definer;
+alter function private.goal_member_points(public.goals) security definer;

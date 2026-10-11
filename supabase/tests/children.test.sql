@@ -2,7 +2,7 @@
 -- Anna and Ben share a household and Anna marks Ben as a child; Carol has her own household.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(26);
+select plan(31);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -19,8 +19,9 @@ insert into public.tasks (title, type, points) values ('Pay the bills', 'meta', 
 insert into public.tasks (title, type, points, for_children, repeat_every_days)
   values ('Feed the cat', 'physical', 2, true, 1);
 insert into public.tasks (title, type, points) values ('Mow the lawn', 'physical', 5);
+insert into public.tasks (title, type, points) values ('Wash the car', 'physical', 4);
 
--- Ben joins and, before he is a child, picks up an adults-only task and adds a private one.
+-- Ben joins and, before he is a child, picks up an adults-only task, washes the car and adds a private task.
 reset role;
 insert into public.household_members (household_id, user_id)
   select household_id, '22222222-2222-2222-2222-222222222222' from public.tasks where title = 'Pay the bills';
@@ -29,12 +30,15 @@ begin
   perform set_config('test.bills', id::text, true) from public.tasks where title = 'Pay the bills';
   perform set_config('test.cat', id::text, true) from public.tasks where title = 'Feed the cat';
   perform set_config('test.lawn', id::text, true) from public.tasks where title = 'Mow the lawn';
+  perform set_config('test.car', id::text, true) from public.tasks where title = 'Wash the car';
 end
 $$;
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select public.pick_up_task(current_setting('test.bills')::uuid);
 select public.set_task_reminder(current_setting('test.bills')::uuid, now() + interval '1 day');
+select public.pick_up_task(current_setting('test.car')::uuid);
+select public.complete_task(current_setting('test.car')::uuid, current_date);
 insert into public.tasks (title, type, points, is_private) values ('Read a book', 'physical', null, true);
 
 select results_eq(
@@ -71,7 +75,7 @@ select throws_ok(
 );
 select results_eq(
   $$ select count(*)::integer from public.tasks $$,
-  $$ values (3) $$,
+  $$ values (4) $$,
   'adults see every shared task'
 );
 
@@ -96,6 +100,21 @@ select throws_ok(
   $$ select public.set_member_is_child('11111111-1111-1111-1111-111111111111', true) $$,
   '42501', null,
   'a child cannot change other members'
+);
+select throws_ok(
+  format('select public.undo_complete_task(%L)', current_setting('test.car')),
+  'P0002', null,
+  'a new child cannot undo an adults-only task they did, which would hand it back to them'
+);
+select throws_ok(
+  format('select public.set_task_reminder(%L, now() + interval ''1 day'')', current_setting('test.car')),
+  'P0002', null,
+  'a child cannot set a reminder for an adults-only task'
+);
+select results_eq(
+  $$ select done, points from public.household_statistics(null) where user_id = auth.uid() $$,
+  $$ values (1, 4) $$,
+  'statistics still count the adults-only tasks a child did before'
 );
 select throws_ok(
   format('select public.pick_up_task(%L)', current_setting('test.lawn')),
@@ -190,6 +209,32 @@ select results_eq(
   ),
   $$ values (true, true) $$,
   'the next occurrence of a task done by a child stays available for children'
+);
+
+-- Even a reminder a child somehow holds for an adults-only task is never sent.
+reset role;
+update public.tasks set picked_up_by = '22222222-2222-2222-2222-222222222222', picked_up_at = now()
+  where title = 'Mow the lawn';
+insert into public.task_reminders (task_id, user_id, remind_at)
+  select id, '22222222-2222-2222-2222-222222222222', now() - interval '1 minute' from public.tasks
+  where title = 'Mow the lawn';
+set local role service_role;
+select is_empty(
+  $$ select * from public.take_due_reminders() $$,
+  'a child is never sent the title of an adults-only task'
+);
+
+-- Anna and Ben can't both make the other a child: the rule is checked on the caller's locked row.
+reset role;
+update public.household_members set is_child = false where user_id = '22222222-2222-2222-2222-222222222222';
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select public.set_member_is_child('22222222-2222-2222-2222-222222222222', true);
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select throws_ok(
+  $$ select public.set_member_is_child('11111111-1111-1111-1111-111111111111', true) $$,
+  '42501', null,
+  'a member just made a child cannot make the adult a child too'
 );
 
 select * from finish();

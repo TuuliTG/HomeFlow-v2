@@ -20,7 +20,8 @@ little personal data as possible, and joining a family must be low effort withou
   without look-alikes. Members see each other's display names and nothing else about each other.
 - **Children**: `household_members.is_child`. Members join as adults; on the household page an adult marks another
   member as a child or back with `set_member_is_child()` (security definer). Children can't change it, and nobody
-  changes themselves, so a household always keeps an adult. Children see only tasks for children (ADR 0004). No
+  changes themselves, so a household always keeps an adult (the caller's row is locked, so two adults can't make
+  each other children at once). Children see only tasks for children (ADR 0004). No
   separate accounts or invite codes for children: the product brief asks only that adults opt children in.
 - **RLS scopes family data** with `household_id = (select private.current_household_id())`, a security-definer
   helper in the unexposed `private` schema.
@@ -29,7 +30,8 @@ little personal data as possible, and joining a family must be low effort withou
 
 - Works inside the installed PWA; no extra processor. Emails aren't verified, and there is no password reset by email
   (the owner resets passwords with SQL, see README). Both need custom SMTP to fix.
-- A child sees every task until an adult marks them, since they join as an adult.
+- A child sees every task until an adult marks them, since they join as an adult. A child could also join again
+  with a second account and the invite code, which every member sees; adults would see the new member listed.
 - Invite codes can't be rotated yet; there is no leaving a household or deleting an account in the app.
 - Supporting several households per user means replacing `current_household_id()` and the unique membership.
 
