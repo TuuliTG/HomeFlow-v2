@@ -1,6 +1,12 @@
 import { useState } from 'react';
 
-import { type Goal, isClaimableBy, membersShortOfMinimum, nameOf } from '@/features/rewards/goal';
+import {
+  type Goal,
+  type GoalParticipant,
+  isClaimableBy,
+  nameOf,
+  participantsShortOfMinimum,
+} from '@/features/rewards/goal';
 import { useClaimGoalReward, useDeleteGoal } from '@/features/rewards/useGoals';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
 
@@ -12,8 +18,8 @@ interface GoalCardProps {
 }
 
 /**
- * An open goal and its progress. Family goals and the user's own can be claimed once reached; someone
- * else's personal goal is followed. Adults can delete any of them.
+ * An open goal and its progress. Shared goals the user takes part in and their own can be claimed once
+ * reached; the others are followed. Adults can delete any of them.
  */
 export function GoalCard({ goal, userId, isAdult }: GoalCardProps) {
   const messages = useMessages();
@@ -32,9 +38,6 @@ export function GoalCard({ goal, userId, isAdult }: GoalCardProps) {
         <div>
           <h3 className="font-semibold text-slate-900">{goal.title}</h3>
           {othersName && <p className="text-sm text-slate-600">{t.othersGoal(othersName)}</p>}
-          {goal.minPointsPerMember !== null && (
-            <p className="text-sm text-slate-600">{t.minimumFromEach(goal.minPointsPerMember)}</p>
-          )}
         </div>
         <span className="shrink-0 text-sm text-slate-600">
           {t.progress(shownPoints, goal.targetPoints)}
@@ -54,61 +57,65 @@ export function GoalCard({ goal, userId, isAdult }: GoalCardProps) {
           style={{ width: `${String(percent)}%` }}
         />
       </div>
-      {goal.minPointsPerMember !== null && (
-        <MemberMinimums goal={goal} minimum={goal.minPointsPerMember} userId={userId} />
-      )}
+      {goal.owner === null && <Participants goal={goal} userId={userId} />}
       {!goal.reached ? (
         <p className="text-sm text-slate-600">{progressMessage(goal, messages)}</p>
       ) : othersName ? (
         <p className="text-sm font-medium text-emerald-800">{t.othersReached(othersName)}</p>
-      ) : (
+      ) : isClaimableBy(goal, userId) ? (
         <ClaimReward goal={goal} userId={userId} />
+      ) : (
+        <p className="text-sm font-medium text-emerald-800">{t.participantsReached}</p>
       )}
       {isAdult && <DeleteGoal goal={goal} userId={userId} />}
     </li>
   );
 }
 
-/** What is still missing from a goal that isn't reached: points, or members' minimums. */
+/** What is still missing from a goal that isn't reached: points, or participants' minimums. */
 function progressMessage(goal: Goal, t: Messages): string {
   const missing = goal.targetPoints - goal.points;
   if (missing > 0) return t.rewards.goal.pointsToGo(missing);
-  return t.rewards.goal.membersShort(membersShortOfMinimum(goal).length);
+  return t.rewards.goal.participantsShort(participantsShortOfMinimum(goal).length);
 }
 
-/** Each member's points towards a family goal's minimum, so the family sees who still has to help. */
-function MemberMinimums({
-  goal,
-  minimum,
-  userId,
-}: {
-  goal: Goal;
-  minimum: number;
-  userId: string;
-}) {
+/**
+ * Who takes part in a shared goal and what each has earned towards it, against their minimum if they
+ * have one, so the family sees who still has to help.
+ */
+function Participants({ goal, userId }: { goal: Goal; userId: string }) {
   const t = useMessages();
   return (
-    <ul aria-label={t.rewards.goal.memberPointsLabel(goal.title)} className="flex flex-col gap-1">
-      {goal.memberPoints.map((member) => {
-        const hasShare = member.points >= minimum;
-        return (
-          <li key={member.id} className="flex items-center justify-between gap-4 text-sm">
-            <span className="text-slate-700">
-              {member.id === userId ? t.common.you : nameOf(member, t)}
-            </span>
-            <span className={hasShare ? 'font-medium text-emerald-800' : 'text-slate-600'}>
-              {Math.min(member.points, minimum)} / {minimum}
-              {hasShare && (
-                <>
-                  <span aria-hidden="true"> ✓</span>
-                  <span className="sr-only">{t.rewards.goal.memberDone}</span>
-                </>
-              )}
-            </span>
-          </li>
-        );
-      })}
+    <ul aria-label={t.rewards.goal.participantsLabel(goal.title)} className="flex flex-col gap-1">
+      {goal.participants.map((participant) => (
+        <li key={participant.id} className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-slate-700">
+            {participant.id === userId ? t.common.you : nameOf(participant, t)}
+          </span>
+          <ParticipantPoints participant={participant} />
+        </li>
+      ))}
     </ul>
+  );
+}
+
+function ParticipantPoints({ participant }: { participant: GoalParticipant }) {
+  const t = useMessages().rewards.goal;
+  const { points, minPoints } = participant;
+  if (minPoints === null) {
+    return <span className="text-slate-600">{t.participantPoints(points)}</span>;
+  }
+  const hasShare = points >= minPoints;
+  return (
+    <span className={hasShare ? 'font-medium text-emerald-800' : 'text-slate-600'}>
+      {Math.min(points, minPoints)} / {minPoints}
+      {hasShare && (
+        <>
+          <span aria-hidden="true"> ✓</span>
+          <span className="sr-only">{t.participantDone}</span>
+        </>
+      )}
+    </span>
   );
 }
 

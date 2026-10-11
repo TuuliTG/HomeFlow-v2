@@ -15,6 +15,13 @@ function addBen() {
   return ben;
 }
 
+function addChild(email: string, name: string) {
+  const child = fakeAuthBackend.addProfile(email, name);
+  fakeHouseholdBackend.addMember(child.id, 'The Virtanens');
+  fakeHouseholdBackend.setChild(child.id, true);
+  return child;
+}
+
 function idOf(title: string): string {
   const task = tasks.find((candidate) => candidate.title === title);
   if (!task) throw new Error(`No task ${title}`);
@@ -27,7 +34,7 @@ function doTask(userId: string, title: string, points: number) {
   fakeTasksBackend.completeTaskAs(userId, idOf(title), '2026-10-10');
 }
 
-type SectionName = 'Family goals' | 'Your goals' | "Family members' goals";
+type SectionName = 'Shared goals' | 'Your goals' | "Family members' goals";
 
 function section(name: SectionName) {
   return screen.getByRole('region', { name });
@@ -40,21 +47,22 @@ async function findGoal(sectionName: SectionName, title: string) {
 }
 
 describe('rewards and goals', () => {
-  it('sets a family goal and a personal one, explaining whose points count', async () => {
+  it('sets a shared goal and a personal one, explaining whose points count', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
     const { router } = renderAppAt('/rewards');
 
-    expect(await screen.findByText(/No family goals yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/No shared goals yet/)).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'New goal' }));
-    expect(await screen.findByRole('radio', { name: 'The family' })).toBeChecked();
-    expect(screen.getByText(/Everyone's points count towards it/)).toBeInTheDocument();
+    expect(await screen.findByRole('radio', { name: 'Together' })).toBeChecked();
+    expect(screen.getByText(/The points of everyone taking part count/)).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Me' })).toBeChecked();
     await user.type(await screen.findByLabelText('Reward'), 'Pizza night');
     await user.clear(screen.getByLabelText('Points needed'));
     await user.type(screen.getByLabelText('Points needed'), '30');
     await user.click(await screen.findByRole('button', { name: 'Set goal' }));
 
-    const pizza = await findGoal('Family goals', 'Pizza night');
+    const pizza = await findGoal('Shared goals', 'Pizza night');
     expect(router.state.location.pathname).toBe('/rewards');
     expect(pizza).toHaveTextContent('0 / 30 points');
     expect(within(pizza).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
@@ -67,10 +75,12 @@ describe('rewards and goals', () => {
 
     const book = await findGoal('Your goals', 'New book');
     expect(book).toHaveTextContent('0 / 20 points');
-    expect(within(section('Family goals')).getAllByRole('listitem')).toHaveLength(1);
+    expect(
+      within(section('Shared goals')).queryByRole('listitem', { name: 'New book' }),
+    ).not.toBeInTheDocument();
   });
 
-  it("counts everyone's points towards family goals and only the user's towards their own", async () => {
+  it("counts everyone's points towards a shared goal for the family and only the user's towards their own", async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
     doTask(anna.id, 'Old chore', 9);
@@ -89,7 +99,7 @@ describe('rewards and goals', () => {
     fakeTasksBackend.completeTaskAs(anna.id, idOf('Diary'), '2026-10-10');
     renderAppAt('/rewards');
 
-    const pizza = await findGoal('Family goals', 'Pizza night');
+    const pizza = await findGoal('Shared goals', 'Pizza night');
     expect(pizza).toHaveTextContent('6 / 10 points');
     expect(pizza).toHaveTextContent('4 more points to go');
     expect(within(pizza).getByRole('progressbar')).toHaveAccessibleName(
@@ -134,74 +144,130 @@ describe('rewards and goals', () => {
     expect(screen.queryByRole('region', { name: "Family members' goals" })).not.toBeInTheDocument();
   });
 
-  it('sets a family goal asking each member for a minimum share of the points', async () => {
+  it('sets a shared goal for chosen members, asking a younger child for less', async () => {
     logInAsFamilyMember();
     addBen();
+    addChild('mia@example.com', 'Mia');
     const user = userEvent.setup();
     renderAppAt('/rewards/new');
 
-    const minimum = await screen.findByLabelText(/Minimum points from each member/);
-    expect(minimum).toHaveAccessibleDescription(/nobody does it all alone/);
-    await user.click(await screen.findByRole('radio', { name: 'One person' }));
-    expect(screen.queryByLabelText(/Minimum points from each member/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole('radio', { name: 'The family' }));
-    await user.type(await screen.findByLabelText('Reward'), 'Zoo trip');
-    await user.type(screen.getByLabelText(/Minimum points from each member/), '3');
-    await user.click(await screen.findByRole('button', { name: 'Set goal' }));
-
-    const zoo = await findGoal('Family goals', 'Zoo trip');
-    expect(zoo).toHaveTextContent('At least 3 points from each member');
+    const participants = await screen.findByRole('group', { name: 'Who takes part' });
+    expect(participants).toHaveAccessibleDescription(/less for a younger child/);
+    await user.type(screen.getByLabelText('Reward'), 'Zoo trip');
+    await user.click(within(participants).getByRole('checkbox', { name: 'Me' }));
+    await user.click(within(participants).getByRole('checkbox', { name: 'Ben' }));
+    await user.click(within(participants).getByRole('checkbox', { name: 'Ben' }));
     expect(
-      within(zoo)
-        .getByRole('list', { name: 'Points from each member towards Zoo trip' })
-        .querySelectorAll('li'),
-    ).toHaveLength(2);
-    expect(zoo).toHaveTextContent('You0 / 3');
-    expect(zoo).toHaveTextContent('Ben0 / 3');
+      within(participants).queryByLabelText('Minimum points from Me (optional)'),
+    ).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('Minimum points from Ben (optional)'), '12');
+    await user.type(screen.getByLabelText('Minimum points from Mia (optional)'), '4');
+    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+
+    const zoo = await findGoal('Shared goals', 'Zoo trip');
+    const points = within(zoo).getByRole('list', {
+      name: 'Points from each person taking part in Zoo trip',
+    });
+    expect(
+      within(points)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Ben0 / 12', 'Mia0 / 4']);
   });
 
-  it("can't be claimed while a member hasn't earned the minimum, even with enough points", async () => {
+  it("counts only the participants' points, and leaves claiming to them", async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
     fakeGoalsBackend.addGoalAs(anna.id, {
       title: 'Zoo trip',
       targetPoints: 10,
       isShared: true,
-      minPointsPerMember: 3,
+      participants: [{ userId: ben.id, minPoints: null }],
+    });
+    doTask(anna.id, 'Vacuum', 20);
+    doTask(ben.id, 'Mow the lawn', 12);
+    renderAppAt('/rewards');
+
+    const zoo = await findGoal('Shared goals', 'Zoo trip');
+    expect(zoo).toHaveTextContent('10 / 10 points');
+    expect(zoo).toHaveTextContent('Ben12 points');
+    expect(zoo).not.toHaveTextContent('You');
+    expect(zoo).toHaveTextContent('Goal reached! Someone taking part claims the reward.');
+    expect(within(zoo).queryByRole('button', { name: /Claim/ })).not.toBeInTheDocument();
+  });
+
+  it("can't be claimed while a participant hasn't earned their minimum, even with enough points", async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    fakeGoalsBackend.addGoalAs(anna.id, {
+      title: 'Zoo trip',
+      targetPoints: 10,
+      isShared: true,
+      participants: [
+        { userId: anna.id, minPoints: 3 },
+        { userId: ben.id, minPoints: 3 },
+      ],
     });
     fakeGoalsBackend.addGoalAs(anna.id, {
       title: 'Movie night',
       targetPoints: 10,
       isShared: true,
-      minPointsPerMember: 1,
+      participants: [
+        { userId: anna.id, minPoints: null },
+        { userId: ben.id, minPoints: 1 },
+      ],
     });
     doTask(anna.id, 'Vacuum', 9);
     doTask(ben.id, 'Dust', 1);
     renderAppAt('/rewards');
 
-    const zoo = await findGoal('Family goals', 'Zoo trip');
+    const zoo = await findGoal('Shared goals', 'Zoo trip');
     expect(zoo).toHaveTextContent('10 / 10 points');
-    expect(zoo).toHaveTextContent('Enough points! One member still needs to earn their share.');
+    expect(zoo).toHaveTextContent('Enough points! One person still needs to earn their share.');
     expect(zoo).toHaveTextContent('You3 / 3 ✓, done');
     expect(zoo).toHaveTextContent('Ben1 / 3');
     expect(within(zoo).queryByRole('button', { name: /Claim reward/ })).not.toBeInTheDocument();
-    const movie = await findGoal('Family goals', 'Movie night');
+    const movie = await findGoal('Shared goals', 'Movie night');
+    expect(movie).toHaveTextContent('You9 points');
     expect(within(movie).getByRole('button', { name: 'Claim reward: Movie night' })).toBeEnabled();
   });
 
-  it('asks for a minimum no bigger than the points needed', async () => {
+  it('asks for someone to take part, and minimums that fit in the points needed', async () => {
     logInAsFamilyMember();
+    addBen();
     const user = userEvent.setup();
     renderAppAt('/rewards/new');
 
     await user.type(await screen.findByLabelText('Reward'), 'Zoo trip');
-    await user.type(screen.getByLabelText(/Minimum points from each member/), '30');
-    await user.click(await screen.findByRole('button', { name: 'Set goal' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Me' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Ben' }));
+    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose who takes part.');
+    expect(screen.getByRole('checkbox', { name: 'Me' })).toHaveFocus();
 
+    await user.click(screen.getByRole('checkbox', { name: 'Me' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Ben' }));
+    await user.type(screen.getByLabelText('Minimum points from Me (optional)'), '15');
+    await user.type(screen.getByLabelText('Minimum points from Ben (optional)'), '10');
+    await user.click(screen.getByRole('button', { name: 'Set goal' }));
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'The minimum from each member must be a whole number from 1 to the points needed.',
+      "Together the minimums can't be more than the points needed.",
     );
-    expect(screen.getByLabelText(/Minimum points from each member/)).toHaveFocus();
+    expect(screen.getByLabelText('Minimum points from Me (optional)')).toHaveFocus();
+
+    await user.clear(screen.getByLabelText('Minimum points from Me (optional)'));
+    await user.type(
+      screen.getByLabelText('Minimum points from Ben (optional)'),
+      '{Backspace}{Backspace}0',
+    );
+    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'A minimum must be a whole number of 1 or more.',
+    );
+    expect(screen.getByLabelText('Minimum points from Ben (optional)')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
   });
 
   it('claims the reward of a reached goal, which then stays as history', async () => {
@@ -212,7 +278,7 @@ describe('rewards and goals', () => {
     const user = userEvent.setup();
     renderAppAt('/rewards');
 
-    const pizza = await findGoal('Family goals', 'Pizza night');
+    const pizza = await findGoal('Shared goals', 'Pizza night');
     expect(pizza).toHaveTextContent('Goal reached!');
     expect(pizza).toHaveTextContent('5 / 5 points');
     expect(
@@ -222,9 +288,9 @@ describe('rewards and goals', () => {
 
     const claimed = await screen.findByRole('region', { name: 'Rewards claimed' });
     expect(within(claimed).getByRole('listitem')).toHaveTextContent(
-      /Pizza night.*Family · Claimed/,
+      /Pizza night.*Shared · Claimed/,
     );
-    expect(section('Family goals')).toHaveTextContent('No family goals yet.');
+    expect(section('Shared goals')).toHaveTextContent('No shared goals yet.');
   });
 
   it('shows the reward as claimed when someone else claimed it first', async () => {
@@ -251,14 +317,12 @@ describe('rewards and goals', () => {
     renderAppAt('/rewards');
 
     await user.click(await screen.findByRole('button', { name: 'Delete goal: Pizza night' }));
-    expect(
-      screen.getByText(/Delete “Pizza night” for everyone in the household\?/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Delete “Pizza night” for everyone taking part\?/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Keep it' }));
     await user.click(screen.getByRole('button', { name: 'Delete goal: Pizza night' }));
     await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
 
-    expect(await screen.findByText(/No family goals yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/No shared goals yet/)).toBeInTheDocument();
   });
 
   it('asks for a reward and a sensible number of points', async () => {

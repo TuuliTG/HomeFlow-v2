@@ -16,8 +16,8 @@ Adults can mark other members as children on the household page, or add a child 
 own device with a one-time code; children see and do only the tasks an adult marked "Children can do it", and add
 tasks only if an adult lets them, with points an adult awards ([ADR 0003](docs/adr/0003-accounts-and-households.md)).
 Only adults set goals, also personal ones for a child.
-The Rewards screen holds family goals (optionally with a minimum from each member) and personal goals that points
-from shared tasks count towards; a reached goal's reward is claimed and kept as history ([ADR 0007](docs/adr/0007-goals-and-rewards.md)).
+The Rewards screen holds shared goals (for the members an adult chooses, each optionally with their own minimum) and
+personal goals that points from shared tasks count towards; a reached goal's reward is claimed and kept as history ([ADR 0007](docs/adr/0007-goals-and-rewards.md)).
 The app speaks English and Finnish: the browser's language by default, changeable on the Me screen
 ([ADR 0002](docs/adr/0002-stack-and-architecture.md)).
 Work in progress is tracked in [plan.md](plan.md).

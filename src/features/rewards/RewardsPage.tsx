@@ -15,14 +15,14 @@ const emptyClassName =
 type Section = keyof Messages['rewards']['sections'];
 
 function sectionOf(goal: Goal, userId: string): Section {
-  if (goal.owner === null) return 'family';
+  if (goal.owner === null) return 'shared';
   return goal.owner.id === userId ? 'yours' : 'members';
 }
 
-/** Whose a claimed reward was: "Family", "Yours" or "Ben's". */
+/** Whose a claimed reward was: "Shared", "Yours" or "Ben's". */
 function ownerLabel(goal: Goal, userId: string, t: Messages): string {
   const { owner } = t.rewards;
-  if (goal.owner === null) return owner.family;
+  if (goal.owner === null) return owner.shared;
   return goal.owner.id === userId ? owner.yours : owner.named(nameOf(goal.owner, t));
 }
 
@@ -75,7 +75,7 @@ function Goals() {
   const claimed = goals.data.filter((goal) => goal.claimedAt !== null);
   return (
     <div className="flex flex-col gap-8">
-      {(['family', 'yours', 'members'] as const).map((section) => (
+      {(['shared', 'yours', 'members'] as const).map((section) => (
         <GoalSection
           key={section}
           section={section}

@@ -51,7 +51,8 @@ interface GoalRow {
   title: string;
   target_points: number;
   owner_id: string | null;
-  min_points_per_member: number | null;
+  /** Who takes part in a shared goal (goal_participants); empty for a personal one. */
+  participants: { user_id: string; min_points: number | null }[];
   created_at: string;
   claimed_at: string | null;
 }
@@ -545,7 +546,7 @@ export async function fakeSupabase(page: Page) {
       title: EXISTING_HOUSEHOLD.goal,
       target_points: 10,
       owner_id: 'e2e-ben',
-      min_points_per_member: null,
+      participants: [],
       created_at: new Date().toISOString(),
       claimed_at: null,
     },
@@ -556,18 +557,24 @@ export async function fakeSupabase(page: Page) {
     return goals.filter((goal) => goal.household_id === ownHousehold?.id);
   }
 
-  /** Like the delete policy and claim_goal_reward(): an open family goal or the user's own. */
-  function ownOpenGoal(goalId: string | undefined) {
-    return visibleGoals().find(
-      (goal) =>
-        goal.id === goalId &&
-        goal.claimed_at === null &&
-        (goal.owner_id === null || goal.owner_id === user.id),
-    );
+  /** Like the delete policy: any open goal in the household. */
+  function openGoal(goalId: string | undefined) {
+    return visibleGoals().find((goal) => goal.id === goalId && goal.claimed_at === null);
   }
 
-  /** Like goal_points(): shared tasks done since the goal was set, by `doneBy` (anyone when null). */
+  /** Like claim_goal_reward(): an open shared goal the user takes part in, or their own. */
+  function ownOpenGoal(goalId: string | undefined) {
+    const goal = openGoal(goalId);
+    const takesPart = goal?.participants.some((participant) => participant.user_id === user.id);
+    return goal && (goal.owner_id === user.id || takesPart) ? goal : undefined;
+  }
+
+  /** Like goal_points(): shared tasks done since the goal was set, by `doneBy` (its participants when null). */
   function goalPoints(goal: GoalRow, doneBy = goal.owner_id) {
+    const counts = (userId: string | null) =>
+      doneBy === null
+        ? goal.participants.some((participant) => participant.user_id === userId)
+        : userId === doneBy;
     return tasks
       .filter(
         (task) =>
@@ -576,56 +583,74 @@ export async function fakeSupabase(page: Page) {
           task.completed_at !== null &&
           task.completed_at >= goal.created_at &&
           (goal.claimed_at === null || task.completed_at <= goal.claimed_at) &&
-          (doneBy === null || task.completed_by === doneBy),
+          counts(task.completed_by),
       )
       .reduce((total, task) => total + (task.points ?? 0), 0);
   }
 
-  /** Like goal_member_points(): what each current member has earned towards a family goal. */
-  function memberPoints(goal: GoalRow) {
-    return (members.get(goal.household_id) ?? []).map((id) => ({
-      user_id: id,
-      display_name: profiles.get(id) ?? null,
-      points: goalPoints(goal, id),
-    }));
+  /** Like goal_participant_points(): what each participant has earned. */
+  function participantPoints(goal: GoalRow) {
+    return (members.get(goal.household_id) ?? []).flatMap((id) => {
+      const participant = goal.participants.find(({ user_id }) => user_id === id);
+      if (!participant) return [];
+      const name = profiles.get(id) ?? null;
+      return [{ ...participant, display_name: name, points: goalPoints(goal, id) }];
+    });
   }
 
   /** Like goal_is_reached(). */
   function isReached(goal: GoalRow) {
-    const minimum = goal.min_points_per_member;
     return (
       goalPoints(goal) >= goal.target_points &&
-      (minimum === null || memberPoints(goal).every(({ points }) => points >= minimum))
+      participantPoints(goal).every(
+        ({ points, min_points }) => min_points === null || points >= min_points,
+      )
     );
+  }
+
+  function addGoal(goal: Pick<GoalRow, 'title' | 'target_points' | 'owner_id' | 'participants'>) {
+    if (!ownHousehold) return false;
+    goals.push({
+      ...goal,
+      id: `e2e-goal-${String(goals.length)}`,
+      household_id: ownHousehold.id,
+      created_at: new Date().toISOString(),
+      claimed_at: null,
+    });
+    return true;
+  }
+
+  /** Like add_shared_goal(), without its checks. */
+  async function addSharedGoal(route: Route) {
+    const goal = route.request().postDataJSON() as Pick<
+      GoalRow,
+      'title' | 'target_points' | 'participants'
+    >;
+    if (!addGoal({ ...goal, owner_id: null })) {
+      return reply(route, 400, { code: '42501', message: 'No household' });
+    }
+    return reply(route, 200, goals.at(-1)?.id);
   }
 
   async function goalsEndpoint(route: Route) {
     const request = route.request();
     if (request.method() === 'POST') {
-      if (!ownHousehold) return reply(route, 400, { code: '23502', message: 'No household' });
-      const goal = request.postDataJSON() as Pick<
-        GoalRow,
-        'title' | 'target_points' | 'owner_id' | 'min_points_per_member'
-      >;
-      goals.push({
-        ...goal,
-        id: `e2e-goal-${String(goals.length)}`,
-        household_id: ownHousehold.id,
-        created_at: new Date().toISOString(),
-        claimed_at: null,
-      });
+      const goal = request.postDataJSON() as Pick<GoalRow, 'title' | 'target_points' | 'owner_id'>;
+      if (!addGoal({ ...goal, participants: [] })) {
+        return reply(route, 400, { code: '23502', message: 'No household' });
+      }
       return reply(route, 201);
     }
     // DELETE, filtered by `id=eq.<id>`, for an open goal only.
     const [id] = filterIds(new URL(request.url()).searchParams.get('id'));
-    const goal = ownOpenGoal(id);
+    const goal = openGoal(id);
     if (goal) goals.splice(goals.indexOf(goal), 1);
     return reply(route, 204);
   }
 
   /**
    * Like household_goals(): open goals first, newest first, then claimed ones, with owners' names,
-   * whether each is reached and, for family goals, what each member has earned.
+   * whether each is reached and, for shared goals, what each participant has earned.
    */
   async function householdGoals(route: Route) {
     const open = visibleGoals().filter((goal) => goal.claimed_at === null);
@@ -638,7 +663,7 @@ export async function fakeSupabase(page: Page) {
         owner_name: goal.owner_id ? (profiles.get(goal.owner_id) ?? null) : null,
         points: goalPoints(goal),
         reached: isReached(goal),
-        member_points: goal.owner_id === null ? memberPoints(goal) : null,
+        participants: goal.owner_id === null ? participantPoints(goal) : null,
       })),
     );
   }
@@ -724,6 +749,7 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/tasks': tasksEndpoint,
     '/rest/v1/goals': goalsEndpoint,
     '/rest/v1/rpc/household_goals': householdGoals,
+    '/rest/v1/rpc/add_shared_goal': addSharedGoal,
     '/rest/v1/rpc/claim_goal_reward': claimGoalReward,
   };
 

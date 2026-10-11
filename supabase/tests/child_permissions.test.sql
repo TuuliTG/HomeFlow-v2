@@ -2,7 +2,7 @@
 -- `npm run db:test` (needs Docker). Anna (adult) and Ben (child) share a household; Carol has her own.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(31);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -212,6 +212,11 @@ select throws_ok(
   $$ insert into public.goals (title, target_points) values ('Ice cream', 3) $$,
   '42501', null,
   'a child cannot add a goal'
+);
+select throws_ok(
+  $$ select public.add_shared_goal('Ice cream', 3, '[{"user_id": "22222222-2222-2222-2222-222222222222"}]') $$,
+  '42501', null,
+  'a child cannot add a shared goal'
 );
 delete from public.goals where title = 'New football';
 select is(

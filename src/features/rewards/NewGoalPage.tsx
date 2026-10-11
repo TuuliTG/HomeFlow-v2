@@ -1,4 +1,4 @@
-import { type SyntheticEvent, useId, useRef, useState } from 'react';
+import { type SyntheticEvent, useId, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { paths } from '@/app/paths';
@@ -15,14 +15,21 @@ import {
   MAX_TARGET_POINTS,
   nameOf,
   newGoalSchema,
+  type NewParticipant,
 } from '@/features/rewards/goal';
+import { everyoneTakingPart, participantsOf } from '@/features/rewards/participantChoices';
+import { ParticipantsField } from '@/features/rewards/ParticipantsField';
 import { useAddGoal, useGoalSetters } from '@/features/rewards/useGoals';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
 const DEFAULT_TARGET_POINTS = '20';
 
-type FieldName = 'title' | 'targetPoints' | 'minPointsPerMember';
+/**
+ * A field to fix, named like its input: the reward, the points, who takes part, or one participant's
+ * minimum (ParticipantsField).
+ */
+type FieldName = 'title' | 'targetPoints' | 'participants' | `minPoints:${string}`;
 
 interface FormError {
   /** The field to fix, or null when saving failed. */
@@ -30,11 +37,16 @@ interface FormError {
   message: string;
 }
 
-function fieldOf(path: PropertyKey | undefined): FieldName {
-  return path === 'targetPoints' || path === 'minPointsPerMember' ? path : 'title';
+/** The field a validation issue is about, e.g. ['participants', 1, 'minPoints'] for a minimum. */
+function fieldOf(path: readonly PropertyKey[], participants: NewParticipant[]): FieldName {
+  const [first, index] = path;
+  if (first === 'targetPoints') return first;
+  if (first !== 'participants') return 'title';
+  const participant = typeof index === 'number' ? participants[index] : undefined;
+  return participant ? `minPoints:${participant.userId}` : 'participants';
 }
 
-/** Only adults set goals, for the family or for one member (ADR 0007). */
+/** Only adults set goals, shared by the members they choose or for one member (ADR 0007). */
 export function NewGoalPage() {
   const user = useLoggedInUser();
   const setters = useGoalSetters(user.id);
@@ -74,19 +86,9 @@ function NewGoalForm({ userId, members }: { userId: string; members: GoalSetter[
   const [scope, setScope] = useState<GoalScope>('shared');
   /** Whose personal goal it is; the user's own unless they pick another member. */
   const [ownerId, setOwnerId] = useState(userId);
-  /** Points each member must earn towards a family goal, or '' for no minimum. */
-  const [minPointsPerMember, setMinPointsPerMember] = useState('');
+  const [choices, setChoices] = useState(() => everyoneTakingPart(members));
   const [error, setError] = useState<FormError | null>(null);
   const errorId = useId();
-  const minimumHintId = useId();
-  const titleRef = useRef<HTMLInputElement>(null);
-  const targetPointsRef = useRef<HTMLInputElement>(null);
-  const minimumRef = useRef<HTMLInputElement>(null);
-  const fieldRefs = {
-    title: titleRef,
-    targetPoints: targetPointsRef,
-    minPointsPerMember: minimumRef,
-  };
 
   function errorPropsFor(field: FieldName) {
     const hasError = error?.field === field;
@@ -95,19 +97,20 @@ function NewGoalForm({ userId, members }: { userId: string; members: GoalSetter[
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
+    const participants = scope === 'shared' ? participantsOf(members, choices) : [];
     const parsed = newGoalSchema(messages).safeParse({
       title,
       targetPoints,
       scope,
       ownerId: scope === 'personal' ? ownerId : null,
-      minPointsPerMember:
-        scope === 'shared' && minPointsPerMember !== '' ? Number(minPointsPerMember) : null,
+      participants,
     });
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
-      const field = fieldOf(issue?.path[0]);
+      const field = fieldOf(issue?.path ?? [], participants);
       setError({ field, message: issue?.message ?? t.checkDetails });
-      fieldRefs[field].current?.focus();
+      const input = event.currentTarget.elements.namedItem(field);
+      if (input instanceof HTMLInputElement) input.focus();
       return;
     }
     addGoal
@@ -133,7 +136,6 @@ function NewGoalForm({ userId, members }: { userId: string; members: GoalSetter[
           <input
             type="text"
             name="title"
-            ref={titleRef}
             {...errorPropsFor('title')}
             maxLength={GOAL_TITLE_MAX_LENGTH}
             placeholder={t.rewardPlaceholder}
@@ -150,7 +152,6 @@ function NewGoalForm({ userId, members }: { userId: string; members: GoalSetter[
           <input
             type="number"
             name="targetPoints"
-            ref={targetPointsRef}
             {...errorPropsFor('targetPoints')}
             inputMode="numeric"
             min={1}
@@ -177,35 +178,16 @@ function NewGoalForm({ userId, members }: { userId: string; members: GoalSetter[
           <p className="text-sm text-slate-600">{t.scopeHints[scope]}</p>
         </div>
 
-        {scope === 'personal' && (
+        {scope === 'personal' ? (
           <GoalOwnerField members={members} userId={userId} value={ownerId} onChange={setOwnerId} />
-        )}
-
-        {scope === 'shared' && (
-          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-            {t.minimum}
-            <input
-              type="number"
-              name="minPointsPerMember"
-              ref={minimumRef}
-              {...errorPropsFor('minPointsPerMember')}
-              aria-describedby={
-                error?.field === 'minPointsPerMember'
-                  ? `${errorId} ${minimumHintId}`
-                  : minimumHintId
-              }
-              inputMode="numeric"
-              min={1}
-              value={minPointsPerMember}
-              onChange={(event) => {
-                setMinPointsPerMember(event.target.value);
-              }}
-              className={`${inputClassName} w-28`}
-            />
-            <span id={minimumHintId} className="font-normal text-slate-600">
-              {t.minimumHint}
-            </span>
-          </label>
+        ) : (
+          <ParticipantsField
+            members={members}
+            userId={userId}
+            choices={choices}
+            onChange={setChoices}
+            errorPropsFor={errorPropsFor}
+          />
         )}
 
         {error && (
