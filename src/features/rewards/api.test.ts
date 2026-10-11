@@ -86,17 +86,23 @@ describe('goals api', () => {
     expect(client.rpc).toHaveBeenCalledWith('household_goals');
   });
 
-  it('sets a family goal without an owner, with its minimum per member, and a personal goal for the user', async () => {
+  it('sets a family goal without an owner, with its minimum per member, and a personal goal for a member', async () => {
     query.insert.mockResolvedValue({ error: null });
 
-    await api.addGoal(
-      { title: 'Pizza night', targetPoints: 30, scope: 'shared', minPointsPerMember: 5 },
-      'u1',
-    );
-    await api.addGoal(
-      { title: 'New book', targetPoints: 5, scope: 'personal', minPointsPerMember: null },
-      'u1',
-    );
+    await api.addGoal({
+      title: 'Pizza night',
+      targetPoints: 30,
+      scope: 'shared',
+      ownerId: null,
+      minPointsPerMember: 5,
+    });
+    await api.addGoal({
+      title: 'New book',
+      targetPoints: 5,
+      scope: 'personal',
+      ownerId: 'u1',
+      minPointsPerMember: null,
+    });
 
     expect(client.from).toHaveBeenCalledWith('goals');
     expect(query.insert).toHaveBeenNthCalledWith(1, {
@@ -132,10 +138,13 @@ describe('goals api', () => {
     await expect(api.fetchGoals()).rejects.toBe(failure);
     await expect(api.claimGoalReward('g1')).rejects.toBe(failure);
     await expect(
-      api.addGoal(
-        { title: 'Holiday', targetPoints: 5, scope: 'shared', minPointsPerMember: null },
-        'u1',
-      ),
+      api.addGoal({
+        title: 'Holiday',
+        targetPoints: 5,
+        scope: 'shared',
+        ownerId: null,
+        minPointsPerMember: null,
+      }),
     ).rejects.toBe(failure);
     await expect(api.deleteGoal('g1')).rejects.toBe(failure);
   });

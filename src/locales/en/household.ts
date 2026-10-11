@@ -42,8 +42,11 @@ export const household = {
     child: 'Child',
     isChild: (name: string) => `${name} is a child`,
     childrenHint:
-      'Children see only the tasks marked “Children can do it”. Adults decide who is a child.',
+      'Children see only the tasks marked “Children can do it”. Adults decide who is a child and which children can add tasks; an adult awards the points of a child’s task.',
     setChildFailed: "We couldn't save that change. Try again.",
+    canAddTasks: 'Can add tasks',
+    canAddTasksFor: (name: string) => `${name} can add tasks`,
+    setCanAddTasksFailed: "We couldn't save that change. Try again.",
     newCode: 'New sign-in code',
     newCodeFor: (name: string) => `New sign-in code for ${name}`,
     newCodeFailed: "We couldn't make a new code. Try again.",

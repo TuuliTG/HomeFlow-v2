@@ -43,9 +43,20 @@ export const tasks = {
     if (days % 7 === 0) return `Every ${String(days / 7)} weeks`;
     return `Every ${String(days)} days`;
   },
+  award: {
+    heading: 'Waiting for points',
+    hint: 'Children added these tasks. Choose what each one was worth; the points go to whoever did it.',
+    notDoneYet: 'Not done yet',
+    doneBy: (name: string) => `Done by ${name}`,
+    pointsFor: (title: string) => `Points for ${title}`,
+    award: 'Award',
+    awardLabel: (title: string) => `Award points: ${title}`,
+    failed: "We couldn't award the points. Try again.",
+  },
   card: {
     private: 'Private',
     forChildren: 'For children',
+    waitingForPoints: 'Waiting for points',
     addedBy: {
       you: 'Added by you',
       someone: 'Added by someone',

@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { addGoal, claimGoalReward, deleteGoal, fetchGoals } from '@/features/rewards/api';
+import {
+  addGoal,
+  claimGoalReward,
+  deleteGoal,
+  fetchGoals,
+  fetchGoalSetters,
+} from '@/features/rewards/api';
 import type { NewGoal } from '@/features/rewards/goal';
 
 const goalsKey = (userId: string) => ['goals', userId] as const;
@@ -13,9 +19,16 @@ export function useGoals(userId: string) {
 export function useAddGoal(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (goal: NewGoal) => addGoal(goal, userId),
+    mutationFn: (goal: NewGoal) => addGoal(goal),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsKey(userId) }),
   });
+}
+
+/** The household's members, and whether the user is an adult, who may add and delete goals. */
+export function useGoalSetters(userId: string) {
+  const query = useQuery({ queryKey: [...goalsKey(userId), 'setters'], queryFn: fetchGoalSetters });
+  const isAdult = query.data?.some((member) => member.id === userId && !member.isChild) ?? false;
+  return { ...query, isAdult };
 }
 
 export function useDeleteGoal(userId: string) {

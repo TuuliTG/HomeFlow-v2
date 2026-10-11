@@ -14,6 +14,7 @@ import {
 import { fieldValues, taskInput } from '@/features/tasks/taskFormValues';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
+import { TaskPointsField } from '@/features/tasks/TaskPointsField';
 import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -39,7 +40,7 @@ interface TaskFormProps {
   suggestions?: TaskSuggestion[];
   /** The household's favourite tasks, offered to add again; leave out when editing. */
   favourites?: FavouriteTasks;
-  /** A child's tasks are always for children, so they aren't asked. */
+  /** A child's tasks are always for children, and an adult awards their points, so they aren't asked. */
   isChild: boolean;
   submitLabel: string;
   isSaving: boolean;
@@ -167,23 +168,13 @@ export function TaskForm({
       />
 
       {!isPrivate && (
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-          {t.taskForm.points}
-          <input
-            type="number"
-            name="points"
-            ref={pointsRef}
-            {...errorPropsFor('points')}
-            inputMode="numeric"
-            min={1}
-            max={10}
-            value={points}
-            onChange={(event) => {
-              setPoints(event.target.value);
-            }}
-            className={`${inputClassName} w-24`}
-          />
-        </label>
+        <TaskPointsField
+          isChild={isChild}
+          value={points}
+          onChange={setPoints}
+          inputRef={pointsRef}
+          errorProps={errorPropsFor('points')}
+        />
       )}
 
       <div className="flex gap-3">

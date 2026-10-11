@@ -44,7 +44,10 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
         .max(DESCRIPTION_MAX_LENGTH, errors.descriptionTooLong(DESCRIPTION_MAX_LENGTH))
         .nullable(),
       type: z.enum(taskTypes),
-      /** Null for a private task: only shared tasks earn points. */
+      /**
+       * Null for a private task, which earns none, and for a child's shared task until an adult awards
+       * its points.
+       */
       points: z.coerce
         .number()
         .int(errors.pointsRange)
@@ -66,7 +69,7 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
        */
       forChildren: z.boolean(),
     })
-    .refine((task) => (task.points === null) === task.isPrivate, {
+    .refine((task) => !task.isPrivate || task.points === null, {
       path: ['points'],
       message: errors.onlySharedHavePoints,
     });

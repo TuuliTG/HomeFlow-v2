@@ -1,18 +1,25 @@
 import { useState } from 'react';
 
-import { type Goal, isManagedBy, membersShortOfMinimum, nameOf } from '@/features/rewards/goal';
+import { type Goal, isClaimableBy, membersShortOfMinimum, nameOf } from '@/features/rewards/goal';
 import { useClaimGoalReward, useDeleteGoal } from '@/features/rewards/useGoals';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
 
+interface GoalCardProps {
+  goal: Goal;
+  userId: string;
+  /** Only adults delete goals (ADR 0007). */
+  isAdult: boolean;
+}
+
 /**
- * An open goal and its progress. Family goals and the user's own can be claimed once reached, and
- * deleted; someone else's personal goal is only followed.
+ * An open goal and its progress. Family goals and the user's own can be claimed once reached; someone
+ * else's personal goal is followed. Adults can delete any of them.
  */
-export function GoalCard({ goal, userId }: { goal: Goal; userId: string }) {
+export function GoalCard({ goal, userId, isAdult }: GoalCardProps) {
   const messages = useMessages();
   const t = messages.rewards.goal;
-  const canManage = isManagedBy(goal, userId);
-  const othersName = goal.owner && !canManage ? nameOf(goal.owner, messages) : null;
+  const othersName =
+    goal.owner && !isClaimableBy(goal, userId) ? nameOf(goal.owner, messages) : null;
   const shownPoints = Math.min(goal.points, goal.targetPoints);
   const percent = Math.round((shownPoints / goal.targetPoints) * 100);
 
@@ -57,7 +64,7 @@ export function GoalCard({ goal, userId }: { goal: Goal; userId: string }) {
       ) : (
         <ClaimReward goal={goal} userId={userId} />
       )}
-      {canManage && <DeleteGoal goal={goal} userId={userId} />}
+      {isAdult && <DeleteGoal goal={goal} userId={userId} />}
     </li>
   );
 }

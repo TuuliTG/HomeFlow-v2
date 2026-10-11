@@ -39,7 +39,7 @@ const completedTaskRowsSchema = z.array(
 const COMPLETED_TASKS_LIMIT = 20;
 const profileRowsSchema = z.array(z.object({ id: z.string(), display_name: z.string() }));
 
-async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>> {
+export async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>> {
   if (userIds.length === 0) return new Map();
   const { data, error } = await getSupabaseClient()
     .from('profiles')

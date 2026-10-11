@@ -47,12 +47,12 @@ describe('rewards and goals', () => {
 
     expect(await screen.findByText(/No family goals yet/)).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'New goal' }));
-    expect(screen.getByRole('radio', { name: 'The family' })).toBeChecked();
+    expect(await screen.findByRole('radio', { name: 'The family' })).toBeChecked();
     expect(screen.getByText(/Everyone's points count towards it/)).toBeInTheDocument();
-    await user.type(screen.getByLabelText('Reward'), 'Pizza night');
+    await user.type(await screen.findByLabelText('Reward'), 'Pizza night');
     await user.clear(screen.getByLabelText('Points needed'));
     await user.type(screen.getByLabelText('Points needed'), '30');
-    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+    await user.click(await screen.findByRole('button', { name: 'Set goal' }));
 
     const pizza = await findGoal('Family goals', 'Pizza night');
     expect(router.state.location.pathname).toBe('/rewards');
@@ -60,10 +60,10 @@ describe('rewards and goals', () => {
     expect(within(pizza).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
 
     await user.click(screen.getByRole('link', { name: 'New goal' }));
-    await user.click(screen.getByRole('radio', { name: 'Just me' }));
-    expect(screen.getByText(/Only your points count towards it/)).toBeInTheDocument();
-    await user.type(screen.getByLabelText('Reward'), 'New book');
-    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+    await user.click(await screen.findByRole('radio', { name: 'One person' }));
+    expect(screen.getByText(/Only their points count towards it/)).toBeInTheDocument();
+    await user.type(await screen.findByLabelText('Reward'), 'New book');
+    await user.click(await screen.findByRole('button', { name: 'Set goal' }));
 
     const book = await findGoal('Your goals', 'New book');
     expect(book).toHaveTextContent('0 / 20 points');
@@ -103,7 +103,7 @@ describe('rewards and goals', () => {
     expect(sweets).toHaveTextContent('4 / 5 points');
   });
 
-  it("shows other members' goals for the family to cheer on, leaving claiming and deleting to them", async () => {
+  it("shows other members' goals for the family to cheer on, leaving claiming to them", async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
     fakeGoalsBackend.addGoalAs(ben.id, { title: 'Sweets', targetPoints: 5, isShared: false });
@@ -115,7 +115,9 @@ describe('rewards and goals', () => {
 
     const sweets = await findGoal("Family members' goals", 'Sweets');
     expect(sweets).toHaveTextContent('Ben reached this goal!');
-    expect(within(sweets).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(sweets).queryByRole('button', { name: /Claim/ })).not.toBeInTheDocument();
+    // Adults can delete any open goal, also a child's or another adult's (ADR 0007).
+    expect(within(sweets).getByRole('button', { name: 'Delete goal: Sweets' })).toBeInTheDocument();
     expect(within(section('Your goals')).getByRole('listitem')).toHaveAccessibleName('New book');
     expect(screen.getByRole('region', { name: 'Rewards claimed' })).toHaveTextContent(
       "CinemaBen's · Claimed",
@@ -138,14 +140,14 @@ describe('rewards and goals', () => {
     const user = userEvent.setup();
     renderAppAt('/rewards/new');
 
-    const minimum = screen.getByLabelText(/Minimum points from each member/);
+    const minimum = await screen.findByLabelText(/Minimum points from each member/);
     expect(minimum).toHaveAccessibleDescription(/nobody does it all alone/);
-    await user.click(screen.getByRole('radio', { name: 'Just me' }));
+    await user.click(await screen.findByRole('radio', { name: 'One person' }));
     expect(screen.queryByLabelText(/Minimum points from each member/)).not.toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: 'The family' }));
-    await user.type(screen.getByLabelText('Reward'), 'Zoo trip');
+    await user.type(await screen.findByLabelText('Reward'), 'Zoo trip');
     await user.type(screen.getByLabelText(/Minimum points from each member/), '3');
-    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+    await user.click(await screen.findByRole('button', { name: 'Set goal' }));
 
     const zoo = await findGoal('Family goals', 'Zoo trip');
     expect(zoo).toHaveTextContent('At least 3 points from each member');
@@ -192,9 +194,9 @@ describe('rewards and goals', () => {
     const user = userEvent.setup();
     renderAppAt('/rewards/new');
 
-    await user.type(screen.getByLabelText('Reward'), 'Zoo trip');
+    await user.type(await screen.findByLabelText('Reward'), 'Zoo trip');
     await user.type(screen.getByLabelText(/Minimum points from each member/), '30');
-    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+    await user.click(await screen.findByRole('button', { name: 'Set goal' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent(
       'The minimum from each member must be a whole number from 1 to the points needed.',
@@ -264,14 +266,14 @@ describe('rewards and goals', () => {
     const user = userEvent.setup();
     renderAppAt('/rewards/new');
 
-    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+    await user.click(await screen.findByRole('button', { name: 'Set goal' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Name the reward.');
     expect(screen.getByLabelText('Reward')).toHaveFocus();
 
-    await user.type(screen.getByLabelText('Reward'), 'Holiday');
+    await user.type(await screen.findByLabelText('Reward'), 'Holiday');
     await user.clear(screen.getByLabelText('Points needed'));
     await user.type(screen.getByLabelText('Points needed'), '0');
-    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+    await user.click(await screen.findByRole('button', { name: 'Set goal' }));
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Points needed must be a whole number from 1 to 10000.',
     );
@@ -280,12 +282,12 @@ describe('rewards and goals', () => {
 
   it('says so when a goal cannot be saved', async () => {
     logInAsFamilyMember();
-    fakeTasksBackend.failRequests();
     const user = userEvent.setup();
     renderAppAt('/rewards/new');
 
-    await user.type(screen.getByLabelText('Reward'), 'Holiday');
-    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+    await user.type(await screen.findByLabelText('Reward'), 'Holiday');
+    fakeTasksBackend.failRequests();
+    await user.click(await screen.findByRole('button', { name: 'Set goal' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't save the goal.");
   });
@@ -296,5 +298,60 @@ describe('rewards and goals', () => {
     renderAppAt('/rewards');
 
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the goals.");
+  });
+
+  it('can be set by an adult for a child', async () => {
+    logInAsFamilyMember();
+    const ben = addBen();
+    fakeHouseholdBackend.setChild(ben.id, true);
+    const user = userEvent.setup();
+    renderAppAt('/rewards/new');
+
+    await user.type(await screen.findByLabelText('Reward'), 'Football');
+    await user.click(screen.getByRole('radio', { name: 'One person' }));
+    await user.selectOptions(screen.getByLabelText('Whose goal'), 'Ben');
+    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+
+    const football = await findGoal("Family members' goals", 'Football');
+    expect(football).toHaveTextContent("Ben's goal");
+  });
+
+  it('are claimed by a child but never added or deleted by one', async () => {
+    const anna = fakeAuthBackend.addProfile('anna@example.com', 'Anna');
+    fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
+    const ben = logInAsFamilyMember('ben@example.com', 'Ben');
+    fakeHouseholdBackend.setChild(ben.id, true);
+    fakeGoalsBackend.addGoalAs(ben.id, { title: 'Football', targetPoints: 2, isShared: false });
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Feed the cat',
+      type: 'physical',
+      points: 2,
+      forChildren: true,
+    });
+    fakeTasksBackend.completeTaskAs(ben.id, idOf('Feed the cat'), '2026-10-10');
+    const user = userEvent.setup();
+    renderAppAt('/rewards');
+
+    const football = await findGoal('Your goals', 'Football');
+    expect(within(football).getByRole('button', { name: /Claim/ })).toBeInTheDocument();
+    expect(within(football).queryByRole('button', { name: /Delete/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'New goal' })).not.toBeInTheDocument();
+    await user.click(within(football).getByRole('button', { name: /Claim/ }));
+    expect(
+      await within(await screen.findByRole('region', { name: 'Rewards claimed' })).findByText(
+        'Football',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("aren't set by a child, even from the New goal address", async () => {
+    const anna = fakeAuthBackend.addProfile('anna@example.com', 'Anna');
+    fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
+    const ben = logInAsFamilyMember('ben@example.com', 'Ben');
+    fakeHouseholdBackend.setChild(ben.id, true);
+    renderAppAt('/rewards/new');
+
+    expect(await screen.findByText(/Only adults set goals/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Reward')).not.toBeInTheDocument();
   });
 });

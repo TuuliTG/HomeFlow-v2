@@ -9,7 +9,13 @@ import { type Messages, useMessages } from '@/lib/i18n/i18n';
 import { isToDoBy, type Task } from '@/features/tasks/task';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
-import { useCompleteTask, usePickUpTask, usePutBackTask } from '@/features/tasks/useTasks';
+import { TaskTags } from '@/features/tasks/TaskTags';
+import {
+  useCompleteTask,
+  useMembership,
+  usePickUpTask,
+  usePutBackTask,
+} from '@/features/tasks/useTasks';
 
 interface TaskCardProps {
   task: Task;
@@ -29,8 +35,6 @@ function byPerson(
   if (person.userId === currentUserId) return phrases.you;
   return person.name === null ? phrases.someone : phrases.named(person.name);
 }
-
-const tagClassName = 'w-fit rounded-full px-2 py-0.5 text-xs font-medium';
 
 export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
   const titleId = useId();
@@ -69,7 +73,6 @@ function TaskDetails({
   titleId,
   titleLevel,
 }: TaskCardProps & { titleId: string }) {
-  const isMeta = task.type === 'meta';
   const t = useMessages();
   const Title = titleLevel === 3 ? 'h3' : 'h4';
   return (
@@ -80,31 +83,7 @@ function TaskDetails({
       {task.description !== null && (
         <p className="text-sm whitespace-pre-line text-slate-600">{task.description}</p>
       )}
-      <div className="flex flex-wrap gap-1.5">
-        <span
-          className={[
-            tagClassName,
-            isMeta ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700',
-          ].join(' ')}
-        >
-          {t.common.taskTypes[task.type]}
-        </span>
-        {task.isPrivate && (
-          <span className={`${tagClassName} bg-amber-100 text-amber-900`}>
-            {t.tasks.card.private}
-          </span>
-        )}
-        {task.forChildren && !task.isPrivate && (
-          <span className={`${tagClassName} bg-emerald-100 text-emerald-800`}>
-            {t.tasks.card.forChildren}
-          </span>
-        )}
-        {task.repeatEveryDays !== null && (
-          <span className={`${tagClassName} bg-sky-100 text-sky-800`}>
-            {t.tasks.repeat(task.repeatEveryDays)}
-          </span>
-        )}
-      </div>
+      <TaskTags task={task} />
       {task.dueOn !== null && (
         <span className="text-xs font-medium text-slate-700">
           {describeDueDate(task.dueOn, today(), t)}
@@ -200,13 +179,7 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
         />
       ) : (
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <Link
-            to={paths.editTask(task.id)}
-            aria-label={t.editLabel(task.title)}
-            className="text-brand-900 mr-auto rounded-lg px-1 py-1.5 text-sm font-semibold underline-offset-2 hover:underline"
-          >
-            {t.edit}
-          </Link>
+          <EditLink task={task} currentUserId={currentUserId} />
           {pickUp === 'putBack' &&
             button(
               t.putBack,
@@ -235,6 +208,22 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
         </div>
       )}
     </>
+  );
+}
+
+/** Edit, for adults and for a child on a task they added (`private.can_change_task()`). */
+function EditLink({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'currentUserId'>) {
+  const membership = useMembership(currentUserId);
+  const t = useMessages().tasks.card;
+  if (membership.data?.isChild !== false && task.createdBy !== currentUserId) return null;
+  return (
+    <Link
+      to={paths.editTask(task.id)}
+      aria-label={t.editLabel(task.title)}
+      className="text-brand-900 mr-auto rounded-lg px-1 py-1.5 text-sm font-semibold underline-offset-2 hover:underline"
+    >
+      {t.edit}
+    </Link>
   );
 }
 

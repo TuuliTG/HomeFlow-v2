@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { Goal, NewGoal } from '@/features/rewards/goal';
+import type { Goal, GoalSetter, NewGoal } from '@/features/rewards/goal';
 import { getSupabaseClient } from '@/lib/supabase';
 
 const goalRowsSchema = z.array(
@@ -48,23 +48,48 @@ export async function fetchGoals(): Promise<Goal[]> {
   }));
 }
 
-/** Sets a goal for the family, or for `userId` alone. */
-export async function addGoal(
-  { title, targetPoints, scope, minPointsPerMember }: NewGoal,
-  userId: string,
-) {
-  const { error } = await getSupabaseClient()
-    .from('goals')
-    .insert({
-      title,
-      target_points: targetPoints,
-      owner_id: scope === 'personal' ? userId : null,
-      min_points_per_member: minPointsPerMember,
-    });
+/** Sets a goal for the family, or for one member; only adults can. */
+export async function addGoal({ title, targetPoints, ownerId, minPointsPerMember }: NewGoal) {
+  const { error } = await getSupabaseClient().from('goals').insert({
+    title,
+    target_points: targetPoints,
+    owner_id: ownerId,
+    min_points_per_member: minPointsPerMember,
+  });
   if (error) throw error;
 }
 
-/** Deletes an open goal; claimed goals stay as history. */
+const memberRowsSchema = z.array(z.object({ user_id: z.string(), is_child: z.boolean() }));
+const profileRowsSchema = z.array(z.object({ id: z.string(), display_name: z.string() }));
+
+/** The household's members in the order they joined, with their names and who is a child. */
+export async function fetchGoalSetters(): Promise<GoalSetter[]> {
+  const client = getSupabaseClient();
+  const members = await client
+    .from('household_members')
+    .select('user_id, is_child')
+    .order('joined_at');
+  if (members.error) throw members.error;
+  const rows = memberRowsSchema.parse(members.data);
+  const profiles = await client
+    .from('profiles')
+    .select('id, display_name')
+    .in(
+      'id',
+      rows.map((row) => row.user_id),
+    );
+  if (profiles.error) throw profiles.error;
+  const names = new Map(
+    profileRowsSchema.parse(profiles.data).map((row) => [row.id, row.display_name]),
+  );
+  return rows.map(({ user_id, is_child }) => ({
+    id: user_id,
+    name: names.get(user_id) ?? null,
+    isChild: is_child,
+  }));
+}
+
+/** Deletes an open goal; only adults can, and claimed goals stay as history. */
 export async function deleteGoal(goalId: string): Promise<void> {
   const { error } = await getSupabaseClient().from('goals').delete().eq('id', goalId);
   if (error) throw error;

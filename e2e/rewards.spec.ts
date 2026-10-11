@@ -32,7 +32,7 @@ test("family member sets family goals, with a minimum from each member, and a pe
   await page.getByRole('link', { name: 'New goal' }).click();
   await page.getByLabel('Reward').fill('New book');
   await page.getByLabel('Points needed').fill('20');
-  await page.getByRole('group', { name: "Who it's for" }).getByText('Just me').click();
+  await page.getByRole('group', { name: "Who it's for" }).getByText('One person').click();
   await page.getByRole('button', { name: 'Set goal' }).click();
 
   const familyGoals = page.getByRole('region', { name: 'Family goals' });
@@ -47,7 +47,9 @@ test("family member sets family goals, with a minimum from each member, and a pe
     .getByRole('listitem', { name: EXISTING_HOUSEHOLD.goal });
   await expect(bens).toContainText("Ben's goal");
   await expect(bens).toContainText('0 / 10 points');
-  await expect(bens.getByRole('button')).toHaveCount(0);
+  // Only Ben claims his goal; adults can still delete it.
+  await expect(bens.getByRole('button', { name: /Claim/ })).toHaveCount(0);
+  await expect(bens.getByRole('button', { name: 'Delete goal: New bike' })).toBeVisible();
 
   await nav.getByRole('link', { name: 'Shared tasks' }).click();
   const task = page.getByRole('listitem', { name: EXISTING_HOUSEHOLD.task });

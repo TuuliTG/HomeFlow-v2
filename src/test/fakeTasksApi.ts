@@ -112,8 +112,13 @@ export const fetchTaskSuggestions: typeof tasksApi.fetchTaskSuggestions = () => 
 
 export const addTask: typeof tasksApi.addTask = (task) =>
   asCurrentUser((userId) => {
-    if (!task.forChildren && fakeHouseholdBackend.isChild(userId))
-      throw new Error('A child adds only tasks for children');
+    // Like the insert policy: a child adds tasks only when allowed, for children and without points.
+    if (
+      fakeHouseholdBackend.isChild(userId) &&
+      (!fakeHouseholdBackend.canAddTasks(userId) || !task.forChildren || task.points !== null)
+    ) {
+      throw new Error('A child adds tasks only when allowed, without points');
+    }
     fakeTasksBackend.addTaskAs(userId, task);
   });
 
@@ -157,6 +162,15 @@ export const fetchTotalPoints: typeof tasksApi.fetchTotalPoints = (userId) => {
   );
 };
 
+/** An open task `userId` may edit or delete, like `private.can_change_task()`: a child's own only. */
+function changeableTaskOf(userId: string, taskId: string): StoredTask {
+  const task = openTaskOf(userId, taskId);
+  if (fakeHouseholdBackend.isChild(userId) && task.createdBy !== userId) {
+    throw new Error('A child changes only tasks they added');
+  }
+  return task;
+}
+
 /** Runs `change` as the logged-in user; rejects, like the database, if it throws. */
 export function asCurrentUser(change: (userId: string) => void): Promise<void> {
   const user = fakeAuthBackend.currentUser();
@@ -182,16 +196,17 @@ export const putBackTask: typeof tasksApi.putBackTask = (taskId) =>
 
 export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
   asCurrentUser((userId) => {
-    const task = openTaskOf(userId, taskId);
-    if (!details.forChildren && fakeHouseholdBackend.isChild(userId))
-      throw new Error('Only adults can make a task adults-only');
-    Object.assign(task, details);
+    const task = changeableTaskOf(userId, taskId);
+    const isChild = fakeHouseholdBackend.isChild(userId);
+    if (!details.forChildren && isChild) throw new Error('Only adults can make a task adults-only');
+    // Like update_task(): a child's edit never sets points.
+    Object.assign(task, { ...details, points: isChild ? task.points : details.points });
     deliver(task, { kind: 'changed' });
   });
 
 export const deleteTask: typeof tasksApi.deleteTask = (taskId) =>
   asCurrentUser((userId) => {
-    const task = openTaskOf(userId, taskId);
+    const task = changeableTaskOf(userId, taskId);
     tasks.splice(tasks.indexOf(task), 1);
     deliver(task, { kind: 'changed' });
   });

@@ -13,6 +13,8 @@ export interface HouseholdMember {
   isChild: boolean;
   /** A child an adult added without email, who signs in with one-time codes the adults make. */
   signsInWithCode: boolean;
+  /** Adults always; a child only when an adult lets them. */
+  canAddTasks: boolean;
 }
 
 /** A one-time code a child signs in with on their own device (ADR 0003). */

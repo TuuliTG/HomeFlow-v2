@@ -34,7 +34,8 @@ export function taskInput(values: FieldValues, isChild: boolean) {
   return {
     title: values.title,
     type: values.type,
-    points: values.isPrivate ? null : values.points,
+    // A private task earns nothing; a child's shared task waits for an adult to award its points.
+    points: values.isPrivate || isChild ? null : values.points,
     repeatEveryDays: values.repeat === '' ? null : Number(values.repeat),
     dueOn: values.dueOn === '' ? null : values.dueOn,
     description: values.description.trim() === '' ? null : values.description,

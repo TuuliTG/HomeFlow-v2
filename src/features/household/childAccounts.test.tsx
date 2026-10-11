@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
@@ -96,5 +96,27 @@ describe('children without email', () => {
     await user.type(screen.getByLabelText("Child's name"), 'Ben');
     await user.click(screen.getByRole('button', { name: 'Add child' }));
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't add the child.");
+  });
+});
+
+describe('letting a child add tasks', () => {
+  it('is up to an adult, and offered only for children', async () => {
+    logInAsFamilyMember();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+    const user = userEvent.setup();
+    renderAppAt('/household');
+
+    await screen.findByRole('checkbox', { name: 'Ben is a child' });
+    expect(screen.queryByRole('checkbox', { name: 'Ben can add tasks' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Ben is a child' }));
+
+    const canAdd = await screen.findByRole('checkbox', { name: 'Ben can add tasks' });
+    expect(canAdd).not.toBeChecked();
+    await user.click(canAdd);
+    await vi.waitFor(() => {
+      expect(fakeHouseholdBackend.canAddTasks(ben.id)).toBe(true);
+    });
+    expect(canAdd).toBeChecked();
   });
 });

@@ -13,7 +13,12 @@ const NO_DATA_FOUND = 'P0002';
 
 const householdRowSchema = z.object({ id: z.string(), name: z.string(), invite_code: z.string() });
 const memberRowsSchema = z.array(
-  z.object({ user_id: z.string(), is_child: z.boolean(), signs_in_with_code: z.boolean() }),
+  z.object({
+    user_id: z.string(),
+    is_child: z.boolean(),
+    signs_in_with_code: z.boolean(),
+    can_add_tasks: z.boolean(),
+  }),
 );
 const ownHouseholdRowSchema = z.object({ id: z.string(), name: z.string() });
 const signInCodeSchema = z.object({ code: z.string(), expires_at: z.string() });
@@ -46,7 +51,7 @@ export async function fetchHouseholdMembers(householdId: string): Promise<Househ
   const client = getSupabaseClient();
   const members = await client
     .from('household_members')
-    .select('user_id, is_child, signs_in_with_code')
+    .select('user_id, is_child, signs_in_with_code, can_add_tasks')
     .eq('household_id', householdId)
     .order('joined_at');
   if (members.error) throw members.error;
@@ -58,12 +63,22 @@ export async function fetchHouseholdMembers(householdId: string): Promise<Househ
   const names = new Map(
     profileRowsSchema.parse(profiles.data).map((row) => [row.id, row.display_name]),
   );
-  return rows.map(({ user_id, is_child, signs_in_with_code }) => ({
+  return rows.map(({ user_id, is_child, signs_in_with_code, can_add_tasks }) => ({
     userId: user_id,
     displayName: names.get(user_id) ?? null,
     isChild: is_child,
     signsInWithCode: signs_in_with_code,
+    canAddTasks: !is_child || can_add_tasks,
   }));
+}
+
+/** Lets a child in the user's household add tasks, or stops them; only adults can. */
+export async function setMemberCanAddTasks(memberId: string, canAddTasks: boolean): Promise<void> {
+  const { error } = await getSupabaseClient().rpc('set_member_can_add_tasks', {
+    member_id: memberId,
+    can_add_tasks: canAddTasks,
+  });
+  if (error) throw error;
 }
 
 /**

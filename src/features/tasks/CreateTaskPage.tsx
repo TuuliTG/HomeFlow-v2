@@ -8,7 +8,7 @@ import { TaskForm } from '@/features/tasks/TaskForm';
 import {
   useAddTask,
   useFavouriteTasks,
-  useIsChild,
+  useMembership,
   useSetFavouriteTask,
   useTaskSuggestions,
 } from '@/features/tasks/useTasks';
@@ -17,18 +17,8 @@ import { useMessages } from '@/lib/i18n/i18n';
 
 export function CreateTaskPage() {
   const user = useLoggedInUser();
-  const addTask = useAddTask(user.id);
-  const suggestions = useTaskSuggestions(user.id);
-  const favourites = useFavouriteTasks(user.id);
-  const isChild = useIsChild(user.id);
-  const setFavourite = useSetFavouriteTask(user.id);
-  const navigate = useNavigate();
+  const membership = useMembership(user.id);
   const t = useMessages();
-  const [searchParams] = useSearchParams();
-  /** The name of an earlier task to add again (`paths.addTaskAgain`). */
-  const againTitle = searchParams.get('again');
-  const again =
-    againTitle === null ? undefined : findSuggestion(suggestions.data ?? [], againTitle);
 
   return (
     <>
@@ -37,28 +27,51 @@ export function CreateTaskPage() {
         title={t.tasks.newTask}
         description={t.taskForm.create.description}
       />
-      {(againTitle !== null && suggestions.isPending) || isChild.isPending ? (
+      {membership.isPending ? (
         <LoadingMessage />
+      ) : membership.data?.canAddTasks === false ? (
+        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+          {t.taskForm.create.askAnAdult}
+        </p>
       ) : (
-        <TaskForm
-          prefill={again && suggestionAsTask(again)}
-          suggestions={suggestions.data ?? []}
-          favourites={{
-            keys: suggestions.isSuccess ? favourites.data : undefined,
-            isSaving: setFavourite.isPending,
-            onChange: (title, isFavourite) => {
-              setFavourite.mutate({ title, isFavourite });
-            },
-          }}
-          isChild={isChild.data ?? false}
-          submitLabel={t.taskForm.create.submit}
-          isSaving={addTask.isPending}
-          onSave={async (task) => {
-            await addTask.mutateAsync(task);
-            await navigate(paths.taskList(task.isPrivate));
-          }}
-        />
+        <NewTaskForm userId={user.id} isChild={membership.data?.isChild ?? false} />
       )}
     </>
+  );
+}
+
+function NewTaskForm({ userId, isChild }: { userId: string; isChild: boolean }) {
+  const addTask = useAddTask(userId);
+  const suggestions = useTaskSuggestions(userId);
+  const favourites = useFavouriteTasks(userId);
+  const setFavourite = useSetFavouriteTask(userId);
+  const navigate = useNavigate();
+  const t = useMessages();
+  const [searchParams] = useSearchParams();
+  /** The name of an earlier task to add again (`paths.addTaskAgain`). */
+  const againTitle = searchParams.get('again');
+  const again =
+    againTitle === null ? undefined : findSuggestion(suggestions.data ?? [], againTitle);
+
+  if (againTitle !== null && suggestions.isPending) return <LoadingMessage />;
+  return (
+    <TaskForm
+      prefill={again && suggestionAsTask(again)}
+      suggestions={suggestions.data ?? []}
+      favourites={{
+        keys: suggestions.isSuccess ? favourites.data : undefined,
+        isSaving: setFavourite.isPending,
+        onChange: (title, isFavourite) => {
+          setFavourite.mutate({ title, isFavourite });
+        },
+      }}
+      isChild={isChild}
+      submitLabel={t.taskForm.create.submit}
+      isSaving={addTask.isPending}
+      onSave={async (task) => {
+        await addTask.mutateAsync(task);
+        await navigate(paths.taskList(task.isPrivate));
+      }}
+    />
   );
 }

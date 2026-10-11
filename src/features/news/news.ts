@@ -26,7 +26,8 @@ export interface NewsItem {
   taskId: string;
   title: string;
   type: WorkType;
-  points: number;
+  /** Null for a child's task until an adult awards its points. */
+  points: number | null;
   /** ISO timestamp. */
   completedAt: string;
   doneBy: NewsPerson;
@@ -70,8 +71,8 @@ function summarise(items: NewsItem[]): DaySummary[] {
       physicalPoints: 0,
       metaPoints: 0,
     };
-    if (type === 'meta') summary.metaPoints += points;
-    else summary.physicalPoints += points;
+    if (type === 'meta') summary.metaPoints += points ?? 0;
+    else summary.physicalPoints += points ?? 0;
     byMember.set(doneBy.userId, summary);
   }
   const total = (summary: DaySummary) => summary.physicalPoints + summary.metaPoints;

@@ -12,12 +12,12 @@ export const rewards: Messages['rewards'] = {
     family: {
       heading: 'Perheen tavoitteet',
       empty:
-        'Perheellä ei ole vielä tavoitteita. Aseta tavoite, jota kohti kaikki voivat tehdä töitä yhdessä, vaikkapa retki.',
+        'Perheellä ei ole vielä tavoitteita. Aikuinen voi asettaa tavoitteen, jota kohti kaikki tekevät töitä yhdessä, vaikkapa retki.',
     },
     yours: {
       heading: 'Omat tavoitteesi',
       empty:
-        'Aseta itsellesi tavoite, vaikkapa herkku. Siihen lasketaan vain sinun pisteesi, ja perhe voi kannustaa sinua.',
+        'Sinulla ei ole vielä omia tavoitteita, vaikkapa herkkua. Aikuinen asettaa ne; niihin lasketaan vain sinun pisteesi, ja perhe voi kannustaa sinua.',
     },
     members: { heading: 'Perheenjäsenten tavoitteet', empty: null },
   },
@@ -52,11 +52,14 @@ export const rewards: Messages['rewards'] = {
     rewardPlaceholder: 'esim. Pizzailta',
     pointsNeeded: 'Tarvittavat pisteet',
     whoFor: 'Kenelle',
-    scopes: { shared: 'Perheelle', personal: 'Vain minulle' },
+    scopes: { shared: 'Perheelle', personal: 'Yhdelle' },
     scopeHints: {
       shared: 'Kaikkien pisteet lasketaan siihen, ja koko perhe näkee sen.',
-      personal: 'Siihen lasketaan vain sinun pisteesi. Perhe näkee senkin ja voi kannustaa sinua.',
+      personal: 'Siihen lasketaan vain hänen pisteensä. Perhe näkee senkin ja voi kannustaa.',
     },
+    whose: 'Kenen tavoite',
+    me: 'Minä',
+    onlyAdults: 'Vain aikuiset asettavat tavoitteita. Pyydä perheesi aikuiselta tavoitetta.',
     minimum: 'Vähimmäispisteet jokaiselta jäseneltä (vapaaehtoinen)',
     minimumHint:
       'Tavoite saavutetaan vasta, kun jokainen on ansainnut vähintään näin paljon, jottei kukaan tee kaikkea yksin.',

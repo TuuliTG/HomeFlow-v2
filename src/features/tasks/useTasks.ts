@@ -15,7 +15,8 @@ import {
   updateTask,
 } from '@/features/tasks/api';
 import { fetchFavouriteTasks, setFavouriteTask } from '@/features/tasks/favouritesApi';
-import { fetchIsChild } from '@/features/tasks/membershipApi';
+import { fetchMembership } from '@/features/tasks/membershipApi';
+import { awardTaskPoints, fetchTasksWaitingForPoints } from '@/features/tasks/pointsApi';
 import { clearTaskReminder, fetchReminders, setTaskReminder } from '@/features/tasks/remindersApi';
 import { type NewTask, titleKey } from '@/features/tasks/task';
 import { today } from '@/lib/dates';
@@ -42,11 +43,14 @@ export function useTaskSuggestions(userId: string) {
   });
 }
 
-/** Whether the user is a child in their household. Under `tasksKey`, so it refreshes with the board. */
-export function useIsChild(userId: string) {
+/**
+ * Whether the user is a child in their household and may add tasks. Under `tasksKey`, so it refreshes
+ * with the board.
+ */
+export function useMembership(userId: string) {
   return useQuery({
-    queryKey: [...tasksKey(userId), 'is-child'],
-    queryFn: () => fetchIsChild(userId),
+    queryKey: [...tasksKey(userId), 'membership'],
+    queryFn: () => fetchMembership(userId),
   });
 }
 
@@ -200,6 +204,24 @@ export function useClearReminder(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: clearTaskReminder,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+  });
+}
+
+/** The household's tasks waiting for an adult to award their points. Under `tasksKey`, like the board. */
+export function useTasksWaitingForPoints(userId: string) {
+  return useQuery({
+    queryKey: [...tasksKey(userId), 'waiting-for-points'],
+    queryFn: fetchTasksWaitingForPoints,
+  });
+}
+
+/** Awards a task's points; the board, totals and statistics refresh with `tasksKey`. */
+export function useAwardTaskPoints(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, points }: { taskId: string; points: number }) =>
+      awardTaskPoints(taskId, points),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
 }

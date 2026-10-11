@@ -43,8 +43,11 @@ export const household: Messages['household'] = {
     child: 'Lapsi',
     isChild: (name: string) => `${name} on lapsi`,
     childrenHint:
-      'Lapset näkevät vain tehtävät, joihin on merkitty ”Lapset voivat tehdä sen”. Aikuiset päättävät, kuka on lapsi.',
+      'Lapset näkevät vain tehtävät, joihin on merkitty ”Lapset voivat tehdä sen”. Aikuiset päättävät, kuka on lapsi ja ketkä lapset voivat lisätä tehtäviä; aikuinen antaa pisteet lapsen tehtävästä.',
     setChildFailed: 'Muutosta ei voitu tallentaa. Yritä uudelleen.',
+    canAddTasks: 'Voi lisätä tehtäviä',
+    canAddTasksFor: (name: string) => `${name} voi lisätä tehtäviä`,
+    setCanAddTasksFailed: 'Muutosta ei voitu tallentaa. Yritä uudelleen.',
     newCode: 'Uusi kirjautumiskoodi',
     newCodeFor: (name: string) => `Uusi kirjautumiskoodi: ${name}`,
     newCodeFailed: 'Uutta koodia ei voitu tehdä. Yritä uudelleen.',

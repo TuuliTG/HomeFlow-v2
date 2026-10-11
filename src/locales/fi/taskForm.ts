@@ -4,6 +4,7 @@ export const taskForm: Messages['taskForm'] = {
   create: {
     description: 'Tehtävän lisääminen on metatyötä, ja sekin lasketaan.',
     submit: 'Luo tehtävä',
+    askAnAdult: 'Pyydä perheesi aikuista sallimaan, että lisäät tehtäviä.',
   },
   edit: {
     title: 'Muokkaa tehtävää',
@@ -31,6 +32,7 @@ export const taskForm: Messages['taskForm'] = {
   forChildren: 'Lapset voivat tehdä sen',
   forChildrenHint: 'Kotitaloutesi lapset näkevät vain tehtävät, jotka he voivat tehdä.',
   points: 'Pisteet',
+  adultAwardsPoints: 'Perheesi aikuinen valitsee pisteet, kun olet tehnyt tehtävän.',
   repeats: 'Toistuu',
   doesNotRepeat: 'Ei toistu',
   dueDate: 'Määräpäivä',

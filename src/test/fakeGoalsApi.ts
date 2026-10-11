@@ -7,8 +7,8 @@ import { requestsFailing, tasks } from '@/test/fakeTasksBackend';
 /**
  * In-memory stand-in for `@/features/rewards/api`, installed for every unit test in `setup.ts`. Like
  * `household_goals()`, it counts the points of shared tasks in `fakeTasksBackend` done since a goal was
- * set, and decides whether a goal is reached like `goal_is_reached()`. Like its policies, members see all their household's goals and claim or delete family goals
- * and their own.
+ * set, and decides whether a goal is reached like `goal_is_reached()`. Like its policies, members see all
+ * their household's goals and claim family goals and their own, and only adults add and delete goals.
  */
 interface StoredGoal {
   id: string;
@@ -70,7 +70,7 @@ function visibleGoals(): StoredGoal[] {
   return goals.filter((goal) => goal.householdId === householdId);
 }
 
-/** An open family goal or one of the user's own, which they can claim or delete. */
+/** An open family goal or one of the user's own, which they can claim. */
 function openGoal(goalId: string): StoredGoal {
   const userId = loggedInUserId();
   const goal = visibleGoals().find(
@@ -112,23 +112,48 @@ export const fetchGoals: typeof goalsApi.fetchGoals = () =>
       }));
   });
 
-export const addGoal: typeof goalsApi.addGoal = (
-  { title, targetPoints, scope, minPointsPerMember },
-  userId,
-) =>
+/** Like the insert policy: an adult, for the family or a member of their household. */
+export const addGoal: typeof goalsApi.addGoal = ({
+  title,
+  targetPoints,
+  ownerId,
+  minPointsPerMember,
+}) =>
   request(() => {
-    if (userId !== loggedInUserId()) throw new Error('Nobody sets a goal for someone else');
+    const userId = loggedInUserId();
+    const householdId = fakeHouseholdBackend.householdIdOf(userId);
+    if (fakeHouseholdBackend.isChild(userId)) throw new Error('Only adults set goals');
+    if (ownerId !== null && fakeHouseholdBackend.householdIdOf(ownerId) !== householdId) {
+      throw new Error('A personal goal is for someone in the household');
+    }
     fakeGoalsBackend.addGoalAs(userId, {
       title,
       targetPoints,
-      isShared: scope === 'shared',
+      isShared: ownerId === null,
       minPointsPerMember,
     });
+    const added = goals.at(-1);
+    if (added && ownerId !== null) added.ownerId = ownerId;
   });
 
+/** Like the delete policy: an adult, any open goal in their household. */
 export const deleteGoal: typeof goalsApi.deleteGoal = (goalId) =>
   request(() => {
-    goals.splice(goals.indexOf(openGoal(goalId)), 1);
+    if (fakeHouseholdBackend.isChild(loggedInUserId())) throw new Error('Only adults delete goals');
+    const goal = visibleGoals().find(({ id, claimedAt }) => id === goalId && claimedAt === null);
+    if (!goal) throw new Error(`No open goal ${goalId}`);
+    goals.splice(goals.indexOf(goal), 1);
+  });
+
+export const fetchGoalSetters: typeof goalsApi.fetchGoalSetters = () =>
+  request(() => {
+    const householdId = fakeHouseholdBackend.householdIdOf(loggedInUserId());
+    if (!householdId) return [];
+    return fakeHouseholdBackend.memberIdsOf(householdId).map((id) => ({
+      id,
+      name: fakeAuthBackend.displayNameOf(id),
+      isChild: fakeHouseholdBackend.isChild(id),
+    }));
   });
 
 export const claimGoalReward: typeof goalsApi.claimGoalReward = (goalId) =>
