@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import type { HouseholdMember } from '@/features/household/household';
 import { useHouseholdMembers, useSetMemberIsChild } from '@/features/household/useHousehold';
@@ -37,9 +39,11 @@ export function MemberList({ householdId, currentUserId }: MemberListProps) {
               // An adult decides for the others, never for themselves, so the household keeps an adult.
               onChildChange={
                 isAdult && member.userId !== currentUserId
-                  ? (isChild) => {
-                      setIsChild.mutate({ memberId: member.userId, isChild });
-                    }
+                  ? (isChild) =>
+                      // A failure shows through isError below.
+                      setIsChild
+                        .mutateAsync({ memberId: member.userId, isChild })
+                        .catch(() => undefined)
                   : undefined
               }
               isSaving={setIsChild.isPending}
@@ -60,14 +64,19 @@ export function MemberList({ householdId, currentUserId }: MemberListProps) {
 interface MemberRowProps {
   member: HouseholdMember;
   isYou: boolean;
-  /** Lets the user mark the member as a child or an adult; left out when they can't. */
-  onChildChange: ((isChild: boolean) => void) | undefined;
+  /**
+   * Lets the user mark the member as a child or an adult, settling once the members are reloaded; left
+   * out when they can't.
+   */
+  onChildChange: ((isChild: boolean) => Promise<void>) | undefined;
   isSaving: boolean;
 }
 
 function MemberRow({ member, isYou, onChildChange, isSaving }: MemberRowProps) {
   const t = useMessages();
   const name = member.displayName ?? t.common.newMember;
+  /** The choice being saved, shown straight away; null once the saved one has loaded. */
+  const [savingIsChild, setSavingIsChild] = useState<boolean | null>(null);
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3 text-slate-900">
       <span>
@@ -79,10 +88,13 @@ function MemberRow({ member, isYou, onChildChange, isSaving }: MemberRowProps) {
           <input
             type="checkbox"
             aria-label={t.household.members.isChild(name)}
-            checked={member.isChild}
+            checked={savingIsChild ?? member.isChild}
             disabled={isSaving}
             onChange={(event) => {
-              onChildChange(event.target.checked);
+              setSavingIsChild(event.target.checked);
+              void onChildChange(event.target.checked).finally(() => {
+                setSavingIsChild(null);
+              });
             }}
             className="accent-brand-600 size-4"
           />
