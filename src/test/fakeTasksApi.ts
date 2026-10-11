@@ -4,7 +4,6 @@ import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import {
   deliver,
   fakeTasksBackend,
-  listeners,
   openTaskOf,
   isVisible,
   requestsFailing,
@@ -208,10 +207,3 @@ export const undoCompleteTask: typeof tasksApi.undoCompleteTask = (taskId) =>
     task.completed = null;
     deliver(task, { kind: 'changed' });
   });
-
-export const subscribeToTaskChanges: typeof tasksApi.subscribeToTaskChanges = (onChange) => {
-  listeners.add(onChange);
-  return () => {
-    listeners.delete(onChange);
-  };
-};

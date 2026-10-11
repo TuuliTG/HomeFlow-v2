@@ -1,4 +1,4 @@
-import type * as tasksApi from '@/features/tasks/api';
+import type * as liveApi from '@/features/tasks/liveApi';
 import { type NewTask, titleKey } from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
@@ -34,7 +34,7 @@ const heldFavourites = new Map<string, Promise<void>>();
 let requestsFail = false;
 let reminderRequestsFail = false;
 let completions = 0;
-export const listeners = new Set<Parameters<typeof tasksApi.subscribeToTaskChanges>[0]>();
+export const listeners = new Set<Parameters<typeof liveApi.subscribeToTaskChanges>[0]>();
 
 /**
  * Whether `userId` can see the task, like `private.can_see_task()`: in their household, shared or their own, and
@@ -55,7 +55,7 @@ export function isVisible(task: StoredTask): boolean {
 }
 
 /** Delivers a change live to the logged-in user if they can see the task (like Realtime with RLS). */
-export function deliver(task: StoredTask, change: tasksApi.TaskChange) {
+export function deliver(task: StoredTask, change: liveApi.TaskChange) {
   if (!isVisible(task)) return;
   listeners.forEach((listener) => {
     listener(change);
