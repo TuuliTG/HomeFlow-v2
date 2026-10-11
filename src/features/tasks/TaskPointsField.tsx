@@ -1,6 +1,7 @@
 import type { Ref } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
+import { MAX_POINTS, MIN_POINTS } from '@/features/tasks/task';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskPointsFieldProps {
@@ -31,8 +32,8 @@ export function TaskPointsField({
         ref={inputRef}
         {...errorProps}
         inputMode="numeric"
-        min={1}
-        max={10}
+        min={MIN_POINTS}
+        max={MAX_POINTS}
         value={value}
         onChange={(event) => {
           onChange(event.target.value);

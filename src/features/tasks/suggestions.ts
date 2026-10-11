@@ -57,7 +57,8 @@ export function suggestionAsTask({
   };
 }
 
-/** "1 point", "3 points", or "Private" for a private task, which has none. */
-export function suggestionPointsLabel({ points }: TaskSuggestion, t: Messages): string {
-  return points === null ? t.taskForm.private : t.common.points(points);
+/** "1 point", "3 points", "Private" for a private task, or "Waiting for points" for a child's task. */
+export function suggestionPointsLabel({ points, isPrivate }: TaskSuggestion, t: Messages): string {
+  if (isPrivate) return t.taskForm.private;
+  return points === null ? t.tasks.card.waitingForPoints : t.common.points(points);
 }

@@ -2,7 +2,7 @@
 -- `npm run db:test` (needs Docker). Anna (adult) and Ben (child) share a household; Carol has her own.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(30);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -145,6 +145,64 @@ select throws_ok(
   'P0002', null,
   'an adult cannot take a shared task''s points away'
 );
+
+-- Carol, in another household, can't award points; nobody awards a private task.
+set local request.jwt.claims = '{"sub": "33333333-3333-3333-3333-333333333333", "role": "authenticated"}';
+select throws_ok(
+  format(
+    'select public.award_task_points(%L, 4::smallint)',
+    (select id from public.tasks where previous_task_id = current_setting('test.room')::uuid)
+  ),
+  'P0002', null,
+  'an adult in another household cannot award points'
+);
+
+-- Ben adds a task, Anna awards it while open, and Ben's later edit sends it back to waiting for points.
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+insert into public.tasks (title, type, points, for_children) values ('Clean the garage', 'physical', null, true);
+do $$
+begin
+  perform set_config('test.garage', id::text, true) from public.tasks where title = 'Clean the garage';
+end
+$$;
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select public.award_task_points(current_setting('test.garage')::uuid, 10::smallint);
+select throws_ok(
+  format(
+    'select public.award_task_points(%L, 4::smallint)',
+    (select id from public.tasks where title = 'Read my book')
+  ),
+  'P0002', null,
+  'a private task has no points to award'
+);
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select lives_ok(
+  format(
+    $$ select public.update_task(%L, 'Brush teeth', null, 'physical', null, null, null) $$,
+    current_setting('test.garage')
+  ),
+  'a child can still edit their task after points were awarded'
+);
+select results_eq(
+  format('select title, points from public.tasks where id = %L', current_setting('test.garage')),
+  $$ values ('Brush teeth', null::smallint) $$,
+  'a child''s edit sends the task back to waiting for points'
+);
+select lives_ok(
+  format('select public.delete_task(%L)', current_setting('test.garage')),
+  'a child can delete a task they added'
+);
+
+-- Anna stops Ben adding tasks.
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select public.set_member_can_add_tasks('22222222-2222-2222-2222-222222222222', false);
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select throws_ok(
+  $$ insert into public.tasks (title, type, points, for_children) values ('Bake', 'physical', null, true) $$,
+  '42501', null,
+  'a child an adult stops adding tasks can no longer add them'
+);
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 
 -- Only adults add and delete goals; Ben claims the personal goal Anna set for him.
 insert into public.goals (title, target_points, owner_id)

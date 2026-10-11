@@ -199,8 +199,8 @@ export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
     const task = changeableTaskOf(userId, taskId);
     const isChild = fakeHouseholdBackend.isChild(userId);
     if (!details.forChildren && isChild) throw new Error('Only adults can make a task adults-only');
-    // Like update_task(): a child's edit never sets points.
-    Object.assign(task, { ...details, points: isChild ? task.points : details.points });
+    // Like update_task(): a child's edit sends their task back to waiting for points.
+    Object.assign(task, { ...details, points: isChild ? null : details.points });
     deliver(task, { kind: 'changed' });
   });
 

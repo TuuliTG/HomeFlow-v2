@@ -6,7 +6,7 @@ import { paths } from '@/app/paths';
 import { describeDueDate } from '@/features/tasks/dueDate';
 import { today } from '@/lib/dates';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
-import { isToDoBy, type Task } from '@/features/tasks/task';
+import { canChange, isToDoBy, type Task } from '@/features/tasks/task';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
 import { TaskTags } from '@/features/tasks/TaskTags';
@@ -215,7 +215,8 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
 function EditLink({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'currentUserId'>) {
   const membership = useMembership(currentUserId);
   const t = useMessages().tasks.card;
-  if (membership.data?.isChild !== false && task.createdBy !== currentUserId) return null;
+  // Hidden until it's known whether the user is a child.
+  if (!canChange(task, currentUserId, membership.data?.isChild ?? true)) return null;
   return (
     <Link
       to={paths.editTask(task.id)}

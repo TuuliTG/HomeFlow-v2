@@ -1,6 +1,13 @@
-import type { NewTask, TaskType } from '@/features/tasks/task';
+import { DEFAULT_POINTS, type NewTask, type TaskType } from '@/features/tasks/task';
 
-const DEFAULT_POINTS = '3';
+/**
+ * A task's points as the field shows them. A shared task waiting for points starts empty, so an adult
+ * editing it chooses them rather than awarding the default by accident.
+ */
+function pointsValue(task: NewTask): string {
+  if (task.points !== null) return String(task.points);
+  return task.isPrivate ? String(DEFAULT_POINTS) : '';
+}
 
 /** The form's field values (strings, as inputs hold them) for a task, or for a new one. */
 export function fieldValues(task: NewTask | undefined) {
@@ -9,7 +16,7 @@ export function fieldValues(task: NewTask | undefined) {
       title: '',
       description: '',
       type: 'physical' as TaskType,
-      points: DEFAULT_POINTS,
+      points: String(DEFAULT_POINTS),
       repeat: '',
       dueOn: '',
       isPrivate: false,
@@ -19,7 +26,7 @@ export function fieldValues(task: NewTask | undefined) {
     title: task.title,
     description: task.description ?? '',
     type: task.type,
-    points: task.points === null ? DEFAULT_POINTS : String(task.points),
+    points: pointsValue(task),
     repeat: task.repeatEveryDays === null ? '' : String(task.repeatEveryDays),
     dueOn: task.dueOn ?? '',
     isPrivate: task.isPrivate,

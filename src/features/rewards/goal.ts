@@ -42,7 +42,6 @@ export function newGoalSchema(t: Messages) {
         .min(1, minimumMessage)
         .nullable(),
     })
-    .refine((goal) => (goal.ownerId === null) === (goal.scope === 'shared'), { path: ['scope'] })
     .refine((goal) => goal.minPointsPerMember === null || goal.scope === 'shared', {
       path: ['minPointsPerMember'],
       message: errors.minimumOnlyForFamily,

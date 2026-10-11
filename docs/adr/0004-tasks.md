@@ -19,8 +19,9 @@ next one back rather than follow a fixed calendar.
   A private task is the creator's own to do: it is listed only in their My tasks (Me page), without picking it up,
   and has no Pick up or Put back. The Shared tasks board and its "Show completed" leave out even the creator's
   own private tasks, and saving or deleting one returns to the Me page (Cancel on the task form goes back to the
-  previous page). **Private tasks have no points** (`tasks_private_without_points`) and statistics count only shared tasks, both done and created (ADR 0006). A private task whose creator
-  deletes their account or leaves stays hidden from everyone.
+  previous page). **Private tasks have no points** (`tasks_private_without_points`) and statistics count only
+  shared tasks, both done and created (ADR 0006). A private task whose creator deletes their account or leaves
+  stays hidden from everyone.
 - **Tasks for children**: `for_children` (default false: adults only), chosen on the task form by adults ("Children
   can do it", not offered for their private tasks) and changeable when editing; the next occurrence keeps it. A
   child (ADR 0003) sees and acts only on tasks for children, and every task they add is one (insert policy;

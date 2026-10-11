@@ -4,7 +4,7 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import type { HouseholdCompletedTask } from '@/features/tasks/task';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
-import { useHouseholdCompletedTasks } from '@/features/tasks/useTasks';
+import { useHouseholdCompletedTasks, useMembership } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
 
@@ -42,6 +42,8 @@ function CompletedTasksBody({
   userId: string;
 }) {
   const t = useMessages();
+  // Adding again is for whoever may add tasks: adults, and children an adult lets.
+  const canAddTasks = useMembership(userId).data?.canAddTasks === true;
   if (completed.data === undefined) {
     if (!completed.isError) return <LoadingMessage />;
     return (
@@ -65,17 +67,19 @@ function CompletedTasksBody({
             <span className="font-medium text-slate-900">{task.title}</span>
             <span className="text-slate-500">
               {doneByLabel(task, userId, t)} · {t.common.shortDate(new Date(task.completedAt))}
-              {task.points !== null && ` · ${t.common.points(task.points)}`}
+              {` · ${task.points === null ? t.tasks.card.waitingForPoints : t.common.points(task.points)}`}
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <Link
-              to={paths.addTaskAgain(task.title)}
-              aria-label={t.tasks.completed.addAgainLabel(task.title)}
-              className="text-brand-600 hover:text-brand-900 flex min-h-11 items-center font-semibold"
-            >
-              {t.tasks.completed.addAgain}
-            </Link>
+            {canAddTasks && (
+              <Link
+                to={paths.addTaskAgain(task.title)}
+                aria-label={t.tasks.completed.addAgainLabel(task.title)}
+                className="text-brand-600 hover:text-brand-900 flex min-h-11 items-center font-semibold"
+              >
+                {t.tasks.completed.addAgain}
+              </Link>
+            )}
             <TaskFavouriteStar title={task.title} currentUserId={userId} />
           </div>
         </li>

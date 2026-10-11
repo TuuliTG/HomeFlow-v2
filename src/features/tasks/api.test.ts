@@ -187,9 +187,10 @@ describe('tasks api', () => {
   });
 
   it("adds up the points of the user's completed tasks", async () => {
-    query.eq
-      .mockReturnValueOnce(query)
-      .mockResolvedValueOnce({ data: [{ points: 3 }, { points: 5 }], error: null });
+    query.eq.mockReturnValueOnce(query).mockResolvedValueOnce({
+      data: [{ points: 3 }, { points: 5 }, { points: null }],
+      error: null,
+    });
 
     await expect(api.fetchTotalPoints('u1')).resolves.toBe(8);
     expect(query.select).toHaveBeenCalledWith('points');

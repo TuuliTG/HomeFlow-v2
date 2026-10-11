@@ -208,11 +208,15 @@ export function useClearReminder(userId: string) {
   });
 }
 
-/** The household's tasks waiting for an adult to award their points. Under `tasksKey`, like the board. */
-export function useTasksWaitingForPoints(userId: string) {
+/**
+ * The household's tasks waiting for an adult to award their points, loaded only for adults (`enabled`).
+ * Under `tasksKey`, like the board.
+ */
+export function useTasksWaitingForPoints(userId: string, enabled: boolean) {
   return useQuery({
     queryKey: [...tasksKey(userId), 'waiting-for-points'],
     queryFn: fetchTasksWaitingForPoints,
+    enabled,
   });
 }
 

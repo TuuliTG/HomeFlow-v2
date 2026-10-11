@@ -22,8 +22,8 @@ revoke execute on function private.can_add_tasks(uuid) from public;
 grant execute on function private.can_add_tasks(uuid) to authenticated;
 
 -- Lets a child in the adult's household add tasks, or stops them. Raises insufficient_privilege (42501) for a child
--- and no_data_found (P0002) for anyone but a child in the adult's household. Locks the adult's row like
--- set_member_is_child().
+-- and no_data_found (P0002) for anyone but a child in the adult's household. adult_household_id() locks the adult's
+-- membership, so they can't be made a child halfway through.
 create function public.set_member_can_add_tasks(member_id uuid, can_add_tasks boolean)
 returns void
 language plpgsql
@@ -111,8 +111,9 @@ $$;
 revoke execute on function private.can_change_task(public.tasks) from public;
 grant execute on function private.can_change_task(public.tasks) to authenticated;
 
--- As before (20261011100000_children.sql), but a child edits only tasks they added and never sets points, and an
--- adult can't take a shared task's points away.
+-- As before (20261011100000_children.sql), but a child edits only tasks they added, and their edit sends a shared
+-- task back to waiting for points, so points an adult awarded can't carry over to a different task. An adult can't
+-- take a shared task's points away.
 create or replace function public.update_task(
   task_id uuid,
   task_title text,
@@ -137,7 +138,7 @@ begin
   end if;
   update public.tasks t
     set title = task_title, description = task_description, type = task_type,
-        points = case when is_child then t.points else task_points end,
+        points = case when is_child then null else task_points end,
         due_on = task_due_on, repeat_every_days = task_repeat_every_days,
         for_children = coalesce(task_for_children, t.for_children)
     where t.id = update_task.task_id

@@ -133,3 +133,43 @@ describe('awarding points', () => {
     expect(screen.queryByRole('region', { name: 'Waiting for points' })).not.toBeInTheDocument();
   });
 });
+
+describe('what a child sees of tasks they may not change', () => {
+  it("offers no Add again to a child who isn't allowed to add tasks", async () => {
+    const { anna } = setUpFamily();
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:0', '2026-10-10');
+    logInAsBen();
+    renderAppAt('/?completed=1');
+
+    await screen.findByText('Feed the cat');
+    expect(screen.queryByRole('link', { name: /Add again/ })).not.toBeInTheDocument();
+  });
+
+  it("doesn't let a child edit an adult's task from its address", async () => {
+    setUpFamily({ benCanAddTasks: true });
+    logInAsBen();
+    renderAppAt('/tasks/task:0/edit');
+
+    expect(await screen.findByText(/This task isn't on the board any more/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Task')).not.toBeInTheDocument();
+  });
+
+  it("makes an adult editing a child's waiting task choose the points", async () => {
+    const { ben } = setUpFamily({ benCanAddTasks: true });
+    fakeTasksBackend.addTaskAs(ben.id, {
+      title: 'Tidy my room',
+      type: 'physical',
+      points: null,
+      forChildren: true,
+    });
+    fakeAuthBackend.logInAs('anna@example.com', 'Anna');
+    const user = userEvent.setup();
+    renderAppAt('/tasks/task:1/edit');
+
+    expect(await screen.findByLabelText('Points')).toHaveValue(null);
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Points must be a whole number from 1 to 10.',
+    );
+  });
+});

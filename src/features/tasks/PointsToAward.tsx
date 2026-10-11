@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
 import type { TaskWaitingForPoints } from '@/features/tasks/pointsApi';
+import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from '@/features/tasks/task';
 import {
   useAwardTaskPoints,
   useMembership,
@@ -10,8 +11,10 @@ import {
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
-const POINT_CHOICES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
-const DEFAULT_POINTS = 3;
+const POINT_CHOICES = Array.from(
+  { length: MAX_POINTS - MIN_POINTS + 1 },
+  (_, index) => MIN_POINTS + index,
+);
 
 /**
  * For adults: the tasks children added whose points are still to be awarded, done ones first, each with
@@ -20,11 +23,12 @@ const DEFAULT_POINTS = 3;
 export function PointsToAward() {
   const user = useLoggedInUser();
   const membership = useMembership(user.id);
-  const waiting = useTasksWaitingForPoints(user.id);
+  const isAdult = membership.data?.isChild === false;
+  const waiting = useTasksWaitingForPoints(user.id, isAdult);
   const headingId = useId();
   const t = useMessages().tasks.award;
 
-  if (membership.data?.isChild !== false || !waiting.data?.length) return null;
+  if (!isAdult || !waiting.data?.length) return null;
   return (
     <section
       aria-labelledby={headingId}
