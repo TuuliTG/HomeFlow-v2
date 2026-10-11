@@ -37,8 +37,8 @@ select throws_ok(
 );
 select throws_ok(
   $$ insert into public.tasks (title, type, points) values ('Dust', 'physical', null) $$,
-  '23514', null,
-  'a shared task has points'
+  '42501', null,
+  'an adult''s shared task has points'
 );
 
 -- Ben sees only the shared task and can't act on the private one.

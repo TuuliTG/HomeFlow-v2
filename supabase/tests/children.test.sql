@@ -2,7 +2,7 @@
 -- Anna and Ben share a household and Anna marks Ben as a child; Carol has her own household.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(31);
+select plan(33);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -152,9 +152,22 @@ select throws_ok(
   '42501', null,
   'a child cannot add an adults-only task'
 );
-select lives_ok(
+select throws_ok(
+  $$ insert into public.tasks (title, type, points, for_children) values ('Tidy my room', 'physical', null, true) $$,
+  '42501', null,
+  'a child cannot add tasks until an adult lets them'
+);
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select public.set_member_can_add_tasks('22222222-2222-2222-2222-222222222222', true);
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select throws_ok(
   $$ insert into public.tasks (title, type, points, for_children) values ('Tidy my room', 'physical', 2, true) $$,
-  'a child can add a task available for children'
+  '42501', null,
+  'a child does not choose the points of their task'
+);
+select lives_ok(
+  $$ insert into public.tasks (title, type, points, for_children) values ('Tidy my room', 'physical', null, true) $$,
+  'a child an adult lets add tasks can add one available for children'
 );
 select results_eq(
   $$ select title, for_children from public.task_suggestions() order by title $$,
