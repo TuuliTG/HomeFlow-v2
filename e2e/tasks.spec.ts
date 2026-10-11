@@ -20,11 +20,13 @@ test('family member can create a task and see it on the shared task board', asyn
   await page.getByLabel('Task', { exact: true }).fill('Water plants');
   await page.getByRole('radio', { name: 'Meta work' }).check();
   await page.getByLabel('Points').fill('5');
+  await page.getByRole('checkbox', { name: 'Children can do it' }).check();
   await page.getByRole('button', { name: 'Create task' }).click();
 
   const task = page.getByRole('listitem', { name: 'Water plants' });
   await expect(task).toBeVisible();
   await expect(task.getByText('5 points')).toBeVisible();
+  await expect(task.getByText('For children')).toBeVisible();
   await expect(task.getByText('Added by you')).toBeVisible();
 
   await page.reload();
