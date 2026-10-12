@@ -9,7 +9,8 @@ Run after the change works and before review. Look at the diff (`git diff main..
 
 ## 1. Documentation
 
-- **README.md** — update if setup steps, scripts, env vars, features or deployment changed.
+- **README.md** — update if setup steps, scripts, env vars, tech stack, architecture or deployment changed. Keep its
+  structure (short app description, tech stack, commands, architecture, services); no feature status or ADR links.
 - **AGENTS.md** — update if commands, conventions, folder structure or workflow changed. Keep it concise; it is
   loaded into every agent session.
 - **ADR** — if the change made an architectural decision (new dependency/framework, data model, auth/RLS approach,

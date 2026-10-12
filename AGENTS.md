@@ -67,3 +67,5 @@ Skills in `.claude/skills/`: `feature-workflow`, `housekeeping`, `adr`, `clean-c
 - Don't commit secrets or `.env*` files (only `.env.example`). The Supabase anon key is public; the service role key never goes in the client.
 - Don't disable lint rules, lower coverage thresholds, or use `any`/`@ts-ignore` to get green. If a rule truly doesn't fit, explain in the PR and record it in the matching ADR.
 - Don't leave commented-out code, TODOs without an issue, or unused exports.
+- Don't add feature status, changelogs or ADR links to `README.md`. Keep it as it is: a short description of the
+  app, then tech stack, commands, architecture and services/deployment. Update those sections when they change.
