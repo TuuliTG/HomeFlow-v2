@@ -24,3 +24,5 @@ Follow these steps in order. Do not skip steps; say explicitly if one does not a
 9. **PR** — Push the branch (`git push -u origin <branch>`) and open a PR filling in
    `.github/pull_request_template.md`. Mention the Vercel preview for UI changes.
 10. **Merge** only after CI is green. After merge, delete the branch.
+11. **Follow-ups** — List any follow-up work with a proposed issue title and description, ask the user to confirm,
+    then create the confirmed ones as GitHub issues and link them from the PR (see `AGENTS.md`).

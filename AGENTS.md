@@ -55,6 +55,9 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node ≥ 22.12 (`.
    Decisions go into the few topic ADRs in `docs/adr/` (update the matching one; see its README), kept short.
 6. Self-review with the **code-review** skill / `code-reviewer` agent, then push and open a PR using the template.
 7. Merge only when CI is green (branch protection enforces this).
+8. **Follow-ups go into GitHub issues.** When a task leaves follow-up work (deferred scope, review findings left
+   for later, gaps noticed along the way), list them for the user with a proposed title and short description each,
+   and create the issues only after the user confirms. Link them from the PR, and reference an issue in any TODO.
 
 Skills in `.claude/skills/`: `feature-workflow`, `housekeeping`, `adr`, `clean-code`, `refactoring`, `testing`,
 `security`, `code-review`. Use them; they define the quality bar.
