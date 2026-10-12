@@ -43,11 +43,13 @@ function deleteFilesQuietly(paths: string[]): Promise<void> {
   return deleteUnusedImageFiles(paths).catch(() => undefined);
 }
 
-/**
- * Uploads the new pictures and returns every picture's file name in order. If an upload fails, deletes
- * the ones already uploaded and rejects.
- */
-export async function uploadNewImages(householdId: string, images: DraftImage[]) {
+/** The new pictures' file names, and every picture's in order. */
+interface UploadedImages {
+  paths: string[];
+  uploaded: string[];
+}
+
+async function uploadNewImages(householdId: string, images: DraftImage[]): Promise<UploadedImages> {
   const uploaded: string[] = [];
   try {
     for (const draft of images) {
@@ -63,23 +65,36 @@ export async function uploadNewImages(householdId: string, images: DraftImage[])
 }
 
 /**
+ * Uploads the new pictures, then saves the task with them (`save`). If an upload or saving fails, deletes
+ * the newly uploaded files and rejects, so a failed save leaves no files behind.
+ */
+export async function saveWithImages<T>(
+  householdId: string,
+  images: DraftImage[],
+  save: (uploaded: UploadedImages) => Promise<T>,
+): Promise<T> {
+  const uploaded = await uploadNewImages(householdId, images);
+  try {
+    return await save(uploaded);
+  } catch (error) {
+    await deleteFilesQuietly(uploaded.uploaded);
+    throw error;
+  }
+}
+
+/**
  * Sets the task's pictures to `paths` if they changed from `before`, then deletes the files of removed
- * ones that no task needs any more. If setting them fails, deletes the newly uploaded files and rejects.
+ * ones that no task needs any more.
  */
 export async function replaceTaskImages(
   taskId: string,
   before: string[],
-  { paths, uploaded }: { paths: string[]; uploaded: string[] },
+  { paths }: UploadedImages,
 ): Promise<void> {
   if (paths.length === before.length && paths.every((path, index) => path === before[index])) {
     return;
   }
-  try {
-    await setTaskImages(taskId, paths);
-  } catch (error) {
-    await deleteFilesQuietly(uploaded);
-    throw error;
-  }
+  await setTaskImages(taskId, paths);
   await deleteFilesQuietly(before.filter((path) => !paths.includes(path)));
 }
 

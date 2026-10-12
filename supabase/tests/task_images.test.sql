@@ -2,7 +2,7 @@
 -- household; Carol has her own. Anna attaches pictures to the laundry, an adults-only task that repeats.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(27);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -41,9 +41,10 @@ select lives_ok(
     $$ insert into storage.objects (bucket_id, name, owner_id) values
          ('task-images', %L, '11111111-1111-1111-1111-111111111111'),
          ('task-images', %L, '11111111-1111-1111-1111-111111111111'),
+         ('task-images', %L, '11111111-1111-1111-1111-111111111111'),
          ('task-images', %L, '11111111-1111-1111-1111-111111111111') $$,
     current_setting('test.smiths') || '/a.jpg', current_setting('test.smiths') || '/b.jpg',
-    current_setting('test.smiths') || '/secret.jpg'
+    current_setting('test.smiths') || '/secret.jpg', current_setting('test.smiths') || '/draft.jpg'
   ),
   'a member uploads pictures to their household''s folder'
 );
@@ -124,7 +125,7 @@ select results_eq(
 select results_eq(
   $$ select name from storage.objects order by name $$,
   format($$ values (%L), (%L) $$, current_setting('test.smiths') || '/a.jpg', current_setting('test.smiths') || '/b.jpg'),
-  'another adult sees the files of pictures on tasks they can see'
+  'another adult sees the files of pictures on tasks they can see, not of private ones or unattached uploads'
 );
 select throws_ok(
   format(
@@ -151,6 +152,15 @@ select throws_ok(
   format($$ select public.set_task_images(%L, '{}') $$, current_setting('test.laundry')),
   'P0002', null,
   'a child does not change pictures of a task they cannot edit'
+);
+select throws_ok(
+  format(
+    $$ insert into storage.objects (bucket_id, name, owner_id)
+         values ('task-images', %L, '22222222-2222-2222-2222-222222222222') $$,
+    current_setting('test.smiths') || '/ben.jpg'
+  ),
+  '42501', null,
+  'a child who may not add tasks does not upload pictures'
 );
 
 -- Carol, in another household, sees nothing.
@@ -195,10 +205,17 @@ select ok(
   'a file stays in use while another task shows it'
 );
 
--- Once no task shows a file, a member can delete it.
+-- Once no task shows a file, whoever took it off a task can delete it; others don't see it.
 reset role;
+set local request.jwt.claims = '{}';
 delete from public.tasks where id = current_setting('test.laundry')::uuid;
 set local role authenticated;
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select is_empty(
+  format($$ select 1 from storage.objects where name = %L $$, current_setting('test.smiths') || '/a.jpg'),
+  'a member who did not take a file off a task does not see it once no task needs it'
+);
+set local request.jwt.claims = '{"sub": "44444444-4444-4444-4444-444444444444", "role": "authenticated"}';
 select ok(
   not private.is_task_image_in_use(current_setting('test.smiths') || '/a.jpg'),
   'a file no task shows is no longer in use'
@@ -208,13 +225,13 @@ select results_eq(
     $$ select count(*)::integer from storage.objects where name = %L $$, current_setting('test.smiths') || '/a.jpg'
   ),
   $$ values (1) $$,
-  'a member sees a file no task needs, to delete it'
+  'whoever took a picture off a task sees its file once no task needs it'
 );
 select isnt_empty(
   format(
     $$ delete from storage.objects where name = %L returning name $$, current_setting('test.smiths') || '/a.jpg'
   ),
-  'a member deletes a file no task needs'
+  'whoever took a picture off a task deletes its file once no task needs it'
 );
 
 select * from finish();

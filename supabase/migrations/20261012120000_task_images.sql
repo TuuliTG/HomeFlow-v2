@@ -27,7 +27,7 @@ create policy "Members can view the pictures of tasks they can see"
   using (exists (select 1 from public.tasks t where t.id = task_images.task_id));
 
 -- Whether any task shows the file, also one the user can't see. Security definer, so storage policies can tell a
--- file no task needs any more, which may be deleted.
+-- file no task needs any more, which may be deleted. Only for files in the user's household's folder.
 create function private.is_task_image_in_use(file_path text)
 returns boolean
 language sql
@@ -35,19 +35,69 @@ stable
 security definer
 set search_path = ''
 as $$
-  select exists (select 1 from public.task_images i where i.path = file_path);
+  select (storage.foldername(file_path))[1] = (select private.current_household_id())::text
+    and exists (select 1 from public.task_images i where i.path = file_path);
 $$;
 revoke execute on function private.is_task_image_in_use(text) from public;
 grant execute on function private.is_task_image_in_use(text) to authenticated;
 
--- Members upload into their household's folder. They see a file they uploaded, one on a task they can see, and one no
--- task needs any more (so whoever removes a picture can delete its file). Only a file no task needs can be deleted,
--- and files are never replaced.
-create policy "Members can upload task pictures to their household's folder"
+-- Who took a picture off a task (by removing it, deleting the task or undoing its completion), so they may delete its
+-- file once no task needs it, though they didn't upload it. Written only by the trigger below.
+create table private.task_image_removals (
+  path text not null,
+  removed_by uuid not null references auth.users (id) on delete cascade,
+  primary key (path, removed_by)
+);
+revoke all on table private.task_image_removals from public, anon, authenticated;
+
+create function private.note_task_image_removal()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is not null then
+    insert into private.task_image_removals (path, removed_by) values (old.path, auth.uid())
+      on conflict do nothing;
+  end if;
+  return null;
+end;
+$$;
+revoke execute on function private.note_task_image_removal() from public, anon, authenticated;
+
+create trigger task_images_note_removal
+  after delete on public.task_images
+  for each row execute function private.note_task_image_removal();
+
+-- Whether the user may see and delete the file once no task needs it: they uploaded it or took it off a task.
+create function private.may_delete_task_image(file_path text, owner_id text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select not private.is_task_image_in_use(file_path)
+    and (
+      owner_id = auth.uid()::text
+      or exists (
+        select 1 from private.task_image_removals r where r.path = file_path and r.removed_by = auth.uid()
+      )
+    );
+$$;
+revoke execute on function private.may_delete_task_image(text, text) from public;
+grant execute on function private.may_delete_task_image(text, text) to authenticated;
+
+-- Adults and children who may add tasks upload into their household's folder. Members see a file they uploaded, one
+-- on a task they can see, and one no task needs any more that they took off a task (to delete it). Only a file no
+-- task needs can be deleted, by whoever uploaded it or took it off a task. Files are never replaced.
+create policy "Members who may add tasks upload task pictures to their household's folder"
   on storage.objects for insert to authenticated
   with check (
     bucket_id = 'task-images'
     and (storage.foldername(name))[1] = (select private.current_household_id())::text
+    and (select private.can_add_tasks((select auth.uid())))
   );
 
 create policy "Members can view their household's task pictures they may see"
@@ -58,7 +108,7 @@ create policy "Members can view their household's task pictures they may see"
     and (
       owner_id = (select auth.uid())::text
       or exists (select 1 from public.task_images i where i.path = objects.name)
-      or not private.is_task_image_in_use(name)
+      or private.may_delete_task_image(name, owner_id)
     )
   );
 
@@ -67,7 +117,7 @@ create policy "Members can delete their household's task pictures no task needs"
   using (
     bucket_id = 'task-images'
     and (storage.foldername(name))[1] = (select private.current_household_id())::text
-    and not private.is_task_image_in_use(name)
+    and private.may_delete_task_image(name, owner_id)
   );
 
 -- Sets the pictures of an open task the user may edit (private.can_change_task()), in order, replacing earlier ones;
@@ -115,9 +165,13 @@ begin
   ) then
     raise exception 'Only pictures you uploaded to your household can be added' using errcode = '42501';
   end if;
-  delete from public.task_images i where i.task_id = task.id;
+  -- Kept pictures are updated rather than deleted, so only removed ones are noted in private.task_image_removals.
+  delete from public.task_images i where i.task_id = task.id and i.path <> all (paths);
   insert into public.task_images (task_id, path, position)
-    select task.id, p.path, (p.ordinality - 1)::smallint from unnest(paths) with ordinality as p (path, ordinality);
+    select task.id, p.path, (p.ordinality - 1)::smallint from unnest(paths) with ordinality as p (path, ordinality)
+    on conflict on constraint task_images_pkey do update set position = excluded.position;
+  -- Touches the task, so members' apps refresh it live (ADR 0004) and show the new pictures.
+  update public.tasks t set title = t.title where t.id = task.id;
 end;
 $$;
 revoke execute on function public.set_task_images(uuid, text[]) from public, anon;

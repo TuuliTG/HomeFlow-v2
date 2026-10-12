@@ -22,18 +22,13 @@ function shownOn(path: string) {
 
 /**
  * Whether `userId` sees the file, like the storage select policy: in their household's folder, and
- * uploaded by them, on a task they can see, or on no task.
+ * uploaded by them or on a task they can see.
  */
 function canSeeFile(userId: string, path: string): boolean {
   const file = files.get(path);
   const folder = `${String(fakeHouseholdBackend.householdIdOf(userId))}/`;
   if (!file || !path.startsWith(folder)) return false;
-  const tasksShowing = shownOn(path);
-  return (
-    file.uploadedBy === userId ||
-    tasksShowing.length === 0 ||
-    tasksShowing.some((task) => canSee(userId, task))
-  );
+  return file.uploadedBy === userId || shownOn(path).some((task) => canSee(userId, task));
 }
 
 /** Like `asCurrentUser`, but also failing when picture requests fail. */
@@ -86,7 +81,7 @@ export const setTaskImages: typeof imagesApi.setTaskImages = (taskId, paths) =>
     deliver(task, { kind: 'changed' });
   });
 
-/** Like Storage under its delete policy: only files no task shows go. */
+/** Like Storage under its delete policy, without who may delete: only files no task shows go. */
 export const deleteUnusedImageFiles: typeof imagesApi.deleteUnusedImageFiles = (paths) =>
   asUploader(() => {
     for (const path of paths) {

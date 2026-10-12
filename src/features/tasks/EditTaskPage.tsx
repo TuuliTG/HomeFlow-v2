@@ -60,6 +60,8 @@ function ImagesNotSavedNotice() {
 function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChild: boolean }) {
   const updateTask = useUpdateTask(userId);
   const householdId = useMembership(userId).data?.householdId ?? '';
+  // The pictures the form opened with: live updates may change the task's meanwhile.
+  const [imagesBefore] = useState(task.images);
   const navigate = useNavigate();
   const t = useMessages();
 
@@ -67,7 +69,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
     <div className="flex flex-col gap-8">
       <TaskForm
         initial={task}
-        initialImages={task.images}
+        initialImages={imagesBefore}
         isChild={isChild}
         currentUserId={userId}
         submitLabel={t.taskForm.edit.submit}
@@ -78,7 +80,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
             task: changed,
             images,
             householdId,
-            before: task.images,
+            before: imagesBefore,
           });
           await navigate(paths.taskList(changed.isPrivate));
         }}

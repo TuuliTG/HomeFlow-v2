@@ -69,7 +69,8 @@ export const tasks = {
     },
     images: (title: string) => `Pictures: ${title}`,
     /** The link opening a picture full size. */
-    image: (position: number, title: string) => `Picture ${String(position)} of ${title}`,
+    image: (position: number, title: string) =>
+      `Picture ${String(position)} of ${title} (opens in a new tab)`,
     imagesFailed: "We couldn't load the pictures.",
     edit: 'Edit',
     editLabel: (title: string) => `Edit: ${title}`,

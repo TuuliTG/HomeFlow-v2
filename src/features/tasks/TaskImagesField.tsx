@@ -10,7 +10,8 @@ function readAsDataUrl(image: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
-      resolve(typeof reader.result === 'string' ? reader.result : '');
+      if (typeof reader.result === 'string') resolve(reader.result);
+      else reject(new Error('The picture could not be read'));
     };
     reader.onerror = () => {
       reject(reader.error ?? new Error('The picture could not be read'));
@@ -118,7 +119,8 @@ export function TaskImagesField({
                     remove(index);
                   }}
                   aria-label={t.remove(index + 1)}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  disabled={isPreparing}
+                  className="min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
                 >
                   {t.removeButton}
                 </button>
@@ -128,7 +130,7 @@ export function TaskImagesField({
         </ul>
       )}
       {images.length < MAX_TASK_IMAGES && (
-        <label className="border-brand-600 text-brand-900 hover:bg-brand-50 focus-within:outline-brand-600 w-fit cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-semibold focus-within:outline-2 focus-within:outline-offset-2">
+        <label className="border-brand-600 text-brand-900 hover:bg-brand-50 focus-within:outline-brand-600 flex min-h-11 w-fit cursor-pointer items-center rounded-lg border px-3 text-sm font-semibold focus-within:outline-2 focus-within:outline-offset-2">
           {isPreparing ? t.preparing : t.add}
           <input
             type="file"

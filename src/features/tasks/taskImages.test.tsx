@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeImagesBackend, setTaskImages, uploadTaskImage } from '@/test/fakeImagesApi';
-import { fakeTasksBackend } from '@/test/fakeTasksBackend';
+import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
@@ -59,7 +59,7 @@ describe('pictures on tasks', () => {
 
     const task = await screen.findByRole('listitem', { name: 'Water the plants' });
     const pictures = await within(task).findAllByRole('link', {
-      name: /^Picture \d of Water the plants$/,
+      name: /^Picture \d of Water the plants \(opens in a new tab\)$/,
     });
     expect(pictures).toHaveLength(2);
     expect(pictures[0]).toHaveAttribute('href', `https://images.test/${folder}/picture-1.jpg`);
@@ -75,7 +75,9 @@ describe('pictures on tasks', () => {
 
     const task = await screen.findByRole('listitem', { name: 'Water the plants' });
     expect(
-      await within(task).findByRole('img', { name: 'Picture 1 of Water the plants' }),
+      await within(task).findByRole('img', {
+        name: 'Picture 1 of Water the plants (opens in a new tab)',
+      }),
     ).toHaveAttribute('src', `https://images.test/${folder}/picture-1.jpg`);
   });
 
@@ -110,12 +112,49 @@ describe('pictures on tasks', () => {
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     const task = await screen.findByRole('listitem', { name: 'Water the plants' });
-    const pictures = await within(task).findAllByRole('img', { name: /of Water the plants$/ });
+    const pictures = await within(task).findAllByRole('img', {
+      name: /of Water the plants \(opens in a new tab\)$/,
+    });
     expect(pictures.map((picture) => picture.getAttribute('src'))).toEqual([
       `https://images.test/${folder}/picture-2.jpg`,
       `https://images.test/${folder}/picture-3.jpg`,
     ]);
     expect(fakeImagesBackend.files()).not.toContain(`${folder}/picture-1.jpg`);
+  });
+
+  it("deletes the new pictures' files when the task can't be saved", async () => {
+    const anna = logInAsFamilyMember();
+    const taskId = await addTaskWithImages(anna.id, { count: 0 });
+    const user = userEvent.setup();
+    renderAppAt(`/tasks/${taskId}/edit`);
+    await user.upload(await screen.findByLabelText('Add a picture'), photo('kitchen.jpg'));
+    await screen.findByRole('img', { name: 'Picture 1' });
+    // Someone else marks it done meanwhile, so it can't be edited any more; the board hasn't heard yet.
+    const stored = tasks.find((task) => task.id === taskId);
+    if (stored) stored.completed = { by: anna.id, at: new Date().toISOString() };
+
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't save the task.");
+    expect(fakeImagesBackend.files()).toEqual([]);
+  });
+
+  it('keeps pictures someone else added while the form was open', async () => {
+    const anna = logInAsFamilyMember();
+    const taskId = await addTaskWithImages(anna.id, { count: 1 });
+    const user = userEvent.setup();
+    renderAppAt(`/tasks/${taskId}/edit`);
+    await screen.findByRole('img', { name: 'Picture 1' });
+    const added = await uploadTaskImage(folder, new Blob());
+    await setTaskImages(taskId, [`${folder}/picture-1.jpg`, added]);
+
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    const task = await screen.findByRole('listitem', { name: 'Water the plants' });
+    expect(await within(task).findAllByRole('img', { name: /of Water the plants/ })).toHaveLength(
+      2,
+    );
+    expect(fakeImagesBackend.files()).toContain(added);
   });
 
   it('takes at most three pictures', async () => {
@@ -189,7 +228,9 @@ describe('pictures on tasks', () => {
 
     const next = await screen.findByRole('listitem', { name: 'Water the plants' });
     expect(
-      await within(next).findByRole('img', { name: 'Picture 1 of Water the plants' }),
+      await within(next).findByRole('img', {
+        name: 'Picture 1 of Water the plants (opens in a new tab)',
+      }),
     ).toBeInTheDocument();
   });
 

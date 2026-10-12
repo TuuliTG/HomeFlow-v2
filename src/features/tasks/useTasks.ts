@@ -35,7 +35,7 @@ import {
   type DraftImage,
   ImagesNotSavedError,
   replaceTaskImages,
-  uploadNewImages,
+  saveWithImages,
 } from '@/features/tasks/taskImages';
 import { today } from '@/lib/dates';
 
@@ -133,16 +133,16 @@ interface TaskWithImages {
 export function useAddTask(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ task, images, householdId }: TaskWithImages) => {
-      const uploaded = await uploadNewImages(householdId, images);
-      const taskId = await addTask(task);
-      try {
-        await replaceTaskImages(taskId, [], uploaded);
-      } catch {
-        throw new ImagesNotSavedError(taskId);
-      }
-      return taskId;
-    },
+    mutationFn: ({ task, images, householdId }: TaskWithImages) =>
+      saveWithImages(householdId, images, async (uploaded) => {
+        const taskId = await addTask(task);
+        try {
+          await replaceTaskImages(taskId, [], uploaded);
+        } catch {
+          throw new ImagesNotSavedError(taskId);
+        }
+        return taskId;
+      }),
     // Stay pending until the list is refreshed, so the board shows the new task straight away.
     onSettled: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
@@ -191,7 +191,10 @@ export function usePutBackTask(userId: string) {
   });
 }
 
-/** Saves an open task's details and pictures; `before` is the pictures it had. */
+/**
+ * Saves an open task's details and pictures; `before` is the pictures it had when the form opened, so
+ * pictures someone else added meanwhile stay unless the user changed the pictures too.
+ */
 export function useUpdateTask(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -201,12 +204,12 @@ export function useUpdateTask(userId: string) {
       images,
       householdId,
       before,
-    }: TaskWithImages & { taskId: string; before: string[] }) => {
-      const uploaded = await uploadNewImages(householdId, images);
-      await updateTask(taskId, task);
-      await replaceTaskImages(taskId, before, uploaded);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+    }: TaskWithImages & { taskId: string; before: string[] }) =>
+      saveWithImages(householdId, images, async (uploaded) => {
+        await updateTask(taskId, task);
+        await replaceTaskImages(taskId, before, uploaded);
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
 }
 

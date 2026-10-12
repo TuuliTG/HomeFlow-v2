@@ -56,7 +56,7 @@ test('family member can attach a picture to a task and see it on the board', asy
 
   const picture = page
     .getByRole('listitem', { name: 'Water plants' })
-    .getByRole('img', { name: 'Picture 1 of Water plants' });
+    .getByRole('img', { name: 'Picture 1 of Water plants (opens in a new tab)' });
   await expect(picture).toBeVisible();
   await expect
     .poll(() => picture.evaluate((image: HTMLImageElement) => image.naturalWidth))
@@ -66,7 +66,9 @@ test('family member can attach a picture to a task and see it on the board', asy
   await page.getByRole('button', { name: 'Remove picture 1' }).click();
   await page.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
-  await expect(page.getByRole('img', { name: 'Picture 1 of Water plants' })).toHaveCount(0);
+  await expect(
+    page.getByRole('img', { name: 'Picture 1 of Water plants (opens in a new tab)' }),
+  ).toHaveCount(0);
 });
 
 test('family member can add a task again from earlier tasks and favourites', async ({ page }) => {

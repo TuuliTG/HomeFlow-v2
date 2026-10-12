@@ -67,7 +67,7 @@ export const tasks: Messages['tasks'] = {
       named: (name) => `Varaaja: ${name}`,
     },
     images: (title) => `Kuvat: ${title}`,
-    image: (position, title) => `Kuva ${String(position)}: ${title}`,
+    image: (position, title) => `Kuva ${String(position)}: ${title} (avautuu uuteen välilehteen)`,
     imagesFailed: 'Kuvia ei voitu ladata.',
     edit: 'Muokkaa',
     editLabel: (title) => `Muokkaa: ${title}`,
