@@ -8,7 +8,7 @@ import { TaskActivityToast } from '@/features/tasks/TaskActivityToast';
 
 /**
  * Mobile-first layout: content plus a bottom tab bar on phones,
- * a side rail on wider screens.
+ * a side rail on wider screens. Toasts stack above the tab bar.
  */
 export function AppShell() {
   return (
@@ -22,7 +22,9 @@ export function AppShell() {
         <InstallHint />
         <Outlet />
       </main>
-      <TaskActivityToast />
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 flex flex-col items-center gap-2 px-4 md:bottom-6">
+        <TaskActivityToast />
+      </div>
     </div>
   );
 }
