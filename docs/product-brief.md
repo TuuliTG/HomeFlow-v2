@@ -32,9 +32,9 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
   count) and personal goals (only yours count; the family sees them to cheer each other on), each a reward with the
   points needed and its progress; a shared goal can ask each participant for their own minimum, e.g. less for a
   younger child, so nobody does it all alone; claim the reward once reached. Must make clear how points are earned and how shared goals accumulate.
-- **Statistics** — period selector; _points earned_ (from doing tasks, all or physical/meta work apart) and _tasks
-  created_ per member, each with its own fairness score (0–100, e.g. "Balanced"); contribution over time. Only shared
-  tasks count; private tasks never do.
+- **Statistics** — period selector; who to compare (everyone, adults, children or chosen members); _points earned_
+  (from doing tasks, all or physical/meta work apart) and _tasks created_ per member, each with its own fairness score
+  (0–100, e.g. "Balanced"); contribution over time. Only shared tasks count; private tasks never do.
 
 ## Design principles from evaluation
 

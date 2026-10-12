@@ -1,9 +1,13 @@
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
+import { CompareMembers } from '@/features/statistics/CompareMembers';
 import { MetricSection } from '@/features/statistics/MetricSection';
 import {
+  type Comparison,
+  comparedMembers,
   type MemberContribution,
+  memberGroups,
   type Period,
   periods,
   type PointsFilter,
@@ -17,6 +21,7 @@ import { useSearchParam } from '@/lib/useSearchParam';
 
 const PERIOD_PARAM = 'period';
 const POINTS_FILTER_PARAM = 'work';
+const COMPARISON_PARAM = 'compare';
 
 /** The period shown, kept in the address as `?period=<period>`; this week by default. */
 function usePeriodParam() {
@@ -33,6 +38,24 @@ function usePointsFilterParam() {
     POINTS_FILTER_PARAM,
     (value) => pointsFilters.find((filter) => filter === value) ?? 'all',
     (filter) => (filter === 'all' ? null : filter),
+  );
+}
+
+/**
+ * Who is compared, kept in the address as `?compare=<group>` or `?compare=<user id>,<user id>`;
+ * everyone by default.
+ */
+function useComparisonParam() {
+  return useSearchParam<Comparison>(
+    COMPARISON_PARAM,
+    (value) =>
+      value === null
+        ? 'everyone'
+        : (memberGroups.find((group) => group === value) ?? value.split(',')),
+    (comparison) => {
+      if (comparison === 'everyone') return null;
+      return typeof comparison === 'string' ? comparison : comparison.join(',');
+    },
   );
 }
 
@@ -90,6 +113,7 @@ function StatisticsBody({
   userId: string;
 }) {
   const t = useMessages().statistics;
+  const [comparison, setComparison] = useComparisonParam();
   if (contributions.data === undefined) {
     if (!contributions.isError) return <LoadingMessage />;
     return (
@@ -98,15 +122,28 @@ function StatisticsBody({
       </p>
     );
   }
+  // With two members or fewer there is no choice to make, so an address from elsewhere can't hide anyone.
+  const canCompare = contributions.data.length > 2;
+  const compared = canCompare
+    ? comparedMembers(contributions.data, comparison)
+    : contributions.data;
   return (
     <div className="flex flex-col gap-6">
+      {canCompare && (
+        <CompareMembers
+          contributions={contributions.data}
+          comparison={comparison}
+          onChange={setComparison}
+          userId={userId}
+        />
+      )}
       {contributions.data.length < 2 && (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
           {t.inviteFamily}
         </p>
       )}
-      <PointsSection contributions={contributions.data} userId={userId} />
-      <MetricSection metric="created" contributions={contributions.data} userId={userId} />
+      <PointsSection contributions={compared} userId={userId} />
+      <MetricSection metric="created" contributions={compared} userId={userId} />
     </div>
   );
 }

@@ -4,7 +4,8 @@ interface SegmentedChoiceProps<T extends string> {
   legend: string;
   options: readonly T[];
   labels: Record<T, string>;
-  value: T;
+  /** Null when none of the options is chosen. */
+  value: T | null;
   onChange: (value: T) => void;
 }
 

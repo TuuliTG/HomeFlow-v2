@@ -25,6 +25,7 @@ export const fetchContributions: typeof statisticsApi.fetchContributions = (sinc
       return {
         userId,
         displayName: fakeAuthBackend.displayNameOf(userId),
+        isChild: fakeHouseholdBackend.isChild(userId),
         done: done.length,
         points: pointsOf(done),
         physicalDone: physical.length,
