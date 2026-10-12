@@ -4,8 +4,7 @@ export const tasks = {
   newTask: 'New task',
   board: {
     title: 'Shared tasks',
-    description:
-      'Pick any task. New tasks earn bonus points for variety and fairness. Your private tasks are on your Me page.',
+    description: 'Pick any task. Your private tasks are on your Me page.',
     showCompleted: 'Show completed',
     show: 'Show',
     loadFailed: "We couldn't load the tasks. Check your connection and reload the page.",

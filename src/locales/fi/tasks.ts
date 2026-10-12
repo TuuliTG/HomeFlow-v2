@@ -6,7 +6,7 @@ export const tasks: Messages['tasks'] = {
   board: {
     title: 'Yhteiset tehtävät',
     description:
-      'Valitse mikä tahansa tehtävä. Uusista tehtävistä saa lisäpisteitä vaihtelusta ja reiluudesta. Omat yksityiset tehtäväsi ovat Minä-sivulla.',
+      'Tällä sivulla näet perheen jaetut tehtävät. Minä-sivulta löydät omat henkilökohtaiset tehtäväsi.',
     showCompleted: 'Näytä tehdyt',
     show: 'Näytä',
     loadFailed: 'Tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
@@ -90,7 +90,11 @@ export const tasks: Messages['tasks'] = {
     heading: 'Tehdyt',
     loadFailed: 'Tehtyjä tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
     empty: 'Mitään ei ole vielä tehty.',
-    doneBy: { you: 'Tekijä: sinä', someone: 'Tekijä: joku', named: (name) => `Tekijä: ${name}` },
+    doneBy: {
+      you: 'Tekijä: sinä',
+      someone: 'Tekijä: joku',
+      named: (name) => `Tekijä: ${name}`,
+    },
     addAgain: 'Lisää uudelleen',
     addAgainLabel: (title) => `Lisää uudelleen: ${title}`,
   },
