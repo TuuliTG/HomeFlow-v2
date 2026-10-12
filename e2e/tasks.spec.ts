@@ -6,6 +6,7 @@ import {
   fakeSupabase,
   logInAsFamilyMember,
   logInAsNewUser,
+  TINY_PNG,
 } from './fakeSupabase';
 
 // See auth.spec.ts: the Supabase fake can't intercept requests that go through the service worker.
@@ -36,6 +37,36 @@ test('family member can create a task and see it on the shared task board', asyn
 
   await page.reload();
   await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
+});
+
+test('family member can attach a picture to a task and see it on the board', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+
+  await page.getByLabel('Task', { exact: true }).fill('Water plants');
+  await page
+    .getByLabel('Add a picture')
+    .setInputFiles({ name: 'balcony.png', mimeType: 'image/png', buffer: TINY_PNG });
+  await expect(page.getByRole('img', { name: 'Picture 1' })).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on the task form with a picture').toEqual([]);
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  const picture = page
+    .getByRole('listitem', { name: 'Water plants' })
+    .getByRole('img', { name: 'Picture 1 of Water plants' });
+  await expect(picture).toBeVisible();
+  await expect
+    .poll(() => picture.evaluate((image: HTMLImageElement) => image.naturalWidth))
+    .toBe(1);
+
+  await page.getByRole('link', { name: 'Edit: Water plants' }).click();
+  await page.getByRole('button', { name: 'Remove picture 1' }).click();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Picture 1 of Water plants' })).toHaveCount(0);
 });
 
 test('family member can add a task again from earlier tasks and favourites', async ({ page }) => {

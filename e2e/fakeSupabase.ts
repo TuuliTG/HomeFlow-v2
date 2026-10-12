@@ -65,6 +65,12 @@ async function reply(route: Route, status: number, body?: unknown) {
   });
 }
 
+/** A 1×1 picture, served for every task picture: uploads arrive as form data, not the picture alone. */
+export const TINY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64',
+);
+
 /** Answers like PostgREST: one object (or 406) when the client asks for one, otherwise an array. */
 async function replyWithRows(route: Route, rows: unknown[]) {
   const wantsObject = (route.request().headers().accept ?? '').includes('vnd.pgrst.object');
@@ -121,6 +127,65 @@ export async function fakeSupabase(page: Page) {
       completed_by: null,
     },
   ];
+
+  /** Uploaded task picture files (the task-images bucket). */
+  const imageFiles = new Set<string>();
+  /** The pictures of each task in order (task_images), by task id. */
+  const taskImages = new Map<string, string[]>();
+
+  /** Like Storage for the task-images bucket: uploads, signed URLs, the signed files and deleting. */
+  async function storageEndpoint(route: Route, pathname: string) {
+    const request = route.request();
+    const upload = /^\/storage\/v1\/object\/task-images\/(.+)$/.exec(pathname)?.[1];
+    if (request.method() === 'POST' && upload) {
+      imageFiles.add(decodeURIComponent(upload));
+      return reply(route, 200, { Key: `task-images/${upload}`, Id: upload });
+    }
+    if (pathname === '/storage/v1/object/sign/task-images') {
+      const { paths } = request.postDataJSON() as { paths: string[] };
+      return reply(
+        route,
+        200,
+        paths.map((path) => ({
+          path,
+          signedURL: imageFiles.has(path) ? `/object/sign/task-images/${path}?token=e2e` : null,
+          error: imageFiles.has(path) ? null : 'Not found',
+        })),
+      );
+    }
+    if (pathname.startsWith('/storage/v1/object/sign/task-images/')) {
+      return route.fulfill({ status: 200, contentType: 'image/png', body: TINY_PNG });
+    }
+    if (request.method() === 'DELETE' && pathname === '/storage/v1/object/task-images') {
+      const { prefixes } = request.postDataJSON() as { prefixes: string[] };
+      const inUse = new Set([...taskImages.values()].flat());
+      const deleted = prefixes.filter((path) => !inUse.has(path) && imageFiles.delete(path));
+      return reply(
+        route,
+        200,
+        deleted.map((name) => ({ name })),
+      );
+    }
+    return reply(route, 404, { message: `Not faked: ${pathname}` });
+  }
+
+  /** Like set_task_images(), without its checks. */
+  async function setTaskImages(route: Route) {
+    const { task_id, paths } = route.request().postDataJSON() as {
+      task_id: string;
+      paths: string[];
+    };
+    taskImages.set(task_id, paths);
+    return reply(route, 204);
+  }
+
+  /** A task with its pictures, like `task_images(path, position)` embedded in the select. */
+  function withImages(task: TaskRow) {
+    return {
+      ...task,
+      task_images: (taskImages.get(task.id) ?? []).map((path, position) => ({ path, position })),
+    };
+  }
 
   /** Who helped with each done task and their shares (task_helpers), by task id. */
   const helpers = new Map<string, { user_id: string; points: number }[]>();
@@ -191,6 +256,7 @@ export async function fakeSupabase(page: Page) {
         .filter((id) => wanted.length === 0 || wanted.includes(id))
         .map((id) => ({
           user_id: id,
+          household_id: ownHousehold?.id,
           is_child: children.has(id),
           signs_in_with_code: childAccounts.has(id),
           can_add_tasks: false,
@@ -228,9 +294,10 @@ export async function fakeSupabase(page: Page) {
         | 'is_private'
         | 'for_children'
       >;
+      const id = `e2e-task-${String(tasks.length)}`;
       tasks.unshift({
         ...task,
-        id: `e2e-task-${String(tasks.length)}`,
+        id,
         household_id: ownHousehold.id,
         created_by: user.id,
         picked_up_by: null,
@@ -238,7 +305,7 @@ export async function fakeSupabase(page: Page) {
         completed_at: null,
         completed_by: null,
       });
-      return reply(route, 201);
+      return replyWithRows(route, [{ id }]);
     }
     const householdId = ownHousehold?.id;
     // The news asks for the household's shared tasks done since a date (`completed_at=gte.<timestamp>`), newest
@@ -308,7 +375,8 @@ export async function fakeSupabase(page: Page) {
       tasks
         .filter((task) => task.household_id === householdId && task.completed_at === null)
         // Stable sort, so tasks with the same due date (or none) stay newest first.
-        .sort((a, b) => (a.due_on ?? '9999-12-31').localeCompare(b.due_on ?? '9999-12-31')),
+        .sort((a, b) => (a.due_on ?? '9999-12-31').localeCompare(b.due_on ?? '9999-12-31'))
+        .map(withImages),
     );
   }
 
@@ -340,6 +408,7 @@ export async function fakeSupabase(page: Page) {
       completed_by: null,
     };
     tasks.unshift(next);
+    taskImages.set(next.id, [...(taskImages.get(task.id) ?? [])]);
     return reply(route, 200, next.id);
   }
 
@@ -789,6 +858,7 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/put_back_task': setPickedUp(null),
     '/rest/v1/rpc/update_task': updateTask,
     '/rest/v1/rpc/delete_task': deleteTask,
+    '/rest/v1/rpc/set_task_images': setTaskImages,
     '/rest/v1/rpc/household_statistics': householdStatistics,
     '/rest/v1/rpc/task_suggestions': taskSuggestions,
     '/rest/v1/rpc/set_task_reminder': setTaskReminder,
@@ -811,6 +881,7 @@ export async function fakeSupabase(page: Page) {
 
   await page.route(`${FAKE_SUPABASE_URL}/**`, async (route) => {
     const pathname = new URL(route.request().url()).pathname.replace(/^\/fake-supabase/, '');
+    if (pathname.startsWith('/storage/v1/object/')) return storageEndpoint(route, pathname);
     const endpoint = endpoints[pathname];
     return endpoint ? endpoint(route) : reply(route, 404, { message: `Not faked: ${pathname}` });
   });
