@@ -55,6 +55,9 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node ≥ 22.12 (`.
    Decisions go into the few topic ADRs in `docs/adr/` (update the matching one; see its README), kept short.
 6. Self-review with the **code-review** skill / `code-reviewer` agent, then push and open a PR using the template.
 7. Merge only when CI is green (branch protection enforces this).
+8. **Follow-ups go into GitHub issues.** When a task leaves follow-up work (deferred scope, review findings left
+   for later, gaps noticed along the way), list them for the user with a proposed title and short description each,
+   and create the issues only after the user confirms. Link them from the PR, and reference an issue in any TODO.
 
 Skills in `.claude/skills/`: `feature-workflow`, `housekeeping`, `adr`, `clean-code`, `refactoring`, `testing`,
 `security`, `code-review`. Use them; they define the quality bar.
@@ -64,3 +67,5 @@ Skills in `.claude/skills/`: `feature-workflow`, `housekeeping`, `adr`, `clean-c
 - Don't commit secrets or `.env*` files (only `.env.example`). The Supabase anon key is public; the service role key never goes in the client.
 - Don't disable lint rules, lower coverage thresholds, or use `any`/`@ts-ignore` to get green. If a rule truly doesn't fit, explain in the PR and record it in the matching ADR.
 - Don't leave commented-out code, TODOs without an issue, or unused exports.
+- Don't add feature status, changelogs or ADR links to `README.md`. Keep it as it is: a short description of the
+  app, then tech stack, commands, architecture and services/deployment. Update those sections when they change.
