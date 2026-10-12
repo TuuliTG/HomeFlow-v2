@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
+
+import { paths } from '@/app/paths';
 
 import {
   type Goal,
@@ -13,13 +16,13 @@ import { type Messages, useMessages } from '@/lib/i18n/i18n';
 interface GoalCardProps {
   goal: Goal;
   userId: string;
-  /** Only adults delete goals (ADR 0007). */
+  /** Only adults change and delete goals (ADR 0007). */
   isAdult: boolean;
 }
 
 /**
  * An open goal and its progress. Shared goals the user takes part in and their own can be claimed once
- * reached; the others are followed. Adults can delete any of them.
+ * reached; the others are followed. Adults can change or delete any of them.
  */
 export function GoalCard({ goal, userId, isAdult }: GoalCardProps) {
   const messages = useMessages();
@@ -67,7 +70,18 @@ export function GoalCard({ goal, userId, isAdult }: GoalCardProps) {
       ) : (
         <p className="text-sm font-medium text-emerald-800">{t.participantsReached}</p>
       )}
-      {isAdult && <DeleteGoal goal={goal} userId={userId} />}
+      {isAdult && (
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <Link
+            to={paths.editGoal(goal.id)}
+            aria-label={t.editLabel(goal.title)}
+            className="text-brand-900 -my-2 flex min-h-11 items-center text-sm font-semibold hover:underline"
+          >
+            {t.edit}
+          </Link>
+          <DeleteGoal goal={goal} userId={userId} />
+        </div>
+      )}
     </li>
   );
 }
@@ -169,7 +183,7 @@ function DeleteGoal({ goal, userId }: { goal: Goal; userId: string }) {
     );
   }
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
+    <div className="flex w-full flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
       <p className="text-sm text-red-900">{t.confirmDelete(goal.title, goal.owner === null)}</p>
       {deleteGoal.isError && (
         <p role="alert" className="text-sm text-red-700">

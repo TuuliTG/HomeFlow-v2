@@ -3,7 +3,7 @@
 -- before the goals were set don't count. (now() is the same all through the transaction.)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(40);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -215,6 +215,63 @@ select throws_ok(
   '23514', null,
   'nobody takes part twice'
 );
+-- Anna edits the Zoo trip: a new reward, fewer points and smaller minimums, then makes it Ben's own.
+select public.update_goal(
+  (select id from public.goals where title = 'Zoo trip'), 'Zoo day', 6, null,
+  '[{"user_id": "11111111-1111-1111-1111-111111111111", "min_points": 2},
+    {"user_id": "22222222-2222-2222-2222-222222222222", "min_points": 3}]'
+);
+do $$
+begin
+  perform set_config('test.zoo', id::text, true) from public.goals where title = 'Zoo day';
+end
+$$;
+select results_eq(
+  $$ select title, target_points, points, reached, participants from public.household_goals() where title = 'Zoo day' $$,
+  $$ values ('Zoo day', 6, 9, true,
+    '[{"user_id": "11111111-1111-1111-1111-111111111111", "display_name": "Anna", "points": 6, "min_points": 2},
+      {"user_id": "22222222-2222-2222-2222-222222222222", "display_name": null, "points": 3, "min_points": 3}]'::jsonb) $$,
+  'an adult changes an open goal''s reward, points and participants, and its progress still counts'
+);
+select public.update_goal(
+  (select id from public.goals where title = 'Zoo day'), 'Zoo day', 6, '22222222-2222-2222-2222-222222222222', '[]'
+);
+select results_eq(
+  $$ select owner_id::text, points, participants from public.household_goals() where title = 'Zoo day' $$,
+  $$ values ('22222222-2222-2222-2222-222222222222', 3, null::jsonb) $$,
+  'a shared goal can become one member''s personal goal'
+);
+select is(
+  (select count(*)::integer from public.goal_participants gp join public.goals g on g.id = gp.goal_id
+    where g.title = 'Zoo day'),
+  0, 'a personal goal keeps no participants'
+);
+select throws_ok(
+  $$ select public.update_goal((select id from public.goals where title = 'Zoo day'), 'Zoo day', 6,
+       '33333333-3333-3333-3333-333333333333', '[]') $$,
+  '42501', null,
+  'a goal is not changed to someone outside the household'
+);
+select throws_ok(
+  $$ select public.update_goal((select id from public.goals where title = 'Zoo day'), 'Zoo day', 4, null,
+       '[{"user_id": "11111111-1111-1111-1111-111111111111", "min_points": 3},
+         {"user_id": "22222222-2222-2222-2222-222222222222", "min_points": 3}]') $$,
+  '23514', null,
+  'a changed goal''s minimums together are at most its points'
+);
+select throws_ok(
+  $$ select public.update_goal((select id from public.goals where title = 'Zoo day'), '', 6,
+       '22222222-2222-2222-2222-222222222222', '[]') $$,
+  '23514', null,
+  'a changed goal still needs a reward'
+);
+select throws_ok(
+  format($$ select public.update_goal(%L, 'Pizza party', 5, null, '[{"user_id": "11111111-1111-1111-1111-111111111111"}]') $$,
+    current_setting('test.pizza')),
+  'P0002', null,
+  'claimed goals stay as they were'
+);
+
 -- Ben deletes his account: he no longer takes part, and his points stop counting.
 reset role;
 delete from auth.users where id = '22222222-2222-2222-2222-222222222222';
@@ -236,6 +293,12 @@ select throws_ok(
   format('select public.claim_goal_reward(%L)', current_setting('test.pizza')),
   'P0002', null,
   'members cannot claim another household''s goal'
+);
+select throws_ok(
+  format($$ select public.update_goal(%L, 'Ours', 6, '33333333-3333-3333-3333-333333333333', '[]') $$,
+    current_setting('test.zoo')),
+  'P0002', null,
+  'members cannot change another household''s goal'
 );
 
 reset role;

@@ -42,6 +42,8 @@ export const rewards: Messages['rewards'] = {
     claim: 'Lunasta palkinto',
     claimLabel: (title) => `Lunasta palkinto: ${title}`,
     claimFailed: 'Palkintoa ei voitu lunastaa. Tarkista yhteys ja yritä uudelleen.',
+    edit: 'Muokkaa',
+    editLabel: (title) => `Muokkaa tavoitetta: ${title}`,
     deleteLabel: (title) => `Poista tavoite: ${title}`,
     confirmDelete: (title, isShared) =>
       `Poistetaanko “${title}”${isShared ? ' kaikilta mukana olevilta' : ''}? Poistoa ei voi perua.`,
@@ -69,6 +71,14 @@ export const rewards: Messages['rewards'] = {
     submit: 'Aseta tavoite',
     checkDetails: 'Tarkista tavoitteen tiedot.',
     saveFailed: 'Tavoitetta ei voitu tallentaa. Yritä uudelleen.',
+    edit: {
+      title: 'Muokkaa tavoitetta',
+      description:
+        'Muuta palkintoa, pisteitä tai sitä, kenelle tavoite on. Jo ansaitut pisteet lasketaan edelleen.',
+      submit: 'Tallenna muutokset',
+      notFound: 'Tätä tavoitetta ei voi muuttaa: se on ehkä lunastettu tai poistettu.',
+      backToRewards: 'Takaisin palkintoihin',
+    },
     errors: {
       rewardRequired: 'Anna palkinnolle nimi.',
       rewardTooLong: (max) => `Palkinnon nimessä saa olla enintään ${String(max)} merkkiä.`,

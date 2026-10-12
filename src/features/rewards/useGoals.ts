@@ -6,6 +6,7 @@ import {
   deleteGoal,
   fetchGoals,
   fetchGoalSetters,
+  updateGoal,
 } from '@/features/rewards/api';
 import type { NewGoal } from '@/features/rewards/goal';
 
@@ -24,7 +25,15 @@ export function useAddGoal(userId: string) {
   });
 }
 
-/** The household's members, and whether the user is an adult, who may add and delete goals. */
+export function useUpdateGoal(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ goalId, goal }: { goalId: string; goal: NewGoal }) => updateGoal(goalId, goal),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsKey(userId) }),
+  });
+}
+
+/** The household's members, and whether the user is an adult, who may add, change and delete goals. */
 export function useGoalSetters(userId: string) {
   const query = useQuery({ queryKey: [...goalsKey(userId), 'setters'], queryFn: fetchGoalSetters });
   const isAdult = query.data?.some((member) => member.id === userId && !member.isChild) ?? false;

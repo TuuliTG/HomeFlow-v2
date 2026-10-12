@@ -419,3 +419,102 @@ describe('rewards and goals', () => {
     expect(screen.queryByLabelText('Reward')).not.toBeInTheDocument();
   });
 });
+
+describe('editing goals', () => {
+  it('changes the reward, points and who takes part, keeping the progress', async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'Pizza night', targetPoints: 30, isShared: true });
+    doTask(anna.id, 'Vacuum', 3);
+    doTask(ben.id, 'Dishes', 2);
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/rewards');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit goal: Pizza night' }));
+    const reward = await screen.findByLabelText('Reward');
+    expect(reward).toHaveValue('Pizza night');
+    expect(screen.getByLabelText('Points needed')).toHaveValue(30);
+    expect(screen.getByRole('radio', { name: 'Together' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Ben' })).toBeChecked();
+    await user.clear(reward);
+    await user.type(reward, 'Pizza party');
+    await user.clear(screen.getByLabelText('Points needed'));
+    await user.type(screen.getByLabelText('Points needed'), '10');
+    await user.click(screen.getByRole('checkbox', { name: 'Ben' }));
+    await user.type(screen.getByLabelText('Minimum points from Me (optional)'), '2');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    const pizza = await findGoal('Shared goals', 'Pizza party');
+    expect(router.state.location.pathname).toBe('/rewards');
+    expect(pizza).toHaveTextContent('3 / 10 points');
+    expect(
+      within(pizza).getByRole('list', { name: /Points from each person/ }),
+    ).not.toHaveTextContent('Ben');
+
+    await user.click(screen.getByRole('link', { name: 'Edit goal: Pizza party' }));
+    expect(await screen.findByLabelText('Minimum points from Me (optional)')).toHaveValue(2);
+    expect(screen.getByRole('checkbox', { name: 'Ben' })).not.toBeChecked();
+  });
+
+  it('turns a shared goal into a personal one for another member', async () => {
+    const anna = logInAsFamilyMember();
+    addBen();
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'Football', targetPoints: 5, isShared: true });
+    const user = userEvent.setup();
+    renderAppAt('/rewards');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit goal: Football' }));
+    await user.click(await screen.findByRole('radio', { name: 'One person' }));
+    await user.selectOptions(screen.getByLabelText('Whose goal'), 'Ben');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await findGoal("Family members' goals", 'Football')).toHaveTextContent("Ben's goal");
+    await user.click(screen.getByRole('link', { name: 'Edit goal: Football' }));
+    expect(await screen.findByRole('radio', { name: 'One person' })).toBeChecked();
+    expect(screen.getByLabelText('Whose goal')).toHaveDisplayValue('Ben');
+  });
+
+  it('says so when the changes cannot be saved', async () => {
+    const anna = logInAsFamilyMember();
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'Pizza night', targetPoints: 5, isShared: true });
+    const user = userEvent.setup();
+    renderAppAt('/rewards/goal:0/edit');
+
+    await user.type(await screen.findByLabelText('Reward'), '!');
+    fakeTasksBackend.failRequests();
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't save the goal.");
+  });
+
+  it("says so when the goal can't be changed any more, e.g. once claimed", async () => {
+    const anna = logInAsFamilyMember();
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'Pizza night', targetPoints: 5, isShared: true });
+    fakeGoalsBackend.claimAs('goal:0');
+    renderAppAt('/rewards/goal:0/edit');
+
+    expect(await screen.findByText(/This goal can't be changed/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Reward')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to rewards' })).toHaveAttribute(
+      'href',
+      '/rewards',
+    );
+  });
+
+  it("aren't changed by a child, even from the edit address", async () => {
+    const anna = fakeAuthBackend.addProfile('anna@example.com', 'Anna');
+    fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
+    const ben = logInAsFamilyMember('ben@example.com', 'Ben');
+    fakeHouseholdBackend.setChild(ben.id, true);
+    fakeGoalsBackend.addGoalAs(ben.id, { title: 'Football', targetPoints: 2, isShared: false });
+    const { unmount } = renderAppAt('/rewards');
+
+    await findGoal('Your goals', 'Football');
+    expect(screen.queryByRole('link', { name: /Edit goal/ })).not.toBeInTheDocument();
+    unmount();
+
+    renderAppAt('/rewards/goal:0/edit');
+    expect(await screen.findByText(/Only adults set goals/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Reward')).not.toBeInTheDocument();
+  });
+});
