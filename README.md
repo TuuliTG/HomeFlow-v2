@@ -22,7 +22,7 @@ The Rewards screen holds shared goals (for the members an adult chooses, each op
 personal goals that points from shared tasks count towards; a reached goal's reward is claimed and kept as history ([ADR 0007](docs/adr/0007-goals-and-rewards.md)).
 The app speaks English and Finnish: the browser's language by default, changeable on the Me screen
 ([ADR 0002](docs/adr/0002-stack-and-architecture.md)).
-Work in progress is tracked in [plan.md](plan.md).
+Planned work and follow-ups are tracked as [GitHub issues](https://github.com/TuuliTG/HomeFlow-v2/issues).
 
 ## Tech stack
 
