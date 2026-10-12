@@ -120,6 +120,26 @@ describe('goals api', () => {
     });
   });
 
+  it('changes a goal, replacing who takes part', async () => {
+    client.rpc.mockResolvedValue({ data: null, error: null });
+
+    await api.updateGoal('g1', {
+      title: 'Pizza party',
+      targetPoints: 10,
+      scope: 'shared',
+      ownerId: null,
+      participants: [{ userId: 'u1', minPoints: 2 }],
+    });
+
+    expect(client.rpc).toHaveBeenCalledWith('update_goal', {
+      goal_id: 'g1',
+      title: 'Pizza party',
+      target_points: 10,
+      owner_id: null,
+      participants: [{ user_id: 'u1', min_points: 2 }],
+    });
+  });
+
   it('deletes a goal and claims a reward', async () => {
     query.eq.mockResolvedValue({ error: null });
     client.rpc.mockResolvedValue({ data: null, error: null });
@@ -148,5 +168,14 @@ describe('goals api', () => {
       }),
     ).rejects.toBe(failure);
     await expect(api.deleteGoal('g1')).rejects.toBe(failure);
+    await expect(
+      api.updateGoal('g1', {
+        title: 'Holiday',
+        targetPoints: 5,
+        scope: 'personal',
+        ownerId: 'u1',
+        participants: [],
+      }),
+    ).rejects.toBe(failure);
   });
 });
