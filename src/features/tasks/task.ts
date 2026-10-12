@@ -23,6 +23,12 @@ export const MIN_POINTS = 1;
 export const MAX_POINTS = 10;
 export const DEFAULT_POINTS = 3;
 
+/** How many pictures a task can show; `set_task_images()` enforces it. */
+export const MAX_TASK_IMAGES = 3;
+
+/** How long the address a task picture is shown from works, in seconds. */
+export const IMAGE_URL_LIFETIME_SECONDS = 60 * 60;
+
 /** How many recently done tasks the board shows with "Show completed". */
 export const HOUSEHOLD_COMPLETED_LIMIT = 30;
 
@@ -97,6 +103,8 @@ export interface Task extends NewTask {
   pickedUpBy: string | null;
   /** Their display name, if they have chosen one. */
   pickerName: string | null;
+  /** Its pictures in order, by their file names in the task-images bucket (`task_images`). */
+  images: string[];
 }
 
 /**

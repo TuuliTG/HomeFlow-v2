@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { canChange, type Task } from '@/features/tasks/task';
 import { TaskForm } from '@/features/tasks/TaskForm';
+import { isImagesNotSavedState } from '@/features/tasks/taskImages';
 import { useDeleteTask, useMembership, useTasks, useUpdateTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -28,6 +29,7 @@ export function EditTaskPage() {
         title={t.taskForm.edit.title}
         description={t.taskForm.edit.description}
       />
+      <ImagesNotSavedNotice />
       {task && !membership.isPending ? (
         <EditTask task={task} userId={user.id} isChild={isChild} />
       ) : tasks.isPending || membership.isPending ? (
@@ -44,8 +46,20 @@ export function EditTaskPage() {
   );
 }
 
+/** After a new task was added without its pictures (`imagesNotSavedState`), asks to add them again. */
+function ImagesNotSavedNotice() {
+  const t = useMessages().taskForm.edit;
+  if (!isImagesNotSavedState(useLocation().state)) return null;
+  return (
+    <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+      {t.imagesNotSaved}
+    </p>
+  );
+}
+
 function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChild: boolean }) {
   const updateTask = useUpdateTask(userId);
+  const householdId = useMembership(userId).data?.householdId ?? '';
   const navigate = useNavigate();
   const t = useMessages();
 
@@ -53,11 +67,19 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
     <div className="flex flex-col gap-8">
       <TaskForm
         initial={task}
+        initialImages={task.images}
         isChild={isChild}
+        currentUserId={userId}
         submitLabel={t.taskForm.edit.submit}
         isSaving={updateTask.isPending}
-        onSave={async (changed) => {
-          await updateTask.mutateAsync({ taskId: task.id, task: changed });
+        onSave={async (changed, images) => {
+          await updateTask.mutateAsync({
+            taskId: task.id,
+            task: changed,
+            images,
+            householdId,
+            before: task.images,
+          });
           await navigate(paths.taskList(changed.isPrivate));
         }}
       />
@@ -105,7 +127,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
           onClick={() => {
             // Not mutate()'s onSuccess: the refetch after deleting removes the task, which unmounts
             // this form before that callback would run. A failure shows through isError.
-            deleteTask.mutateAsync(task.id).then(
+            deleteTask.mutateAsync(task).then(
               () => navigate(paths.taskList(task.isPrivate)),
               () => undefined,
             );

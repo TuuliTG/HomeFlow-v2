@@ -21,6 +21,7 @@ function task(title: string, dueOn: string | null, pickedUpBy: string | null = n
     creatorName: 'Anna',
     pickedUpBy,
     pickerName: null,
+    images: [],
   };
 }
 

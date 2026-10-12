@@ -20,10 +20,23 @@ import {
   type HelperShare,
   setTaskHelpers,
 } from '@/features/tasks/helpersApi';
+import { fetchImageUrls } from '@/features/tasks/imagesApi';
 import { fetchMembership } from '@/features/tasks/membershipApi';
 import { awardTaskPoints, fetchTasksWaitingForPoints } from '@/features/tasks/pointsApi';
 import { clearTaskReminder, fetchReminders, setTaskReminder } from '@/features/tasks/remindersApi';
-import { type NewTask, titleKey } from '@/features/tasks/task';
+import {
+  IMAGE_URL_LIFETIME_SECONDS,
+  type NewTask,
+  type Task,
+  titleKey,
+} from '@/features/tasks/task';
+import {
+  deleteImageFilesOf,
+  type DraftImage,
+  ImagesNotSavedError,
+  replaceTaskImages,
+  uploadNewImages,
+} from '@/features/tasks/taskImages';
 import { today } from '@/lib/dates';
 
 export const tasksKey = (userId: string) => ['tasks', userId] as const;
@@ -106,12 +119,32 @@ export function useSetFavouriteTask(userId: string) {
   });
 }
 
+/** What the task form saves: the task's details and its pictures, uploaded to the household's folder. */
+interface TaskWithImages {
+  task: NewTask;
+  images: DraftImage[];
+  householdId: string;
+}
+
+/**
+ * Adds a task with its pictures and returns its id. Uploads the pictures first, so a failed upload adds
+ * nothing; if the task is added but its pictures can't be attached, rejects with `ImagesNotSavedError`.
+ */
 export function useAddTask(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: addTask,
+    mutationFn: async ({ task, images, householdId }: TaskWithImages) => {
+      const uploaded = await uploadNewImages(householdId, images);
+      const taskId = await addTask(task);
+      try {
+        await replaceTaskImages(taskId, [], uploaded);
+      } catch {
+        throw new ImagesNotSavedError(taskId);
+      }
+      return taskId;
+    },
     // Stay pending until the list is refreshed, so the board shows the new task straight away.
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
 }
 
@@ -158,19 +191,48 @@ export function usePutBackTask(userId: string) {
   });
 }
 
+/** Saves an open task's details and pictures; `before` is the pictures it had. */
 export function useUpdateTask(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ taskId, task }: { taskId: string; task: NewTask }) => updateTask(taskId, task),
+    mutationFn: async ({
+      taskId,
+      task,
+      images,
+      householdId,
+      before,
+    }: TaskWithImages & { taskId: string; before: string[] }) => {
+      const uploaded = await uploadNewImages(householdId, images);
+      await updateTask(taskId, task);
+      await replaceTaskImages(taskId, before, uploaded);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+  });
+}
+
+/** Deletes an open task, then the files of its pictures that no other task shows. */
+export function useDeleteTask(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, images }: Pick<Task, 'id' | 'images'>) => {
+      await deleteTask(id);
+      await deleteImageFilesOf(images);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
 }
 
-export function useDeleteTask(userId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteTask,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+/** Signed URLs last an hour; fetch new ones well before they stop working. */
+const IMAGE_URLS_STALE_MS = (IMAGE_URL_LIFETIME_SECONDS * 1000) / 2;
+
+/** Addresses to show the task pictures from, by file name. Loaded only when there are pictures. */
+export function useTaskImageUrls(userId: string, paths: string[]) {
+  return useQuery({
+    queryKey: ['task-image-urls', userId, ...paths],
+    queryFn: () => fetchImageUrls(paths),
+    enabled: paths.length > 0,
+    staleTime: IMAGE_URLS_STALE_MS,
+    gcTime: IMAGE_URLS_STALE_MS,
   });
 }
 

@@ -25,6 +25,7 @@ const taskRowsSchema = z.array(
     picked_up_by: z.string().nullable(),
     is_private: z.boolean(),
     for_children: z.boolean(),
+    task_images: z.array(z.object({ path: z.string(), position: z.number() })),
   }),
 );
 const helperRowsSchema = z.array(z.object({ user_id: z.string(), points: z.number() }));
@@ -61,7 +62,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, task_images(path, position)',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -82,9 +83,11 @@ export async function fetchTasks(): Promise<Task[]> {
       picked_up_by,
       is_private,
       for_children,
+      task_images,
       ...task
     }) => ({
       ...task,
+      images: task_images.toSorted((a, b) => a.position - b.position).map((image) => image.path),
       isPrivate: is_private,
       forChildren: for_children,
       repeatEveryDays: repeat_every_days,
@@ -208,15 +211,18 @@ export async function fetchTaskSuggestions(): Promise<TaskSuggestion[]> {
     }));
 }
 
-/** Adds a task to the user's household; the database fills in the household and the creator. */
+/**
+ * Adds a task to the user's household and returns its id; the database fills in the household and the
+ * creator.
+ */
 export async function addTask({
   repeatEveryDays,
   dueOn,
   isPrivate,
   forChildren,
   ...task
-}: NewTask): Promise<void> {
-  const { error } = await getSupabaseClient()
+}: NewTask): Promise<string> {
+  const { data, error } = await getSupabaseClient()
     .from('tasks')
     .insert({
       ...task,
@@ -224,8 +230,11 @@ export async function addTask({
       due_on: dueOn,
       is_private: isPrivate,
       for_children: forChildren,
-    });
+    })
+    .select('id')
+    .single();
   if (error) throw error;
+  return z.object({ id: z.string() }).parse(data).id;
 }
 
 /**

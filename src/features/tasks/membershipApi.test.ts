@@ -16,32 +16,35 @@ const api = await vi.importActual<typeof membershipApi>('@/features/tasks/member
 const { client, query } = supabase;
 
 describe('membership api', () => {
-  it('reads whether the user is a child and whether they may add tasks', async () => {
+  it("reads the user's household, whether they are a child and whether they may add tasks", async () => {
     query.maybeSingle.mockResolvedValueOnce({
-      data: { is_child: true, can_add_tasks: false },
+      data: { household_id: 'h1', is_child: true, can_add_tasks: false },
       error: null,
     });
     await expect(api.fetchMembership('u1')).resolves.toEqual({
+      householdId: 'h1',
       isChild: true,
       canAddTasks: false,
     });
     expect(client.from).toHaveBeenCalledWith('household_members');
-    expect(query.select).toHaveBeenCalledWith('is_child, can_add_tasks');
+    expect(query.select).toHaveBeenCalledWith('household_id, is_child, can_add_tasks');
     expect(query.eq).toHaveBeenCalledWith('user_id', 'u1');
   });
 
   it('lets adults add tasks, and counts someone without a household as an adult', async () => {
     query.maybeSingle.mockResolvedValueOnce({
-      data: { is_child: false, can_add_tasks: false },
+      data: { household_id: 'h1', is_child: false, can_add_tasks: false },
       error: null,
     });
     await expect(api.fetchMembership('u1')).resolves.toEqual({
+      householdId: 'h1',
       isChild: false,
       canAddTasks: true,
     });
 
     query.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
     await expect(api.fetchMembership('u1')).resolves.toEqual({
+      householdId: null,
       isChild: false,
       canAddTasks: true,
     });

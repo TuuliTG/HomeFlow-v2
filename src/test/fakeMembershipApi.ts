@@ -9,6 +9,7 @@ import { requestsFailing } from '@/test/fakeTasksBackend';
 export const fetchMembership: typeof membershipApi.fetchMembership = (userId) => {
   if (requestsFailing()) return Promise.reject(new Error('Network error'));
   return Promise.resolve({
+    householdId: fakeHouseholdBackend.householdIdOf(userId),
     isChild: fakeHouseholdBackend.isChild(userId),
     canAddTasks: fakeHouseholdBackend.canAddTasks(userId),
   });

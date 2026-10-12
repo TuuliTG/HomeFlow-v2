@@ -19,6 +19,8 @@ export interface StoredTask extends NewTask {
   completed: { by: string; at: string } | null;
   /** Who helped whoever marked it done, and their shares of its points (`task_helpers`). */
   helpers: { userId: string; points: number }[];
+  /** Its pictures' file names, in order (`task_images`). */
+  images: string[];
 }
 
 /** One member's points from a done task, like a row of `private.task_credits`. */
@@ -48,7 +50,7 @@ export const listeners = new Set<Parameters<typeof liveApi.subscribeToTaskChange
  * Whether `userId` can see the task, like `private.can_see_task()`: in their household, shared or their own, and
  * for children if they are a child.
  */
-function canSee(userId: string, task: StoredTask): boolean {
+export function canSee(userId: string, task: StoredTask): boolean {
   return (
     task.householdId === fakeHouseholdBackend.householdIdOf(userId) &&
     (!task.isPrivate || task.createdBy === userId) &&
@@ -158,10 +160,11 @@ export const fakeTasksBackend = {
     completions = 0;
     listeners.clear();
   },
-  /** Stores a task as if `userId` had added it to their household, and delivers it live. */
-  addTaskAs(userId: string, task: TaskDetails) {
+  /** Stores a task as if `userId` had added it to their household, delivers it live and returns its id. */
+  addTaskAs(userId: string, task: TaskDetails): string {
     const householdId = fakeHouseholdBackend.householdIdOf(userId);
     if (!householdId) throw new Error(`${userId} is not in a household`);
+    const id = `task:${String(tasks.length)}`;
     store(
       {
         repeatEveryDays: null,
@@ -170,7 +173,7 @@ export const fakeTasksBackend = {
         isPrivate: false,
         forChildren: false,
         ...task,
-        id: `task:${String(tasks.length)}`,
+        id,
         householdId,
         createdBy: userId,
         pickedUpBy: null,
@@ -178,9 +181,11 @@ export const fakeTasksBackend = {
         createdAt: new Date().toISOString(),
         completed: null,
         helpers: [],
+        images: [],
       },
       false,
     );
+    return id;
   },
   /** How many tasks are stored, so the next one added gets the id `task:<count>`. */
   taskCount: () => tasks.length,
@@ -215,6 +220,8 @@ export const fakeTasksBackend = {
         createdAt: new Date().toISOString(),
         completed: null,
         helpers: [],
+        // Like complete_task(): the next occurrence shows the same pictures.
+        images: [...task.images],
       },
       true,
     );

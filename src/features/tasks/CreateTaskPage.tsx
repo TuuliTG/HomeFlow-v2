@@ -4,6 +4,7 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { findSuggestion, suggestionAsTask } from '@/features/tasks/suggestions';
+import { ImagesNotSavedError, imagesNotSavedState } from '@/features/tasks/taskImages';
 import { TaskForm } from '@/features/tasks/TaskForm';
 import {
   useAddTask,
@@ -34,13 +35,23 @@ export function CreateTaskPage() {
           {t.taskForm.create.askAnAdult}
         </p>
       ) : (
-        <NewTaskForm userId={user.id} isChild={membership.data?.isChild ?? false} />
+        <NewTaskForm
+          userId={user.id}
+          isChild={membership.data?.isChild ?? false}
+          householdId={membership.data?.householdId ?? null}
+        />
       )}
     </>
   );
 }
 
-function NewTaskForm({ userId, isChild }: { userId: string; isChild: boolean }) {
+interface NewTaskFormProps {
+  userId: string;
+  isChild: boolean;
+  householdId: string | null;
+}
+
+function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
   const addTask = useAddTask(userId);
   const suggestions = useTaskSuggestions(userId);
   const favourites = useFavouriteTasks(userId);
@@ -66,10 +77,18 @@ function NewTaskForm({ userId, isChild }: { userId: string; isChild: boolean }) 
         },
       }}
       isChild={isChild}
+      currentUserId={userId}
       submitLabel={t.taskForm.create.submit}
       isSaving={addTask.isPending}
-      onSave={async (task) => {
-        await addTask.mutateAsync(task);
+      onSave={async (task, images) => {
+        try {
+          await addTask.mutateAsync({ task, images, householdId: householdId ?? '' });
+        } catch (error) {
+          if (!(error instanceof ImagesNotSavedError)) throw error;
+          // The task was added: adding its pictures again on the edit page doesn't add it twice.
+          await navigate(paths.editTask(error.taskId), { state: imagesNotSavedState });
+          return;
+        }
         await navigate(paths.taskList(task.isPrivate));
       }}
     />

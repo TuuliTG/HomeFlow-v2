@@ -12,6 +12,7 @@ const supabase = vi.hoisted(() => {
     in: vi.fn(),
     insert: vi.fn(),
     not: vi.fn(),
+    single: vi.fn(),
   };
   return {
     query,
@@ -51,6 +52,7 @@ const row = {
   picked_up_by: null,
   is_private: false,
   for_children: false,
+  task_images: [],
 };
 
 /** The tasks query's result: it is ordered twice (due date, then newest), then awaited. */
@@ -286,6 +288,29 @@ describe('tasks api', () => {
     expect(task).toMatchObject({ forChildren: true });
   });
 
+  it("reads a task's pictures in order", async () => {
+    respondWithTasks({
+      data: [
+        {
+          ...row,
+          task_images: [
+            { path: 'h1/b.jpg', position: 1 },
+            { path: 'h1/a.jpg', position: 0 },
+          ],
+        },
+      ],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const [task] = await api.fetchTasks();
+
+    expect(query.select).toHaveBeenCalledWith(
+      expect.stringContaining('task_images(path, position)'),
+    );
+    expect(task?.images).toEqual(['h1/a.jpg', 'h1/b.jpg']);
+  });
+
   it('skips the name lookup when there are no tasks', async () => {
     respondWithTasks({ data: [], error: null });
 
@@ -308,10 +333,11 @@ describe('tasks api', () => {
     await expect(api.fetchTasks()).rejects.toBe(failure);
   });
 
-  it('adds a task, leaving household and creator to the database', async () => {
-    query.insert.mockResolvedValue({ error: null });
+  it('adds a task, leaving household and creator to the database, and returns its id', async () => {
+    query.insert.mockReturnValue(query);
+    query.single.mockResolvedValue({ data: { id: 't9' }, error: null });
 
-    await api.addTask({
+    const id = await api.addTask({
       ...newTask,
       repeatEveryDays: 7,
       dueOn: '2026-10-10',
@@ -330,10 +356,13 @@ describe('tasks api', () => {
       is_private: true,
       for_children: true,
     });
+    expect(query.select).toHaveBeenCalledWith('id');
+    expect(id).toBe('t9');
   });
 
   it('passes errors on when adding fails', async () => {
-    query.insert.mockResolvedValue({ error: failure });
+    query.insert.mockReturnValue(query);
+    query.single.mockResolvedValue({ data: null, error: failure });
 
     await expect(api.addTask(newTask)).rejects.toBe(failure);
   });

@@ -47,6 +47,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           forChildren,
           createdBy,
           pickedUpBy,
+          images,
         }) => ({
           id,
           title,
@@ -61,6 +62,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           creatorName: fakeAuthBackend.displayNameOf(createdBy),
           pickedUpBy,
           pickerName: pickedUpBy ? fakeAuthBackend.displayNameOf(pickedUpBy) : null,
+          images: [...images],
         }),
       ),
   );
@@ -123,7 +125,7 @@ export const addTask: typeof tasksApi.addTask = (task) =>
     ) {
       throw new Error('A child adds tasks only when allowed, without points');
     }
-    fakeTasksBackend.addTaskAs(userId, task);
+    return fakeTasksBackend.addTaskAs(userId, task);
   });
 
 export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) =>
@@ -171,7 +173,7 @@ export const fetchTotalPoints: typeof tasksApi.fetchTotalPoints = () => {
 };
 
 /** An open task `userId` may edit or delete, like `private.can_change_task()`: a child's own only. */
-function changeableTaskOf(userId: string, taskId: string): StoredTask {
+export function changeableTaskOf(userId: string, taskId: string): StoredTask {
   const task = openTaskOf(userId, taskId);
   if (fakeHouseholdBackend.isChild(userId) && task.createdBy !== userId) {
     throw new Error('A child changes only tasks they added');
@@ -180,12 +182,10 @@ function changeableTaskOf(userId: string, taskId: string): StoredTask {
 }
 
 /** Runs `change` as the logged-in user; rejects, like the database, if it throws. */
-export function asCurrentUser(change: (userId: string) => void): Promise<void> {
+export function asCurrentUser<T>(change: (userId: string) => T): Promise<T> {
   const user = fakeAuthBackend.currentUser();
   if (requestsFailing() || !user) return Promise.reject(new Error('Network error'));
-  return Promise.resolve().then(() => {
-    change(user.id);
-  });
+  return Promise.resolve().then(() => change(user.id));
 }
 
 export const pickUpTask: typeof tasksApi.pickUpTask = (taskId) =>
