@@ -9,7 +9,7 @@ import { creditsOf, requestsFailing, tasks } from '@/test/fakeTasksBackend';
  * `household_goals()`, it counts the points of shared tasks in `fakeTasksBackend` done since a goal was
  * set, helpers' shares included, and decides whether a goal is reached like `goal_is_reached()`. Like
  * its policies, members see all their household's goals and claim the shared goals they take part in
- * and their own, and only adults add and delete goals.
+ * and their own, and only adults add, change and delete goals.
  */
 interface StoredGoal {
   id: string;
@@ -136,6 +136,29 @@ export const addGoal: typeof goalsApi.addGoal = ({ title, targetPoints, ownerId,
     });
     const added = goals.at(-1);
     if (added && ownerId !== null) added.ownerId = ownerId;
+  });
+
+/** Like `update_goal()`: an adult, an open goal in their household, for members of it. */
+export const updateGoal: typeof goalsApi.updateGoal = (
+  goalId,
+  { title, targetPoints, ownerId, participants },
+) =>
+  request(() => {
+    const userId = loggedInUserId();
+    const householdId = fakeHouseholdBackend.householdIdOf(userId);
+    if (fakeHouseholdBackend.isChild(userId)) throw new Error('Only adults change goals');
+    const goal = visibleGoals().find(({ id, claimedAt }) => id === goalId && claimedAt === null);
+    if (!goal) throw new Error(`No open goal ${goalId}`);
+    const forMembers = ownerId === null ? participants.map((p) => p.userId) : [ownerId];
+    if (forMembers.some((id) => fakeHouseholdBackend.householdIdOf(id) !== householdId)) {
+      throw new Error('A goal is for members of the household');
+    }
+    Object.assign(goal, {
+      title,
+      targetPoints,
+      ownerId,
+      participants: ownerId === null ? participants : [],
+    });
   });
 
 /** Like the delete policy: an adult, any open goal in their household. */

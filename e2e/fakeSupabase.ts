@@ -518,8 +518,8 @@ export async function fakeSupabase(page: Page) {
   }
 
   /**
-   * Like household_statistics(): each member's shared tasks done (with points, and how many of those
-   * were meta work) and added since `since`.
+   * Like household_statistics(): whether each member is a child, and their shared tasks done (with
+   * points, and how many of those were meta work) and added since `since`.
    */
   async function householdStatistics(route: Route) {
     const { since } = route.request().postDataJSON() as { since: string | null };
@@ -544,6 +544,7 @@ export async function fakeSupabase(page: Page) {
         return {
           user_id: id,
           display_name: profiles.get(id) ?? null,
+          is_child: children.has(id),
           done: done.length,
           points: done.reduce((total, credit) => total + credit.points, 0),
           created: shared.filter((task) => task.created_by === id && inPeriod(task.created_at))

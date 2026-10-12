@@ -142,12 +142,13 @@ begin
 end;
 $$;
 
--- As before (20261010120000_statistics_by_task_type.sql, security definer since 20261011100000_children.sql), but
--- counting credits: a task someone helped with counts as done for them too, with their share of its points.
+-- As before (20261011210000_statistics_by_member_group.sql), but counting credits: a task someone helped with counts
+-- as done for them too, with their share of its points.
 create or replace function public.household_statistics(since timestamptz)
 returns table (
   user_id uuid,
   display_name text,
+  is_child boolean,
   done integer,
   points integer,
   created integer,
@@ -162,6 +163,7 @@ as $$
   select
     m.user_id,
     p.display_name,
+    m.is_child,
     credits.done,
     coalesce(credits.points, 0),
     (

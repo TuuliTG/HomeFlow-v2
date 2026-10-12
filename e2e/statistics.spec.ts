@@ -47,3 +47,35 @@ test('family member sees points earned, physical and meta work apart, and tasks 
   await expect(page).toHaveURL(/period=all/);
   await expect(page.getByRole('radio', { name: 'All time' })).toBeChecked();
 });
+
+test('family member compares only the adults, or members chosen one by one', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsNewUser(page);
+  await page.getByLabel('Invite code').fill(EXISTING_HOUSEHOLD.inviteCode);
+  await page.getByRole('button', { name: 'Join household' }).click();
+  await page.getByLabel("Child's name").fill('Cleo');
+  await page.getByRole('button', { name: 'Add child' }).click();
+  await expect(page.getByRole('checkbox', { name: 'Cleo is a child' })).toBeChecked();
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Statistics' })
+    .click();
+
+  const created = page.getByRole('region', { name: 'Tasks created' });
+  await expect(created.getByRole('listitem')).toHaveText([
+    'Ben1 task',
+    'You0 tasks',
+    'Cleo0 tasks',
+  ]);
+  await page.getByText('Adults', { exact: true }).click();
+  await expect(created.getByRole('listitem')).toHaveText(['Ben1 task', 'You0 tasks']);
+  await expect(page).toHaveURL(/compare=adults/);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations comparing members').toEqual([]);
+
+  await page.getByRole('checkbox', { name: 'Ben' }).uncheck();
+  await page.getByRole('checkbox', { name: 'Cleo' }).check();
+  await expect(created.getByRole('listitem')).toHaveText(['You0 tasks', 'Cleo0 tasks']);
+  await expect(page.getByRole('radio', { name: 'Adults' })).not.toBeChecked();
+  await page.screenshot({ path: test.info().outputPath('compare.png'), fullPage: true });
+});

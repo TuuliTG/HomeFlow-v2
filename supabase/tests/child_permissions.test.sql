@@ -2,7 +2,7 @@
 -- `npm run db:test` (needs Docker). Anna (adult) and Ben (child) share a household; Carol has her own.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(31);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -204,7 +204,7 @@ select throws_ok(
 );
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 
--- Only adults add and delete goals; Ben claims the personal goal Anna set for him.
+-- Only adults add, change and delete goals; Ben claims the personal goal Anna set for him.
 insert into public.goals (title, target_points, owner_id)
   values ('New football', 4, '22222222-2222-2222-2222-222222222222');
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
@@ -217,6 +217,12 @@ select throws_ok(
   $$ select public.add_shared_goal('Ice cream', 3, '[{"user_id": "22222222-2222-2222-2222-222222222222"}]') $$,
   '42501', null,
   'a child cannot add a shared goal'
+);
+select throws_ok(
+  $$ select public.update_goal((select id from public.goals where title = 'New football'), 'New football', 1,
+       '22222222-2222-2222-2222-222222222222', '[]') $$,
+  '42501', null,
+  'a child cannot change a goal'
 );
 delete from public.goals where title = 'New football';
 select is(

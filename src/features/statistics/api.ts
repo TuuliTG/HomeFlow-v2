@@ -7,6 +7,7 @@ const statisticsRowsSchema = z.array(
   z.object({
     user_id: z.string(),
     display_name: z.string().nullable(),
+    is_child: z.boolean(),
     done: z.number(),
     points: z.number(),
     created: z.number(),
@@ -28,9 +29,10 @@ export async function fetchContributions(since: Date | null): Promise<MemberCont
   if (result.error) throw result.error;
   return statisticsRowsSchema
     .parse(result.data)
-    .map(({ user_id, display_name, done, points, created, meta_done, meta_points }) => ({
+    .map(({ user_id, display_name, is_child, done, points, created, meta_done, meta_points }) => ({
       userId: user_id,
       displayName: display_name,
+      isChild: is_child,
       done,
       points,
       physicalDone: done - meta_done,

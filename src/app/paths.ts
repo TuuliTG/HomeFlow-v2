@@ -12,6 +12,7 @@ export const paths = {
   news: '/news',
   rewards: '/rewards',
   newGoal: '/rewards/new',
+  editGoal: (goalId: string) => `/rewards/${goalId}/edit`,
   statistics: '/statistics',
   login: '/login',
   household: '/household',
