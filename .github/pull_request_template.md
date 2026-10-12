@@ -10,7 +10,7 @@
 
 - [ ] Tests added/updated; `npm run verify` passes
 - [ ] E2E updated if a user flow changed
-- [ ] README updated (setup, scripts, features) — or not needed
+- [ ] README updated (setup, scripts, stack, architecture) — or not needed
 - [ ] AGENTS.md updated (commands, conventions, architecture) — or not needed
 - [ ] ADR for the topic updated for any architectural decision — or not needed
 - [ ] No outdated comments, dead code or unused exports left behind (`npm run knip`)
