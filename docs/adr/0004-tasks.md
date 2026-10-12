@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-11 (helping with a task)
+- **Updated:** 2026-10-12 (pictures on tasks)
 
 ## Context
 
@@ -56,6 +56,19 @@ next one back rather than follow a fixed calendar.
   (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
   the next occurrence it created, unless that one is already done.
+- **Pictures**: whoever may edit a task (`private.can_change_task()`) can attach up to three pictures on the task
+  form, e.g. to show which plants to water; its card shows them as thumbnails that open full size. The app redraws
+  each as a JPEG of at most 1600 px (`shrinkImage`), which also drops metadata such as the photo's location, and
+  uploads it to the private Supabase Storage bucket `task-images` (≤ 5 MB, JPEG/PNG/WebP) as
+  `<household id>/<random>.jpg`, then attaches the files in order with `set_task_images()` (security definer;
+  only files the user uploaded can be added). `task_images` (task, file, position) is readable by whoever can see
+  the task; storage policies let members upload only to their household's folder and see a file they uploaded or
+  one on a task they can see, so a private or adults-only task's pictures stay hidden like the task. The app shows
+  them through signed URLs valid for an hour. A repeating task's next occurrence shows the same files, and done
+  tasks keep theirs as history, so a file is deleted (by the app, through the Storage API, which refuses direct SQL
+  deletes) only when no task shows it any more (`private.is_task_image_in_use()`): after removing a picture or
+  deleting a task. Uploading happens before saving, so a failed upload saves nothing; if a new task's pictures
+  can't be attached, its edit page opens to add them again.
 - **Points**: the Me screen shows the user's total points, summed when read (`own_total_points()`), not stored.
   Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
 - **Helping**: whoever marked a shared task with points done can say, for a week (as long as it is in the News), who
@@ -106,6 +119,8 @@ next one back rather than follow a fixed calendar.
 
 - Each occurrence is its own row, so history, streaks and statistics come from completed rows.
 - Intervals are whole days ("the 1st of every month" isn't possible).
+- Picture files can be left behind (a picked picture never saved, a failed delete); they count against the free
+  storage tier until cleaned up, and pictures of done tasks are kept until their task is deleted.
 
 ## Alternatives considered
 

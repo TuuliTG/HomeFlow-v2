@@ -1,5 +1,5 @@
 /** The longest side of a task picture, in pixels: sharp on a phone, a few hundred kilobytes as a JPEG. */
-export const MAX_IMAGE_SIDE = 1600;
+const MAX_IMAGE_SIDE = 1600;
 
 const JPEG_QUALITY = 0.85;
 
