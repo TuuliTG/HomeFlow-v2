@@ -9,6 +9,7 @@ export const app: Messages['app'] = {
     rewards: 'Palkinnot',
     statistics: 'Tilastot',
   },
+  toasts: 'Ilmoitukset',
   installHint: {
     title: 'Lisää HomeFlow Koti-valikkoon',
     tapShare: 'Napauta',

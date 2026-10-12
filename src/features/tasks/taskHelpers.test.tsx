@@ -1,8 +1,9 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { HELPERS_WINDOW_MS } from '@/features/tasks/task';
+import { WHO_HELPED_PROMPT_DURATION_MS } from '@/features/tasks/WhoHelpedPrompt';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHelpersBackend } from '@/test/fakeHelpersApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
@@ -174,11 +175,93 @@ describe('helping with a task', () => {
     expect(await screen.findByText('Nobody else is in your household yet.')).toBeInTheDocument();
   });
 
+  it('shows a helper the tasks they helped with on their Me page, without the task on their board', async () => {
+    const { anna, ben } = annaDidTheLaundry();
+    fakeHelpersBackend.setHelpersAs(anna.id, 'task:0', [{ userId: ben.id, points: 2 }]);
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Feed the cat',
+      type: 'physical',
+      points: 1,
+      forChildren: true,
+    });
+    fakeTasksBackend.completeTaskAs(anna.id, 'task:1', '2026-10-11');
+    fakeAuthBackend.logInAs('ben@example.com');
+    const { router } = renderAppAt('/me');
+
+    const laundry = await findCompleted('Laundry');
+    expect(laundry).toHaveTextContent('2 points');
+    expect(laundry).toHaveTextContent('You helped Anna');
+    expect(within(laundry).queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
+    expect(within(laundry).queryByRole('link', { name: /Who helped/ })).not.toBeInTheDocument();
+
+    // Ben is a child and Laundry is for adults: it stays off his board.
+    await router.navigate('/?completed=1');
+    expect(await screen.findByText('Feed the cat')).toBeInTheDocument();
+    expect(screen.queryByText('Laundry')).not.toBeInTheDocument();
+  });
+
   it('explains when the task or the household cannot be loaded', async () => {
     annaDidTheLaundry();
     fakeTasksBackend.failRequests();
     renderAppAt('/tasks/task:0/helpers');
 
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the task");
+  });
+});
+
+describe('asking who helped after marking a task done', () => {
+  async function markDone(title: string) {
+    const user = userEvent.setup();
+    const result = renderAppAt('/');
+    await user.click(await screen.findByRole('button', { name: `Mark done: ${title}` }));
+    return { user, ...result };
+  }
+
+  it('asks right away, and links to sharing the points', async () => {
+    const anna = logInAsFamilyMember();
+    addMember('ben@example.com', 'Ben', true);
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Laundry', type: 'physical', points: 5 });
+    const { user, router } = await markDone('Laundry');
+
+    expect(await screen.findByText('Laundry done! Did someone help?')).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Who helped with Laundry?' }));
+
+    expect(router.state.location.pathname).toBe('/tasks/task:0/helpers');
+    expect(await screen.findByRole('checkbox', { name: 'Ben helped' })).toBeInTheDocument();
+    expect(screen.queryByText('Laundry done! Did someone help?')).not.toBeInTheDocument();
+  });
+
+  it('goes away when dismissed, or after a while', async () => {
+    const anna = logInAsFamilyMember();
+    addMember('ben@example.com', 'Ben');
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Laundry', type: 'physical', points: 5 });
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Dishes', type: 'physical', points: 2 });
+    const { user } = await markDone('Laundry');
+
+    await screen.findByText('Laundry done! Did someone help?');
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByText('Laundry done! Did someone help?')).not.toBeInTheDocument();
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      await user.click(screen.getByRole('button', { name: 'Mark done: Dishes' }));
+      await screen.findByText('Dishes done! Did someone help?');
+      act(() => {
+        vi.advanceTimersByTime(WHO_HELPED_PROMPT_DURATION_MS);
+      });
+      expect(screen.queryByText('Dishes done! Did someone help?')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not ask for a private task, or when nobody else is in the household', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Laundry', type: 'physical', points: 5 });
+    await markDone('Laundry');
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Mark done: Laundry' })).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText(/Did someone help/)).not.toBeInTheDocument();
   });
 });

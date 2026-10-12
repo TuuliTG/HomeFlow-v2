@@ -8,6 +8,8 @@ export const app = {
     rewards: 'Rewards',
     statistics: 'Statistics',
   },
+  /** Names the area where messages like "Ben added Book dentist" appear. */
+  toasts: 'Updates',
   installHint: {
     title: 'Add HomeFlow to your Home Screen',
     tapShare: 'Tap',

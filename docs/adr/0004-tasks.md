@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-12 (pictures on tasks)
+- **Updated:** 2026-10-12 (asking who helped, helpers' Me page)
 
 ## Context
 
@@ -75,13 +75,20 @@ next one back rather than follow a fixed calendar.
   Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
 - **Helping**: whoever marked a shared task with points done can say, for a week (as long as it is in the News), who
   helped them and give each helper a share of its points (`task_helpers`, written only by `set_task_helpers()`, which
-  replaces the helpers; "Who helped?" on the Me page's Completed list). Shares are 1–10 and together at most the
+  replaces the helpers). Right after marking such a task done, a prompt ("Laundry done! Did someone help?") links to
+  the form for a while, unless nobody else is in the household (`WhoHelpedPrompt`, found from TanStack Query's
+  mutation state, since the card goes when the board refreshes); "Who helped?" on the Me page's Completed list offers
+  it for the rest of the week. We ask after the tap rather than adding a "Do together" button to every card: a phone's
+  action row is already full, and who helped is only known once the work is done. Shares are 1–10 and together at most the
   task's points, and come out of the doer's points, so a task is worth the same however many helped: adding helpers
   can't inflate totals or skew fairness. Only the doer chooses, since they give away their own points; a helper is
   any other member, also a child helping with an adults-only task (they get the points without seeing the task). The
   form suggests an even split. `private.task_credits` (a view only security definer functions read) credits the doer
   the rest and each helper their share; statistics, goals and `own_total_points()` count it, and News adds up the
-  same from the embedded helpers. Undoing a task removes its helpers; a repeat doesn't copy them.
+  same from the embedded helpers. Undoing a task removes its helpers; a repeat doesn't copy them. A helper's Me page
+  lists the tasks they helped with among those they did ("You helped Anna", with their share), read with
+  `own_helped_tasks()` (security definer): a child sees there the title of an adults-only task they helped with, and
+  only there. The task stays off their board and News, and other children's, to keep a child's view simple.
 - The board (the **Shared tasks** page) shows open shared tasks, soonest due first and tasks without a due date last (newest first within a date).
   It and the Me page's _To do_ group them under headings like an agenda (`groupByDueDate`): Overdue, Today, Tomorrow,
   each of the next five days by date, Later and No due date, leaving out empty groups. Grouping is done in the app

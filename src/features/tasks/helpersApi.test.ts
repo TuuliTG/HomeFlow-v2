@@ -49,4 +49,33 @@ describe('helpers api', () => {
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.setTaskHelpers('t1', [])).rejects.toBe(failure);
   });
+
+  it('reads the tasks the user helped with, with who did them', async () => {
+    const row = {
+      task_id: 't1',
+      title: 'Laundry',
+      type: 'physical',
+      points: 2,
+      completed_at: '2026-10-11T10:00:00Z',
+    };
+    client.rpc.mockResolvedValueOnce({
+      data: [
+        { ...row, completed_by: 'u1' },
+        { ...row, task_id: 't2', completed_by: null },
+      ],
+      error: null,
+    });
+    fetchDisplayNames.mockResolvedValueOnce(new Map([['u1', 'Anna']]));
+
+    const helped = { title: 'Laundry', type: 'physical', points: 2, completedAt: row.completed_at };
+    await expect(api.fetchHelpedTasks()).resolves.toEqual([
+      { ...helped, id: 't1', doerName: 'Anna' },
+      { ...helped, id: 't2', doerName: null },
+    ]);
+    expect(client.rpc).toHaveBeenCalledWith('own_helped_tasks', { max_tasks: 20 });
+    expect(fetchDisplayNames).toHaveBeenCalledWith(['u1']);
+
+    client.rpc.mockResolvedValueOnce({ data: null, error: failure });
+    await expect(api.fetchHelpedTasks()).rejects.toBe(failure);
+  });
 });

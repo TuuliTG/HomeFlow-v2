@@ -261,7 +261,10 @@ test('family member can say who helped with a task and share its points', async 
   await page.getByRole('button', { name: 'Create task' }).click();
   await page.getByRole('button', { name: 'Mark done: Laundry' }).click();
 
-  await page.getByRole('link', { name: 'Me' }).click();
+  // Asked straight away; the Me page offers the same link for a week.
+  await expect(page.getByText('Laundry done! Did someone help?')).toBeVisible();
+  const board = await new AxeBuilder({ page }).analyze();
+  expect(board.violations, 'a11y violations with the prompt').toEqual([]);
   await page.getByRole('link', { name: 'Who helped with Laundry?' }).click();
   await page.getByRole('checkbox', { name: 'Ben helped' }).check();
   await page.getByRole('combobox', { name: 'Points for Ben' }).selectOption('1');
@@ -270,6 +273,7 @@ test('family member can say who helped with a task and share its points', async 
   expect(results.violations, 'a11y violations on the helpers page').toEqual([]);
   await page.getByRole('button', { name: 'Save' }).click();
 
+  await expect(page).toHaveURL('/me');
   const completed = page.getByRole('list', { name: 'Completed tasks' });
   await expect(completed.getByText('Helped by Ben (1 point)')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Points earned' })).toContainText('2');
