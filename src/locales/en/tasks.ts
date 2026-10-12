@@ -120,6 +120,8 @@ export const tasks = {
     undoLabel: (title: string) => `Undo: ${title}`,
     undoFailed:
       "We couldn't undo this. Tasks can be undone for an hour, before their next one is done.",
+    /** Under a task the user helped someone else with. */
+    youHelped: (name: string) => `You helped ${name}`,
   },
   /** Saying who helped with a task the user did, and sharing its points with them. */
   helpers: {
@@ -138,6 +140,8 @@ export const tasks = {
     loadFailed:
       "We couldn't load the task and your household. Check your connection and reload the page.",
     saveFailed: "We couldn't save who helped. Try again.",
+    /** The prompt that appears after marking a task done. */
+    askAfterDone: (title: string) => `${title} done! Did someone help?`,
   },
   activity: {
     added: (name: string, title: string) => `${name} added ${title}`,

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   addTask,
@@ -15,11 +15,6 @@ import {
   updateTask,
 } from '@/features/tasks/api';
 import { fetchFavouriteTasks, setFavouriteTask } from '@/features/tasks/favouritesApi';
-import {
-  fetchHouseholdMembers,
-  type HelperShare,
-  setTaskHelpers,
-} from '@/features/tasks/helpersApi';
 import { fetchImageUrls } from '@/features/tasks/imagesApi';
 import { fetchMembership } from '@/features/tasks/membershipApi';
 import { awardTaskPoints, fetchTasksWaitingForPoints } from '@/features/tasks/pointsApi';
@@ -148,13 +143,36 @@ export function useAddTask(userId: string) {
   });
 }
 
+/** Marks tasks done; `useLastDoneTask()` finds the latest by it. */
+const completeTaskKey = ['complete-task'] as const;
+
+/** What marking a task done remembers about it, to ask who helped afterwards. */
+export type DoneTask = Pick<Task, 'id' | 'title' | 'points' | 'isPrivate'>;
+
 /** Marks a task done today; a repeating task's next occurrence then appears on the board. */
 export function useCompleteTask(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (taskId: string) => completeTask(taskId, today()),
+    mutationKey: completeTaskKey,
+    mutationFn: (task: DoneTask) => completeTask(task.id, today()),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
+}
+
+/**
+ * The task the user marked done most recently while the app is open, and when (`at`, to tell two times
+ * apart). It outlives the task card, which goes once the board refreshes.
+ */
+export function useLastDoneTask(): { task: DoneTask; at: number } | undefined {
+  const done = useMutationState({
+    filters: { mutationKey: completeTaskKey, status: 'success' },
+    // The key is only used by useCompleteTask(), whose variables are a DoneTask.
+    select: (mutation) => ({
+      task: mutation.state.variables as DoneTask,
+      at: mutation.state.submittedAt,
+    }),
+  });
+  return done.at(-1);
 }
 
 /** The household's recently done tasks. */
@@ -296,24 +314,6 @@ export function useAwardTaskPoints(userId: string) {
   return useMutation({
     mutationFn: ({ taskId, points }: { taskId: string; points: number }) =>
       awardTaskPoints(taskId, points),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
-  });
-}
-
-/** The members of the user's household, who could have helped. Under `tasksKey`, like the board. */
-export function useHouseholdMembers(userId: string) {
-  return useQuery({
-    queryKey: [...tasksKey(userId), 'household-members'],
-    queryFn: fetchHouseholdMembers,
-  });
-}
-
-/** Says who helped with a task; the user's points and completed tasks refresh with `tasksKey`. */
-export function useSetTaskHelpers(userId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ taskId, helpers }: { taskId: string; helpers: HelperShare[] }) =>
-      setTaskHelpers(taskId, helpers),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
 }

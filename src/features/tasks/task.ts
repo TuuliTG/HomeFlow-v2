@@ -163,6 +163,24 @@ export function canChooseHelpers(task: CompletedTask, now: number): boolean {
   return task.points !== null && now - new Date(task.completedAt).getTime() < HELPERS_WINDOW_MS;
 }
 
+/** A task the user helped someone else with (`own_helped_tasks()`), maybe one they can't otherwise see. */
+export interface HelpedTask {
+  id: string;
+  title: string;
+  type: TaskType;
+  /** The user's share of its points. */
+  points: number;
+  /** When it was marked done (ISO timestamp). */
+  completedAt: string;
+  /** The display name of whoever marked it done, if they have chosen one. */
+  doerName: string | null;
+}
+
+/** Whether to ask who helped right after marking the task done: only a shared task with points can be shared. */
+export function canAskWhoHelped(task: Pick<Task, 'points' | 'isPrivate'>): boolean {
+  return task.points !== null && !task.isPrivate;
+}
+
 /** A task someone in the household has marked done. */
 export interface HouseholdCompletedTask extends CompletedTask {
   completedBy: string | null;

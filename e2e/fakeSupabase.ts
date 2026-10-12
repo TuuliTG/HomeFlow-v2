@@ -441,6 +441,21 @@ export async function fakeSupabase(page: Page) {
     return reply(route, 200, total);
   }
 
+  /** Like own_helped_tasks(): the done tasks in the user's household they helped with, newest first. */
+  async function ownHelpedTasks(route: Route) {
+    const helped = tasks.flatMap((task) => {
+      const share = helpers.get(task.id)?.find((helper) => helper.user_id === user.id);
+      if (!share || task.completed_at === null || task.household_id !== ownHousehold?.id) return [];
+      const { id, title, type, completed_at, completed_by } = task;
+      return [{ task_id: id, title, type, points: share.points, completed_at, completed_by }];
+    });
+    return reply(
+      route,
+      200,
+      helped.sort((a, b) => b.completed_at.localeCompare(a.completed_at)),
+    );
+  }
+
   /** Like pick_up_task() and put_back_task(): `pickedUpBy` is who has the task afterwards. */
   function setPickedUp(pickedUpBy: string | null) {
     return async (route: Route) => {
@@ -854,6 +869,7 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/complete_task': completeTask,
     '/rest/v1/rpc/set_task_helpers': setTaskHelpers,
     '/rest/v1/rpc/own_total_points': ownTotalPoints,
+    '/rest/v1/rpc/own_helped_tasks': ownHelpedTasks,
     '/rest/v1/rpc/pick_up_task': setPickedUp(user.id),
     '/rest/v1/rpc/put_back_task': setPickedUp(null),
     '/rest/v1/rpc/update_task': updateTask,

@@ -10,11 +10,13 @@ import {
   canChooseHelpers,
   type CompletedTask,
   doersShare,
+  type HelpedTask,
   isToDoBy,
   UNDO_WINDOW_MS,
 } from '@/features/tasks/task';
 import { TaskHelpersLine } from '@/features/tasks/TaskHelpersLine';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
+import { useHelpedTasks } from '@/features/tasks/useHelpers';
 import {
   useCompletedTasks,
   useTasks,
@@ -101,20 +103,33 @@ function ToDoList() {
   return <DueTaskGroups tasks={mine} currentUserId={user.id} headingLevel={3} />;
 }
 
+/** A task the user did, or helped someone else with. */
+type CompletedEntry = { kind: 'done'; task: CompletedTask } | { kind: 'helped'; task: HelpedTask };
+
+function newestFirst(done: CompletedTask[], helped: HelpedTask[]): CompletedEntry[] {
+  return [
+    ...done.map((task) => ({ kind: 'done' as const, task })),
+    ...helped.map((task) => ({ kind: 'helped' as const, task })),
+  ].sort((a, b) => b.task.completedAt.localeCompare(a.task.completedAt));
+}
+
+/** The tasks the user did and those they helped with, so a helper sees their share of the work too. */
 function CompletedList() {
   const user = useLoggedInUser();
   const completed = useCompletedTasks(user.id);
+  const helped = useHelpedTasks(user.id);
   const t = useMessages().tasks.me;
 
-  if (completed.isPending) return <LoadingMessage />;
-  if (completed.isError) {
+  if (completed.isPending || helped.isPending) return <LoadingMessage />;
+  if (completed.isError || helped.isError) {
     return (
       <p role="alert" className="text-sm text-red-700">
         {t.completedLoadFailed}
       </p>
     );
   }
-  if (completed.data.length === 0) {
+  const entries = newestFirst(completed.data, helped.data);
+  if (entries.length === 0) {
     return <p className={emptyClassName}>{t.completedEmpty}</p>;
   }
   return (
@@ -122,10 +137,29 @@ function CompletedList() {
       aria-label={t.completedTasks}
       className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white"
     >
-      {completed.data.map((task) => (
-        <CompletedItem key={task.id} task={task} userId={user.id} />
-      ))}
+      {entries.map((entry) =>
+        entry.kind === 'done' ? (
+          <CompletedItem key={`done:${entry.task.id}`} task={entry.task} userId={user.id} />
+        ) : (
+          <HelpedItem key={`helped:${entry.task.id}`} task={entry.task} />
+        ),
+      )}
     </ul>
+  );
+}
+
+/** A task the user helped with: who did it and the user's share of its points. */
+function HelpedItem({ task }: { task: HelpedTask }) {
+  const { common, tasks } = useMessages();
+  const t = tasks.me;
+  return (
+    <li className="flex min-w-0 flex-col gap-0.5 px-4 py-3 text-sm break-words">
+      <span className="font-medium text-slate-900">{task.title}</span>
+      <span className="text-slate-500">
+        {t.doneOn(common.shortDate(new Date(task.completedAt)))} · {common.points(task.points)}
+      </span>
+      <span className="text-brand-900">{t.youHelped(task.doerName ?? common.someone)}</span>
+    </li>
   );
 }
 

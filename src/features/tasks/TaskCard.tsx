@@ -161,7 +161,7 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
 
   function markDone() {
     setIsConfirming(false);
-    completeTask.mutate(task.id);
+    completeTask.mutate(task);
   }
 
   return (

@@ -61,3 +61,28 @@ export const setTaskHelpers: typeof helpersApi.setTaskHelpers = (taskId, helpers
   asCurrentUser((userId) => {
     fakeHelpersBackend.setHelpersAs(userId, taskId, helpers);
   });
+
+export const fetchHelpedTasks: typeof helpersApi.fetchHelpedTasks = () => {
+  const user = fakeAuthBackend.currentUser();
+  if (requestsFailing() || !user) return Promise.reject(new Error('Network error'));
+  const householdId = fakeHouseholdBackend.householdIdOf(user.id);
+  return Promise.resolve(
+    tasks
+      .flatMap((task) => {
+        const share = task.helpers.find((helper) => helper.userId === user.id);
+        if (!share || !task.completed || task.householdId !== householdId) return [];
+        const { id, title, type, completed } = task;
+        return [
+          {
+            id,
+            title,
+            type,
+            points: share.points,
+            completedAt: completed.at,
+            doerName: fakeAuthBackend.displayNameOf(completed.by),
+          },
+        ];
+      })
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
+  );
+};

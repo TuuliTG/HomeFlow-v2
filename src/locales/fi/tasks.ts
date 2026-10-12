@@ -113,6 +113,7 @@ export const tasks: Messages['tasks'] = {
     undoLabel: (title) => `Kumoa: ${title}`,
     undoFailed:
       'Tätä ei voitu kumota. Tehdyksi merkinnän voi kumota tunnin sisällä, jos seuraavaa kertaa ei ole vielä tehty.',
+    youHelped: (name) => `${name} teki, sinä autoit`,
   },
   helpers: {
     eyebrow: 'Tehdyt',
@@ -131,6 +132,7 @@ export const tasks: Messages['tasks'] = {
     loadFailed:
       'Tehtävää ja kotitaloutta ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
     saveFailed: 'Auttajia ei voitu tallentaa. Yritä uudelleen.',
+    askAfterDone: (title) => `${title} tehty! Teittekö yhdessä?`,
   },
   activity: {
     added: (name, title) => `${name} lisäsi tehtävän ${title}`,

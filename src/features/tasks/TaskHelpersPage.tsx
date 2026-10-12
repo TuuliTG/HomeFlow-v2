@@ -8,11 +8,8 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import type { HelperShare, HouseholdMember } from '@/features/tasks/helpersApi';
 import { canChooseHelpers, type CompletedTask } from '@/features/tasks/task';
-import {
-  useCompletedTasks,
-  useHouseholdMembers,
-  useSetTaskHelpers,
-} from '@/features/tasks/useTasks';
+import { useHouseholdMembers, useSetTaskHelpers } from '@/features/tasks/useHelpers';
+import { useCompletedTasks } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
