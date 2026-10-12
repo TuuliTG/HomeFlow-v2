@@ -29,23 +29,24 @@ npm run dev
 
 ## Commands
 
-| Command                   | What it does                                                            |
-| ------------------------- | ----------------------------------------------------------------------- |
-| `npm run dev`             | Start the dev server                                                    |
-| `npm run build`           | Type-check and build for production                                     |
-| `npm run preview`         | Serve the production build locally                                      |
-| `npm run verify`          | Format check, lint, typecheck, dead-code check, tests + coverage, build |
-| `npm run lint`            | Lint (`lint:fix` to auto-fix)                                           |
-| `npm run format`          | Format with Prettier (`format:check` to only check)                     |
-| `npm run typecheck`       | TypeScript type check                                                   |
-| `npm run knip`            | Find unused files, exports and dependencies                             |
-| `npm test`                | Unit/component tests (`test:watch` for watch mode, `test:coverage`)     |
-| `npm run e2e`             | Playwright e2e on mobile + desktop (first run `npm run e2e:install`)    |
-| `npm run db:start`        | Start local Supabase (requires Docker; `db:stop` to stop)               |
-| `npm run db:reset`        | Reset the local database and apply all migrations                       |
-| `npm run db:migration`    | Create a new SQL migration                                              |
-| `npm run db:test`         | Run database (RLS) tests in `supabase/tests` against local Supabase     |
-| `npm run functions:check` | Type-check the Supabase Edge Functions with Deno                        |
+| Command                       | What it does                                                            |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `npm run dev`                 | Start the dev server                                                    |
+| `npm run build`               | Type-check and build for production                                     |
+| `npm run preview`             | Serve the production build locally                                      |
+| `npm run verify`              | Format check, lint, typecheck, dead-code check, tests + coverage, build |
+| `npm run lint`                | Lint (`lint:fix` to auto-fix)                                           |
+| `npm run format`              | Format with Prettier (`format:check` to only check)                     |
+| `npx prettier --write <path>` | Format one file or folder                                               |
+| `npm run typecheck`           | TypeScript type check                                                   |
+| `npm run knip`                | Find unused files, exports and dependencies                             |
+| `npm test`                    | Unit/component tests (`test:watch` for watch mode, `test:coverage`)     |
+| `npm run e2e`                 | Playwright e2e on mobile + desktop (first run `npm run e2e:install`)    |
+| `npm run db:start`            | Start local Supabase (requires Docker; `db:stop` to stop)               |
+| `npm run db:reset`            | Reset the local database and apply all migrations                       |
+| `npm run db:migration`        | Create a new SQL migration                                              |
+| `npm run db:test`             | Run database (RLS) tests in `supabase/tests` against local Supabase     |
+| `npm run functions:check`     | Type-check the Supabase Edge Functions with Deno                        |
 
 The database tests need [Docker](https://docs.docker.com/get-started/get-docker/) running. For just the database,
 like CI does:
