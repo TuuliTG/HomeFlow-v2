@@ -18,7 +18,7 @@ as their PRs merge.
 
 ## Backlog (not in this iteration)
 
-- Points for meta work, a "Fairness this week" bar, and the Statistics screen (shared tasks only, never private ones).
+- Points for meta work and the Statistics screen (shared tasks only, never private ones).
 - Fewer notifications: batch several new tasks into one, per-user preferences.
 - "Last done by …" on cards.
 - Leave a household, delete my account (GDPR), password reset by email (needs custom SMTP).
