@@ -6,7 +6,7 @@ See [docs/product-brief.md](docs/product-brief.md).
 
 **Status:** a family logs in with email and password, creates or joins a household with an invite code and shares
 one task board ([ADR 0003](docs/adr/0003-accounts-and-households.md)). Members pick up tasks (listed on their Me
-screen with what they've completed and their total points); tasks can have a due date, be private, be edited,
+screen with what they've completed and their total points); tasks can have a due date and up to three pictures, be private, be edited,
 deleted, marked done (and undone), repeat a set number of days after they were done and be added again from earlier
 or the family's favourite tasks (starred on the form or any task) (private ones are listed only on the Me screen); the board and the Me screen group
 tasks by when they are due (overdue, today, tomorrow, the next five days by date, later, no due date) and the

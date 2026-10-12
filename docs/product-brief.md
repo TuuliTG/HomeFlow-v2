@@ -23,7 +23,7 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
   (frequency, type physical/meta), bonus points (e.g. "new for you", fairness boost), "last done by …";
   **Pick up task** button; **+** to create a task.
 - **Create / edit task** — reuse a previous task or type a new one; points, type, assignees (adults default, children
-  opt-in); a **private** check mark keeps a task to yourself, without points. Creating a task gets positive
+  opt-in); up to three pictures to clarify details; a **private** check mark keeps a task to yourself, without points. Creating a task gets positive
   feedback and counts towards _tasks created_ (no points).
 - **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
   On a done task, _Who helped?_ gives helpers (a child who helped, an adult who shared it) part of its points.

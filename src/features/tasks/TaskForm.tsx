@@ -12,6 +12,8 @@ import {
   type TaskType,
 } from '@/features/tasks/task';
 import { fieldValues, taskInput } from '@/features/tasks/taskFormValues';
+import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
+import { TaskImagesField } from '@/features/tasks/TaskImagesField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
 import { TaskPointsField } from '@/features/tasks/TaskPointsField';
@@ -34,6 +36,8 @@ function fieldOf(path: PropertyKey | undefined): FieldName {
 interface TaskFormProps {
   /** The task being edited; a new task starts empty and can be made private. */
   initial?: NewTask;
+  /** The pictures of the task being edited, by file name. */
+  initialImages?: string[];
   /** A new task's starting details, e.g. an earlier task's to add it again. */
   prefill?: NewTask | undefined;
   /** Tasks the household has added before, offered to add again; leave out when editing. */
@@ -42,19 +46,22 @@ interface TaskFormProps {
   favourites?: FavouriteTasks;
   /** A child's tasks are always for children, and an adult awards their points, so they aren't asked. */
   isChild: boolean;
+  currentUserId: string;
   submitLabel: string;
   isSaving: boolean;
-  /** Saves the task; a rejection shows "We couldn't save the task." */
-  onSave: (task: NewTask) => Promise<void>;
+  /** Saves the task and its pictures; a rejection shows "We couldn't save the task." */
+  onSave: (task: NewTask, images: DraftImage[]) => Promise<void>;
 }
 
 /** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
 export function TaskForm({
   initial,
+  initialImages = [],
   prefill,
   suggestions = [],
   favourites,
   isChild,
+  currentUserId,
   submitLabel,
   isSaving,
   onSave,
@@ -69,6 +76,8 @@ export function TaskForm({
   const [dueOn, setDueOn] = useState(initialValues.dueOn);
   const [isPrivate, setIsPrivate] = useState(initialValues.isPrivate);
   const [forChildren, setForChildren] = useState(initialValues.forChildren);
+  const [images, setImages] = useState(() => savedImages(initialImages));
+  const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
   const t = useMessages();
   const errorId = useId();
@@ -115,7 +124,7 @@ export function TaskForm({
       fieldRefs[field].current?.focus();
       return;
     }
-    onSave(parsed.data).catch(() => {
+    onSave(parsed.data, images).catch(() => {
       setError({ field: null, message: t.taskForm.errors.saveFailed });
     });
   }
@@ -155,6 +164,16 @@ export function TaskForm({
           className={inputClassName}
         />
       </label>
+
+      <TaskImagesField
+        images={images}
+        onChange={(changed) => {
+          setImages(changed);
+          setError(null);
+        }}
+        onPreparingChange={setIsPreparingImages}
+        currentUserId={currentUserId}
+      />
 
       <TaskTypeField value={type} onChange={setType} />
 
@@ -227,7 +246,7 @@ export function TaskForm({
       <div className="flex gap-3">
         <button
           type="submit"
-          disabled={isSaving}
+          disabled={isSaving || isPreparingImages}
           className="bg-brand-600 hover:bg-brand-900 flex-1 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
         >
           {submitLabel}

@@ -8,6 +8,7 @@ import { today } from '@/lib/dates';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
 import { canChange, isToDoBy, type Task } from '@/features/tasks/task';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
+import { TaskImages } from '@/features/tasks/TaskImages';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
 import { TaskTags } from '@/features/tasks/TaskTags';
 import {
@@ -61,6 +62,7 @@ export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
           <TaskFavouriteStar title={task.title} currentUserId={currentUserId} />
         </div>
       </div>
+      <TaskImages paths={task.images} title={task.title} currentUserId={currentUserId} />
       {isToDoBy(task, currentUserId) && <TaskReminder task={task} currentUserId={currentUserId} />}
       <TaskActions task={task} currentUserId={currentUserId} />
     </li>

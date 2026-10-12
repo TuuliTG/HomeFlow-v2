@@ -5,6 +5,7 @@ import { afterEach, vi } from 'vitest';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeGoalsBackend } from '@/test/fakeGoalsApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
+import { fakeImagesBackend } from '@/test/fakeImagesApi';
 import { fakeNewsBackend } from '@/test/fakeNewsApi';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 
@@ -17,6 +18,7 @@ vi.mock('@/features/statistics/api', () => import('@/test/fakeStatisticsApi'));
 vi.mock('@/features/tasks/api', () => import('@/test/fakeTasksApi'));
 vi.mock('@/features/tasks/favouritesApi', () => import('@/test/fakeFavouritesApi'));
 vi.mock('@/features/tasks/helpersApi', () => import('@/test/fakeHelpersApi'));
+vi.mock('@/features/tasks/imagesApi', () => import('@/test/fakeImagesApi'));
 vi.mock('@/features/tasks/liveApi', () => import('@/test/fakeLiveApi'));
 vi.mock('@/features/tasks/membershipApi', () => import('@/test/fakeMembershipApi'));
 vi.mock('@/features/tasks/pointsApi', () => import('@/test/fakePointsApi'));
@@ -37,6 +39,7 @@ afterEach(() => {
   fakeAuthBackend.reset();
   fakeHouseholdBackend.reset();
   fakeTasksBackend.reset();
+  fakeImagesBackend.reset();
   fakeGoalsBackend.reset();
   fakeNewsBackend.reset();
 });

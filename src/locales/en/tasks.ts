@@ -67,6 +67,11 @@ export const tasks = {
       someone: 'Picked up by someone',
       named: (name: string) => `Picked up by ${name}`,
     },
+    images: (title: string) => `Pictures: ${title}`,
+    /** The link opening a picture full size. */
+    image: (position: number, title: string) =>
+      `Picture ${String(position)} of ${title} (opens in a new tab)`,
+    imagesFailed: "We couldn't load the pictures.",
     edit: 'Edit',
     editLabel: (title: string) => `Edit: ${title}`,
     pickUp: 'Pick up',
