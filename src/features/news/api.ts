@@ -11,6 +11,7 @@ const newsRowsSchema = z.array(
     points: z.number().nullable(),
     completed_at: z.string(),
     completed_by: z.string().nullable(),
+    task_helpers: z.array(z.object({ user_id: z.string(), points: z.number() })),
     task_likes: z.array(z.object({ user_id: z.string() })),
     task_comments: z.array(
       z.object({
@@ -31,6 +32,7 @@ type NewsRow = z.infer<typeof newsRowsSchema>[number];
 function peopleIn(rows: NewsRow[]): string[] {
   const ids = rows.flatMap((row) => [
     row.completed_by,
+    ...row.task_helpers.map((helper) => helper.user_id),
     ...row.task_likes.map((like) => like.user_id),
     ...row.task_comments.map((comment) => comment.author_id),
   ]);
@@ -48,14 +50,14 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
 }
 
 /**
- * The shared tasks done in the user's household since `since`, newest first, with who liked them and
- * their comments, oldest first. Row Level Security limits tasks, likes and comments to the household.
+ * The shared tasks done in the user's household since `since`, newest first, with who helped, who liked
+ * them and their comments, oldest first. Row Level Security limits tasks, likes and comments to the household.
  */
 export async function fetchNews(since: Date): Promise<NewsItem[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, type, points, completed_at, completed_by, task_likes(user_id), task_comments(id, author_id, body, created_at)',
+      'id, title, type, points, completed_at, completed_by, task_helpers(user_id, points), task_likes(user_id), task_comments(id, author_id, body, created_at)',
     )
     .eq('is_private', false)
     .gte('completed_at', since.toISOString())
@@ -75,6 +77,10 @@ export async function fetchNews(since: Date): Promise<NewsItem[]> {
     points: row.points,
     completedAt: row.completed_at,
     doneBy: person(row.completed_by),
+    helpers: row.task_helpers.map((helper) => ({
+      person: person(helper.user_id),
+      points: helper.points,
+    })),
     likedBy: row.task_likes.map((like) => person(like.user_id)),
     comments: row.task_comments.map((comment) => ({
       id: comment.id,

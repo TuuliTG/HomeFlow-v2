@@ -12,6 +12,8 @@ or the family's favourite tasks (starred on the form or any task) (private ones 
 tasks by when they are due (overdue, today, tomorrow, the next five days by date, later, no due date) and the
 board can be filtered to today, this week, no due date or tasks available to pick up; the Shared tasks board updates
 live and members can get push notifications, including reminders they set for their own tasks ([ADR 0004](docs/adr/0004-tasks.md), [ADR 0005](docs/adr/0005-push-notifications.md)).
+Whoever marked a task done can say who helped (a child helping with the laundry, or another adult sharing it) and
+give each helper some of its points, so the task is worth the same in total ([ADR 0004](docs/adr/0004-tasks.md)).
 Adults can mark other members as children on the household page, or add a child without email who signs in on their
 own device with a one-time code; children see and do only the tasks an adult marked "Children can do it", and add
 tasks only if an adult lets them, with points an adult awards ([ADR 0003](docs/adr/0003-accounts-and-households.md)).

@@ -28,6 +28,7 @@ const row = {
   points: 3,
   completed_at: '2026-10-10T08:00:00Z',
   completed_by: 'u2',
+  task_helpers: [{ user_id: 'u3', points: 1 }],
   task_likes: [{ user_id: 'u1' }],
   task_comments: [
     { id: 'c1', author_id: 'u1', body: 'Thanks!', created_at: '2026-10-10T09:00:00Z' },
@@ -49,12 +50,13 @@ describe('news api', () => {
     query.delete.mockReturnValue(query);
   });
 
-  it('reads shared tasks done since the start, with their likes and comments and everyone named', async () => {
+  it('reads shared tasks done since the start, with helpers, likes and comments and everyone named', async () => {
     respondWithNews({ data: [row], error: null });
     query.in.mockResolvedValue({
       data: [
         { id: 'u1', display_name: 'Anna' },
         { id: 'u2', display_name: 'Ben' },
+        { id: 'u3', display_name: 'Carl' },
       ],
       error: null,
     });
@@ -67,6 +69,7 @@ describe('news api', () => {
         points: 3,
         completedAt: '2026-10-10T08:00:00Z',
         doneBy: { userId: 'u2', name: 'Ben' },
+        helpers: [{ person: { userId: 'u3', name: 'Carl' }, points: 1 }],
         likedBy: [{ userId: 'u1', name: 'Anna' }],
         comments: [
           {
@@ -87,7 +90,7 @@ describe('news api', () => {
     expect(client.from).toHaveBeenCalledWith('tasks');
     expect(query.eq).toHaveBeenCalledWith('is_private', false);
     expect(query.gte).toHaveBeenCalledWith('completed_at', '2026-10-04T00:00:00.000Z');
-    expect(query.in).toHaveBeenCalledWith('id', ['u2', 'u1']);
+    expect(query.in).toHaveBeenCalledWith('id', ['u2', 'u3', 'u1']);
   });
 
   it('asks for no names when nothing was done', async () => {

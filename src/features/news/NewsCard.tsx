@@ -26,6 +26,15 @@ export function NewsCard({ item, userId }: { item: NewsItem; userId: string }) {
           </span>{' '}
           · {t.common.time(new Date(item.completedAt))}
         </p>
+        {item.helpers.length > 0 && (
+          <p className="text-slate-500">
+            {t.common.helpedBy(
+              item.helpers.map(({ person, points }) =>
+                t.common.share(nameFor(person, userId, t), points),
+              ),
+            )}
+          </p>
+        )}
       </div>
       <Likes item={item} userId={userId} />
       <CommentThread item={item} userId={userId} />

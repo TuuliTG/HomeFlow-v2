@@ -111,6 +111,24 @@ export const tasks: Messages['tasks'] = {
     undoFailed:
       'Tätä ei voitu kumota. Tehdyksi merkinnän voi kumota tunnin sisällä, jos seuraavaa kertaa ei ole vielä tehty.',
   },
+  helpers: {
+    eyebrow: 'Tehdyt',
+    title: 'Kuka auttoi?',
+    description: (title, points) =>
+      `Anna tehtävässä ${title} auttaneille osa sen pisteistä (${points}). Antamasi pisteet vähennetään omistasi, joten tehtävä on yhä saman arvoinen.`,
+    whoHelped: 'Kuka auttoi?',
+    whoHelpedLabel: (title) => `Kuka auttoi: ${title}?`,
+    helped: (name) => `${name} auttoi`,
+    pointsFor: (name) => `Pisteet: ${name}`,
+    youKeep: (kept) => `Sinulle jää ${kept}.`,
+    tooMany: (points) => `Yhteensä enemmän kuin tehtävän pisteet (${points}).`,
+    noOneElse: 'Kotitaloudessasi ei ole vielä muita.',
+    unavailable:
+      'Auttajat voi valita viikon ajan siitä, kun merkitsit pisteitä antavan yhteisen tehtävän tehdyksi.',
+    loadFailed:
+      'Tehtävää ja kotitaloutta ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
+    saveFailed: 'Auttajia ei voitu tallentaa. Yritä uudelleen.',
+  },
   activity: {
     added: (name, title) => `${name} lisäsi tehtävän ${title}`,
     dismiss: 'Sulje',

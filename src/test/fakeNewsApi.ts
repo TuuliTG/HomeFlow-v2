@@ -76,6 +76,10 @@ export const fetchNews: typeof newsApi.fetchNews = (since) => {
         points: task.points,
         completedAt: task.completed.at,
         doneBy: person(task.completed.by),
+        helpers: task.helpers.map((helper) => ({
+          person: person(helper.userId),
+          points: helper.points,
+        })),
         likedBy: likes.filter((like) => like.taskId === task.id).map((like) => person(like.userId)),
         comments: comments
           .filter((comment) => comment.taskId === task.id)

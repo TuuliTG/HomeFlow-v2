@@ -122,6 +122,22 @@ export async function fakeSupabase(page: Page) {
     },
   ];
 
+  /** Who helped with each done task and their shares (task_helpers), by task id. */
+  const helpers = new Map<string, { user_id: string; points: number }[]>();
+
+  /** A task with who helped, like `task_helpers(user_id, points)` embedded in the select. */
+  function withHelpers(task: TaskRow) {
+    return { ...task, task_helpers: helpers.get(task.id) ?? [] };
+  }
+
+  /** Like private.task_credits: the doer gets what the helpers didn't, each helper their share. */
+  function creditsOf(task: TaskRow): { user_id: string | null; points: number }[] {
+    if (task.completed_at === null || task.is_private) return [];
+    const shares = helpers.get(task.id) ?? [];
+    const helped = shares.reduce((total, share) => total + share.points, 0);
+    return [{ user_id: task.completed_by, points: (task.points ?? 0) - helped }, ...shares];
+  }
+
   function joinAs(household: HouseholdRow) {
     ownHousehold = household;
     members.set(household.id, [...(members.get(household.id) ?? []), user.id]);
@@ -243,7 +259,7 @@ export async function fakeSupabase(page: Page) {
         done
           .sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at)))
           .map((task) => ({
-            ...task,
+            ...withHelpers(task),
             task_likes: likes.filter((like) => like.task_id === task.id),
             task_comments: comments.filter((comment) => comment.task_id === task.id),
           })),
@@ -269,7 +285,9 @@ export async function fakeSupabase(page: Page) {
       return reply(
         route,
         200,
-        done.sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at))),
+        done
+          .sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at)))
+          .map(withHelpers),
       );
     }
     // The Me screen asks for the user's completed tasks (`completed_by=eq.<id>`), newest first.
@@ -279,7 +297,9 @@ export async function fakeSupabase(page: Page) {
       return reply(
         route,
         200,
-        done.sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at))),
+        done
+          .sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at)))
+          .map(withHelpers),
       );
     }
     return reply(
@@ -321,6 +341,35 @@ export async function fakeSupabase(page: Page) {
     };
     tasks.unshift(next);
     return reply(route, 200, next.id);
+  }
+
+  /** Like set_task_helpers(): who helped with a task the user did, sharing at most its points. */
+  async function setTaskHelpers(route: Route) {
+    const { task_id, helpers: shares } = route.request().postDataJSON() as {
+      task_id: string;
+      helpers: { user_id: string; points: number }[];
+    };
+    const task = tasks.find(
+      (candidate) => candidate.id === task_id && candidate.completed_by === user.id,
+    );
+    if (task?.points === undefined || task.points === null) {
+      return reply(route, 400, { code: 'P0002', message: 'No task of yours done this week' });
+    }
+    if (shares.reduce((total, share) => total + share.points, 0) > task.points) {
+      return reply(route, 400, { code: '23514', message: 'More than the task points' });
+    }
+    helpers.set(task_id, shares);
+    return reply(route, 200, null);
+  }
+
+  /** Like own_total_points(): the user's credits in their household. */
+  async function ownTotalPoints(route: Route) {
+    const total = tasks
+      .filter((task) => task.household_id === ownHousehold?.id)
+      .flatMap(creditsOf)
+      .filter((credit) => credit.user_id === user.id)
+      .reduce((sum, credit) => sum + credit.points, 0);
+    return reply(route, 200, total);
   }
 
   /** Like pick_up_task() and put_back_task(): `pickedUpBy` is who has the task afterwards. */
@@ -484,20 +533,24 @@ export async function fakeSupabase(page: Page) {
       route,
       200,
       userIds.map((id) => {
-        const done = shared.filter(
-          (task) => task.completed_by === id && inPeriod(task.completed_at),
+        const done = shared.flatMap((task) =>
+          inPeriod(task.completed_at)
+            ? creditsOf(task)
+                .filter((credit) => credit.user_id === id)
+                .map((credit) => ({ type: task.type, points: credit.points }))
+            : [],
         );
-        const metaDone = done.filter((task) => task.type === 'meta');
+        const metaDone = done.filter((credit) => credit.type === 'meta');
         return {
           user_id: id,
           display_name: profiles.get(id) ?? null,
           is_child: children.has(id),
           done: done.length,
-          points: done.reduce((total, task) => total + (task.points ?? 0), 0),
+          points: done.reduce((total, credit) => total + credit.points, 0),
           created: shared.filter((task) => task.created_by === id && inPeriod(task.created_at))
             .length,
           meta_done: metaDone.length,
-          meta_points: metaDone.reduce((total, task) => total + (task.points ?? 0), 0),
+          meta_points: metaDone.reduce((total, credit) => total + credit.points, 0),
         };
       }),
     );
@@ -570,7 +623,7 @@ export async function fakeSupabase(page: Page) {
     return goal && (goal.owner_id === user.id || takesPart) ? goal : undefined;
   }
 
-  /** Like goal_points(): shared tasks done since the goal was set, by `doneBy` (its participants when null). */
+  /** Like goal_points(): shared tasks done since the goal was set, credited to `doneBy` (participants when null). */
   function goalPoints(goal: GoalRow, doneBy = goal.owner_id) {
     const counts = (userId: string | null) =>
       doneBy === null
@@ -580,13 +633,13 @@ export async function fakeSupabase(page: Page) {
       .filter(
         (task) =>
           task.household_id === goal.household_id &&
-          !task.is_private &&
           task.completed_at !== null &&
           task.completed_at >= goal.created_at &&
-          (goal.claimed_at === null || task.completed_at <= goal.claimed_at) &&
-          counts(task.completed_by),
+          (goal.claimed_at === null || task.completed_at <= goal.claimed_at),
       )
-      .reduce((total, task) => total + (task.points ?? 0), 0);
+      .flatMap(creditsOf)
+      .filter((credit) => counts(credit.user_id))
+      .reduce((total, credit) => total + credit.points, 0);
   }
 
   /** Like goal_participant_points(): what each participant has earned. */
@@ -730,6 +783,8 @@ export async function fakeSupabase(page: Page) {
     // The fake has one user, Anna, so no code signs anyone in.
     '/functions/v1/child-sign-in': (route) => reply(route, 401, { error: 'unknown_code' }),
     '/rest/v1/rpc/complete_task': completeTask,
+    '/rest/v1/rpc/set_task_helpers': setTaskHelpers,
+    '/rest/v1/rpc/own_total_points': ownTotalPoints,
     '/rest/v1/rpc/pick_up_task': setPickedUp(user.id),
     '/rest/v1/rpc/put_back_task': setPickedUp(null),
     '/rest/v1/rpc/update_task': updateTask,

@@ -5,6 +5,7 @@ import { en } from '@/locales/en';
 
 const anna = { userId: 'u1', name: 'Anna' };
 const ben = { userId: 'u2', name: 'Ben' };
+const carl = { userId: 'u3', name: 'Carl' };
 
 /** Local time on a day in October 2026, as an ISO timestamp. */
 function at(day: number, hour: number): string {
@@ -17,6 +18,7 @@ function item(details: Partial<NewsItem> & Pick<NewsItem, 'taskId' | 'completedA
     type: 'physical',
     points: 3,
     doneBy: anna,
+    helpers: [],
     likedBy: [],
     comments: [],
     ...details,
@@ -43,6 +45,36 @@ describe('groupByDay', () => {
     expect(days[0]?.summaries).toEqual([
       { member: ben, physicalPoints: 8, metaPoints: 0 },
       { member: anna, physicalPoints: 0, metaPoints: 2 },
+    ]);
+  });
+
+  it("credits helpers their shares, out of the doer's points", () => {
+    const items = [
+      item({
+        taskId: 't1',
+        completedAt: at(10, 18),
+        points: 5,
+        helpers: [{ person: ben, points: 2 }],
+      }),
+      item({
+        taskId: 't2',
+        completedAt: at(10, 9),
+        type: 'meta',
+        points: 4,
+        doneBy: ben,
+        helpers: [
+          { person: anna, points: 2 },
+          { person: carl, points: 2 },
+        ],
+      }),
+    ];
+
+    const [today] = groupByDay(items, '2026-10-10', en);
+
+    expect(today?.summaries).toEqual([
+      { member: anna, physicalPoints: 3, metaPoints: 2 },
+      { member: ben, physicalPoints: 2, metaPoints: 0 },
+      { member: carl, physicalPoints: 0, metaPoints: 2 },
     ]);
   });
 });

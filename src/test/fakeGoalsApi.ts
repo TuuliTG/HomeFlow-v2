@@ -2,14 +2,14 @@ import type * as goalsApi from '@/features/rewards/api';
 import type { Goal, NewParticipant } from '@/features/rewards/goal';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
-import { requestsFailing, tasks } from '@/test/fakeTasksBackend';
+import { creditsOf, requestsFailing, tasks } from '@/test/fakeTasksBackend';
 
 /**
  * In-memory stand-in for `@/features/rewards/api`, installed for every unit test in `setup.ts`. Like
  * `household_goals()`, it counts the points of shared tasks in `fakeTasksBackend` done since a goal was
- * set, and decides whether a goal is reached like `goal_is_reached()`. Like its policies, members see all
- * their household's goals and claim the shared goals they take part in and their own, and only adults add,
- * change and delete goals.
+ * set, helpers' shares included, and decides whether a goal is reached like `goal_is_reached()`. Like
+ * its policies, members see all their household's goals and claim the shared goals they take part in
+ * and their own, and only adults add, change and delete goals.
  */
 interface StoredGoal {
   id: string;
@@ -27,21 +27,21 @@ interface StoredGoal {
 
 const goals: StoredGoal[] = [];
 
-/** Points from shared tasks done towards the goal, by `doneBy` (its participants when null). */
+/** Points from shared tasks done towards the goal, earned by `doneBy` (its participants when null). */
 function pointsOf(goal: StoredGoal, doneBy = goal.ownerId): number {
   const countsFor = (userId: string) =>
     doneBy === null ? goal.participants.some((p) => p.userId === userId) : userId === doneBy;
   return tasks
     .filter(
-      ({ householdId, isPrivate, completed }) =>
+      ({ householdId, completed }) =>
         householdId === goal.householdId &&
-        !isPrivate &&
         completed !== null &&
         completed.at >= goal.createdAt &&
-        (goal.claimedAt === null || completed.at <= goal.claimedAt) &&
-        countsFor(completed.by),
+        (goal.claimedAt === null || completed.at <= goal.claimedAt),
     )
-    .reduce((total, task) => total + (task.points ?? 0), 0);
+    .flatMap(creditsOf)
+    .filter((credit) => countsFor(credit.userId))
+    .reduce((total, credit) => total + credit.points, 0);
 }
 
 /** What each participant has earned towards a shared goal, in the order they joined. */

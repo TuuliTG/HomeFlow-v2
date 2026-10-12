@@ -29,6 +29,12 @@ export const HOUSEHOLD_COMPLETED_LIMIT = 30;
 /** How long after marking a task done the user can undo it; `undo_complete_task()` enforces it. */
 export const UNDO_WINDOW_MS = 60 * 60 * 1000;
 
+/**
+ * How long after marking a task done the user can say who helped; `set_task_helpers()` enforces it.
+ * As long as the task is in the News.
+ */
+export const HELPERS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
 /** How often a task can repeat, in days; offered as choices when creating a task. */
 export const repeatChoices = [1, 2, 3, 7, 14, 30] as const;
 
@@ -114,6 +120,14 @@ export interface TaskSuggestion extends Omit<NewTask, 'dueOn'> {
   isOpen: boolean;
 }
 
+/** Someone who helped with a task, and their share of its points (`task_helpers`). */
+export interface TaskHelper {
+  userId: string;
+  /** Their display name, if they have chosen one. */
+  name: string | null;
+  points: number;
+}
+
 /** A task the user has marked done. */
 export interface CompletedTask {
   id: string;
@@ -123,6 +137,22 @@ export interface CompletedTask {
   points: number | null;
   /** When it was marked done (ISO timestamp). */
   completedAt: string;
+  /** Who helped; their shares come out of the task's points. */
+  helpers: TaskHelper[];
+}
+
+/** The points the task earned whoever marked it done: what the helpers didn't get. */
+export function doersShare({ points, helpers }: CompletedTask): number | null {
+  if (points === null) return null;
+  return helpers.reduce((rest, helper) => rest - helper.points, points);
+}
+
+/**
+ * Whether whoever marked the task done can still say who helped: a shared task with points, done in
+ * the last week (`set_task_helpers()` has the final say).
+ */
+export function canChooseHelpers(task: CompletedTask, now: number): boolean {
+  return task.points !== null && now - new Date(task.completedAt).getTime() < HELPERS_WINDOW_MS;
 }
 
 /** A task someone in the household has marked done. */
