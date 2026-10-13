@@ -18,6 +18,12 @@ export function today(): string {
   return toIsoDate(new Date());
 }
 
+/** Whole days from `from` to `to`, both calendar dates; negative if `to` comes first. */
+export function daysBetween(from: string, to: string): number {
+  // Rounded, since a day with a daylight saving change is an hour shorter or longer.
+  return Math.round((fromIsoDate(to).getTime() - fromIsoDate(from).getTime()) / 86_400_000);
+}
+
 export function addDays(isoDate: string, days: number): string {
   const date = fromIsoDate(isoDate);
   date.setDate(date.getDate() + days);

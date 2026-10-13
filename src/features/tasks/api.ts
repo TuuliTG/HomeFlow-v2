@@ -27,6 +27,10 @@ const taskRowsSchema = z.array(
     is_private: z.boolean(),
     for_children: z.boolean(),
     task_images: z.array(z.object({ path: z.string(), position: z.number() })),
+    /** The occurrence this one repeats; it is done, since completing it added this one. */
+    previous: z
+      .object({ completed_by: z.string().nullable(), completed_at: z.string().nullable() })
+      .nullable(),
   }),
 );
 const helperRowsSchema = z.array(z.object({ user_id: z.string(), points: z.number() }));
@@ -51,7 +55,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, task_images(path, position)',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, task_images(path, position), previous:previous_occurrence(completed_by, completed_at)',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -59,7 +63,11 @@ export async function fetchTasks(): Promise<Task[]> {
   if (error) throw error;
   const rows = taskRowsSchema.parse(data);
 
-  const userIds = rows.flatMap((row) => [row.created_by, row.picked_up_by]);
+  const userIds = rows.flatMap((row) => [
+    row.created_by,
+    row.picked_up_by,
+    row.previous?.completed_by ?? null,
+  ]);
   const names = await fetchDisplayNames([
     ...new Set(userIds.filter((id): id is string => id !== null)),
   ]);
@@ -73,6 +81,7 @@ export async function fetchTasks(): Promise<Task[]> {
       is_private,
       for_children,
       task_images,
+      previous,
       ...task
     }) => ({
       ...task,
@@ -85,6 +94,15 @@ export async function fetchTasks(): Promise<Task[]> {
       creatorName: nameOf(created_by),
       pickedUpBy: picked_up_by,
       pickerName: nameOf(picked_up_by),
+      // Like statistics, only shared tasks show who did them.
+      lastDone:
+        is_private || !previous?.completed_at
+          ? null
+          : {
+              by: previous.completed_by,
+              name: nameOf(previous.completed_by),
+              at: previous.completed_at,
+            },
     }),
   );
 }

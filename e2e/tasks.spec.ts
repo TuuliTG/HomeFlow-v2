@@ -131,6 +131,7 @@ test('family member can mark a repeating task done and see it come back', async 
   await task.getByRole('button', { name: 'Mark done: Change bed linen' }).click();
 
   await expect(task.getByText('Due Thu 22 Oct')).toBeVisible();
+  await expect(task.getByText('Last done by you, today')).toBeVisible();
   await expect(page.getByText('Was due Tue 6 Oct')).toBeHidden();
 });
 

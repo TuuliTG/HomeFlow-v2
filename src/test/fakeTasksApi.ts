@@ -26,6 +26,13 @@ function byDueDate(a: StoredTask, b: StoredTask): number {
   return a.dueOn < b.dueOn ? -1 : 1;
 }
 
+/** Who marked the occurrence before a repeating task done, like the `previous_occurrence` embed. */
+function lastDoneOf(previousTaskId: string | null) {
+  const completed = tasks.find((task) => task.id === previousTaskId)?.completed;
+  if (!completed) return null;
+  return { by: completed.by, name: fakeAuthBackend.displayNameOf(completed.by), at: completed.at };
+}
+
 export const fetchTasks: typeof tasksApi.fetchTasks = () => {
   if (requestsFailing()) return Promise.reject(new Error('Network error'));
   return Promise.resolve(
@@ -46,6 +53,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           forChildren,
           createdBy,
           pickedUpBy,
+          previousTaskId,
           images,
         }) => ({
           id,
@@ -62,6 +70,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           pickedUpBy,
           pickerName: pickedUpBy ? fakeAuthBackend.displayNameOf(pickedUpBy) : null,
           images: [...images],
+          lastDone: isPrivate ? null : lastDoneOf(previousTaskId),
         }),
       ),
   );

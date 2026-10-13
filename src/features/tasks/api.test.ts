@@ -53,6 +53,7 @@ const row = {
   is_private: false,
   for_children: false,
   task_images: [],
+  previous: null,
 };
 
 /** The tasks query's result: it is ordered twice (due date, then newest), then awaited. */
@@ -258,6 +259,31 @@ describe('tasks api', () => {
     const [task] = await api.fetchTasks();
 
     expect(task).toMatchObject({ repeatEveryDays: 14, dueOn: '2026-10-22' });
+  });
+
+  it('reads who did the previous occurrence of a repeating shared task, with their name', async () => {
+    const previous = { completed_by: 'u2', completed_at: '2026-10-05T09:00:00Z' };
+    respondWithTasks({
+      data: [
+        { ...row, previous },
+        { ...row, id: 't2', is_private: true, previous },
+        { ...row, id: 't3' },
+      ],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [{ id: 'u2', display_name: 'Ben' }], error: null });
+
+    const tasks = await api.fetchTasks();
+
+    expect(query.select).toHaveBeenCalledWith(
+      expect.stringContaining('previous:previous_occurrence(completed_by, completed_at)'),
+    );
+    expect(query.in).toHaveBeenCalledWith('id', ['u1', 'u2']);
+    expect(tasks.map((task) => task.lastDone)).toEqual([
+      { by: 'u2', name: 'Ben', at: '2026-10-05T09:00:00Z' },
+      null,
+      null,
+    ]);
   });
 
   it('reads whether a task is private', async () => {
