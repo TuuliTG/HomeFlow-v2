@@ -65,6 +65,16 @@ export const tasks: Messages['tasks'] = {
       someone: 'Varaaja: joku',
       named: (name) => `Varaaja: ${name}`,
     },
+    lastDoneBy: (when) => ({
+      you: `Viimeksi tehnyt: sinä, ${when}`,
+      someone: `Viimeksi tehnyt: joku, ${when}`,
+      named: (name) => `Viimeksi tehnyt: ${name}, ${when}`,
+    }),
+    daysAgo: (days) => {
+      if (days === 0) return 'tänään';
+      if (days === 1) return 'eilen';
+      return `${String(days)} päivää sitten`;
+    },
     images: (title) => `Kuvat: ${title}`,
     image: (position, title) => `Kuva ${String(position)}: ${title} (avautuu uuteen välilehteen)`,
     imagesFailed: 'Kuvia ei voitu ladata.',

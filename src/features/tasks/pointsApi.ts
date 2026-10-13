@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { fetchDisplayNames } from '@/features/tasks/api';
+import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
 import { getSupabaseClient } from '@/lib/supabase';
 
 /** A child's shared task whose points an adult hasn't awarded yet (ADR 0004). */
@@ -46,4 +46,15 @@ export async function awardTaskPoints(taskId: string, points: number): Promise<v
     points,
   });
   if (error) throw error;
+}
+
+/**
+ * All the points the user has earned in their household (`own_total_points()`): from shared tasks they
+ * marked done, less what helpers got, and their shares of tasks they helped with. Private tasks have
+ * none, and a child's task waiting for an adult to award its points has none yet.
+ */
+export async function fetchTotalPoints(): Promise<number> {
+  const result = await getSupabaseClient().rpc('own_total_points');
+  if (result.error) throw result.error;
+  return z.number().parse(result.data);
 }

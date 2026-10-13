@@ -10,6 +10,7 @@ import {
   type TaskSuggestion,
   taskTypes,
 } from '@/features/tasks/task';
+import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
 import { getSupabaseClient } from '@/lib/supabase';
 
 const taskRowsSchema = z.array(
@@ -26,6 +27,10 @@ const taskRowsSchema = z.array(
     is_private: z.boolean(),
     for_children: z.boolean(),
     task_images: z.array(z.object({ path: z.string(), position: z.number() })),
+    /** The occurrence this one repeats; it is done, since completing it added this one. */
+    previous: z
+      .object({ completed_by: z.string().nullable(), completed_at: z.string().nullable() })
+      .nullable(),
   }),
 );
 const helperRowsSchema = z.array(z.object({ user_id: z.string(), points: z.number() }));
@@ -41,18 +46,6 @@ const completedTaskRowsSchema = z.array(
 );
 /** How many of the user's completed tasks the Me screen shows. */
 const COMPLETED_TASKS_LIMIT = 20;
-const profileRowsSchema = z.array(z.object({ id: z.string(), display_name: z.string() }));
-
-export async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>> {
-  if (userIds.length === 0) return new Map();
-  const { data, error } = await getSupabaseClient()
-    .from('profiles')
-    .select('id, display_name')
-    .in('id', userIds);
-  if (error) throw error;
-  return new Map(profileRowsSchema.parse(data).map((row) => [row.id, row.display_name]));
-}
-
 /**
  * The household's open tasks (not yet done): soonest due first, then those without a due date, each
  * newest first. Row Level Security limits them to the user's household, private tasks to whoever
@@ -62,7 +55,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, task_images(path, position)',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, task_images(path, position), previous:previous_occurrence(completed_by, completed_at)',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -70,7 +63,11 @@ export async function fetchTasks(): Promise<Task[]> {
   if (error) throw error;
   const rows = taskRowsSchema.parse(data);
 
-  const userIds = rows.flatMap((row) => [row.created_by, row.picked_up_by]);
+  const userIds = rows.flatMap((row) => [
+    row.created_by,
+    row.picked_up_by,
+    row.previous?.completed_by ?? null,
+  ]);
   const names = await fetchDisplayNames([
     ...new Set(userIds.filter((id): id is string => id !== null)),
   ]);
@@ -84,6 +81,7 @@ export async function fetchTasks(): Promise<Task[]> {
       is_private,
       for_children,
       task_images,
+      previous,
       ...task
     }) => ({
       ...task,
@@ -96,6 +94,15 @@ export async function fetchTasks(): Promise<Task[]> {
       creatorName: nameOf(created_by),
       pickedUpBy: picked_up_by,
       pickerName: nameOf(picked_up_by),
+      // Like statistics, only shared tasks show who did them.
+      lastDone:
+        is_private || !previous?.completed_at
+          ? null
+          : {
+              by: previous.completed_by,
+              name: nameOf(previous.completed_by),
+              at: previous.completed_at,
+            },
     }),
   );
 }
@@ -165,17 +172,6 @@ export async function fetchHouseholdCompletedTasks(): Promise<HouseholdCompleted
     completedBy: completed_by,
     completerName: completed_by ? (names.get(completed_by) ?? null) : null,
   }));
-}
-
-/**
- * All the points the user has earned in their household (`own_total_points()`): from shared tasks they
- * marked done, less what helpers got, and their shares of tasks they helped with. Private tasks have
- * none, and a child's task waiting for an adult to award its points has none yet.
- */
-export async function fetchTotalPoints(): Promise<number> {
-  const result = await getSupabaseClient().rpc('own_total_points');
-  if (result.error) throw result.error;
-  return z.number().parse(result.data);
 }
 
 const suggestionRowsSchema = z.array(

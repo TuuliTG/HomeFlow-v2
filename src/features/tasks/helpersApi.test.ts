@@ -10,7 +10,7 @@ const supabase = vi.hoisted(() => {
 const fetchDisplayNames = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/supabase', () => ({ getSupabaseClient: () => supabase.client }));
-vi.mock('@/features/tasks/api', () => ({ fetchDisplayNames }));
+vi.mock('@/features/tasks/displayNamesApi', () => ({ fetchDisplayNames }));
 
 // setup.ts replaces this api with a fake for every test; this file tests the real one.
 const api = await vi.importActual<typeof helpersApi>('@/features/tasks/helpersApi');

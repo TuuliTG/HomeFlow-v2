@@ -2,7 +2,6 @@ import type * as tasksApi from '@/features/tasks/api';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import {
-  creditsOf,
   deliver,
   helpersOf,
   fakeTasksBackend,
@@ -27,6 +26,13 @@ function byDueDate(a: StoredTask, b: StoredTask): number {
   return a.dueOn < b.dueOn ? -1 : 1;
 }
 
+/** Who marked the occurrence before a repeating task done, like the `previous_occurrence` embed. */
+function lastDoneOf(previousTaskId: string | null) {
+  const completed = tasks.find((task) => task.id === previousTaskId)?.completed;
+  if (!completed) return null;
+  return { by: completed.by, name: fakeAuthBackend.displayNameOf(completed.by), at: completed.at };
+}
+
 export const fetchTasks: typeof tasksApi.fetchTasks = () => {
   if (requestsFailing()) return Promise.reject(new Error('Network error'));
   return Promise.resolve(
@@ -47,6 +53,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           forChildren,
           createdBy,
           pickedUpBy,
+          previousTaskId,
           images,
         }) => ({
           id,
@@ -63,6 +70,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           pickedUpBy,
           pickerName: pickedUpBy ? fakeAuthBackend.displayNameOf(pickedUpBy) : null,
           images: [...images],
+          lastDone: isPrivate ? null : lastDoneOf(previousTaskId),
         }),
       ),
   );
@@ -155,20 +163,6 @@ export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdComplet
           : [];
       })
       .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
-  );
-};
-
-/** Like `own_total_points()`: the user's credits in their household, also from tasks they can't see. */
-export const fetchTotalPoints: typeof tasksApi.fetchTotalPoints = () => {
-  const user = fakeAuthBackend.currentUser();
-  if (requestsFailing() || !user) return Promise.reject(new Error('Network error'));
-  const householdId = fakeHouseholdBackend.householdIdOf(user.id);
-  return Promise.resolve(
-    tasks
-      .filter((task) => task.householdId === householdId)
-      .flatMap(creditsOf)
-      .filter((credit) => credit.userId === user.id)
-      .reduce((total, credit) => total + credit.points, 0),
   );
 };
 

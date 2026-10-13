@@ -43,6 +43,7 @@ interface TaskRow {
   created_at: string;
   completed_at: string | null;
   completed_by: string | null;
+  previous_task_id: string | null;
 }
 
 interface GoalRow {
@@ -125,6 +126,7 @@ export async function fakeSupabase(page: Page) {
       created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
+      previous_task_id: null,
     },
   ];
 
@@ -184,6 +186,17 @@ export async function fakeSupabase(page: Page) {
     return {
       ...task,
       task_images: (taskImages.get(task.id) ?? []).map((path, position) => ({ path, position })),
+    };
+  }
+
+  /** A task with the occurrence it repeats, like `previous_occurrence(completed_by, completed_at)` embedded. */
+  function withPrevious<T extends TaskRow>(task: T) {
+    const previous = tasks.find((candidate) => candidate.id === task.previous_task_id);
+    return {
+      ...task,
+      previous: previous
+        ? { completed_by: previous.completed_by, completed_at: previous.completed_at }
+        : null,
     };
   }
 
@@ -304,6 +317,7 @@ export async function fakeSupabase(page: Page) {
         created_at: new Date().toISOString(),
         completed_at: null,
         completed_by: null,
+        previous_task_id: null,
       });
       return replyWithRows(route, [{ id }]);
     }
@@ -376,7 +390,7 @@ export async function fakeSupabase(page: Page) {
         .filter((task) => task.household_id === householdId && task.completed_at === null)
         // Stable sort, so tasks with the same due date (or none) stay newest first.
         .sort((a, b) => (a.due_on ?? '9999-12-31').localeCompare(b.due_on ?? '9999-12-31'))
-        .map(withImages),
+        .map((task) => withPrevious(withImages(task))),
     );
   }
 
@@ -406,6 +420,7 @@ export async function fakeSupabase(page: Page) {
       created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
+      previous_task_id: task.id,
     };
     tasks.unshift(next);
     taskImages.set(next.id, [...(taskImages.get(task.id) ?? [])]);

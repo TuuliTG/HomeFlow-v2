@@ -22,6 +22,7 @@ function task(title: string, dueOn: string | null, pickedUpBy: string | null = n
     pickedUpBy,
     pickerName: null,
     images: [],
+    lastDone: null,
   };
 }
 

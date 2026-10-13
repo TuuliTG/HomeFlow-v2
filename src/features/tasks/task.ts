@@ -105,6 +105,20 @@ export interface Task extends NewTask {
   pickerName: string | null;
   /** Its pictures in order, by their file names in the task-images bucket (`task_images`). */
   images: string[];
+  /**
+   * Who marked the previous occurrence of a repeating task done, and when; null for the first
+   * occurrence and for private tasks.
+   */
+  lastDone: LastDone | null;
+}
+
+export interface LastDone {
+  /** User id; null if they have deleted their account. */
+  by: string | null;
+  /** Their display name, if they have chosen one. */
+  name: string | null;
+  /** ISO timestamp. */
+  at: string;
 }
 
 /**

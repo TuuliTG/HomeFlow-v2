@@ -66,6 +66,17 @@ export const tasks = {
       someone: 'Picked up by someone',
       named: (name: string) => `Picked up by ${name}`,
     },
+    /** Who marked the previous occurrence of a repeating task done, and when (`daysAgo`). */
+    lastDoneBy: (when: string) => ({
+      you: `Last done by you, ${when}`,
+      someone: `Last done by someone, ${when}`,
+      named: (name: string) => `Last done by ${name}, ${when}`,
+    }),
+    daysAgo: (days: number) => {
+      if (days === 0) return 'today';
+      if (days === 1) return 'yesterday';
+      return `${String(days)} days ago`;
+    },
     images: (title: string) => `Pictures: ${title}`,
     /** The link opening a picture full size. */
     image: (position: number, title: string) =>

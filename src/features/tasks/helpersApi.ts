@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { fetchDisplayNames } from '@/features/tasks/api';
+import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
 import { type HelpedTask, taskTypes } from '@/features/tasks/task';
 import { getSupabaseClient } from '@/lib/supabase';
 

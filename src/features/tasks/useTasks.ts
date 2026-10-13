@@ -8,7 +8,6 @@ import {
   fetchHouseholdCompletedTasks,
   fetchTasks,
   fetchTaskSuggestions,
-  fetchTotalPoints,
   pickUpTask,
   putBackTask,
   undoCompleteTask,
@@ -17,7 +16,11 @@ import {
 import { fetchFavouriteTasks, setFavouriteTask } from '@/features/tasks/favouritesApi';
 import { fetchImageUrls } from '@/features/tasks/imagesApi';
 import { fetchMembership } from '@/features/tasks/membershipApi';
-import { awardTaskPoints, fetchTasksWaitingForPoints } from '@/features/tasks/pointsApi';
+import {
+  awardTaskPoints,
+  fetchTasksWaitingForPoints,
+  fetchTotalPoints,
+} from '@/features/tasks/pointsApi';
 import { clearTaskReminder, fetchReminders, setTaskReminder } from '@/features/tasks/remindersApi';
 import {
   IMAGE_URL_LIFETIME_SECONDS,

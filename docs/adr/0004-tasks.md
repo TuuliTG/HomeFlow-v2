@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-12 (asking who helped, helpers' Me page)
+- **Updated:** 2026-10-13 (who last did a task)
 
 ## Context
 
@@ -97,6 +97,12 @@ next one back rather than follow a fixed calendar.
   A **Show** filter (`?show=`, one choice at a time, `taskFilter.ts`) narrows the board to tasks due **Today** or
   **This week** (the next seven days, so it ends where "Later" begins; both include overdue tasks, which still need
   doing), with **No due date**, or **Available** (nobody has picked them up); **All** is the default.
+- **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
+  long ago in the user's calendar days ("Last done by Ben, 3 days ago"), so the family sees who usually carries it
+  and can take turns. It comes from `previous_task_id`, embedded as `previous_occurrence(...)`: PostgREST finds no
+  relationship for a self-referencing one-to-one key, so `public.previous_occurrence(tasks)` (security invoker, so
+  RLS applies) is a computed relationship. We chose the last doer over "usually done by", which needs a period and
+  a tie-break and reads less clearly on a small card. Private tasks don't show it, as statistics leave them out.
 - **Adding a task again**: the New task form suggests earlier tasks from the household's own history, read with
   `task_suggestions()` (security invoker, so RLS hides other members' private tasks): one per title ignoring case,
   with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Typing a
