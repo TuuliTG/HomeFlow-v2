@@ -5,7 +5,7 @@ export const rewards: Messages['rewards'] = {
   eyebrow: 'Palkinnot',
   title: 'Palkinnot ja tavoitteet',
   description:
-    'Yhteisistä tehtävistä saa pisteitä. Tavoitteen asettamisen jälkeen ansaitut pisteet lasketaan siihen: yhteisiin tavoitteisiin kaikkien mukana olevien pisteet, omiin tavoitteisiisi vain sinun.',
+    'Yhteisistä tehtävistä saa pisteitä. Tavoitteen asettamisen jälkeen ansaitut pisteet lasketaan siihen: yhteisiin tavoitteisiin kaikkien mukana olevien pisteet, omiin tavoitteisiisi vain sinun. Kullakin on kerrallaan yksi yhteinen ja yksi oma tavoite.',
   newGoal: 'Uusi tavoite',
   loadFailed: 'Tavoitteita ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
   sections: {
@@ -57,8 +57,10 @@ export const rewards: Messages['rewards'] = {
     whoFor: 'Kenelle',
     scopes: { shared: 'Yhdessä', personal: 'Yhdelle' },
     scopeHints: {
-      shared: 'Siihen lasketaan kaikkien mukana olevien pisteet, ja koko perhe näkee sen.',
-      personal: 'Siihen lasketaan vain hänen pisteensä. Perhe näkee senkin ja voi kannustaa.',
+      shared:
+        'Siihen lasketaan kaikkien mukana olevien pisteet, ja koko perhe näkee sen. Kukin on mukana yhdessä yhteisessä tavoitteessa kerrallaan.',
+      personal:
+        'Siihen lasketaan vain hänen pisteensä. Perhe näkee senkin ja voi kannustaa. Kullakin on yksi oma tavoite kerrallaan.',
     },
     whose: 'Kenen tavoite',
     me: 'Minä',
@@ -68,9 +70,13 @@ export const rewards: Messages['rewards'] = {
       'Voit pyytää jokaiselta vähimmäismäärän, esimerkiksi nuoremmalta lapselta vähemmän. Tavoite saavutetaan vasta, kun jokainen on ansainnut omansa, jottei kukaan tee kaikkea yksin.',
     minimum: 'Vähintään',
     minimumFor: (name) => `Vähintään (vapaaehtoinen): ${name}`,
+    hasOpenGoal: (name) => `${name} – tavoite kesken`,
+    everyoneHasOpenGoal: 'Kaikilla on jo oma tavoite kesken. Lunasta tai poista jokin ensin.',
     submit: 'Aseta tavoite',
     checkDetails: 'Tarkista tavoitteen tiedot.',
     saveFailed: 'Tavoitetta ei voitu tallentaa. Yritä uudelleen.',
+    openGoalExists:
+      'Jollakulla on jo kesken samanlainen tavoite. Lunasta tai poista se ennen seuraavan asettamista.',
     edit: {
       title: 'Muokkaa tavoitetta',
       description:

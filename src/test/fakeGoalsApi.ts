@@ -1,5 +1,5 @@
 import type * as goalsApi from '@/features/rewards/api';
-import type { Goal, NewParticipant } from '@/features/rewards/goal';
+import { type Goal, type NewParticipant, OpenGoalExistsError } from '@/features/rewards/goal';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { creditsOf, requestsFailing, tasks } from '@/test/fakeTasksBackend';
@@ -9,7 +9,7 @@ import { creditsOf, requestsFailing, tasks } from '@/test/fakeTasksBackend';
  * `household_goals()`, it counts the points of shared tasks in `fakeTasksBackend` done since a goal was
  * set, helpers' shares included, and decides whether a goal is reached like `goal_is_reached()`. Like
  * its policies, members see all their household's goals and claim the shared goals they take part in
- * and their own, and only adults add, change and delete goals.
+ * and their own, and only adults add, change and delete goals, one open goal of each kind per member.
  */
 interface StoredGoal {
   id: string;
@@ -88,6 +88,33 @@ function openGoal(goalId: string): StoredGoal {
   return goal;
 }
 
+/**
+ * Like `add_shared_goal()`, `update_goal()` and the trigger on `goals`: nobody gets a second open shared
+ * or personal goal. Those already in `changed` (the goal being changed) aren't checked again.
+ */
+function checkOneOpenGoal(
+  householdId: string | null,
+  { ownerId, participants }: { ownerId: string | null; participants: NewParticipant[] },
+  changed?: StoredGoal,
+) {
+  const others = goals.filter(
+    (goal) => goal.householdId === householdId && goal.claimedAt === null && goal !== changed,
+  );
+  const newOwner = ownerId !== null && ownerId !== changed?.ownerId;
+  const newParticipants = participants.filter(
+    ({ userId }) => !changed?.participants.some((p) => p.userId === userId),
+  );
+  if (
+    (newOwner && others.some((goal) => goal.ownerId === ownerId)) ||
+    (ownerId === null &&
+      newParticipants.some(({ userId }) =>
+        others.some((goal) => goal.participants.some((p) => p.userId === userId)),
+      ))
+  ) {
+    throw new OpenGoalExistsError();
+  }
+}
+
 /** Answers like a request: what `respond` throws becomes a rejection. */
 function request<T>(respond: () => T): Promise<T> {
   return Promise.resolve().then(respond);
@@ -128,6 +155,7 @@ export const addGoal: typeof goalsApi.addGoal = ({ title, targetPoints, ownerId,
     if (forMembers.some((id) => fakeHouseholdBackend.householdIdOf(id) !== householdId)) {
       throw new Error('A goal is for members of the household');
     }
+    checkOneOpenGoal(householdId, { ownerId, participants });
     fakeGoalsBackend.addGoalAs(userId, {
       title,
       targetPoints,
@@ -153,6 +181,7 @@ export const updateGoal: typeof goalsApi.updateGoal = (
     if (forMembers.some((id) => fakeHouseholdBackend.householdIdOf(id) !== householdId)) {
       throw new Error('A goal is for members of the household');
     }
+    checkOneOpenGoal(householdId, { ownerId, participants }, goal);
     Object.assign(goal, {
       title,
       targetPoints,
@@ -194,7 +223,8 @@ export const fakeGoalsBackend = {
   },
   /**
    * Stores a goal as if `userId` had set it: their own, or a shared goal for `participants` (by default
-   * everyone in the household, without minimums).
+   * everyone in the household, without minimums). It doesn't check one goal at a time, so tests can set
+   * up several open goals, like those set before that rule.
    */
   addGoalAs(
     userId: string,

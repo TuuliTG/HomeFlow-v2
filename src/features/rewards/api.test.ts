@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as goalsApi from '@/features/rewards/api';
+import { type NewGoal, OpenGoalExistsError } from '@/features/rewards/goal';
 
 const supabase = vi.hoisted(() => {
   const query = { insert: vi.fn(), delete: vi.fn(), eq: vi.fn() };
@@ -177,5 +178,29 @@ describe('goals api', () => {
         participants: [],
       }),
     ).rejects.toBe(failure);
+  });
+
+  it('tells when someone already has an open goal of that kind', async () => {
+    const taken = { message: 'duplicate', code: '23505' };
+    client.rpc.mockResolvedValue({ data: null, error: taken });
+    query.insert.mockResolvedValue({ error: taken });
+    const personal: NewGoal = {
+      title: 'Holiday',
+      targetPoints: 5,
+      scope: 'personal',
+      ownerId: 'u1',
+      participants: [],
+    };
+
+    await expect(api.addGoal(personal)).rejects.toBeInstanceOf(OpenGoalExistsError);
+    await expect(
+      api.addGoal({
+        ...personal,
+        scope: 'shared',
+        ownerId: null,
+        participants: [{ userId: 'u1', minPoints: null }],
+      }),
+    ).rejects.toBeInstanceOf(OpenGoalExistsError);
+    await expect(api.updateGoal('g1', personal)).rejects.toBeInstanceOf(OpenGoalExistsError);
   });
 });

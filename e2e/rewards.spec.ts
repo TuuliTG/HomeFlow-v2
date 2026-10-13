@@ -6,7 +6,7 @@ import { EXISTING_HOUSEHOLD, fakeSupabase, logInAsNewUser } from './fakeSupabase
 // See auth.spec.ts: the Supabase fake can't intercept requests that go through the service worker.
 test.use({ serviceWorkers: 'block' });
 
-test("family member sets shared goals, with a minimum from a participant, and a personal one, follows others' goals, earns the points and claims the reward", async ({
+test("family member sets a shared goal and a personal one, follows others' goals, earns the points, claims the reward and sets the next goal with a minimum from a participant", async ({
   page,
 }) => {
   await fakeSupabase(page);
@@ -23,13 +23,9 @@ test("family member sets shared goals, with a minimum from a participant, and a 
   expect(newGoalResults.violations, 'a11y violations on New goal').toEqual([]);
   await page.getByRole('button', { name: 'Set goal' }).click();
 
+  // One open shared goal at a time: the user is already in Pizza night.
   await page.getByRole('link', { name: 'New goal' }).click();
-  await page.getByLabel('Reward').fill('Zoo trip');
-  await page.getByLabel('Points needed').fill('5');
-  await page.getByLabel('Minimum points from Ben (optional)').fill('1');
-  await page.getByRole('button', { name: 'Set goal' }).click();
-
-  await page.getByRole('link', { name: 'New goal' }).click();
+  await expect(page.getByRole('checkbox', { name: 'Me – goal in progress' })).toBeDisabled();
   await page.getByLabel('Reward').fill('New book');
   await page.getByLabel('Points needed').fill('20');
   await page.getByRole('group', { name: "Who it's for" }).getByText('One person').click();
@@ -58,11 +54,6 @@ test("family member sets shared goals, with a minimum from a participant, and a 
   await nav.getByRole('link', { name: 'Rewards' }).click();
 
   await expect(pizza).toContainText('Goal reached!');
-  // Ben hasn't done his share of the zoo trip yet.
-  const zoo = sharedGoals.getByRole('listitem', { name: 'Zoo trip' });
-  await expect(zoo).toContainText('Enough points! One person still needs to earn their share.');
-  await expect(zoo).toContainText('Ben0 / 1');
-  await expect(zoo.getByRole('button', { name: /Claim reward/ })).toHaveCount(0);
   await expect(book).toContainText('5 / 20 points');
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations on Rewards').toEqual([]);
@@ -70,4 +61,14 @@ test("family member sets shared goals, with a minimum from a participant, and a 
   await pizza.getByRole('button', { name: 'Claim reward: Pizza night' }).click();
   await expect(page.getByRole('region', { name: 'Rewards claimed' })).toContainText('Pizza night');
   await expect(pizza).toBeHidden();
+
+  // The next shared goal counts from zero, and Ben hasn't done his share yet.
+  await page.getByRole('link', { name: 'New goal' }).click();
+  await page.getByLabel('Reward').fill('Zoo trip');
+  await page.getByLabel('Points needed').fill('5');
+  await page.getByLabel('Minimum points from Ben (optional)').fill('1');
+  await page.getByRole('button', { name: 'Set goal' }).click();
+  const zoo = sharedGoals.getByRole('listitem', { name: 'Zoo trip' });
+  await expect(zoo).toContainText('0 / 5 points');
+  await expect(zoo).toContainText('Ben0 / 1');
 });

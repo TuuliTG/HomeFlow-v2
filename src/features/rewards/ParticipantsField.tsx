@@ -7,6 +7,8 @@ import { useMessages } from '@/lib/i18n/i18n';
 
 interface ParticipantsFieldProps {
   members: GoalSetter[];
+  /** Members who already take part in another open shared goal. */
+  busy: ReadonlySet<string>;
   userId: string;
   choices: ParticipantChoices;
   onChange: (choices: ParticipantChoices) => void;
@@ -19,10 +21,11 @@ interface ParticipantsFieldProps {
 
 /**
  * Who takes part in a shared goal, each with an optional minimum, so e.g. a younger child can share a
- * goal with a big sister and do less.
+ * goal with a big sister and do less. Someone already in another open shared goal can't be added.
  */
 export function ParticipantsField({
   members,
+  busy,
   userId,
   choices,
   onChange,
@@ -47,6 +50,8 @@ export function ParticipantsField({
         {members.map((member, index) => {
           const name = member.id === userId ? t.me : nameOf(member, messages);
           const choice = choices[member.id];
+          const takesPart = choice?.takesPart ?? false;
+          const hasGoal = busy.has(member.id);
           const minimumField = `minPoints:${member.id}` as const;
           return (
             <li key={member.id} className="flex min-h-14 items-center justify-between gap-3">
@@ -56,13 +61,14 @@ export function ParticipantsField({
                   // The first box stands for the whole field when nobody takes part.
                   name={index === 0 ? 'participants' : undefined}
                   {...(index === 0 ? errorPropsFor('participants') : {})}
-                  checked={choice?.takesPart ?? false}
+                  checked={takesPart}
+                  disabled={hasGoal}
                   onChange={(event) => {
                     update(member.id, { takesPart: event.target.checked });
                   }}
                   className="accent-brand-600 size-5"
                 />
-                {name}
+                <ParticipantName name={name} hasGoal={hasGoal} />
               </label>
               {choice?.takesPart && (
                 <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -88,4 +94,11 @@ export function ParticipantsField({
       </ul>
     </fieldset>
   );
+}
+
+/** A member's name, saying when they can't take part because they're already in another open shared goal. */
+function ParticipantName({ name, hasGoal }: { name: string; hasGoal: boolean }) {
+  const t = useMessages().rewards.form;
+  if (!hasGoal) return name;
+  return <span className="text-slate-500">{t.hasOpenGoal(name)}</span>;
 }
