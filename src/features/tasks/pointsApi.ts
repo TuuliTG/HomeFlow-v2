@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { fetchDisplayNames } from '@/features/tasks/api';
+import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
 import { getSupabaseClient } from '@/lib/supabase';
 
 /** A child's shared task whose points an adult hasn't awarded yet (ADR 0004). */

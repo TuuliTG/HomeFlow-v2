@@ -10,6 +10,7 @@ import {
   type TaskSuggestion,
   taskTypes,
 } from '@/features/tasks/task';
+import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
 import { getSupabaseClient } from '@/lib/supabase';
 
 const taskRowsSchema = z.array(
@@ -41,18 +42,6 @@ const completedTaskRowsSchema = z.array(
 );
 /** How many of the user's completed tasks the Me screen shows. */
 const COMPLETED_TASKS_LIMIT = 20;
-const profileRowsSchema = z.array(z.object({ id: z.string(), display_name: z.string() }));
-
-export async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>> {
-  if (userIds.length === 0) return new Map();
-  const { data, error } = await getSupabaseClient()
-    .from('profiles')
-    .select('id, display_name')
-    .in('id', userIds);
-  if (error) throw error;
-  return new Map(profileRowsSchema.parse(data).map((row) => [row.id, row.display_name]));
-}
-
 /**
  * The household's open tasks (not yet done): soonest due first, then those without a due date, each
  * newest first. Row Level Security limits them to the user's household, private tasks to whoever
