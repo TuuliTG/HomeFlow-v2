@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 
 import { paths } from '@/app/paths';
-import { canAskWhoHelped } from '@/features/tasks/task';
-import { useHouseholdMembers } from '@/features/tasks/useHelpers';
+import { useAsksWhoHelped } from '@/features/tasks/useHelpers';
 import { useLastDoneTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -19,14 +18,11 @@ export const WHO_HELPED_PROMPT_DURATION_MS = 12_000;
 export function WhoHelpedPrompt() {
   const user = useLoggedInUser();
   const last = useLastDoneTask();
-  const members = useHouseholdMembers(user.id);
+  const asks = useAsksWhoHelped(user.id, last?.task);
   // When the last prompt was answered, dismissed or timed out; later completions ask again.
   const [closedAt, setClosedAt] = useState(0);
   const { tasks } = useMessages();
-  const prompt =
-    last && last.at > closedAt && canAskWhoHelped(last.task) && (members.data?.length ?? 0) > 1
-      ? last
-      : undefined;
+  const prompt = last && last.at > closedAt && asks ? last : undefined;
 
   useEffect(() => {
     if (!prompt) return;

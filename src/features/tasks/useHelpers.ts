@@ -6,7 +6,8 @@ import {
   type HelperShare,
   setTaskHelpers,
 } from '@/features/tasks/helpersApi';
-import { tasksKey } from '@/features/tasks/useTasks';
+import { canAskWhoHelped } from '@/features/tasks/task';
+import { type DoneTask, tasksKey } from '@/features/tasks/useTasks';
 
 /** The tasks the user helped others with. Under `tasksKey`, like their completed tasks. */
 export function useHelpedTasks(userId: string) {
@@ -22,6 +23,12 @@ export function useHouseholdMembers(userId: string) {
     queryKey: [...tasksKey(userId), 'household-members'],
     queryFn: fetchHouseholdMembers,
   });
+}
+
+/** Whether the user is asked who helped with this task they just marked done (`WhoHelpedPrompt`). */
+export function useAsksWhoHelped(userId: string, task: DoneTask | undefined): boolean {
+  const members = useHouseholdMembers(userId);
+  return task !== undefined && canAskWhoHelped(task) && (members.data?.length ?? 0) > 1;
 }
 
 /** Says who helped with a task; the user's points and completed tasks refresh with `tasksKey`. */

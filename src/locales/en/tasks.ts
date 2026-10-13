@@ -153,6 +153,12 @@ export const tasks = {
     /** The prompt that appears after marking a task done. */
     askAfterDone: (title: string) => `${title} done! Did someone help?`,
   },
+  /** The short celebration when the user marks a task done. */
+  celebration: {
+    done: (title: string) => `${title} done!`,
+    /** "+3 points": what the task earned. */
+    pointsEarned: (points: string) => `+${points}`,
+  },
   activity: {
     added: (name: string, title: string) => `${name} added ${title}`,
     dismiss: 'Dismiss',
