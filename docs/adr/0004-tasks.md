@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-13 (who last did a task)
+- **Updated:** 2026-10-13 (celebrating a done task)
 
 ## Context
 
@@ -103,6 +103,12 @@ next one back rather than follow a fixed calendar.
   relationship for a self-referencing one-to-one key, so `public.previous_occurrence(tasks)` (security invoker, so
   RLS applies) is a computed relationship. We chose the last doer over "usually done by", which needs a period and
   a tie-break and reads less clearly on a small card. Private tasks don't show it, as statistics leave them out.
+- **Celebrating**: once marking a task done succeeds, stars burst and the points earned (or a tick) pop up for
+  about a second (`TaskCelebration`, found from the same mutation state as `WhoHelpedPrompt`), for every task the
+  user marks done. It is plain CSS and SVG, no dependency. It is decorative (`aria-hidden`, no pointer events, fixed
+  so the layout doesn't move); screen readers hear "<task> done!" unless the who-helped prompt says so already. With
+  reduced motion there are no stars and the badge doesn't move. The badge shrinks away instead of fading so its text
+  keeps its contrast.
 - **Adding a task again**: the New task form suggests earlier tasks from the household's own history, read with
   `task_suggestions()` (security invoker, so RLS hides other members' private tasks): one per title ignoring case,
   with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Typing a

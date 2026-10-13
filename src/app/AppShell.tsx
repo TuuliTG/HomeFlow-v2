@@ -5,12 +5,13 @@ import { MainNav } from '@/app/MainNav';
 import { AccountStatus } from '@/features/auth/AccountStatus';
 import { HouseholdLink } from '@/features/household/HouseholdLink';
 import { TaskActivityToast } from '@/features/tasks/TaskActivityToast';
+import { TaskCelebration } from '@/features/tasks/TaskCelebration';
 import { WhoHelpedPrompt } from '@/features/tasks/WhoHelpedPrompt';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /**
  * Mobile-first layout: content plus a bottom tab bar on phones,
- * a side rail on wider screens. Toasts stack above the tab bar.
+ * a side rail on wider screens. Toasts stack above the tab bar; a done task's celebration plays on top.
  */
 export function AppShell() {
   const t = useMessages().app;
@@ -32,6 +33,7 @@ export function AppShell() {
         <WhoHelpedPrompt />
         <TaskActivityToast />
       </section>
+      <TaskCelebration />
     </div>
   );
 }

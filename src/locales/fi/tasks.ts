@@ -143,6 +143,10 @@ export const tasks: Messages['tasks'] = {
     saveFailed: 'Auttajia ei voitu tallentaa. Yritä uudelleen.',
     askAfterDone: (title) => `${title} tehty! Teittekö yhdessä?`,
   },
+  celebration: {
+    done: (title) => `${title} tehty!`,
+    pointsEarned: (points) => `+${points}`,
+  },
   activity: {
     added: (name, title) => `${name} lisäsi tehtävän ${title}`,
     dismiss: 'Sulje',

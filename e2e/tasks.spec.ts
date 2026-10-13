@@ -279,3 +279,41 @@ test('family member can say who helped with a task and share its points', async 
   await expect(completed.getByText('Helped by Ben (1 point)')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Points earned' })).toContainText('2');
 });
+
+test('marking a task done celebrates without getting in the way', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+  for (const title of ['Vacuum', 'Dishes']) {
+    await page.getByRole('link', { name: 'New task' }).click();
+    await page.getByLabel('Task', { exact: true }).fill(title);
+    await page.getByLabel('Points').fill('3');
+    await page.getByRole('button', { name: 'Create task' }).click();
+  }
+
+  await page.getByRole('button', { name: 'Mark done: Vacuum' }).click();
+  await expect(page.getByText('+3 points')).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations while celebrating').toEqual([]);
+  // The next tap works straight away, through the celebration.
+  await page.getByRole('button', { name: 'Mark done: Dishes' }).click();
+  await expect(page.getByRole('listitem', { name: 'Dishes' })).toBeHidden();
+  await expect(page.getByText('+3 points')).toBeHidden();
+});
+
+test('with reduced motion, a done task gets no flying stars', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('Vacuum');
+  await page.getByLabel('Points').fill('3');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  await page.getByRole('button', { name: 'Mark done: Vacuum' }).click();
+
+  const points = page.getByText('+3 points');
+  await expect(points).toBeVisible();
+  await expect(points.locator('xpath=..').locator('svg').first()).toBeHidden();
+});
