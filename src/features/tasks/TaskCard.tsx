@@ -9,6 +9,7 @@ import { type Messages, useMessages } from '@/lib/i18n/i18n';
 import { canChange, isToDoBy, type Task } from '@/features/tasks/task';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskImages } from '@/features/tasks/TaskImages';
+import { TaskPeople } from '@/features/tasks/TaskPeople';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
 import { TaskTags } from '@/features/tasks/TaskTags';
 import {
@@ -23,18 +24,6 @@ interface TaskCardProps {
   currentUserId: string;
   /** Heading level of the task's title, one below the heading of the list it is in. */
   titleLevel: 3 | 4;
-}
-
-type ByPerson = Messages['tasks']['card']['addedBy'];
-
-/** "Added by you", by their name, or by "someone" if they haven't chosen a name or have deleted their account. */
-function byPerson(
-  phrases: ByPerson,
-  person: { userId: string | null; name: string | null },
-  currentUserId: string,
-): string {
-  if (person.userId === currentUserId) return phrases.you;
-  return person.name === null ? phrases.someone : phrases.named(person.name);
 }
 
 export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
@@ -91,22 +80,7 @@ function TaskDetails({
           {describeDueDate(task.dueOn, today(), t)}
         </span>
       )}
-      <span className="text-xs text-slate-500">
-        {byPerson(
-          t.tasks.card.addedBy,
-          { userId: task.createdBy, name: task.creatorName },
-          currentUserId,
-        )}
-      </span>
-      {task.pickedUpBy !== null && (
-        <span className="text-brand-900 text-xs font-medium">
-          {byPerson(
-            t.tasks.card.pickedUpBy,
-            { userId: task.pickedUpBy, name: task.pickerName },
-            currentUserId,
-          )}
-        </span>
-      )}
+      <TaskPeople task={task} currentUserId={currentUserId} />
     </div>
   );
 }

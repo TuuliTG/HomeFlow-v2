@@ -2,7 +2,6 @@ import type * as tasksApi from '@/features/tasks/api';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import {
-  creditsOf,
   deliver,
   helpersOf,
   fakeTasksBackend,
@@ -155,20 +154,6 @@ export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdComplet
           : [];
       })
       .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
-  );
-};
-
-/** Like `own_total_points()`: the user's credits in their household, also from tasks they can't see. */
-export const fetchTotalPoints: typeof tasksApi.fetchTotalPoints = () => {
-  const user = fakeAuthBackend.currentUser();
-  if (requestsFailing() || !user) return Promise.reject(new Error('Network error'));
-  const householdId = fakeHouseholdBackend.householdIdOf(user.id);
-  return Promise.resolve(
-    tasks
-      .filter((task) => task.householdId === householdId)
-      .flatMap(creditsOf)
-      .filter((credit) => credit.userId === user.id)
-      .reduce((total, credit) => total + credit.points, 0),
   );
 };
 

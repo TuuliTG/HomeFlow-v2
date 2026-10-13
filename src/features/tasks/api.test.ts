@@ -202,16 +202,6 @@ describe('tasks api', () => {
     await expect(api.fetchHouseholdCompletedTasks()).rejects.toBe(failure);
   });
 
-  it("reads the user's points from the database", async () => {
-    client.rpc.mockResolvedValueOnce({ data: 8, error: null });
-
-    await expect(api.fetchTotalPoints()).resolves.toBe(8);
-    expect(client.rpc).toHaveBeenCalledWith('own_total_points');
-
-    client.rpc.mockResolvedValueOnce({ data: null, error: failure });
-    await expect(api.fetchTotalPoints()).rejects.toBe(failure);
-  });
-
   it('passes errors on when completed tasks cannot be read', async () => {
     query.order.mockReturnValueOnce(query);
     query.limit.mockResolvedValueOnce({ data: null, error: failure });

@@ -167,17 +167,6 @@ export async function fetchHouseholdCompletedTasks(): Promise<HouseholdCompleted
   }));
 }
 
-/**
- * All the points the user has earned in their household (`own_total_points()`): from shared tasks they
- * marked done, less what helpers got, and their shares of tasks they helped with. Private tasks have
- * none, and a child's task waiting for an adult to award its points has none yet.
- */
-export async function fetchTotalPoints(): Promise<number> {
-  const result = await getSupabaseClient().rpc('own_total_points');
-  if (result.error) throw result.error;
-  return z.number().parse(result.data);
-}
-
 const suggestionRowsSchema = z.array(
   z.object({
     title: z.string(),
