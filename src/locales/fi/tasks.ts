@@ -5,8 +5,7 @@ export const tasks: Messages['tasks'] = {
   newTask: 'Uusi tehtävä',
   board: {
     title: 'Yhteiset tehtävät',
-    description:
-      'Valitse mikä tahansa tehtävä. Uusista tehtävistä saa lisäpisteitä vaihtelusta ja reiluudesta. Omat yksityiset tehtäväsi ovat Minä-sivulla.',
+    description: 'Valitse mikä tahansa tehtävä. Omat yksityiset tehtäväsi ovat Minä-sivulla.',
     showCompleted: 'Näytä tehdyt',
     show: 'Näytä',
     loadFailed: 'Tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',

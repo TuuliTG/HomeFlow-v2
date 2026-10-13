@@ -20,7 +20,7 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 ## Screens (mid-fi prototype, mobile, bottom tab bar: Me · Tasks · News · Rewards · Statistics)
 
 - **Shared tasks** (formerly Available tasks) — filter; task cards with points, tags
-  (frequency, type physical/meta), bonus points (e.g. "new for you", fairness boost), "last done by …";
+  (frequency, type physical/meta), bonus points (e.g. "new for you", fairness boost; later iteration), "last done by …";
   **Pick up task** button; **+** to create a task.
 - **Create / edit task** — reuse a previous task or type a new one; points, type, assignees (adults default, children
   opt-in); up to three pictures to clarify details; a **private** check mark keeps a task to yourself, without points. Creating a task gets positive
@@ -42,5 +42,5 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 
 - Self-assignment, never one person assigning to others.
 - Clearly separate **tasks done** from **tasks created** everywhere points appear.
-- Encourage rotation: bonus for unfamiliar tasks, diminishing points for repeating the same task.
+- Encourage rotation: bonus for unfamiliar tasks, diminishing points for repeating the same task (later iteration).
 - Avoid pure competition; praise each other with a thumbs up or a comment (News). Open question: reward reset period.
