@@ -17,7 +17,7 @@ test("family member sets a shared goal and a personal one, follows others' goals
   await nav.getByRole('link', { name: 'Rewards' }).click();
 
   await page.getByRole('link', { name: 'New goal' }).click();
-  await page.getByLabel('Reward').fill('Pizza night');
+  await page.getByLabel('Reward', { exact: true }).fill('Pizza night');
   await page.getByLabel('Points needed').fill('5');
   const newGoalResults = await new AxeBuilder({ page }).analyze();
   expect(newGoalResults.violations, 'a11y violations on New goal').toEqual([]);
@@ -26,7 +26,7 @@ test("family member sets a shared goal and a personal one, follows others' goals
   // One open shared goal at a time: the user is already in Pizza night.
   await page.getByRole('link', { name: 'New goal' }).click();
   await expect(page.getByRole('checkbox', { name: 'Me – goal in progress' })).toBeDisabled();
-  await page.getByLabel('Reward').fill('New book');
+  await page.getByLabel('Reward', { exact: true }).fill('New book');
   await page.getByLabel('Points needed').fill('20');
   await page.getByRole('group', { name: "Who it's for" }).getByText('One person').click();
   await page.getByRole('button', { name: 'Set goal' }).click();
@@ -64,7 +64,7 @@ test("family member sets a shared goal and a personal one, follows others' goals
 
   // The next shared goal counts from zero, and Ben hasn't done his share yet.
   await page.getByRole('link', { name: 'New goal' }).click();
-  await page.getByLabel('Reward').fill('Zoo trip');
+  await page.getByLabel('Reward', { exact: true }).fill('Zoo trip');
   await page.getByLabel('Points needed').fill('5');
   await page.getByLabel('Minimum points from Ben (optional)').fill('1');
   await page.getByRole('button', { name: 'Set goal' }).click();
