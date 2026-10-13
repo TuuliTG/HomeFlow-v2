@@ -9,7 +9,7 @@ meta work (planning, remembering, organising). Product context: [docs/product-br
 Decisions: [docs/adr/](docs/adr/README.md).
 
 Stack: Vite + React 19 + TypeScript (strict) · React Router · TanStack Query · Tailwind CSS v4 · Zod · Supabase ·
-Vitest + Testing Library · Playwright · deployed on Vercel. Node ≥ 22.12 (`.nvmrc`).
+Vitest + Testing Library · Playwright · deployed on Vercel. Node 22 (≥ 22.22.2), 24 (≥ 24.15) or 26+ (`.nvmrc`).
 
 ## Commands
 

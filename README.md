@@ -19,7 +19,7 @@ rewards instead of control. The app is available in English and Finnish.
 
 ## Getting started
 
-Requires Node ≥ 22.12 (see `.nvmrc`).
+Requires Node 22 (≥ 22.22.2), 24 (≥ 24.15) or 26+ (see `.nvmrc`).
 
 ```sh
 npm install
