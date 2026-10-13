@@ -364,6 +364,55 @@ describe('rewards and goals', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load the goals.");
   });
 
+  it('leaves out members who already have an open goal of that kind', async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    addChild('mia@example.com', 'Mia');
+    fakeGoalsBackend.addGoalAs(anna.id, {
+      title: 'Pizza night',
+      targetPoints: 30,
+      isShared: true,
+      participants: [
+        { userId: anna.id, minPoints: null },
+        { userId: ben.id, minPoints: null },
+      ],
+    });
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'New book', targetPoints: 5, isShared: false });
+    const user = userEvent.setup();
+    renderAppAt('/rewards/new');
+
+    const participants = await screen.findByRole('group', { name: 'Who takes part' });
+    const me = within(participants).getByRole('checkbox', {
+      name: 'Me – goal in progress',
+    });
+    expect(me).toBeDisabled();
+    expect(me).not.toBeChecked();
+    expect(
+      within(participants).getByRole('checkbox', { name: 'Ben – goal in progress' }),
+    ).toBeDisabled();
+    expect(within(participants).getByRole('checkbox', { name: 'Mia' })).toBeChecked();
+
+    await user.click(screen.getByRole('radio', { name: 'One person' }));
+    const whose = screen.getByLabelText('Whose goal');
+    expect(whose).toHaveDisplayValue('Ben');
+    expect(within(whose).getByRole('option', { name: 'Me – goal in progress' })).toBeDisabled();
+  });
+
+  it('says so when someone got an open goal of that kind meanwhile', async () => {
+    const anna = logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/rewards/new');
+
+    await user.type(await screen.findByLabelText('Reward'), 'Holiday');
+    await user.click(screen.getByRole('radio', { name: 'One person' }));
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'New book', targetPoints: 5, isShared: false });
+    await user.click(screen.getByRole('button', { name: 'Set goal' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Someone already has an open goal like this. Claim or delete it before setting the next one.',
+    );
+  });
+
   it('can be set by an adult for a child', async () => {
     logInAsFamilyMember();
     const ben = addBen();
@@ -454,6 +503,47 @@ describe('editing goals', () => {
     await user.click(screen.getByRole('link', { name: 'Edit goal: Pizza party' }));
     expect(await screen.findByLabelText('Minimum points from Me (optional)')).toHaveValue(2);
     expect(screen.getByRole('checkbox', { name: 'Ben' })).not.toBeChecked();
+  });
+
+  it('offers, when changing a goal, only members free for that kind, keeping those already in it', async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addBen();
+    // Set before one goal at a time: Anna and Ben take part in both.
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'Football', targetPoints: 5, isShared: true });
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'Zoo trip', targetPoints: 5, isShared: true });
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'New book', targetPoints: 5, isShared: false });
+    const user = userEvent.setup();
+    renderAppAt('/rewards');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit goal: Football' }));
+    const participants = await screen.findByRole('group', { name: 'Who takes part' });
+    const benBox = within(participants).getByRole('checkbox', { name: 'Ben' });
+    await user.click(benBox);
+    await user.click(benBox);
+    expect(benBox).toBeChecked();
+
+    await user.click(screen.getByRole('radio', { name: 'One person' }));
+    expect(screen.getByLabelText('Whose goal')).toHaveDisplayValue('Ben');
+    fakeGoalsBackend.addGoalAs(ben.id, { title: 'Sweets', targetPoints: 5, isShared: false });
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Someone already has an open goal like this.',
+    );
+  });
+
+  it('says so when everyone already has a goal of their own', async () => {
+    const anna = logInAsFamilyMember();
+    fakeGoalsBackend.addGoalAs(anna.id, { title: 'New book', targetPoints: 5, isShared: false });
+    const user = userEvent.setup();
+    renderAppAt('/rewards/new');
+
+    await user.click(await screen.findByRole('radio', { name: 'One person' }));
+    expect(
+      screen.getByText(
+        'Everyone already has a goal of their own in progress. Claim or delete one first.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText('Whose goal')).not.toBeInTheDocument();
   });
 
   it('turns a shared goal into a personal one for another member', async () => {

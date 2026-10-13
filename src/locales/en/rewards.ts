@@ -5,7 +5,7 @@ export const rewards = {
   eyebrow: 'Rewards',
   title: 'Rewards & goals',
   description:
-    'Doing shared tasks earns points. Points earned after a goal is set count towards it: those of everyone taking part in a shared goal, yours for your own.',
+    'Doing shared tasks earns points. Points earned after a goal is set count towards it: those of everyone taking part in a shared goal, yours for your own. Each of you has one shared goal and one of your own at a time.',
   newGoal: 'New goal',
   loadFailed: "We couldn't load the goals. Check your connection and reload the page.",
   sections: {
@@ -61,8 +61,10 @@ export const rewards = {
     whoFor: "Who it's for",
     scopes: { shared: 'Together', personal: 'One person' },
     scopeHints: {
-      shared: 'The points of everyone taking part count towards it, and the whole family sees it.',
-      personal: 'Only their points count towards it. The family sees it too and can cheer them on.',
+      shared:
+        'The points of everyone taking part count towards it, and the whole family sees it. Each person takes part in one shared goal at a time.',
+      personal:
+        'Only their points count towards it. The family sees it too and can cheer them on. Each person has one goal of their own at a time.',
     },
     whose: 'Whose goal',
     me: 'Me',
@@ -72,9 +74,14 @@ export const rewards = {
       'You can ask each one for a minimum, e.g. less for a younger child. The goal is reached only once everyone has earned theirs, so nobody does it all alone.',
     minimum: 'Minimum',
     minimumFor: (name: string) => `Minimum points from ${name} (optional)`,
+    hasOpenGoal: (name: string) => `${name} – goal in progress`,
+    everyoneHasOpenGoal:
+      'Everyone already has a goal of their own in progress. Claim or delete one first.',
     submit: 'Set goal',
     checkDetails: 'Check the goal details.',
     saveFailed: "We couldn't save the goal. Try again.",
+    openGoalExists:
+      'Someone already has an open goal like this. Claim or delete it before setting the next one.',
     edit: {
       title: 'Edit goal',
       description:

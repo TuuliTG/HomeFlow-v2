@@ -126,3 +126,37 @@ export function participantsShortOfMinimum(goal: Goal): GoalParticipant[] {
 export interface GoalSetter extends GoalMember {
   isChild: boolean;
 }
+
+/** Who already has an open goal: each member takes part in one shared goal and has one personal goal at a time. */
+export interface MembersWithOpenGoal {
+  shared: ReadonlySet<string>;
+  personal: ReadonlySet<string>;
+}
+
+/**
+ * The members with an open goal of each kind (ADR 0007). Like the database, it leaves out `changed`, the
+ * goal being changed, and its own participants or owner, so a goal set before one goal at a time can still
+ * be changed.
+ */
+export function membersWithOpenGoal(goals: Goal[], changed?: Goal): MembersWithOpenGoal {
+  const open = goals.filter(({ id, claimedAt }) => claimedAt === null && id !== changed?.id);
+  const inChanged = new Set(changed?.participants.map(({ id }) => id));
+  return {
+    shared: new Set(
+      open
+        .flatMap(({ participants }) => participants.map(({ id }) => id))
+        .filter((id) => !inChanged.has(id)),
+    ),
+    personal: new Set(
+      open.flatMap(({ owner }) => (owner && owner.id !== changed?.owner?.id ? [owner.id] : [])),
+    ),
+  };
+}
+
+/** Saving failed because someone already has an open goal of that kind, e.g. set by another adult meanwhile. */
+export class OpenGoalExistsError extends Error {
+  constructor() {
+    super('Someone already has an open goal of this kind');
+    this.name = 'OpenGoalExistsError';
+  }
+}

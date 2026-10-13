@@ -1,7 +1,15 @@
 import { z } from 'zod';
 
-import type { Goal, GoalSetter, NewGoal } from '@/features/rewards/goal';
+import {
+  type Goal,
+  type GoalSetter,
+  type NewGoal,
+  OpenGoalExistsError,
+} from '@/features/rewards/goal';
 import { getSupabaseClient } from '@/lib/supabase';
+
+/** unique_violation: someone already has an open goal of that kind (one at a time, ADR 0007). */
+const OPEN_GOAL_EXISTS = '23505';
 
 const goalRowsSchema = z.array(
   z.object({
@@ -54,7 +62,7 @@ export async function fetchGoals(): Promise<Goal[]> {
 
 /**
  * Sets a goal shared by the chosen members, each with their minimum, or a personal goal for one member;
- * only adults can.
+ * only adults can. Rejects with `OpenGoalExistsError` if someone already has an open goal of that kind.
  */
 export async function addGoal({ title, targetPoints, ownerId, participants }: NewGoal) {
   const client = getSupabaseClient();
@@ -71,12 +79,14 @@ export async function addGoal({ title, targetPoints, ownerId, participants }: Ne
       : await client
           .from('goals')
           .insert({ title, target_points: targetPoints, owner_id: ownerId });
+  if (error?.code === OPEN_GOAL_EXISTS) throw new OpenGoalExistsError();
   if (error) throw error;
 }
 
 /**
  * Changes an open goal's reward, points and who it is for, replacing a shared goal's participants; only
- * adults can. Points earned since the goal was set still count.
+ * adults can. Points earned since the goal was set still count. Rejects with `OpenGoalExistsError` like
+ * `addGoal()`.
  */
 export async function updateGoal(
   goalId: string,
@@ -92,6 +102,7 @@ export async function updateGoal(
       min_points: minPoints,
     })),
   });
+  if (error?.code === OPEN_GOAL_EXISTS) throw new OpenGoalExistsError();
   if (error) throw error;
 }
 

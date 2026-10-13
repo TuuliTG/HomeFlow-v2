@@ -1,6 +1,6 @@
 # 0007. Goals and rewards
 
-- **Updated:** 2026-10-11 (participants of shared goals; editing goals; helpers' shares count)
+- **Updated:** 2026-10-13 (one open goal at a time)
 
 ## Context
 
@@ -38,8 +38,17 @@ together, and members want small personal goals of their own; both must make cle
   invoker) returns the household's goals with their points, `reached`, `owner_name` and, for shared goals,
   `participants` (points and minimum each), open ones first (newest first), then claimed ones. The app shows `reached` rather than deciding
   itself, so the Claim button and `claim_goal_reward()` always agree.
-- **Points aren't spent**: the same points count towards every goal they apply to, so there is no balance to
-  reset or argue about, and setting a new goal starts it from zero.
+- **One open goal at a time** (#74): each member takes part in at most one open shared goal and has at most one
+  open personal goal, so one stretch of work doesn't pay for several rewards. The next goal can be set once the
+  current one is claimed or deleted. `add_shared_goal()` and `update_goal()` check participants
+  (`private.check_one_open_shared_goal()`), and a trigger on `goals` checks a personal goal's new owner
+  (`private.check_one_open_personal_goal()`); both raise `unique_violation` (23505) and take a per-household
+  advisory lock, so two adults can't both set one at once. Someone already in the goal being changed isn't checked
+  again, so goals that were open together before this rule can still be edited. The form shows members who
+  already have an open goal of that kind as unavailable, with the reason (`membersWithOpenGoal()`).
+- **Points aren't spent or reset**: a goal counts from zero, from when it was set, and points beyond its target
+  don't roll over. Nothing is subtracted, so there is no balance to argue about. Points earned over time stay in the
+  Statistics totals (ADR 0006), which goals never reset.
 - **Claiming**: `claim_goal_reward(goal_id)` (security definer) claims an open shared goal the user takes part in
   or their own personal goal, once `goal_is_reached()`, and only once (row lock). Claimed goals stay as
   history ("Rewards claimed") and can't be deleted. Undoing a task after a claim doesn't unclaim it.
@@ -49,8 +58,12 @@ together, and members want small personal goals of their own; both must make cle
 ## Consequences
 
 - A child can't suggest or change a goal; they ask an adult. Changing a goal keeps no history of what it was.
+- A family wanting two rewards at once makes them one goal, or claims one before setting the next.
 
 ## Alternatives considered
 
 - A points balance that rewards spend (needs a ledger and a reset policy, and invites competition); storing
   progress on the goal (drifts when tasks are undone or edited).
+- Several open goals sharing the same points (rewards stack, which feels too easy); choosing a goal for each
+  task's points (a step every time a task is done); rolling extra points over to the next goal (more bookkeeping,
+  and the totals already live in Statistics).

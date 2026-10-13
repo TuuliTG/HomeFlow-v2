@@ -11,10 +11,11 @@ import {
   goalScopes,
   type GoalSetter,
   MAX_TARGET_POINTS,
-  nameOf,
+  type MembersWithOpenGoal,
   type NewGoal,
   newGoalSchema,
   type NewParticipant,
+  OpenGoalExistsError,
 } from '@/features/rewards/goal';
 import {
   choicesOf,
@@ -22,6 +23,7 @@ import {
   type ParticipantChoices,
   participantsOf,
 } from '@/features/rewards/participantChoices';
+import { GoalOwnerField } from '@/features/rewards/GoalOwnerField';
 import { ParticipantsField } from '@/features/rewards/ParticipantsField';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -57,19 +59,27 @@ interface FormValues {
   choices: ParticipantChoices;
 }
 
-/** What the form starts with: the goal being changed, or a new goal shared by everyone. */
-function startingValues(
-  initial: Goal | undefined,
-  userId: string,
-  members: GoalSetter[],
-): FormValues {
+/** The members who can be chosen for each kind of goal: those without another open one (ADR 0007). */
+interface FreeMembers {
+  shared: GoalSetter[];
+  personal: GoalSetter[];
+}
+
+/**
+ * What the form starts with: the goal being changed, or a new goal shared by everyone free to take part,
+ * or for the user (or else the first member free) as their own. A personal goal switched to shared
+ * starts with everyone free to take part.
+ */
+function startingValues(initial: Goal | undefined, userId: string, free: FreeMembers): FormValues {
+  const freeOwner = free.personal.find(({ id }) => id === userId) ?? free.personal[0];
+  const ownerId = freeOwner?.id ?? userId;
   if (!initial) {
     return {
       title: '',
       targetPoints: DEFAULT_TARGET_POINTS,
       scope: 'shared',
-      ownerId: userId,
-      choices: everyoneTakingPart(members),
+      ownerId,
+      choices: everyoneTakingPart(free.shared),
     };
   }
   const { title, targetPoints, owner, participants } = initial;
@@ -77,15 +87,17 @@ function startingValues(
     title,
     targetPoints: String(targetPoints),
     scope: owner ? 'personal' : 'shared',
-    ownerId: owner?.id ?? userId,
-    choices: owner ? everyoneTakingPart(members) : choicesOf(participants),
+    ownerId: owner?.id ?? ownerId,
+    choices: owner ? everyoneTakingPart(free.shared) : choicesOf(participants),
   };
 }
 
 interface GoalFormProps {
   userId: string;
   members: GoalSetter[];
-  /** The open goal being changed; a new goal starts empty, shared by everyone. */
+  /** Who already has another open goal, so they can't be chosen for one of the same kind (ADR 0007). */
+  busy: MembersWithOpenGoal;
+  /** The open goal being changed; a new goal starts empty, shared by everyone free to take part. */
   initial?: Goal;
   submitLabel: string;
   isSaving: boolean;
@@ -97,6 +109,7 @@ interface GoalFormProps {
 export function GoalForm({
   userId,
   members,
+  busy,
   initial,
   submitLabel,
   isSaving,
@@ -104,7 +117,12 @@ export function GoalForm({
 }: GoalFormProps) {
   const messages = useMessages();
   const t = messages.rewards.form;
-  const [start] = useState(() => startingValues(initial, userId, members));
+  const [start] = useState(() =>
+    startingValues(initial, userId, {
+      shared: members.filter(({ id }) => !busy.shared.has(id)),
+      personal: members.filter(({ id }) => !busy.personal.has(id)),
+    }),
+  );
   const [title, setTitle] = useState(start.title);
   const [targetPoints, setTargetPoints] = useState(start.targetPoints);
   const [scope, setScope] = useState(start.scope);
@@ -137,8 +155,9 @@ export function GoalForm({
       if (input instanceof HTMLInputElement) input.focus();
       return;
     }
-    onSave(parsed.data).catch(() => {
-      setError({ field: null, message: t.saveFailed });
+    onSave(parsed.data).catch((saveError: unknown) => {
+      const message = saveError instanceof OpenGoalExistsError ? t.openGoalExists : t.saveFailed;
+      setError({ field: null, message });
     });
   }
 
@@ -200,10 +219,17 @@ export function GoalForm({
         </div>
 
         {scope === 'personal' ? (
-          <GoalOwnerField members={members} userId={userId} value={ownerId} onChange={setOwnerId} />
+          <GoalOwnerField
+            members={members}
+            busy={busy.personal}
+            userId={userId}
+            value={ownerId}
+            onChange={setOwnerId}
+          />
         ) : (
           <ParticipantsField
             members={members}
+            busy={busy.shared}
             userId={userId}
             choices={choices}
             onChange={setChoices}
@@ -229,37 +255,5 @@ export function GoalForm({
         </div>
       </form>
     </>
-  );
-}
-
-interface GoalOwnerFieldProps {
-  members: GoalSetter[];
-  userId: string;
-  value: string;
-  onChange: (ownerId: string) => void;
-}
-
-/** Whose personal goal it is: the user's own ("Me") or another member's, e.g. a child's. */
-function GoalOwnerField({ members, userId, value, onChange }: GoalOwnerFieldProps) {
-  const messages = useMessages();
-  const t = messages.rewards.form;
-  return (
-    <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-      {t.whose}
-      <select
-        name="ownerId"
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value);
-        }}
-        className={`${inputClassName} w-fit`}
-      >
-        {members.map((member) => (
-          <option key={member.id} value={member.id}>
-            {member.id === userId ? t.me : nameOf(member, messages)}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }

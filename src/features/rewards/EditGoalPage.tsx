@@ -3,7 +3,12 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
-import type { Goal, GoalSetter } from '@/features/rewards/goal';
+import {
+  type Goal,
+  type GoalSetter,
+  type MembersWithOpenGoal,
+  membersWithOpenGoal,
+} from '@/features/rewards/goal';
 import { ForAdults } from '@/features/rewards/ForAdults';
 import { GoalForm } from '@/features/rewards/GoalForm';
 import { useGoals, useUpdateGoal } from '@/features/rewards/useGoals';
@@ -28,7 +33,12 @@ export function EditGoalPage() {
       <ForAdults userId={user.id}>
         {(members) =>
           goal ? (
-            <EditGoal goal={goal} userId={user.id} members={members} />
+            <EditGoal
+              goal={goal}
+              userId={user.id}
+              members={members}
+              busy={membersWithOpenGoal(goals.data ?? [], goal)}
+            />
           ) : goals.isPending ? (
             <LoadingMessage />
           ) : (
@@ -49,10 +59,12 @@ function EditGoal({
   goal,
   userId,
   members,
+  busy,
 }: {
   goal: Goal;
   userId: string;
   members: GoalSetter[];
+  busy: MembersWithOpenGoal;
 }) {
   const updateGoal = useUpdateGoal(userId);
   const navigate = useNavigate();
@@ -61,6 +73,7 @@ function EditGoal({
     <GoalForm
       userId={userId}
       members={members}
+      busy={busy}
       initial={goal}
       submitLabel={t.edit.submit}
       isSaving={updateGoal.isPending}
