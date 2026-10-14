@@ -52,6 +52,8 @@ async function forget(endpoint: string): Promise<void> {
 
 export const pushDependencies: PushDependencies = { subscriptionsOf, send, forget };
 
+export const missingVapidKeys = 'Set VAPID_SUBJECT, VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY';
+
 // Checked per request so a missing secret shows up as a clear error instead of a function that
 // won't start.
 export function configureVapid(): boolean {

@@ -2,6 +2,7 @@
  * What the send-reminders Edge Function does (ADR 0004, ADR 0005), without Deno, Supabase or
  * web-push, so it can be unit-tested with Vitest. index.ts supplies the real dependencies.
  */
+import type { ReportError } from '../_shared/monitoring.ts';
 import { type PushDependencies, type PushResult, pushToUsers } from '../_shared/push.ts';
 
 /** A reminder that has come due for a task that is still the user's to do. */
@@ -13,6 +14,7 @@ export interface DueReminder {
 export interface RemindDependencies extends PushDependencies {
   /** Removes every due reminder from the database and returns those still worth sending. */
   takeDueReminders: () => Promise<DueReminder[]>;
+  reportError: ReportError;
 }
 
 /** Sends each due reminder to its user's devices; returns the totals over all of them. */
@@ -22,8 +24,8 @@ export async function sendDueReminders(deps: RemindDependencies): Promise<PushRe
     reminders.map(({ userId, taskTitle }) =>
       // Reminders are already taken from the database, so one that fails mustn't stop the others.
       pushToUsers([userId], { title: 'Reminder', body: taskTitle, url: '/me' }, deps).catch(
-        (error: unknown) => {
-          console.error('send-reminders: a reminder failed', error);
+        async (error: unknown) => {
+          await deps.reportError('send-reminders: a reminder failed', error);
           return { sent: 0, removed: 0, failed: 1 };
         },
       ),

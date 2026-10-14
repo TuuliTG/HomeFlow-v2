@@ -3,6 +3,7 @@
  * with Vitest. index.ts supplies the real dependencies.
  */
 import { failure, type JsonAnswer, stringField } from '../_shared/http.ts';
+import type { ReportError } from '../_shared/monitoring.ts';
 
 /** Like `profiles.display_name`. */
 const NAME_MAX_LENGTH = 50;
@@ -32,6 +33,7 @@ export interface AddChildDependencies {
   deleteLogin: (userId: string) => Promise<void>;
   /** `add_child()`: rejects with `NotAnAdultError` when the adult isn't one. */
   addChild: (adultId: string, childId: string, displayName: string) => Promise<SignInCode>;
+  reportError: ReportError;
 }
 
 function bearerToken(authorization: string | null): string | null {
@@ -63,9 +65,11 @@ export async function addChild(
     return { status: 200, body: await deps.addChild(adultId, childId, displayName) };
   } catch (error) {
     // Failing to clean up mustn't hide why adding failed; the stray login can't sign in anyway.
-    await deps.deleteLogin(childId).catch((deleteError: unknown) => {
-      console.error('add-child: could not remove the unused login', childId, deleteError);
-    });
+    await deps
+      .deleteLogin(childId)
+      .catch((deleteError: unknown) =>
+        deps.reportError('add-child: could not remove the unused login', deleteError, { childId }),
+      );
     // add_child() checks again, in case the user was made a child meanwhile.
     if (error instanceof NotAnAdultError) return failure(403, 'not_an_adult');
     throw error;
