@@ -15,6 +15,7 @@ rewards instead of control. The app is available in English and Finnish.
 | Backend      | Supabase (Postgres with Row Level Security, Auth, Edge Functions, Realtime) |
 | Testing      | Vitest · Testing Library · Playwright + axe                                 |
 | Quality      | ESLint · Prettier · knip                                                    |
+| Monitoring   | Sentry (errors from the app and Edge Functions, alerts by email and app)    |
 | CI & hosting | GitHub Actions · Vercel                                                     |
 
 ## Getting started
@@ -63,7 +64,7 @@ npm run db:stop
 src/app/            shell, routing, providers
 src/features/<x>/   feature code: components, hooks, api.ts, tests
 src/components/ui/  shared presentational components
-src/lib/            infrastructure (env, Supabase client, auth, i18n, push message format)
+src/lib/            infrastructure (env, Supabase client, auth, i18n, error reporting, push message format)
 src/locales/<lang>/ the app's texts, one folder per language (English is the source)
 src/sw.ts           service worker: offline cache and push notifications
 e2e/                Playwright specs
@@ -76,12 +77,15 @@ supabase/           config, SQL migrations, database tests, Edge Functions
 - **Edge Functions** (Deno): `add-child` and `child-sign-in` for children without email, `notify-household` and
   `send-reminders` for push notifications.
 - **Texts** live in `src/locales/`, never inline in components.
+- **Errors:** a crashed screen shows a reload page; crashes, unhandled errors and Edge Function failures are
+  reported to Sentry when a DSN is set.
 
 Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
 
 ## Services and deployment
 
 - **Supabase** hosts the database, authentication (email + password) and Edge Functions.
+- **Sentry** collects errors and sends alerts; the build uploads source maps to it, then deletes them.
 - **Vercel** builds the app (settings and SPA routing in `vercel.json`) and deploys `main` to production and every
   PR to a preview URL.
 - **GitHub Actions** runs lint, types, dead-code check, unit, database and e2e tests, dependency audit and CodeQL on
@@ -94,6 +98,10 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
 | `VITE_SUPABASE_URL`      | `.env.local`, Vercel | Supabase project URL                                  |
 | `VITE_SUPABASE_ANON_KEY` | `.env.local`, Vercel | Supabase anon key (public; access is enforced by RLS) |
 | `VITE_VAPID_PUBLIC_KEY`  | `.env.local`, Vercel | Optional; enables push notifications                  |
+| `VITE_SENTRY_DSN`        | Vercel               | Optional; reports app errors to Sentry                |
+| `SENTRY_AUTH_TOKEN`      | Vercel               | Optional; uploads source maps (with `SENTRY_ORG`,     |
+|                          |                      | `SENTRY_PROJECT`)                                     |
+| `SENTRY_DSN`             | Supabase secrets     | Optional; reports Edge Function errors to Sentry      |
 
 ### One-time setup
 
@@ -115,3 +123,12 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
    5. **Supabase → Integrations → Cron:** every minute (`* * * * *`), call the `send-reminders` function (POST)
       with the same `x-webhook-secret` header.
    6. In the app, turn on notifications on each device (on iPhone, add HomeFlow to the Home Screen first).
+5. **Error monitoring** (optional):
+   1. Create a [Sentry](https://sentry.io) account with **EU data storage**, and a **React** project. In
+      **Settings → Security & Privacy**, turn on _Prevent Storing of IP Addresses_ and _Data Scrubber_.
+   2. **Vercel:** set `VITE_SENTRY_DSN` (the project's DSN), and for readable stack traces `SENTRY_ORG`,
+      `SENTRY_PROJECT` and `SENTRY_AUTH_TOKEN` (an organization token from **Settings → Auth Tokens**). Redeploy.
+   3. **Supabase → Edge Functions → Secrets:** add `SENTRY_DSN` (the same DSN), then redeploy all functions:
+      `npx supabase functions deploy`.
+   4. **Sentry → Alerts:** keep the default _new issue_ alert, and add one for _number of events in an issue is
+      more than 10 in 1 hour_. Alerts go by email; install the Sentry mobile app for push notifications.

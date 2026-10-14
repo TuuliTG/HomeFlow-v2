@@ -1,6 +1,6 @@
 # 0002. Stack and architecture
 
-- **Updated:** 2026-10-11
+- **Updated:** 2026-10-14
 
 ## Context
 
@@ -27,11 +27,18 @@ maintained by agents, so strict types and a predictable structure matter more th
   chosen on the Me page (stored per device in `localStorage`), else the browser's, else English; `<html lang>`
   follows it. Adding one: copy `src/locales/en`, translate, register it in `src/lib/i18n/languages.ts`.
 
+- **Error monitoring with Sentry** (EU region, free plan), on only where a DSN is set. The app loads the SDK
+  lazily from `startMonitoring()` (`src/lib/monitoring.ts`) and sends no user info, cookies, headers, bodies or
+  query strings. A route that crashes shows `ErrorPage` (the `errorElement` inside `LanguageProvider`), which calls
+  `reportError()`. The Edge Functions report through `_shared/deno/monitoring.ts`; their pure halves take a
+  `ReportError` dependency instead of calling `console.error`. Builds with `SENTRY_AUTH_TOKEN` upload hidden
+  source maps and then delete them. No tracing or session replay.
+
 ## Consequences
 
 - TypeScript fails the build when a language is missing a text or gives a function the wrong shape. Unit tests
   without `LanguageProvider` see English. Push notification texts are built server-side and are still English.
-- No servers to run; the free tiers are enough for now.
+- No servers to run; the free tiers are enough for now. Sentry's free plan allows about 5k errors a month.
 - Security rests on RLS policies, so each one needs pgTAP tests.
 - No SSR; the service worker's cache must be kept in mind when debugging stale content.
 
@@ -39,5 +46,6 @@ maintained by agents, so strict types and a predictable structure matter more th
 
 - Next.js (SSR not needed), React Native (app stores not needed), Firebase (NoSQL makes points and fairness
   queries harder), own Node API (more to host and secure).
+- Supabase and Vercel logs alone for monitoring: no alerts, and nothing from users' browsers.
 - i18next with JSON files for languages: a dependency and string keys that need extra setup to type-check, more
   than a few hundred short texts need. Worth revisiting if translators need a translation service.
