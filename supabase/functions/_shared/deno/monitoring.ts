@@ -21,7 +21,7 @@ if (dsn) {
 
 /** Logs the failure, as Supabase's function logs show, and reports it to Sentry when SENTRY_DSN is set. */
 export const reportError: ReportError = async (message, error, details) => {
-  console.error(message, details ?? '', error);
+  console.error(message, ...(details ? [details] : []), error);
   if (!dsn) return;
   Sentry.captureException(error, { tags: { failure: message }, extra: details });
   await Sentry.flush(FLUSH_TIMEOUT_MS);

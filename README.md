@@ -93,15 +93,15 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
 
 ### Environment variables
 
-| Variable                 | Where                | Purpose                                               |
-| ------------------------ | -------------------- | ----------------------------------------------------- |
-| `VITE_SUPABASE_URL`      | `.env.local`, Vercel | Supabase project URL                                  |
-| `VITE_SUPABASE_ANON_KEY` | `.env.local`, Vercel | Supabase anon key (public; access is enforced by RLS) |
-| `VITE_VAPID_PUBLIC_KEY`  | `.env.local`, Vercel | Optional; enables push notifications                  |
-| `VITE_SENTRY_DSN`        | Vercel               | Optional; reports app errors to Sentry                |
-| `SENTRY_AUTH_TOKEN`      | Vercel               | Optional; uploads source maps (with `SENTRY_ORG`,     |
-|                          |                      | `SENTRY_PROJECT`)                                     |
-| `SENTRY_DSN`             | Supabase secrets     | Optional; reports Edge Function errors to Sentry      |
+| Variable                       | Where                | Purpose                                               |
+| ------------------------------ | -------------------- | ----------------------------------------------------- |
+| `VITE_SUPABASE_URL`            | `.env.local`, Vercel | Supabase project URL                                  |
+| `VITE_SUPABASE_ANON_KEY`       | `.env.local`, Vercel | Supabase anon key (public; access is enforced by RLS) |
+| `VITE_VAPID_PUBLIC_KEY`        | `.env.local`, Vercel | Optional; enables push notifications                  |
+| `VITE_SENTRY_DSN`              | Vercel               | Optional; reports app errors to Sentry                |
+| `SENTRY_AUTH_TOKEN`            | Vercel               | Optional; uploads source maps to Sentry               |
+| `SENTRY_ORG`, `SENTRY_PROJECT` | Vercel               | Where the source maps go                              |
+| `SENTRY_DSN`                   | Supabase secrets     | Optional; reports Edge Function errors to Sentry      |
 
 ### One-time setup
 
