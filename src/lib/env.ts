@@ -22,6 +22,17 @@ export function readVapidPublicKey(source: Record<string, unknown>): string | nu
   return parsed.success ? parsed.data : null;
 }
 
+const sentryDsnSchema = z.url({ protocol: /^https$/ });
+
+/**
+ * The Sentry DSN errors are reported to (ADR 0002), or null when error reporting is off, as it is in
+ * local development and tests. Like the VAPID key it is optional and public.
+ */
+export function readSentryDsn(source: Record<string, unknown>): string | null {
+  const parsed = sentryDsnSchema.safeParse(source.VITE_SENTRY_DSN);
+  return parsed.success ? parsed.data : null;
+}
+
 /**
  * Validates environment variables so misconfiguration fails fast with a clear message
  * instead of surfacing later as an obscure network error.

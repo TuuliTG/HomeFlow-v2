@@ -1,6 +1,7 @@
 import { Outlet, type RouteObject } from 'react-router';
 
 import { AppShell } from '@/app/AppShell';
+import { ErrorPage } from '@/app/ErrorPage';
 import { NotFoundPage } from '@/app/NotFoundPage';
 import { OnboardingGate } from '@/app/OnboardingGate';
 import { paths } from '@/app/paths';
@@ -28,43 +29,52 @@ export const routes: RouteObject[] = [
   {
     element: (
       <LanguageProvider>
-        <AuthProvider beforeLogOut={turnOffNotificationsOnThisDevice}>
-          <Outlet />
-        </AuthProvider>
+        <Outlet />
       </LanguageProvider>
     ),
     children: [
-      { path: paths.login, element: <LoginPage /> },
-      { path: paths.householdSetup, element: <HouseholdSetupPage /> },
       {
+        // Inside LanguageProvider, so a crash anywhere below is explained in the user's language.
         element: (
-          <OnboardingGate>
-            <AppShell />
-          </OnboardingGate>
+          <AuthProvider beforeLogOut={turnOffNotificationsOnThisDevice}>
+            <Outlet />
+          </AuthProvider>
         ),
+        errorElement: <ErrorPage />,
         children: [
-          { path: paths.tasks, element: <SharedTasksPage /> },
-          { path: paths.newTask, element: <CreateTaskPage /> },
-          { path: paths.editTask(':taskId'), element: <EditTaskPage /> },
-          { path: paths.taskHelpers(':taskId'), element: <TaskHelpersPage /> },
+          { path: paths.login, element: <LoginPage /> },
+          { path: paths.householdSetup, element: <HouseholdSetupPage /> },
           {
-            path: paths.me,
             element: (
-              <>
-                <MyTasksPage />
-                <FamilySettings />
-                <NotificationSettings />
-                <LanguageSettings />
-              </>
+              <OnboardingGate>
+                <AppShell />
+              </OnboardingGate>
             ),
+            children: [
+              { path: paths.tasks, element: <SharedTasksPage /> },
+              { path: paths.newTask, element: <CreateTaskPage /> },
+              { path: paths.editTask(':taskId'), element: <EditTaskPage /> },
+              { path: paths.taskHelpers(':taskId'), element: <TaskHelpersPage /> },
+              {
+                path: paths.me,
+                element: (
+                  <>
+                    <MyTasksPage />
+                    <FamilySettings />
+                    <NotificationSettings />
+                    <LanguageSettings />
+                  </>
+                ),
+              },
+              { path: paths.news, element: <NewsPage /> },
+              { path: paths.rewards, element: <RewardsPage /> },
+              { path: paths.newGoal, element: <NewGoalPage /> },
+              { path: paths.editGoal(':goalId'), element: <EditGoalPage /> },
+              { path: paths.statistics, element: <StatisticsPage /> },
+              { path: paths.household, element: <HouseholdPage /> },
+              { path: '*', element: <NotFoundPage /> },
+            ],
           },
-          { path: paths.news, element: <NewsPage /> },
-          { path: paths.rewards, element: <RewardsPage /> },
-          { path: paths.newGoal, element: <NewGoalPage /> },
-          { path: paths.editGoal(':goalId'), element: <EditGoalPage /> },
-          { path: paths.statistics, element: <StatisticsPage /> },
-          { path: paths.household, element: <HouseholdPage /> },
-          { path: '*', element: <NotFoundPage /> },
         ],
       },
     ],
