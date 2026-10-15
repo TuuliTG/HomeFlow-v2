@@ -5,6 +5,7 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { GoalCard } from '@/features/rewards/GoalCard';
 import { type Goal, nameOf } from '@/features/rewards/goal';
+import { RewardCelebration } from '@/features/rewards/RewardCelebration';
 import { useGoals, useGoalSetters } from '@/features/rewards/useGoals';
 import { useLoggedInUser } from '@/lib/auth';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
@@ -35,6 +36,7 @@ export function RewardsPage() {
         <NewGoalLink />
       </div>
       <Goals />
+      <RewardCelebration />
     </>
   );
 }
