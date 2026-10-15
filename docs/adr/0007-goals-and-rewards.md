@@ -37,7 +37,8 @@ together, and members want small personal goals of their own; both must make cle
   shares included (`private.task_credits`, ADR 0004). `household_goals()` (security
   invoker) returns the household's goals with their points, `reached`, `owner_name` and, for shared goals,
   `participants` (points and minimum each), open ones first (newest first), then claimed ones. The app shows `reached` rather than deciding
-  itself, so the Claim button and `claim_goal_reward()` always agree.
+  itself, so the Claim button and `claim_goal_reward()` always agree. A shared goal's card shows each participant's
+  points in full against their minimum (`37 / 50`, also past it), with a bar on the goal's scale marking the minimum.
 - **One open goal at a time** (#74): each member takes part in at most one open shared goal and has at most one
   open personal goal, so one stretch of work doesn't pay for several rewards. The next goal can be set once the
   current one is claimed or deleted. `add_shared_goal()` and `update_goal()` check participants
