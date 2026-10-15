@@ -130,5 +130,5 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
       `SENTRY_PROJECT` and `SENTRY_AUTH_TOKEN` (an organization token from **Settings → Auth Tokens**). Redeploy.
    3. **Supabase → Edge Functions → Secrets:** add `SENTRY_DSN` (the same DSN), then redeploy all functions:
       `npx supabase functions deploy`.
-   4. **Sentry → Alerts:** keep the default _new issue_ alert, and add one for _number of events in an issue is
-      more than 10 in 1 hour_. Alerts go by email; install the Sentry mobile app for push notifications.
+   4. **Sentry → Alerts:** keep the default _High priority issues_ alert (new, regressed and escalating issues) by
+      email. Install the Sentry mobile app for push notifications.
