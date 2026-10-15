@@ -10,6 +10,10 @@
   --animate-star-burst: star-burst 900ms ease-out both;
   --animate-float-up: float-up 1200ms ease-out both;
 
+  /* Celebrating a claimed reward (RewardCelebration, CLAIM_CELEBRATION_DURATION_MS). */
+  --animate-confetti-fall: confetti-fall 2000ms ease-in both;
+  --animate-reward-pop: reward-pop 3000ms ease-out both;
+
   /* A star flies from the centre to (--star-x, --star-y), spinning and fading. */
   @keyframes star-burst {
     from {
@@ -34,6 +38,33 @@
     }
     100% {
       transform: translateY(-2.5rem) scale(0);
+    }
+  }
+
+  /* A piece of confetti falls from above the top of the screen to below its bottom, drifting and spinning. */
+  @keyframes confetti-fall {
+    from {
+      transform: translate(0, -2rem) rotate(0);
+    }
+    to {
+      transform: translate(var(--confetti-drift), 100vh) rotate(var(--confetti-spin));
+    }
+  }
+
+  /* Pops in, stays, then shrinks away rather than fading, so the text keeps its contrast throughout. */
+  @keyframes reward-pop {
+    0% {
+      transform: scale(0.4);
+    }
+    10% {
+      transform: scale(1.1);
+    }
+    15%,
+    85% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(0);
     }
   }
 }

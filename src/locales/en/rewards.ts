@@ -27,6 +27,11 @@ export const rewards = {
   owner: { shared: 'Shared', yours: 'Yours', named: (name: string) => `${name}'s` },
   claimedOn: (date: string) => `Claimed ${date}`,
   aFamilyMember: 'A family member',
+  /** The short celebration when the user claims a reward. */
+  celebration: {
+    claimed: (title: string) => `Reward claimed: ${title}!`,
+    badge: 'Reward claimed!',
+  },
   goal: {
     othersGoal: (name: string) => `${name}'s goal`,
     progress: (points: number, target: number) => `${String(points)} / ${String(target)} points`,

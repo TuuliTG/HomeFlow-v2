@@ -25,6 +25,10 @@ export const rewards: Messages['rewards'] = {
   owner: { shared: 'Yhteinen', yours: 'Sinun', named: (name) => name },
   claimedOn: (date) => `Lunastettu ${date}`,
   aFamilyMember: 'Perheenjäsen',
+  celebration: {
+    claimed: (title) => `Palkinto lunastettu: ${title}!`,
+    badge: 'Palkinto lunastettu!',
+  },
   goal: {
     othersGoal: (name) => `Tavoitteen asettaja: ${name}`,
     progress: (points, target) => `${String(points)} / ${String(target)} pistettä`,

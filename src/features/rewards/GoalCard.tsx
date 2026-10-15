@@ -178,7 +178,7 @@ function ClaimReward({ goal, userId }: { goal: Goal; userId: string }) {
           aria-label={t.claimLabel(goal.title)}
           disabled={claim.isPending}
           onClick={() => {
-            claim.mutate(goal.id);
+            claim.mutate(goal);
           }}
           className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
         >

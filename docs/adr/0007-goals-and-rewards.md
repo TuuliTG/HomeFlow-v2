@@ -1,6 +1,6 @@
 # 0007. Goals and rewards
 
-- **Updated:** 2026-10-13 (one open goal at a time)
+- **Updated:** 2026-10-15 (celebrating a claimed reward)
 
 ## Context
 
@@ -53,6 +53,10 @@ together, and members want small personal goals of their own; both must make cle
 - **Claiming**: `claim_goal_reward(goal_id)` (security definer) claims an open shared goal the user takes part in
   or their own personal goal, once `goal_is_reached()`, and only once (row lock). Claimed goals stay as
   history ("Rewards claimed") and can't be deleted. Undoing a task after a claim doesn't unclaim it.
+- **Celebrating a claim**: once claiming succeeds, confetti falls over the screen around a "Reward claimed!" badge
+  for three seconds (`RewardCelebration`, found from the claim's mutation state so it outlives the goal card). Like
+  the done-task celebration (ADR 0004) it is plain CSS, no dependency, decorative (`aria-hidden`, no pointer
+  events) with a screen-reader status instead; with reduced motion only the badge shows, without moving.
 - The Rewards screen refetches goals when it opens (TanStack Query default), so tasks done elsewhere show up; no
   live updates for goals.
 
