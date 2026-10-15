@@ -224,7 +224,8 @@ describe('rewards and goals', () => {
     const zoo = await findGoal('Shared goals', 'Zoo trip');
     expect(zoo).toHaveTextContent('10 / 10 points');
     expect(zoo).toHaveTextContent('Enough points! One person still needs to earn their share.');
-    expect(zoo).toHaveTextContent('You3 / 3 ✓, done');
+    // Points past a minimum still show, so the family sees how much each one did.
+    expect(zoo).toHaveTextContent('You9 / 3 ✓, done');
     expect(zoo).toHaveTextContent('Ben1 / 3');
     expect(within(zoo).queryByRole('button', { name: /Claim reward/ })).not.toBeInTheDocument();
     const movie = await findGoal('Shared goals', 'Movie night');

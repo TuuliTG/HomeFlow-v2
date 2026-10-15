@@ -95,18 +95,21 @@ function progressMessage(goal: Goal, t: Messages): string {
 
 /**
  * Who takes part in a shared goal and what each has earned towards it, against their minimum if they
- * have one, so the family sees who still has to help.
+ * have one, so the family sees who still has to help and how much each one has done.
  */
 function Participants({ goal, userId }: { goal: Goal; userId: string }) {
   const t = useMessages();
   return (
-    <ul aria-label={t.rewards.goal.participantsLabel(goal.title)} className="flex flex-col gap-1">
+    <ul aria-label={t.rewards.goal.participantsLabel(goal.title)} className="flex flex-col gap-3">
       {goal.participants.map((participant) => (
-        <li key={participant.id} className="flex items-center justify-between gap-4 text-sm">
-          <span className="text-slate-700">
-            {participant.id === userId ? t.common.you : nameOf(participant, t)}
-          </span>
-          <ParticipantPoints participant={participant} />
+        <li key={participant.id} className="flex flex-col gap-1.5 text-sm">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-slate-700">
+              {participant.id === userId ? t.common.you : nameOf(participant, t)}
+            </span>
+            <ParticipantPoints participant={participant} />
+          </div>
+          <ContributionBar participant={participant} targetPoints={goal.targetPoints} />
         </li>
       ))}
     </ul>
@@ -122,7 +125,7 @@ function ParticipantPoints({ participant }: { participant: GoalParticipant }) {
   const hasShare = points >= minPoints;
   return (
     <span className={hasShare ? 'font-medium text-emerald-800' : 'text-slate-600'}>
-      {Math.min(points, minPoints)} / {minPoints}
+      {points} / {minPoints}
       {hasShare && (
         <>
           <span aria-hidden="true"> ✓</span>
@@ -130,6 +133,36 @@ function ParticipantPoints({ participant }: { participant: GoalParticipant }) {
         </>
       )}
     </span>
+  );
+}
+
+/**
+ * A participant's points on the scale of the whole goal, with a mark at their minimum, so points past it
+ * show too. Decorative: the points next to the name say the same.
+ */
+function ContributionBar({
+  participant,
+  targetPoints,
+}: {
+  participant: GoalParticipant;
+  targetPoints: number;
+}) {
+  const { points, minPoints } = participant;
+  const widthOf = (value: number) => `${String(Math.min(value / targetPoints, 1) * 100)}%`;
+  const hasShare = minPoints !== null && points >= minPoints;
+  return (
+    <div aria-hidden="true" className="relative h-2 rounded-full bg-slate-200">
+      <div
+        className={`absolute inset-y-0 left-0 rounded-full ${hasShare ? 'bg-emerald-600' : 'bg-brand-600'}`}
+        style={{ width: widthOf(points) }}
+      />
+      {minPoints !== null && (
+        <div
+          className="absolute -inset-y-1 w-0.5 -translate-x-1/2 rounded-full bg-slate-700"
+          style={{ left: widthOf(minPoints) }}
+        />
+      )}
+    </div>
   );
 }
 
