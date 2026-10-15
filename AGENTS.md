@@ -33,6 +33,9 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node 22 (≥ 22.22
   Cross-feature composition (e.g. `OnboardingGate`) lives in `src/app`.
 - `src/sw.ts` is the service worker (ADR 0005): WebWorker types via `tsconfig.sw.json`, no React or DOM. It may
   import only `src/lib` modules that don't touch the DOM; put its logic there so it can be unit-tested.
+- Errors: a crashed screen is reported by `ErrorPage`; report other errors the app catches but can't handle with
+  `reportError()` from `@/lib/monitoring`. Edge Functions report through a `ReportError` dependency, not
+  `console.error` (ADR 0002).
 - Data access: components → hooks (TanStack Query) → feature `api.ts` → `getSupabaseClient()`. Never call Supabase
   from components (ESLint enforces the import ban). Validate external data with Zod.
 - Every Supabase table has Row Level Security enabled with explicit policies. Scope family data with

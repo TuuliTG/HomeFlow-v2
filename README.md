@@ -15,6 +15,7 @@ rewards instead of control. The app is available in English and Finnish.
 | Backend      | Supabase (Postgres with Row Level Security, Auth, Edge Functions, Realtime) |
 | Testing      | Vitest · Testing Library · Playwright + axe                                 |
 | Quality      | ESLint · Prettier · knip                                                    |
+| Monitoring   | Sentry (errors from the app and Edge Functions, alerts by email and app)    |
 | CI & hosting | GitHub Actions · Vercel                                                     |
 
 ## Getting started
@@ -63,7 +64,7 @@ npm run db:stop
 src/app/            shell, routing, providers
 src/features/<x>/   feature code: components, hooks, api.ts, tests
 src/components/ui/  shared presentational components
-src/lib/            infrastructure (env, Supabase client, auth, i18n, push message format)
+src/lib/            infrastructure (env, Supabase client, auth, i18n, error reporting, push message format)
 src/locales/<lang>/ the app's texts, one folder per language (English is the source)
 src/sw.ts           service worker: offline cache and push notifications
 e2e/                Playwright specs
@@ -76,12 +77,15 @@ supabase/           config, SQL migrations, database tests, Edge Functions
 - **Edge Functions** (Deno): `add-child` and `child-sign-in` for children without email, `notify-household` and
   `send-reminders` for push notifications.
 - **Texts** live in `src/locales/`, never inline in components.
+- **Errors:** a crashed screen shows a reload page; crashes, unhandled errors and Edge Function failures are
+  reported to Sentry when a DSN is set.
 
 Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
 
 ## Services and deployment
 
 - **Supabase** hosts the database, authentication (email + password) and Edge Functions.
+- **Sentry** collects errors and sends alerts; the build uploads source maps to it, then deletes them.
 - **Vercel** builds the app (settings and SPA routing in `vercel.json`) and deploys `main` to production and every
   PR to a preview URL.
 - **GitHub Actions** runs lint, types, dead-code check, unit, database and e2e tests, dependency audit and CodeQL on
@@ -89,11 +93,15 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
 
 ### Environment variables
 
-| Variable                 | Where                | Purpose                                               |
-| ------------------------ | -------------------- | ----------------------------------------------------- |
-| `VITE_SUPABASE_URL`      | `.env.local`, Vercel | Supabase project URL                                  |
-| `VITE_SUPABASE_ANON_KEY` | `.env.local`, Vercel | Supabase anon key (public; access is enforced by RLS) |
-| `VITE_VAPID_PUBLIC_KEY`  | `.env.local`, Vercel | Optional; enables push notifications                  |
+| Variable                       | Where                | Purpose                                               |
+| ------------------------------ | -------------------- | ----------------------------------------------------- |
+| `VITE_SUPABASE_URL`            | `.env.local`, Vercel | Supabase project URL                                  |
+| `VITE_SUPABASE_ANON_KEY`       | `.env.local`, Vercel | Supabase anon key (public; access is enforced by RLS) |
+| `VITE_VAPID_PUBLIC_KEY`        | `.env.local`, Vercel | Optional; enables push notifications                  |
+| `VITE_SENTRY_DSN`              | Vercel               | Optional; reports app errors to Sentry                |
+| `SENTRY_AUTH_TOKEN`            | Vercel               | Optional; uploads source maps to Sentry               |
+| `SENTRY_ORG`, `SENTRY_PROJECT` | Vercel               | Where the source maps go                              |
+| `SENTRY_DSN`                   | Supabase secrets     | Optional; reports Edge Function errors to Sentry      |
 
 ### One-time setup
 
@@ -115,3 +123,30 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
    5. **Supabase → Integrations → Cron:** every minute (`* * * * *`), call the `send-reminders` function (POST)
       with the same `x-webhook-secret` header.
    6. In the app, turn on notifications on each device (on iPhone, add HomeFlow to the Home Screen first).
+5. **Error monitoring** (optional):
+   1. **Sentry account:** sign up at [sentry.io](https://sentry.io) and choose **EU data storage** (it can't be
+      changed later). In **Settings → Security & Privacy**, turn on _Prevent Storing of IP Addresses_ and
+      _Data Scrubber_.
+   2. **Sentry project:** create one with platform **React** and only the product **Error monitoring** (leave
+      Logging, Session replay, Tracing and Metrics off; the app sends none of them). For alerts keep
+      **High priority issues** (new, regressed and escalating issues) with **Email**. Skip the SDK setup
+      instructions; the code already does it.
+   3. **DSN:** copy it from the setup page (`dsn:` in `Sentry.init`) or **Settings → Projects → HomeFlow →
+      Client Keys (DSN)**. It looks like `https://…@o123.ingest.de.sentry.io/456`; `.de.` means EU storage. It is
+      public by design.
+   4. **Auth token** (for readable stack traces): **Settings → Organization Tokens → Create New Token**, named
+      e.g. `Vercel source maps (HomeFlow)`; its `org:ci` scope only uploads source maps. Copy it at once, Sentry
+      shows it only once.
+   5. **Vercel → project → Settings → Environment Variables**, each for **Production** and **Preview** (not
+      Development, so local runs send nothing):
+      - `VITE_SENTRY_DSN`: the DSN
+      - `SENTRY_AUTH_TOKEN`: the auth token, marked **Sensitive**
+      - `SENTRY_ORG`: the organization slug, the part after `sentry.io/organizations/` in Sentry's URL
+      - `SENTRY_PROJECT`: the project slug, shown in **Settings → Projects**
+
+      Then redeploy (**Deployments → ⋯ → Redeploy**); variables apply only to new builds.
+
+   6. **Supabase → Edge Functions → Secrets:** add `SENTRY_DSN` with the same DSN. Then deploy the functions from
+      an up-to-date `main` (first `npx supabase login` and `npx supabase link --project-ref <ref>` if the CLI
+      asks): `npx supabase functions deploy`.
+   7. **Notifications:** alerts arrive by email; install the Sentry mobile app and sign in for push notifications.

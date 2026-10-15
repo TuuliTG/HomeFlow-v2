@@ -1,11 +1,17 @@
 import { fileURLToPath, URL } from 'node:url';
 
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
+// Set in Vercel together with SENTRY_ORG and SENTRY_PROJECT (ADR 0002): the build then uploads source maps to Sentry,
+// so reported errors point at our code, and deletes them so they aren't published.
+const uploadSourceMaps = Boolean(process.env.SENTRY_AUTH_TOKEN);
+
 export default defineConfig({
+  build: { sourcemap: uploadSourceMaps ? 'hidden' : false },
   plugins: [
     react(),
     tailwindcss(),
@@ -14,6 +20,8 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
+      // The service worker reports nothing to Sentry, so its source map would only be published.
+      injectManifest: { sourcemap: false },
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon-180x180.png'],
       manifest: {
@@ -37,6 +45,11 @@ export default defineConfig({
         ],
       },
     }),
+    uploadSourceMaps &&
+      sentryVitePlugin({
+        sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
+        telemetry: false,
+      }),
   ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

@@ -24,6 +24,11 @@ export const app: Messages['app'] = {
     description: 'Tätä sivua ei ole olemassa.',
     backToTasks: 'Takaisin tehtäviin',
   },
+  error: {
+    title: 'Jotain meni pieleen',
+    description: 'HomeFlow kohtasi ongelman. Lataa sivu uudelleen ja yritä uudestaan.',
+    reload: 'Lataa uudelleen',
+  },
   language: {
     heading: 'Kieli',
     label: 'HomeFlow’n kieli',

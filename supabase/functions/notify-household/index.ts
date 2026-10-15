@@ -1,7 +1,13 @@
 // notify-household Edge Function (ADR 0005): a Database Webhook calls it for each new task; it sends
 // a push notification to the other household members' devices. The logic lives in notify.ts.
 import { isAuthorized } from '../_shared/push.ts';
-import { configureVapid, pushDependencies, supabase } from '../_shared/deno/webPush.ts';
+import { reportError } from '../_shared/deno/monitoring.ts';
+import {
+  configureVapid,
+  missingVapidKeys,
+  pushDependencies,
+  supabase,
+} from '../_shared/deno/webPush.ts';
 import {
   type HouseholdMember,
   notifyHousehold,
@@ -68,7 +74,7 @@ Deno.serve(async (request) => {
     return new Response('Unauthorized', { status: 401 });
   }
   if (!configureVapid()) {
-    console.error('notify-household: set VAPID_SUBJECT, VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY');
+    await reportError('notify-household', new Error(missingVapidKeys));
     return new Response('Push notifications are not configured', { status: 500 });
   }
   const taskId = parseAddedTaskId(await request.json().catch(() => null));
@@ -80,9 +86,7 @@ Deno.serve(async (request) => {
       .then((result) => {
         console.log('notify-household', taskId, JSON.stringify(result));
       })
-      .catch((error: unknown) => {
-        console.error('notify-household failed', taskId, error);
-      }),
+      .catch((error: unknown) => reportError('notify-household failed', error, { taskId })),
   );
   return Response.json({ accepted: true }, { status: 202 });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseEnv, readVapidPublicKey } from '@/lib/env';
+import { parseEnv, readSentryDsn, readVapidPublicKey } from '@/lib/env';
 
 describe('parseEnv', () => {
   it('returns the validated variables', () => {
@@ -42,5 +42,22 @@ describe('readVapidPublicKey', () => {
     ['not base64url', `${key.slice(0, 86)}=`],
   ])('treats a %s key as push notifications not being set up', (_case, value) => {
     expect(readVapidPublicKey({ VITE_VAPID_PUBLIC_KEY: value })).toBeNull();
+  });
+});
+
+describe('readSentryDsn', () => {
+  const dsn = 'https://abc123@o42.ingest.de.sentry.io/7';
+
+  it('returns a Sentry DSN', () => {
+    expect(readSentryDsn({ VITE_SENTRY_DSN: dsn })).toBe(dsn);
+  });
+
+  it.each([
+    ['missing', undefined],
+    ['empty', ''],
+    ['not a URL', 'not-a-dsn'],
+    ['not https', 'http://abc123@o42.ingest.de.sentry.io/7'],
+  ])('treats a %s DSN as error reporting being off', (_case, value) => {
+    expect(readSentryDsn({ VITE_SENTRY_DSN: value })).toBeNull();
   });
 });
