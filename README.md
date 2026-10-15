@@ -124,11 +124,29 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
       with the same `x-webhook-secret` header.
    6. In the app, turn on notifications on each device (on iPhone, add HomeFlow to the Home Screen first).
 5. **Error monitoring** (optional):
-   1. Create a [Sentry](https://sentry.io) account with **EU data storage**, and a **React** project. In
-      **Settings → Security & Privacy**, turn on _Prevent Storing of IP Addresses_ and _Data Scrubber_.
-   2. **Vercel:** set `VITE_SENTRY_DSN` (the project's DSN), and for readable stack traces `SENTRY_ORG`,
-      `SENTRY_PROJECT` and `SENTRY_AUTH_TOKEN` (an organization token from **Settings → Auth Tokens**). Redeploy.
-   3. **Supabase → Edge Functions → Secrets:** add `SENTRY_DSN` (the same DSN), then redeploy all functions:
-      `npx supabase functions deploy`.
-   4. **Sentry → Alerts:** keep the default _High priority issues_ alert (new, regressed and escalating issues) by
-      email. Install the Sentry mobile app for push notifications.
+   1. **Sentry account:** sign up at [sentry.io](https://sentry.io) and choose **EU data storage** (it can't be
+      changed later). In **Settings → Security & Privacy**, turn on _Prevent Storing of IP Addresses_ and
+      _Data Scrubber_.
+   2. **Sentry project:** create one with platform **React** and only the product **Error monitoring** (leave
+      Logging, Session replay, Tracing and Metrics off; the app sends none of them). For alerts keep
+      **High priority issues** (new, regressed and escalating issues) with **Email**. Skip the SDK setup
+      instructions; the code already does it.
+   3. **DSN:** copy it from the setup page (`dsn:` in `Sentry.init`) or **Settings → Projects → HomeFlow →
+      Client Keys (DSN)**. It looks like `https://…@o123.ingest.de.sentry.io/456`; `.de.` means EU storage. It is
+      public by design.
+   4. **Auth token** (for readable stack traces): **Settings → Organization Tokens → Create New Token**, named
+      e.g. `Vercel source maps (HomeFlow)`; its `org:ci` scope only uploads source maps. Copy it at once, Sentry
+      shows it only once.
+   5. **Vercel → project → Settings → Environment Variables**, each for **Production** and **Preview** (not
+      Development, so local runs send nothing):
+      - `VITE_SENTRY_DSN`: the DSN
+      - `SENTRY_AUTH_TOKEN`: the auth token, marked **Sensitive**
+      - `SENTRY_ORG`: the organization slug, the part after `sentry.io/organizations/` in Sentry's URL
+      - `SENTRY_PROJECT`: the project slug, shown in **Settings → Projects**
+
+      Then redeploy (**Deployments → ⋯ → Redeploy**); variables apply only to new builds.
+
+   6. **Supabase → Edge Functions → Secrets:** add `SENTRY_DSN` with the same DSN. Then deploy the functions from
+      an up-to-date `main` (first `npx supabase login` and `npx supabase link --project-ref <ref>` if the CLI
+      asks): `npx supabase functions deploy`.
+   7. **Notifications:** alerts arrive by email; install the Sentry mobile app and sign in for push notifications.
