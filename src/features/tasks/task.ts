@@ -93,6 +93,15 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
 
 export type NewTask = z.infer<ReturnType<typeof newTaskSchema>>;
 
+/** What a new task starts with besides its name, description and due date. */
+export const NEW_TASK_DEFAULTS = {
+  type: 'physical',
+  points: DEFAULT_POINTS,
+  repeatEveryDays: null,
+  isPrivate: false,
+  forChildren: false,
+} as const satisfies Partial<NewTask>;
+
 export interface Task extends NewTask {
   id: string;
   /** User id of whoever added the task; null if they have deleted their account. */

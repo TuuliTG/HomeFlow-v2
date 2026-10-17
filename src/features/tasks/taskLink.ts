@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { DEFAULT_POINTS, type NewTask } from '@/features/tasks/task';
+import { NEW_TASK_DEFAULTS, type NewTask } from '@/features/tasks/task';
 
 const dueDate = z.iso.date();
 
@@ -18,10 +18,6 @@ export function taskFromLink(params: URLSearchParams): NewTask | undefined {
     title,
     description: description === '' ? null : description,
     dueOn: due.success ? due.data : null,
-    type: 'physical',
-    points: DEFAULT_POINTS,
-    repeatEveryDays: null,
-    isPrivate: false,
-    forChildren: false,
+    ...NEW_TASK_DEFAULTS,
   };
 }
