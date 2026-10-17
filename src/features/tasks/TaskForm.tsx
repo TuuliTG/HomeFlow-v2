@@ -38,7 +38,7 @@ interface TaskFormProps {
   initial?: NewTask;
   /** The pictures of the task being edited, by file name. */
   initialImages?: string[];
-  /** A new task's starting details, e.g. an earlier task's to add it again. */
+  /** A new task's starting details: an earlier task's to add it again, or ones from a link. */
   prefill?: NewTask | undefined;
   /** Tasks the household has added before, offered to add again; leave out when editing. */
   suggestions?: TaskSuggestion[];
