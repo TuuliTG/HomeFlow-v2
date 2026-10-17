@@ -1,4 +1,4 @@
-import { DEFAULT_POINTS, type NewTask, type TaskType } from '@/features/tasks/task';
+import { DEFAULT_POINTS, NEW_TASK_DEFAULTS, type NewTask } from '@/features/tasks/task';
 
 /**
  * A task's points as the field shows them. A shared task waiting for points starts empty, so an adult
@@ -10,18 +10,9 @@ function pointsValue(task: NewTask): string {
 }
 
 /** The form's field values (strings, as inputs hold them) for a task, or for a new one. */
-export function fieldValues(task: NewTask | undefined) {
-  if (!task)
-    return {
-      title: '',
-      description: '',
-      type: 'physical' as TaskType,
-      points: String(DEFAULT_POINTS),
-      repeat: '',
-      dueOn: '',
-      isPrivate: false,
-      forChildren: false,
-    };
+export function fieldValues(
+  task: NewTask = { title: '', description: null, dueOn: null, ...NEW_TASK_DEFAULTS },
+) {
   return {
     title: task.title,
     description: task.description ?? '',

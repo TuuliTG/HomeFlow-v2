@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { findSuggestion, suggestionAsTask } from '@/features/tasks/suggestions';
 import { ImagesNotSavedError, imagesNotSavedState } from '@/features/tasks/taskImages';
 import { TaskForm } from '@/features/tasks/TaskForm';
+import { taskFromLink } from '@/features/tasks/taskLink';
 import {
   useAddTask,
   useFavouriteTasks,
@@ -67,7 +68,7 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
   if (againTitle !== null && suggestions.isPending) return <LoadingMessage />;
   return (
     <TaskForm
-      prefill={again && suggestionAsTask(again)}
+      prefill={again ? suggestionAsTask(again) : taskFromLink(searchParams)}
       suggestions={suggestions.data ?? []}
       favourites={{
         keys: suggestions.isSuccess ? favourites.data : undefined,
