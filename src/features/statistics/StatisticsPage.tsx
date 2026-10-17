@@ -1,12 +1,12 @@
+import { useState } from 'react';
+
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
-import { CompareMembers } from '@/features/statistics/CompareMembers';
 import { MetricSection } from '@/features/statistics/MetricSection';
 import {
   type Comparison,
   comparedMembers,
-  type MemberContribution,
   memberGroups,
   type Period,
   periods,
@@ -14,6 +14,7 @@ import {
   pointsFilters,
   pointsMetrics,
 } from '@/features/statistics/statistics';
+import { StatisticsFilters } from '@/features/statistics/StatisticsFilters';
 import { useContributions } from '@/features/statistics/useContributions';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -68,7 +69,7 @@ export function StatisticsPage() {
   return (
     <>
       <PageHeader eyebrow={t.eyebrow} title={t.title} description={t.description} />
-      <div className="mb-6">
+      <div className="mb-3">
         <SegmentedChoice
           legend={t.period}
           options={periods}
@@ -82,29 +83,6 @@ export function StatisticsPage() {
   );
 }
 
-/** Points earned, from all tasks or one task type at a time. */
-function PointsSection({
-  contributions,
-  userId,
-}: {
-  contributions: MemberContribution[];
-  userId: string;
-}) {
-  const [filter, setFilter] = usePointsFilterParam();
-  const t = useMessages().statistics;
-  return (
-    <MetricSection metric={pointsMetrics[filter]} contributions={contributions} userId={userId}>
-      <SegmentedChoice
-        legend={t.workType}
-        options={pointsFilters}
-        labels={t.pointsFilters}
-        value={filter}
-        onChange={setFilter}
-      />
-    </MetricSection>
-  );
-}
-
 function StatisticsBody({
   contributions,
   userId,
@@ -114,6 +92,8 @@ function StatisticsBody({
 }) {
   const t = useMessages().statistics;
   const [comparison, setComparison] = useComparisonParam();
+  const [pointsFilter, setPointsFilter] = usePointsFilterParam();
+  const [filtersOpen, setFiltersOpen] = useState(false);
   if (contributions.data === undefined) {
     if (!contributions.isError) return <LoadingMessage />;
     return (
@@ -129,20 +109,26 @@ function StatisticsBody({
     : contributions.data;
   return (
     <div className="flex flex-col gap-6">
-      {canCompare && (
-        <CompareMembers
-          contributions={contributions.data}
-          comparison={comparison}
-          onChange={setComparison}
-          userId={userId}
-        />
-      )}
+      <StatisticsFilters
+        contributions={contributions.data}
+        comparison={canCompare ? comparison : null}
+        onComparisonChange={setComparison}
+        pointsFilter={pointsFilter}
+        onPointsFilterChange={setPointsFilter}
+        userId={userId}
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+      />
       {contributions.data.length < 2 && (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
           {t.inviteFamily}
         </p>
       )}
-      <PointsSection contributions={compared} userId={userId} />
+      <MetricSection
+        metric={pointsMetrics[pointsFilter]}
+        contributions={compared}
+        userId={userId}
+      />
       <MetricSection metric="created" contributions={compared} userId={userId} />
     </div>
   );

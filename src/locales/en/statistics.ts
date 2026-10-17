@@ -10,6 +10,7 @@ export const statistics = {
   description: "Points earned and tasks created across the family. Private tasks don't count.",
   period: 'Period',
   periods: { week: 'This week', month: 'This month', all: 'All time' },
+  filters: 'Filters',
   workType: 'Work type',
   compare: 'Compare',
   compareGroup: 'Who to compare',

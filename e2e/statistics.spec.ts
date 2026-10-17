@@ -33,6 +33,7 @@ test('family member sees points earned, physical and meta work apart, and tasks 
   expect(results.violations, 'a11y violations on Statistics').toEqual([]);
 
   // Book dentist is meta work, so it counts there and not as physical work.
+  await page.getByText('Filters', { exact: true }).click();
   const workType = page.getByRole('group', { name: 'Work type' });
   await workType.getByText('Physical').click();
   await expect(points.getByRole('listitem')).toHaveText([
@@ -67,9 +68,11 @@ test('family member compares only the adults, or members chosen one by one', asy
     'You0 tasks',
     'Cleo0 tasks',
   ]);
+  await page.getByText('Filters', { exact: true }).click();
   await page.getByText('Adults', { exact: true }).click();
   await expect(created.getByRole('listitem')).toHaveText(['Ben1 task', 'You0 tasks']);
   await expect(page).toHaveURL(/compare=adults/);
+  await expect(page.locator('summary')).toHaveText('FiltersAdults');
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations comparing members').toEqual([]);
 
