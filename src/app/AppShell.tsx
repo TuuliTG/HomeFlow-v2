@@ -2,6 +2,7 @@ import { Outlet } from 'react-router';
 
 import { InstallHint } from '@/app/InstallHint';
 import { MainNav } from '@/app/MainNav';
+import { SettingsLink } from '@/app/SettingsLink';
 import { AccountStatus } from '@/features/auth/AccountStatus';
 import { HouseholdLink } from '@/features/household/HouseholdLink';
 import { TaskActivityToast } from '@/features/tasks/TaskActivityToast';
@@ -22,6 +23,7 @@ export function AppShell() {
         <div className="mb-4 flex items-center justify-end gap-3">
           <HouseholdLink />
           <AccountStatus />
+          <SettingsLink />
         </div>
         <InstallHint />
         <Outlet />

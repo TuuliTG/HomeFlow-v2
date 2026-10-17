@@ -25,7 +25,7 @@ maintained by agents, so strict types and a predictable structure matter more th
   `Messages`. Texts that take values are functions, so plurals, word order and date formats (`common.shortDate`,
   `common.time`) live with the language. Components read texts with `useMessages()` from `@/lib/i18n/i18n`;
   helpers that build text take `t: Messages` (e.g. `groupByDueDate`, `newTaskSchema(t)`). The language is the one
-  chosen on the Me page (stored per device in `localStorage`), else the browser's, else English; `<html lang>`
+  chosen in the settings (stored per device in `localStorage`), else the browser's, else English; `<html lang>`
   follows it. Adding one: copy `src/locales/en`, translate, register it in `src/lib/i18n/languages.ts`.
 
 - **Error monitoring with Sentry** (EU region, free plan), on only where a DSN is set. The app loads the SDK

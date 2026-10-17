@@ -37,6 +37,18 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: linkName })).toHaveAttribute('aria-current', 'page');
   });
 
+  it('opens the settings from the gear at the top', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await user.click(await screen.findByRole('link', { name: 'Settings' }));
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('region', { name: 'Your family' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Language' })).toBeInTheDocument();
+  });
+
   it('shows a not-found page with a way back for unknown routes', async () => {
     const user = userEvent.setup();
     renderAppAt('/does-not-exist');
