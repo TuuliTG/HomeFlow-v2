@@ -7,7 +7,7 @@ import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /**
- * On the Me page: where adults invite family members and add children without email, since the
+ * In the settings: where adults invite family members and add children without email, since the
  * household page is otherwise reached only through the household's name at the top.
  */
 export function FamilySettings() {

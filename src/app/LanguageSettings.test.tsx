@@ -34,16 +34,17 @@ describe('language', () => {
     expect(document.documentElement.lang).toBe('fi');
   });
 
-  it('can be changed on the Me page, and is remembered on this device', async () => {
+  it('can be changed in the settings, and is remembered on this device', async () => {
     const user = userEvent.setup();
     const { unmount } = renderAppAt('/me');
 
+    await user.click(await screen.findByRole('link', { name: 'Settings' }));
     await user.selectOptions(
       await screen.findByRole('combobox', { name: 'Language of HomeFlow' }),
       'Suomi',
     );
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Omat tehtävät' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Asetukset' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Tilastot' })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe('fi');
 

@@ -29,6 +29,10 @@ export const app: Messages['app'] = {
     description: 'HomeFlow kohtasi ongelman. Lataa sivu uudelleen ja yritä uudestaan.',
     reload: 'Lataa uudelleen',
   },
+  settings: {
+    title: 'Asetukset',
+    description: 'Perheesi, ilmoitukset ja kieli.',
+  },
   language: {
     heading: 'Kieli',
     label: 'HomeFlow’n kieli',

@@ -19,6 +19,7 @@ export const paths = {
   newGoal: '/rewards/new',
   editGoal: (goalId: string) => `/rewards/${goalId}/edit`,
   statistics: '/statistics',
+  settings: '/settings',
   login: '/login',
   household: '/household',
   householdSetup: '/household/setup',

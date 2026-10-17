@@ -29,6 +29,10 @@ export const app = {
     description: 'HomeFlow ran into a problem. Reload the page to try again.',
     reload: 'Reload',
   },
+  settings: {
+    title: 'Settings',
+    description: 'Your family, notifications and language.',
+  },
   language: {
     heading: 'Language',
     label: 'Language of HomeFlow',
