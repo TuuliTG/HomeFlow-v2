@@ -31,6 +31,9 @@ history grows past what one API request returns.
   fairness scores cover only those compared (`comparedMembers()`), so e.g. the adults can see how they share the work
   between them. Kept in the address as `?compare=adults` or `?compare=<user id>,<user id>`; a choice matching no one
   (e.g. members who left) compares everyone.
+- **Filters fold away**: only the period stays on screen; who is compared and the work type sit in a collapsed
+  _Filters_ panel (`StatisticsFilters`) whose summary names the filters that differ from the defaults (e.g.
+  "Adults · Physical"), so the statistics come first but a filtered view is never mistaken for the whole family.
 - **Fairness score** (0–100) per metric: each member's share compared with an equal share. The score is
   `100 × (1 − d / dmax)`, where `d` is half the sum of `|share − 1/n|` and `dmax = 1 − 1/n` (one member has it all),
   so 100 is perfectly even and 0 is one member having it all. ≥ 80 is _Balanced_, ≥ 50 _Slightly uneven_, below that
