@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_POINTS } from '@/features/tasks/task';
+import { DEFAULT_POINTS, DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/features/tasks/task';
 import { taskFromLink } from '@/features/tasks/taskLink';
 
 function linked(query: string) {
@@ -26,6 +26,14 @@ describe('taskFromLink', () => {
   it('is undefined without a name', () => {
     expect(linked('')).toBeUndefined();
     expect(linked('title=++&description=Something')).toBeUndefined();
+  });
+
+  it('shortens a name and description too long to save', () => {
+    const task = taskFromLink(
+      new URLSearchParams({ title: 'a'.repeat(100), description: 'b'.repeat(600) }),
+    );
+    expect(task?.title).toBe('a'.repeat(TITLE_MAX_LENGTH));
+    expect(task?.description).toBe('b'.repeat(DESCRIPTION_MAX_LENGTH));
   });
 
   it('leaves out an empty description and a due date that isn’t a date', () => {

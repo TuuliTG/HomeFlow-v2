@@ -117,7 +117,8 @@ next one back rather than follow a fixed calendar.
 - **Tasks from other apps**: a link to `/tasks/new?title=…&description=…&due=YYYY-MM-DD` fills in the New task
   form (`taskFromLink()`), so another app, such as the owner's email assistant, can hand over a task it found
   without any access to HomeFlow. The link only fills in the form: the user chooses the type, points and who it's
-  for and saves it as usual, so the normal checks, RLS and push apply. A due date that isn't a date is left out.
+  for and saves it as usual, so the normal checks, RLS and push apply. A name or description too long to save is
+  shortened and a due date that isn't a date is left out. A link opened while logged out is lost at the login.
 - **Favourites**: before a name is typed, the form offers the household's favourite tasks by name instead of the
   most often added ones, which changed under the user and weren't what they wanted. A star by the name field stars
   or unstars the task being named, also a new one, saved straight away; so does a star on each open task card and

@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
@@ -15,5 +16,6 @@ describe('a link to the New task form with task details', () => {
     expect(screen.getByLabelText('Description (optional)')).toHaveValue('Sign and return');
     expect(screen.getByLabelText('Due date')).toHaveValue('2026-10-20');
     expect(screen.getByRole('button', { name: 'Create task' })).toBeEnabled();
+    expect(fakeTasksBackend.taskCount()).toBe(0);
   });
 });
