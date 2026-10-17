@@ -12,8 +12,8 @@ for apps added to the home screen (iOS 16.4+).
 - Standard **Web Push with VAPID** keys, no push provider. The public key is `VITE_VAPID_PUBLIC_KEY`; the private key
   lives only in Supabase Edge Function secrets.
 - Each device that turns notifications on (in the settings, behind the gear at the top) is a row in
-  `push_subscriptions`, visible only to its owner and saved through `save_push_subscription()`, which moves an endpoint to whoever is logged in now. Logging
-  out unsubscribes the device.
+  `push_subscriptions`, visible only to its owner and saved through `save_push_subscription()`, which moves an
+  endpoint to whoever is logged in now. Logging out unsubscribes the device.
 - The **`notify-household` Edge Function**, called by a Database Webhook on task insert with a shared secret, reads
   the task with the service role and notifies every member except its creator, and children only of tasks for
   children (ADR 0004). It skips private tasks and the next occurrences of repeating tasks, and forgets subscriptions the push service reports gone (404/410).
