@@ -58,6 +58,11 @@ export default tseslint.config(
       reactRefresh.configs.vite,
       jsxA11y.flatConfigs.strict,
     ],
+    rules: {
+      // A scrolling region (role="region" with a name) must be focusable to scroll it with the keyboard,
+      // as axe's scrollable-region-focusable rule requires, e.g. the timetable (ADR 0004).
+      'jsx-a11y/no-noninteractive-tabindex': ['error', { tags: [], roles: ['tabpanel', 'region'] }],
+    },
   },
   {
     files: ['src/**/*.{ts,tsx}'],

@@ -5,6 +5,7 @@ import { household } from '@/locales/en/household';
 import { news } from '@/locales/en/news';
 import { notifications } from '@/locales/en/notifications';
 import { rewards } from '@/locales/en/rewards';
+import { schedule } from '@/locales/en/schedule';
 import { statistics } from '@/locales/en/statistics';
 import { taskForm } from '@/locales/en/taskForm';
 import { tasks } from '@/locales/en/tasks';
@@ -18,6 +19,7 @@ export const en = {
   notifications,
   tasks,
   taskForm,
+  schedule,
   news,
   rewards,
   statistics,

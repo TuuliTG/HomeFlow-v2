@@ -116,8 +116,11 @@ export function openTaskOf(userId: string, taskId: string): StoredTask {
   return task;
 }
 
-/** Whether the open task is `userId`'s to do, so they can set a reminder for it (`set_task_reminder()`). */
-function isToDoBy(task: StoredTask, userId: string): boolean {
+/**
+ * Whether the open task is `userId`'s to do, so they can set a reminder for it or schedule it
+ * (`private.is_task_to_do_by()`).
+ */
+export function isToDoBy(task: StoredTask, userId: string): boolean {
   return (task.isPrivate && task.createdBy === userId) || task.pickedUpBy === userId;
 }
 
