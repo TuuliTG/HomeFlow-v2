@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { TaskSchedule } from '@/features/tasks/schedule';
+import { pickUpTask } from '@/features/tasks/api';
+import { DEFAULT_DURATION_MINUTES, type TaskSchedule } from '@/features/tasks/schedule';
 import { clearTaskSchedule, fetchSchedules, setTaskSchedule } from '@/features/tasks/schedulesApi';
 import { tasksKey } from '@/features/tasks/useTasks';
 
@@ -41,5 +42,28 @@ export function useClearSchedule(userId: string) {
   return useMutation({
     mutationFn: clearTaskSchedule,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: schedulesKey(userId) }),
+  });
+}
+
+/**
+ * Puts a task the user just added from their timetable in it at `startsAt`. A shared task is picked up first,
+ * as only the tasks that are the user's to do can be scheduled; a private one already is.
+ */
+export function usePlanNewTask(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      taskId,
+      isPrivate,
+      startsAt,
+    }: {
+      taskId: string;
+      isPrivate: boolean;
+      startsAt: string;
+    }) => {
+      if (!isPrivate) await pickUpTask(taskId);
+      await setTaskSchedule({ taskId, startsAt, durationMinutes: DEFAULT_DURATION_MINUTES });
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
 }

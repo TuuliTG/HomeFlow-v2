@@ -24,10 +24,21 @@ export const schedule = {
   block: (title: string, from: string, to: string) => `${title}, ${from}–${to}`,
   loadFailed: "We couldn't load your timetable. Check your connection and reload the page.",
   notScheduled: 'Not scheduled yet',
-  dragHint: 'Drag a task into the timetable (on a phone, touch and hold it first) or use Schedule.',
+  dragHint:
+    'Tap a task or an empty time to plan it, or drag a task into the timetable (on a phone, touch and hold it first).',
+  nothingToPlan: 'Nothing to plan yet. Tap a time to add a task, or pick one up on the board.',
   allScheduled: 'All your tasks are in the timetable.',
-  schedule: 'Schedule',
   scheduleLabel: (title: string) => `Schedule: ${title}`,
+  /** Names the empty part of a day's column, which opens what to do at the time tapped. */
+  addAt: (day: string) => `Plan a task on ${day}`,
+  /** "Sat 17 Oct at 14:00". */
+  at: (day: string, time: string) => `${day} at ${time}`,
+  /** Names the tasks to choose from for the time tapped. */
+  placeHere: 'Your tasks not scheduled yet',
+  addNewTask: 'Add a new task',
+  /** On the New task form, when adding a task from the timetable. */
+  addingAt: (day: string, time: string) =>
+    `It goes in your timetable on ${day} at ${time}. A shared task is picked up for you.`,
   /** The form for one task's block. */
   formLabel: (title: string) => `When to do ${title}`,
   day: 'Day',

@@ -22,10 +22,18 @@ export const schedule: Messages['schedule'] = {
   block: (title, from, to) => `${title}, ${from}–${to}`,
   loadFailed: 'Aikatauluasi ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
   notScheduled: 'Ei vielä aikataulussa',
-  dragHint: 'Vedä tehtävä aikatauluun (puhelimella paina sitä ensin hetken) tai valitse Ajoita.',
+  dragHint:
+    'Napauta tehtävää tai tyhjää kohtaa aikataulussa, tai vedä tehtävä aikatauluun (puhelimella paina sitä ensin hetken).',
+  nothingToPlan:
+    'Ei vielä suunniteltavaa. Napauta aikaa lisätäksesi tehtävän tai varaa tehtävä yhteisistä.',
   allScheduled: 'Kaikki tehtäväsi ovat aikataulussa.',
-  schedule: 'Ajoita',
   scheduleLabel: (title) => `Ajoita: ${title}`,
+  addAt: (day) => `Suunnittele tehtävä: ${day}`,
+  at: (day, time) => `${day} klo ${time}`,
+  placeHere: 'Aikatauluttamattomat tehtäväsi',
+  addNewTask: 'Lisää uusi tehtävä',
+  addingAt: (day, time) =>
+    `Tehtävä tulee aikatauluusi ${day} klo ${time}. Yhteinen tehtävä varataan sinulle.`,
   formLabel: (title) => `Milloin teet: ${title}`,
   day: 'Päivä',
   start: 'Alkaa',

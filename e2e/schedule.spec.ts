@@ -55,7 +55,7 @@ test('family member can drag a task into the timetable and move it', async ({ pa
 
   const item = page
     .getByRole('region', { name: 'Not scheduled yet' })
-    .getByRole('listitem', { name: 'Vacuum' });
+    .getByRole('button', { name: 'Schedule: Vacuum' });
   // The column starts at midnight and an hour is 60px tall; the timetable opens at 7:00.
   const column = page.getByRole('list', { name: /^Planned for / }).locator('..');
   const from = await item.boundingBox();
@@ -82,3 +82,27 @@ async function drag(page: Page, from: { x: number; y: number }, to: { x: number;
   await page.mouse.move(to.x, to.y, { steps: 10 });
   await page.mouse.up();
 }
+
+test('family member can tap an empty time to add a new task there', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.goto('/me?view=day');
+
+  // The timetable opens at 7:00, and an hour is 60px tall: 10:00 is 180px down, below its 6:50 top.
+  const timetable = page.getByRole('region', { name: 'Timetable' });
+  await timetable.evaluate((element) => {
+    element.scrollIntoView({ block: 'start' });
+  });
+  const box = await timetable.boundingBox();
+  if (!box) throw new Error('The timetable is not shown');
+  await page.mouse.click(box.x + box.width / 2, box.y + 190 + 5);
+  await expect(page.getByRole('heading', { name: / at 10:00$/ })).toBeFocused();
+  await page.getByRole('link', { name: 'Add a new task' }).click();
+
+  await expect(page.getByText(/^It goes in your timetable on .* at 10:00\./)).toBeVisible();
+  await page.getByLabel('Task', { exact: true }).fill('Mow the lawn');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  await expect(page).toHaveURL(/\/me\?view=day$/);
+  await expect(page.getByRole('button', { name: 'Mow the lawn, 10:00–10:30' })).toBeVisible();
+});

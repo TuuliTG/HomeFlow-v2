@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-17 (scheduling tasks in a timetable)
+- **Updated:** 2026-10-17 (placing tasks from the timetable)
 
 ## Context
 
@@ -145,8 +145,13 @@ next one back rather than follow a fixed calendar.
   task back, however it changes hands. It is a plan, separate from the due date, so it moves no deadline. Tasks are
   placed by dragging (`@dnd-kit/core`: mouse, or touch and hold so a swipe still scrolls) in 15-minute steps,
   with a preview of where they land; the day and time come from the pointer over the columns, measured as it moves,
-  so they stay right while the timetable scrolls. Every block and unscheduled task also opens a form (day, start,
-  length), the way to schedule with a keyboard or screen reader; a live region says where a dragged task went. The
+  so they stay right while the timetable scrolls. Tasks not scheduled yet are chips above the timetable, so they
+  show without scrolling; a block or chip opens a form (day, start, length), the way to schedule with a keyboard or
+  screen reader; a live region says where a dragged task went. The empty part of each day is one button: a tap
+  opens what to do at the quarter tapped (a key press, at a suggested time), one of the tasks not scheduled yet
+  or **Add a new task**, whose form (`paths.newTaskAt`, `?at=`) puts the new task there once added, picking a
+  shared one up first, as only tasks that are the user's to do can be scheduled. The timetable shows even
+  without tasks to do, to add one from it. The
   hours scroll inside a focusable region, which axe requires, so ESLint allows `tabIndex` on `role="region"`.
   Done tasks leave the timetable, and a schedule isn't copied to a repeating task's next occurrence.
 - **Live updates**: `tasks` is in the `supabase_realtime` publication (RLS applies per subscriber). The app

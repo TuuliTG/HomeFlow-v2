@@ -2,6 +2,8 @@
  * Planning when to do the tasks that are the user's to do, in a timetable of days and times (ADR 0004). A
  * scheduled block starts at an instant (ISO timestamp), shown in the user's own time zone.
  */
+import { z } from 'zod';
+
 import { addDays, fromIsoDate, toIsoDate } from '@/lib/dates';
 
 /** When the user plans to do a task (`task_schedules`). */
@@ -135,4 +137,24 @@ export function suggestedStart(isoDate: string, now: Date): Date {
   if (isoDate !== toIsoDate(now)) return atMinutes(isoDate, 9 * 60);
   const nextHour = Math.min((now.getHours() + 1) * 60, MINUTES_PER_DAY - 60);
   return atMinutes(isoDate, nextHour);
+}
+
+/**
+ * Where a new block goes when the user taps `minutes` into a day: the start of the quarter of an hour
+ * tapped, early enough for a block of the default length to fit in the day.
+ */
+export function tappedStart(minutes: number): number {
+  const latest = MINUTES_PER_DAY - DEFAULT_DURATION_MINUTES;
+  return Math.min(Math.max(Math.floor(minutes / SNAP_MINUTES) * SNAP_MINUTES, 0), latest);
+}
+
+const startsAtSchema = z.iso.datetime({ offset: true });
+
+/**
+ * When a task added from the timetable is to start (`paths.newTaskAt`), as an ISO timestamp; null if the
+ * link has none or it isn't a time.
+ */
+export function startFromLink(params: URLSearchParams): string | null {
+  const parsed = startsAtSchema.safeParse(params.get('at'));
+  return parsed.success ? parsed.data : null;
 }
