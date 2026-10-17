@@ -10,6 +10,7 @@ export const statistics: Messages['statistics'] = {
     'Koko perheen ansaitsemat pisteet ja luomat tehtävät. Yksityisiä tehtäviä ei lasketa.',
   period: 'Ajanjakso',
   periods: { week: 'Tämä viikko', month: 'Tämä kuukausi', all: 'Koko ajalta' },
+  filters: 'Suodattimet',
   workType: 'Työn tyyppi',
   compare: 'Vertaa',
   compareGroup: 'Keitä verrataan',

@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-
 import {
   fairnessOf,
   type MemberContribution,
@@ -82,17 +80,15 @@ function metricDetails(metric: Metric, t: Messages): MetricDetails {
   }
 }
 
-/** One metric: its fairness score and each member's share, most first; `children` go above them. */
+/** One metric: its fairness score and each member's share, most first. */
 export function MetricSection({
   metric,
   contributions,
   userId,
-  children,
 }: {
   metric: Metric;
   contributions: MemberContribution[];
   userId: string;
-  children?: ReactNode;
 }) {
   const t = useMessages();
   const { title, description, summary, empty, bar, legend } = metricDetails(metric, t);
@@ -106,7 +102,6 @@ export function MetricSection({
         </h2>
         <p className="text-sm text-slate-600">{description}</p>
       </div>
-      {children}
       <div className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
         <FairnessScore contributions={contributions} metric={metric} empty={empty} />
         {legend && <Legend entries={legend} />}
