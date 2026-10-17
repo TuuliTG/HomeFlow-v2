@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-13 (celebrating a done task)
+- **Updated:** 2026-10-17 (scheduling tasks in a timetable)
 
 ## Context
 
@@ -92,7 +92,8 @@ next one back rather than follow a fixed calendar.
 - The board (the **Shared tasks** page) shows open shared tasks, soonest due first and tasks without a due date last (newest first within a date).
   It and the Me page's _To do_ group them under headings like an agenda (`groupByDueDate`): Overdue, Today, Tomorrow,
   each of the next five days by date, Later and No due date, leaving out empty groups. Grouping is done in the app
-  from the same sorted list, with the user's local date; no calendar grid, which needs far more room on a phone.
+  from the same sorted list, with the user's local date; the board has no calendar grid, which needs far more room
+  on a phone (the Me page offers one as an optional view, below).
   "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done shared tasks.
   A **Show** filter (`?show=`, one choice at a time, `taskFilter.ts`) narrows the board to tasks due **Today** or
   **This week** (the next seven days, so it ends where "Later" begins; both include overdue tasks, which still need
@@ -136,6 +137,18 @@ next one back rather than follow a fixed calendar.
   only), which deletes every due reminder and returns those whose task is still theirs and open and that are less
   than an hour late, so a reminder is sent at most once, and not for a task done meanwhile or after an outage. The
   app hides reminders whose time has passed. Reminders aren't copied to a repeating task's next occurrence.
+- **Scheduling**: the Me page's _To do_ shows as a **List** (the agenda above), or a timetable of a **Day** or a
+  **Week** from Monday (`?view=`), where a member plans when to do each task that is theirs to do, as a block with a
+  start and a length. `task_schedules` (one per task and user, `starts_at` timestamptz, `duration_minutes` 5–720)
+  is like reminders: only its owner sees it, and it is written only through `set_task_schedule()` /
+  `clear_task_schedule()`, which check the task is theirs to do; a trigger removes the schedule of whoever gives a
+  task back, however it changes hands. It is a plan, separate from the due date, so it moves no deadline. Tasks are
+  placed by dragging (`@dnd-kit/core`: mouse, or touch and hold so a swipe still scrolls) in 15-minute steps,
+  with a preview of where they land; the day and time come from the pointer over the columns, measured as it moves,
+  so they stay right while the timetable scrolls. Every block and unscheduled task also opens a form (day, start,
+  length), the way to schedule with a keyboard or screen reader; a live region says where a dragged task went. The
+  hours scroll inside a focusable region, which axe requires, so ESLint allows `tabIndex` on `role="region"`.
+  Done tasks leave the timetable, and a schedule isn't copied to a repeating task's next occurrence.
 - **Live updates**: `tasks` is in the `supabase_realtime` publication (RLS applies per subscriber). The app
   subscribes once (`subscribeToTaskChanges`) and refetches through TanStack Query on every insert, update or
   delete (deletes aren't filtered by RLS, so they only trigger the refetch). Tasks
@@ -150,5 +163,7 @@ next one back rather than follow a fixed calendar.
 
 ## Alternatives considered
 
+- Scheduling: a column on `tasks` (others would see your plans), native HTML drag and drop (doesn't work with
+  touch), a timetable on the board (too little room on a phone).
 - A calendar recurrence rule (doesn't move with late tasks), reopening the same row (loses who did each
   occurrence), creating the next occurrence from the app (two requests that can half-fail or race).

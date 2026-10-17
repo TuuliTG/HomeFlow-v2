@@ -4,8 +4,11 @@ import { Link } from 'react-router';
 import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
+import { parseToDoView, type ToDoView, toDoViews } from '@/features/tasks/schedule';
+import { ScheduleView } from '@/features/tasks/ScheduleView';
 import {
   canChooseHelpers,
   type CompletedTask,
@@ -25,12 +28,17 @@ import {
 } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
+import { useSearchParam } from '@/lib/useSearchParam';
 
 const emptyClassName =
   'rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600';
 
 export function MyTasksPage() {
-  const t = useMessages().tasks.me;
+  const { tasks, schedule } = useMessages();
+  const t = tasks.me;
+  const [view, setView] = useSearchParam<ToDoView>('view', parseToDoView, (chosen) =>
+    chosen === 'list' ? null : chosen,
+  );
   return (
     <>
       <div className="flex items-start justify-between gap-4">
@@ -43,7 +51,14 @@ export function MyTasksPage() {
           <h2 id="to-do-heading" className="text-lg font-semibold text-slate-900">
             {t.toDo}
           </h2>
-          <ToDoList />
+          <SegmentedChoice
+            legend={schedule.viewLegend}
+            options={toDoViews}
+            labels={schedule.views}
+            value={view}
+            onChange={setView}
+          />
+          <ToDoList view={view} />
         </section>
         <section aria-labelledby="completed-heading" className="flex flex-col gap-3">
           <h2 id="completed-heading" className="text-lg font-semibold text-slate-900">
@@ -82,7 +97,7 @@ function PointsTotal() {
   );
 }
 
-function ToDoList() {
+function ToDoList({ view }: { view: ToDoView }) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
   const t = useMessages().tasks.me;
@@ -100,6 +115,7 @@ function ToDoList() {
   if (mine.length === 0) {
     return <p className={emptyClassName}>{t.nothingPickedUp}</p>;
   }
+  if (view !== 'list') return <ScheduleView view={view} tasks={mine} currentUserId={user.id} />;
   return <DueTaskGroups tasks={mine} currentUserId={user.id} headingLevel={3} />;
 }
 

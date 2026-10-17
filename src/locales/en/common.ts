@@ -32,6 +32,8 @@ export const common = {
   /** "Thu 8 Oct". */
   shortDate: (date: Date) =>
     `${weekdays[date.getDay()] ?? ''} ${String(date.getDate())} ${months[date.getMonth()] ?? ''}`,
+  /** "Thu". */
+  weekday: (date: Date) => weekdays[date.getDay()] ?? '',
   /** "8 Oct". */
   dayAndMonth: (date: Date) => `${String(date.getDate())} ${months[date.getMonth()] ?? ''}`,
   /** "9:05", "18:00". */

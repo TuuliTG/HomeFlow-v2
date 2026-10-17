@@ -8,7 +8,7 @@ rewards instead of control. The app is available in English and Finnish.
 
 | Area         | Technology                                                                  |
 | ------------ | --------------------------------------------------------------------------- |
-| App          | Vite · React 19 · TypeScript (strict) · React Router                        |
+| App          | Vite · React 19 · TypeScript (strict) · React Router · dnd-kit              |
 | Data & state | TanStack Query · Zod (validation of external data)                          |
 | Styling      | Tailwind CSS v4                                                             |
 | PWA          | vite-plugin-pwa · custom service worker (offline, push)                     |

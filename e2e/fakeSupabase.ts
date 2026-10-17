@@ -480,7 +480,10 @@ export async function fakeSupabase(page: Page) {
       );
       if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
       task.picked_up_by = pickedUpBy;
-      if (pickedUpBy === null) reminders.delete(task_id);
+      if (pickedUpBy === null) {
+        reminders.delete(task_id);
+        schedules.delete(task_id);
+      }
       return reply(route, 204);
     };
   }
@@ -613,6 +616,30 @@ export async function fakeSupabase(page: Page) {
   async function clearTaskReminder(route: Route) {
     const { task_id } = route.request().postDataJSON() as { task_id: string };
     reminders.delete(task_id);
+    return reply(route, 204);
+  }
+
+  /** The user's schedule by task id, like task_schedules with Row Level Security. */
+  const schedules = new Map<string, { starts_at: string; duration_minutes: number }>();
+
+  /** Like set_task_schedule(): only for an open task the user picked up or added privately. */
+  async function setTaskSchedule(route: Route) {
+    const { task_id, starts_at, duration_minutes } = route.request().postDataJSON() as {
+      task_id: string;
+      starts_at: string;
+      duration_minutes: number;
+    };
+    const task = ownOpenTask(task_id);
+    const isToDo =
+      task && (task.picked_up_by === user.id || (task.is_private && task.created_by === user.id));
+    if (!isToDo) return reply(route, 400, { code: 'P0002', message: 'No open task of yours' });
+    schedules.set(task_id, { starts_at, duration_minutes });
+    return reply(route, 204);
+  }
+
+  async function clearTaskSchedule(route: Route) {
+    const { task_id } = route.request().postDataJSON() as { task_id: string };
+    schedules.delete(task_id);
     return reply(route, 204);
   }
 
@@ -899,6 +926,14 @@ export async function fakeSupabase(page: Page) {
         route,
         200,
         [...reminders].map(([task_id, remind_at]) => ({ task_id, remind_at })),
+      ),
+    '/rest/v1/rpc/set_task_schedule': setTaskSchedule,
+    '/rest/v1/rpc/clear_task_schedule': clearTaskSchedule,
+    '/rest/v1/task_schedules': (route) =>
+      reply(
+        route,
+        200,
+        [...schedules].map(([task_id, schedule]) => ({ task_id, ...schedule })),
       ),
     '/rest/v1/favourite_tasks': favouritesEndpoint,
     '/rest/v1/task_likes': likesEndpoint,

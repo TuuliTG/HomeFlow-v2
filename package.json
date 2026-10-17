@@ -31,6 +31,7 @@
     "functions:check": "npx --yes deno@2.9.6 check --config supabase/functions/notify-household/deno.json supabase/functions/notify-household/index.ts && npx --yes deno@2.9.6 check --config supabase/functions/send-reminders/deno.json supabase/functions/send-reminders/index.ts && npx --yes deno@2.9.6 check --config supabase/functions/add-child/deno.json supabase/functions/add-child/index.ts && npx --yes deno@2.9.6 check --config supabase/functions/child-sign-in/deno.json supabase/functions/child-sign-in/index.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "6.3.1",
     "@sentry/react": "11.7.0",
     "@supabase/supabase-js": "2.117.2",
     "@tanstack/react-query": "5.104.1",
