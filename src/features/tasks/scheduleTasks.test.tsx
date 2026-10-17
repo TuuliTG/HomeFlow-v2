@@ -8,7 +8,7 @@ import { en } from '@/locales/en';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeSchedulesBackend } from '@/test/fakeSchedulesApi';
-import { fakeTasksBackend } from '@/test/fakeTasksBackend';
+import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
@@ -60,9 +60,14 @@ describe('scheduling tasks', () => {
     }
     const notScheduled = screen.getByRole('region', { name: 'Not scheduled yet' });
     expect(
-      within(notScheduled).getByRole('listitem', { name: 'Call grandma' }),
+      within(notScheduled).getByRole('button', { name: 'Schedule: Call grandma' }),
     ).toBeInTheDocument();
     expect(within(notScheduled).queryByText('Buy a present')).not.toBeInTheDocument();
+    // Above the timetable, so they show without scrolling.
+    expect(
+      notScheduled.compareDocumentPosition(screen.getByRole('region', { name: 'Timetable' })) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('leaves out tasks that are not yours to do', async () => {
@@ -78,7 +83,7 @@ describe('scheduling tasks', () => {
     addPrivateTask(anna.id, 'Buy a present');
     renderAppAt('/me?view=day');
 
-    await screen.findByRole('listitem', { name: 'Buy a present' });
+    await screen.findByRole('button', { name: 'Schedule: Buy a present' });
     expect(screen.queryByText('Vacuum')).not.toBeInTheDocument();
   });
 
@@ -260,7 +265,7 @@ describe('dragging tasks in the timetable', () => {
     const anna = logInAsFamilyMember();
     const present = addPrivateTask(anna.id, 'Buy a present');
     renderAppAt('/me?view=day');
-    const item = await screen.findByRole('listitem', { name: 'Buy a present' });
+    const item = await screen.findByRole('button', { name: 'Schedule: Buy a present' });
     layOut(today());
 
     drag(item, { x: 100, y: 1600 }, { x: 120, y: 100 + 14 * 60 + 5 });
@@ -278,12 +283,118 @@ describe('dragging tasks in the timetable', () => {
     const anna = logInAsFamilyMember();
     const present = addPrivateTask(anna.id, 'Buy a present');
     renderAppAt('/me?view=day');
-    const item = await screen.findByRole('listitem', { name: 'Buy a present' });
+    const item = await screen.findByRole('button', { name: 'Schedule: Buy a present' });
     layOut(today());
 
     drag(item, { x: 100, y: 1600 }, { x: 100, y: 2100 });
 
     expect(await screen.findByText('Buy a present was not moved')).toBeInTheDocument();
     expect(fakeSchedulesBackend.scheduleOf(anna.id, present)).toBeNull();
+  });
+});
+
+describe('planning a task at a time you tap', () => {
+  /** Lays out the empty part of the day's column 100px down the page, an hour 60px tall. */
+  function layOutEmptyTime(day: string): HTMLElement {
+    const empty = screen.getByRole('button', {
+      name: `Plan a task on ${en.common.shortDate(fromIsoDate(day))}`,
+    });
+    vi.spyOn(empty, 'getBoundingClientRect').mockReturnValue(new DOMRect(50, 100, 300, 1440));
+    return empty;
+  }
+
+  it('places one of your tasks at the quarter of an hour tapped', async () => {
+    const anna = logInAsFamilyMember();
+    const present = addPrivateTask(anna.id, 'Buy a present');
+    const user = userEvent.setup();
+    renderAppAt('/me?view=day');
+    await screen.findByRole('button', { name: 'Schedule: Buy a present' });
+
+    // 14:10, in the quarter from 14:00.
+    fireEvent.click(layOutEmptyTime(today()), { clientY: 100 + 14 * 60 + 10, detail: 1 });
+
+    const when = en.schedule.at(en.common.shortDate(fromIsoDate(today())), '14:00');
+    expect(screen.getByRole('heading', { name: when })).toHaveFocus();
+    const choices = screen.getByRole('list', { name: 'Your tasks not scheduled yet' });
+    await user.click(within(choices).getByRole('button', { name: 'Buy a present' }));
+
+    expect(
+      await screen.findByRole('button', { name: 'Buy a present, 14:00–14:30' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: when })).not.toBeInTheDocument();
+    expect(fakeSchedulesBackend.scheduleOf(anna.id, present)?.startsAt).toBe(
+      atMinutes(today(), 14 * 60).toISOString(),
+    );
+  });
+
+  it('offers a suggested time with the keyboard, and adding a new task there', async () => {
+    const anna = logInAsFamilyMember();
+    addPrivateTask(anna.id, 'Buy a present');
+    const tomorrow = addDays(today(), 1);
+    const user = userEvent.setup();
+    renderAppAt('/me?view=day');
+    await user.click(await screen.findByRole('button', { name: 'Next day' }));
+
+    layOutEmptyTime(tomorrow).focus();
+    await user.keyboard('{Enter}');
+
+    const when = en.schedule.at(en.common.shortDate(fromIsoDate(tomorrow)), '9:00');
+    expect(screen.getByRole('heading', { name: when })).toBeInTheDocument();
+    const startsAt = atMinutes(tomorrow, 9 * 60).toISOString();
+    expect(screen.getByRole('link', { name: 'Add a new task' })).toHaveAttribute(
+      'href',
+      `/tasks/new?at=${encodeURIComponent(startsAt)}&view=day`,
+    );
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('heading', { name: when })).not.toBeInTheDocument();
+  });
+
+  it('shows the timetable without tasks to do, to add one from it', async () => {
+    logInAsFamilyMember();
+    renderAppAt('/me?view=week');
+
+    expect(await screen.findByRole('region', { name: 'Timetable' })).toBeInTheDocument();
+    expect(screen.getByText(/^Nothing to plan yet\./)).toBeInTheDocument();
+    expect(screen.queryByText(/^Nothing picked up yet/)).not.toBeInTheDocument();
+  });
+
+  it('puts a new task added from the timetable in it, picking up a shared one', async () => {
+    const anna = logInAsFamilyMember();
+    const startsAt = atMinutes(addDays(today(), 1), 14 * 60).toISOString();
+    const user = userEvent.setup();
+    const { router } = renderAppAt(`/tasks/new?at=${encodeURIComponent(startsAt)}&view=week`);
+
+    expect(
+      await screen.findByText(/^It goes in your timetable on .* at 14:00\./),
+    ).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Task', { exact: true }), 'Mow the lawn');
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/me');
+    });
+    expect(router.state.location.search).toBe('?view=week');
+    const added = tasks.find((task) => task.title === 'Mow the lawn');
+    expect(added?.pickedUpBy).toBe(anna.id);
+    expect(fakeSchedulesBackend.scheduleOf(anna.id, added?.id ?? '')).toEqual({
+      taskId: added?.id,
+      startsAt,
+      durationMinutes: 30,
+    });
+  });
+
+  it('adds a task as usual from a link without a time', async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/tasks/new?at=soon');
+
+    await user.type(await screen.findByLabelText('Task', { exact: true }), 'Mow the lawn');
+    expect(screen.queryByText(/^It goes in your timetable/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/');
+    });
+    expect(tasks.find((task) => task.title === 'Mow the lawn')?.pickedUpBy).toBeNull();
   });
 });

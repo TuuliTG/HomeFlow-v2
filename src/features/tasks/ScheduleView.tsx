@@ -10,12 +10,14 @@ import {
   daysShown,
   type ScheduleView as View,
   suggestedStart,
+  type TaskSchedule,
 } from '@/features/tasks/schedule';
 import { ScheduleForm } from '@/features/tasks/ScheduleForm';
+import { type Slot, SlotPicker } from '@/features/tasks/SlotPicker';
 import type { Task } from '@/features/tasks/task';
 import { type ScheduledTask, Timetable } from '@/features/tasks/Timetable';
 import { useSchedules, useSetSchedule } from '@/features/tasks/useSchedules';
-import { useTimetableDrag } from '@/features/tasks/useTimetableDrag';
+import { type DropTarget, useTimetableDrag } from '@/features/tasks/useTimetableDrag';
 import { today } from '@/lib/dates';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -32,16 +34,19 @@ function firstDayToPlan(days: string[]): string {
   return days.includes(todayDate) ? todayDate : (days[0] ?? todayDate);
 }
 
+/** What is open above the timetable: a task's form, or what to do at a time tapped in it. */
+type Panel = { kind: 'task'; taskId: string } | ({ kind: 'slot' } & Slot);
+
 /**
- * The user's tasks to do in a timetable of a day or a week, which they plan by dragging tasks into it or
- * with a form (ADR 0004). Only they see it.
+ * The user's tasks to do in a timetable of a day or a week, which they plan by dragging tasks into it,
+ * tapping a task or an empty time, or with a form (ADR 0004). Only they see it.
  */
 export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) {
   const schedules = useSchedules(currentUserId);
   const setSchedule = useSetSchedule(currentUserId);
   const [shownDay, setShownDay] = useState(today);
-  // The task whose form is open, and the control that opened it, to give focus back to.
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // What is open above the timetable, and the control that opened it, to give focus back to.
+  const [panel, setPanel] = useState<Panel | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const drag = useTimetableDrag((task, startsAt, durationMinutes) => {
     setSchedule.mutate({ taskId: task.id, startsAt: startsAt.toISOString(), durationMinutes });
@@ -63,18 +68,17 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
     const schedule = scheduleOf.get(task.id);
     return schedule ? [{ ...schedule, task }] : [];
   });
-  const editing = tasks.find((task) => task.id === editingId);
-  const editingSchedule = editing && scheduleOf.get(editing.id);
+  const notScheduled = tasks.filter((task) => !scheduleOf.has(task.id));
 
-  function openForm(taskId: string, control: HTMLElement) {
+  function open(next: Panel, control: HTMLElement) {
     if (drag.wasJustDragged()) return;
     opener.current = control;
-    setEditingId(taskId);
+    setPanel(next);
   }
 
-  function closeForm() {
-    setEditingId(null);
-    // Once the form has gone; a block keeps its button when it moves.
+  function close() {
+    setPanel(null);
+    // Once the panel has gone; a block keeps its button when it moves.
     setTimeout(() => {
       if (opener.current?.isConnected) opener.current.focus();
     });
@@ -83,8 +87,27 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-slate-600">{t.schedule.description}</p>
-      <DayNavigation view={view} days={days} onShow={setShownDay} />
       <DndContext sensors={drag.sensors} {...drag.handlers}>
+        <NotScheduledList
+          tasks={notScheduled}
+          hasScheduled={scheduled.length > 0}
+          onOpen={(taskId, control) => {
+            open({ kind: 'task', taskId }, control);
+          }}
+        />
+        {panel && (
+          <OpenPanel
+            panel={panel}
+            view={view}
+            days={days}
+            tasks={tasks}
+            notScheduled={notScheduled}
+            scheduleOf={scheduleOf}
+            currentUserId={currentUserId}
+            onClose={close}
+          />
+        )}
+        <DayNavigation view={view} days={days} onShow={setShownDay} />
         <Timetable
           days={days}
           scheduled={scheduled}
@@ -92,7 +115,12 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
           target={drag.target}
           scrollerRef={drag.scrollerRef}
           columnRef={drag.columnRef}
-          onOpen={openForm}
+          onOpen={(taskId, control) => {
+            open({ kind: 'task', taskId }, control);
+          }}
+          onPickSlot={(slot, control) => {
+            open({ kind: 'slot', ...slot }, control);
+          }}
         />
         {setSchedule.isError && (
           <p role="alert" className="text-sm text-red-700">
@@ -102,38 +130,69 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
         <p aria-live="polite" className="sr-only">
           {drag.announcement}
         </p>
-        {editing && (
-          <ScheduleForm
-            key={editing.id}
-            task={editing}
-            currentUserId={currentUserId}
-            initial={
-              editingSchedule ?? {
-                startsAt: suggestedStart(firstDayToPlan(days), new Date()).toISOString(),
-                durationMinutes: DEFAULT_DURATION_MINUTES,
-              }
-            }
-            isScheduled={editingSchedule !== undefined}
-            onClose={closeForm}
-          />
-        )}
-        <NotScheduledList
-          tasks={tasks.filter((task) => !scheduleOf.has(task.id))}
-          onOpen={openForm}
-        />
         <DragOverlay dropAnimation={null}>
-          {drag.dragged && (
-            <div className="bg-brand-50 border-brand-600 text-brand-900 w-36 rounded-md border-l-4 px-2 py-1 text-xs font-semibold shadow-lg">
-              <span className="block truncate">{drag.dragged.task.title}</span>
-              {drag.target && (
-                <span className="block font-normal">
-                  {t.common.time(atMinutes(drag.target.day, drag.target.minutes))}
-                </span>
-              )}
-            </div>
-          )}
+          {drag.dragged && <DragPreview title={drag.dragged.task.title} target={drag.target} />}
         </DragOverlay>
       </DndContext>
+    </div>
+  );
+}
+
+interface OpenPanelProps {
+  panel: Panel;
+  view: View;
+  days: string[];
+  tasks: Task[];
+  notScheduled: Task[];
+  scheduleOf: Map<string, TaskSchedule>;
+  currentUserId: string;
+  onClose: () => void;
+}
+
+/** A task's form, or what to do at the time tapped; nothing once the task has gone, e.g. done elsewhere. */
+function OpenPanel({ panel, days, scheduleOf, tasks, ...props }: OpenPanelProps) {
+  if (panel.kind === 'slot') {
+    return (
+      <SlotPicker
+        slot={panel}
+        view={props.view}
+        tasks={props.notScheduled}
+        currentUserId={props.currentUserId}
+        onClose={props.onClose}
+      />
+    );
+  }
+  const task = tasks.find((candidate) => candidate.id === panel.taskId);
+  if (!task) return null;
+  const schedule = scheduleOf.get(task.id);
+  return (
+    <ScheduleForm
+      key={task.id}
+      task={task}
+      currentUserId={props.currentUserId}
+      initial={
+        schedule ?? {
+          startsAt: suggestedStart(firstDayToPlan(days), new Date()).toISOString(),
+          durationMinutes: DEFAULT_DURATION_MINUTES,
+        }
+      }
+      isScheduled={schedule !== undefined}
+      onClose={props.onClose}
+    />
+  );
+}
+
+/** The dragged task under the pointer, with the time it would start at. */
+function DragPreview({ title, target }: { title: string; target: DropTarget | null }) {
+  const t = useMessages();
+  return (
+    <div className="bg-brand-50 border-brand-600 text-brand-900 w-36 rounded-md border-l-4 px-2 py-1 text-xs font-semibold shadow-lg">
+      <span className="block truncate">{title}</span>
+      {target && (
+        <span className="block font-normal">
+          {t.common.time(atMinutes(target.day, target.minutes))}
+        </span>
+      )}
     </div>
   );
 }

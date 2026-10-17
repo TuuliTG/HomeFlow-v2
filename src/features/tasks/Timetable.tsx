@@ -10,6 +10,8 @@ import {
   placeBlocks,
   type TaskSchedule,
 } from '@/features/tasks/schedule';
+import { EmptyTimeButton } from '@/features/tasks/EmptyTimeButton';
+import type { Slot } from '@/features/tasks/SlotPicker';
 import type { Task } from '@/features/tasks/task';
 import { typeColours } from '@/features/tasks/typeColours';
 import { type DragData, type DropTarget, PX_PER_MINUTE } from '@/features/tasks/useTimetableDrag';
@@ -28,6 +30,9 @@ export type ScheduledTask = Omit<TaskSchedule, 'taskId'> & { task: Task };
 /** Opens the form of a task, from the control that was tapped. */
 export type OpenForm = (taskId: string, control: HTMLElement) => void;
 
+/** Opens what to do at a time in the timetable, from the control that was tapped. */
+export type PickSlot = (slot: Slot, control: HTMLElement) => void;
+
 interface TimetableProps {
   days: string[];
   scheduled: ScheduledTask[];
@@ -38,6 +43,7 @@ interface TimetableProps {
   scrollerRef: (element: HTMLElement | null) => void;
   columnRef: (day: string, element: HTMLElement | null) => void;
   onOpen: OpenForm;
+  onPickSlot: PickSlot;
 }
 
 /** Days side by side, with the hours of the day down the side and the tasks planned in them. */
@@ -49,6 +55,7 @@ export function Timetable({
   scrollerRef,
   columnRef,
   onOpen,
+  onPickSlot,
 }: TimetableProps) {
   const t = useMessages();
   const scrollerAtMorning = useCallback(
@@ -91,6 +98,7 @@ export function Timetable({
                   columnRef(day, element);
                 }}
                 onOpen={onOpen}
+                onPickSlot={onPickSlot}
               />
             ))}
           </div>
@@ -154,17 +162,20 @@ interface DayColumnProps {
   preview: (DragData & { target: DropTarget }) | null;
   columnRef: (element: HTMLElement | null) => void;
   onOpen: OpenForm;
+  onPickSlot: PickSlot;
 }
 
-function DayColumn({ day, blocks, preview, columnRef, onOpen }: DayColumnProps) {
+function DayColumn({ day, blocks, preview, columnRef, onOpen, onPickSlot }: DayColumnProps) {
   const t = useMessages();
   const [now] = useState(() => new Date());
+  const date = t.common.shortDate(fromIsoDate(day));
   return (
     <div ref={columnRef} className="relative border-l border-slate-200">
+      <EmptyTimeButton day={day} label={t.schedule.addAt(date)} onPickSlot={onPickSlot} />
       {day === toIsoDate(now) && (
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 z-10 border-t-2 border-red-500"
+          className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-red-500"
           style={{ top: minutesIntoDay(now) * PX_PER_MINUTE }}
         />
       )}
@@ -175,7 +186,7 @@ function DayColumn({ day, blocks, preview, columnRef, onOpen }: DayColumnProps) 
           className="border-brand-600 bg-brand-50/70 border-2 border-dashed"
         />
       )}
-      <ul aria-label={t.schedule.plannedFor(t.common.shortDate(fromIsoDate(day)))}>
+      <ul aria-label={t.schedule.plannedFor(date)}>
         {blocks.map((block) => (
           <ScheduledBlock key={block.item.task.id} block={block} onOpen={onOpen} />
         ))}

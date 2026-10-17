@@ -6,8 +6,10 @@ import {
   endOf,
   placeBlocks,
   snapStart,
+  startFromLink,
   startOfWeek,
   suggestedStart,
+  tappedStart,
 } from '@/features/tasks/schedule';
 
 function block(isoDate: string, start: string, durationMinutes: number) {
@@ -113,5 +115,30 @@ describe('suggestedStart', () => {
     expect(suggestedStart('2026-10-18', new Date(2026, 9, 17, 14, 20))).toEqual(
       new Date(2026, 9, 18, 9, 0),
     );
+  });
+});
+
+describe('tappedStart', () => {
+  it('is the start of the quarter of an hour tapped', () => {
+    expect(tappedStart(14 * 60 + 14)).toBe(14 * 60);
+    expect(tappedStart(14 * 60 + 15)).toBe(14 * 60 + 15);
+  });
+
+  it('leaves room for a block of the default length before midnight', () => {
+    expect(tappedStart(23 * 60 + 50)).toBe(23 * 60 + 30);
+    expect(tappedStart(-5)).toBe(0);
+  });
+});
+
+describe('startFromLink', () => {
+  it('is the time in the link', () => {
+    expect(startFromLink(new URLSearchParams('at=2026-10-18T12:00:00.000Z'))).toBe(
+      '2026-10-18T12:00:00.000Z',
+    );
+  });
+
+  it('is null without a time', () => {
+    expect(startFromLink(new URLSearchParams(''))).toBeNull();
+    expect(startFromLink(new URLSearchParams('at=tomorrow'))).toBeNull();
   });
 });

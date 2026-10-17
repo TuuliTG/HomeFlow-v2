@@ -112,10 +112,11 @@ function ToDoList({ view }: { view: ToDoView }) {
     );
   }
   const mine = tasks.data.filter((task) => isToDoBy(task, user.id));
+  // The timetable shows even without tasks: a new one can be added from it.
+  if (view !== 'list') return <ScheduleView view={view} tasks={mine} currentUserId={user.id} />;
   if (mine.length === 0) {
     return <p className={emptyClassName}>{t.nothingPickedUp}</p>;
   }
-  if (view !== 'list') return <ScheduleView view={view} tasks={mine} currentUserId={user.id} />;
   return <DueTaskGroups tasks={mine} currentUserId={user.id} headingLevel={3} />;
 }
 
