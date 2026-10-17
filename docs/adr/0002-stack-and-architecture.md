@@ -1,6 +1,6 @@
 # 0002. Stack and architecture
 
-- **Updated:** 2026-10-14
+- **Updated:** 2026-10-17 (dnd-kit for drag and drop)
 
 ## Context
 
@@ -10,7 +10,8 @@ maintained by agents, so strict types and a predictable structure matter more th
 ## Decisions
 
 - **Vite + React 19 + TypeScript** (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`) as a
-  single-page app. React Router, TanStack Query for server state, Tailwind CSS v4, Zod for external data.
+  single-page app. React Router, TanStack Query for server state, Tailwind CSS v4, Zod for external data,
+  `@dnd-kit/core` for drag and drop (mouse and touch, ADR 0004).
 - **Supabase** (Postgres, Auth, Realtime, Edge Functions) instead of our own server. Schema changes are SQL
   migrations; **every table has Row Level Security** with explicit policies. The browser has only the anon key.
 - **Feature folders**: `src/features/<feature>/` holds components, hooks, `api.ts` and tests; `src/app` the shell,
