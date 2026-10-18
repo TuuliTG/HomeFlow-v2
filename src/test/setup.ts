@@ -25,6 +25,14 @@ vi.mock('@/features/tasks/membershipApi', () => import('@/test/fakeMembershipApi
 vi.mock('@/features/tasks/pointsApi', () => import('@/test/fakePointsApi'));
 vi.mock('@/features/tasks/remindersApi', () => import('@/test/fakeRemindersApi'));
 vi.mock('@/features/tasks/schedulesApi', () => import('@/test/fakeSchedulesApi'));
+// jsdom has no service worker; tests that need a new version waiting mock this hook themselves.
+vi.mock('virtual:pwa-register/react', () => ({
+  useRegisterSW: vi.fn(() => ({
+    needRefresh: [false, () => undefined],
+    offlineReady: [false, () => undefined],
+    updateServiceWorker: () => Promise.resolve(),
+  })),
+}));
 
 // jsdom has no matchMedia; behave like a browser tab where no media query matches.
 Object.defineProperty(window, 'matchMedia', {

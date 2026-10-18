@@ -13,12 +13,16 @@ declare const self: ServiceWorkerGlobalScope;
 
 // The same offline app shell the generated worker had: precache the build and serve index.html for
 // navigations.
-// New versions take over straight away (registerType: 'autoUpdate').
-void self.skipWaiting();
 clientsClaim();
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')));
+
+// A new version waits until the user taps Reload in the update banner (registerType: 'prompt'), so a
+// page isn't swapped out from under someone typing.
+self.addEventListener('message', (event) => {
+  if (isSkipWaitingMessage(event.data)) void self.skipWaiting();
+});
 
 self.addEventListener('push', (event) => {
   const notification = parsePushPayload(readJson(event.data));
@@ -36,6 +40,12 @@ self.addEventListener('notificationclick', (event) => {
   const url = new URL(notificationPath(event.notification.data), self.location.origin).href;
   event.waitUntil(openApp(self.clients, url));
 });
+
+function isSkipWaitingMessage(data: unknown): boolean {
+  return (
+    typeof data === 'object' && data !== null && 'type' in data && data.type === 'SKIP_WAITING'
+  );
+}
 
 function readJson(data: PushMessageData | null): unknown {
   try {

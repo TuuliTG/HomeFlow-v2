@@ -1,6 +1,6 @@
 # 0002. Stack and architecture
 
-- **Updated:** 2026-10-17 (dnd-kit for drag and drop)
+- **Updated:** 2026-10-18 (update banner for new versions)
 
 ## Context
 
@@ -19,6 +19,10 @@ maintained by agents, so strict types and a predictable structure matter more th
   infrastructure. Features don't import each other's internals. Data flows components → hooks → `api.ts` →
   `getSupabaseClient()`; components never call Supabase (ESLint enforces it).
 - **PWA** with `vite-plugin-pwa` and our own service worker (`src/sw.ts`), installable to the home screen.
+  New versions **wait for the user** (`registerType: 'prompt'`): `UpdateBanner` registers the worker, offers
+  "Reload" once a new version has downloaded, and checks for one whenever the app returns to the foreground and
+  hourly (`src/lib/appUpdate.ts`), because iOS resumes Home Screen apps instead of reloading them. An automatic
+  reload could lose what someone is typing.
 - **Vercel** hosts the static build.
 - **Languages** (English and Finnish) without an i18n library: each language is a typed object in
   `src/locales/<code>/`, one file per area, with English (`src/locales/en`) as the source and its type
@@ -41,7 +45,8 @@ maintained by agents, so strict types and a predictable structure matter more th
   without `LanguageProvider` see English. Push notification texts are built server-side and are still English.
 - No servers to run; the free tiers are enough for now. Sentry's free plan allows about 5k errors a month.
 - Security rests on RLS policies, so each one needs pgTAP tests.
-- No SSR; the service worker's cache must be kept in mind when debugging stale content.
+- No SSR; the service worker's cache must be kept in mind when debugging stale content. A deploy shows up
+  after a tap on Reload, not a restart.
 
 ## Alternatives considered
 
