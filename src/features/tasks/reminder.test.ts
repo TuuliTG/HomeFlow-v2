@@ -20,6 +20,16 @@ describe('reminder times', () => {
     expect(suggestedReminderTime(new Date(2026, 9, 9, 23, 59))).toBe('2026-10-10T00:00');
   });
 
+  it('suggests half an hour before the scheduled time', () => {
+    const startsAt = new Date(2026, 9, 10, 9, 15).toISOString();
+    expect(suggestedReminderTime(now, startsAt)).toBe('2026-10-10T08:45');
+  });
+
+  it('suggests the next full hour when half an hour before the scheduled time has passed', () => {
+    const startsAt = new Date(2026, 9, 9, 14, 40).toISOString();
+    expect(suggestedReminderTime(now, startsAt)).toBe('2026-10-09T15:00');
+  });
+
   it.each([
     [new Date(2026, 9, 9, 18, 0), 'Reminder today at 18:00'],
     [new Date(2026, 9, 10, 9, 5), 'Reminder tomorrow at 9:05'],
