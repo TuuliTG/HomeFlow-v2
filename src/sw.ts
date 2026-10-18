@@ -22,7 +22,9 @@ registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')));
 // A new version waits until the user taps Reload in the update banner (registerType: 'prompt'), so a
 // page isn't swapped out from under someone typing.
 self.addEventListener('message', (event) => {
-  if (isSkipWaitingMessage(event.data)) void self.skipWaiting();
+  if (event.origin === self.location.origin && isSkipWaitingMessage(event.data)) {
+    void self.skipWaiting();
+  }
 });
 
 self.addEventListener('push', (event) => {
