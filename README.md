@@ -74,8 +74,8 @@ supabase/           config, SQL migrations, database tests, Edge Functions
 - **Data flow:** components → hooks (TanStack Query) → feature `api.ts` → Supabase client. Components never call
   Supabase directly, and external data is validated with Zod.
 - **Security:** every table has Row Level Security; family data is scoped to the user's household.
-- **Edge Functions** (Deno): `add-child` and `child-sign-in` for children without email, `notify-household` and
-  `send-reminders` for push notifications.
+- **Edge Functions** (Deno): `add-child` and `child-sign-in` for children without email, `notify-household`,
+  `notify-request` and `send-reminders` for push notifications.
 - **Texts** live in `src/locales/`, never inline in components.
 - **Errors:** a crashed screen shows a reload page; crashes, unhandled errors and Edge Function failures are
   reported to Sentry when a DSN is set.
@@ -117,9 +117,10 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
    1. Generate VAPID keys: `npx web-push@3.6.7 generate-vapid-keys`. Set `VITE_VAPID_PUBLIC_KEY` in Vercel.
    2. **Supabase → Edge Functions → Secrets:** add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
       (`mailto:` + your email) and `NOTIFY_WEBHOOK_SECRET` (e.g. `openssl rand -hex 32`).
-   3. Deploy: `npx supabase functions deploy notify-household send-reminders`.
+   3. Deploy: `npx supabase functions deploy notify-household notify-request send-reminders`.
    4. **Supabase → Database Webhooks:** on insert into `tasks`, call the `notify-household` function (POST) with
-      header `x-webhook-secret` set to the secret.
+      header `x-webhook-secret` set to the secret; on insert and update of `task_requests`, call `notify-request`
+      the same way.
    5. **Supabase → Integrations → Cron:** every minute (`* * * * *`), call the `send-reminders` function (POST)
       with the same `x-webhook-secret` header.
    6. In the app, turn on notifications on each device (on iPhone, add HomeFlow to the Home Screen first).
