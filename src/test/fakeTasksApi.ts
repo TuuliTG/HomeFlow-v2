@@ -195,6 +195,7 @@ export const putBackTask: typeof tasksApi.putBackTask = (taskId) =>
     const task = openTaskOf(userId, taskId);
     if (task.pickedUpBy !== userId) throw new Error('You have not picked up this task');
     task.pickedUpBy = null;
+    fakeRequestsBackend.settle(taskId, null);
     fakeTasksBackend.clearReminderAs(userId, taskId);
     // Like the trigger on tasks: whoever gives a task back no longer plans to do it.
     fakeSchedulesBackend.clearScheduleAs(userId, taskId);

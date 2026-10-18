@@ -58,11 +58,18 @@ export const fakeRequestsBackend = {
     deliver(task, { kind: 'changed' });
   },
   /**
-   * Like the trigger on tasks: a request is settled once the task is done (`pickedUpBy` null) or someone
-   * other than the member asked picks it up.
+   * Like the trigger on tasks when a task changes hands: someone else picking it up settles its request, the
+   * member asked picking it up accepts it, and giving back a task one accepted clears it.
    */
   settle(taskId: string, pickedUpBy: string | null) {
-    if (requests.get(taskId)?.requestedFor !== pickedUpBy) requests.delete(taskId);
+    const request = requests.get(taskId);
+    if (!request) return;
+    if (request.requestedFor === pickedUpBy) request.answer = 'accepted';
+    else if (pickedUpBy !== null || request.answer === 'accepted') requests.delete(taskId);
+  },
+  /** Like the trigger on tasks: a request goes once the task is done. */
+  forget(taskId: string) {
+    requests.delete(taskId);
   },
   /** The task's request with names, like the embedded `task_requests`. */
   requestOf(taskId: string): TaskRequest | null {

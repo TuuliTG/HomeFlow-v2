@@ -1,5 +1,5 @@
 import { type SyntheticEvent, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { CancelLink } from '@/components/ui/CancelLink';
@@ -64,6 +64,7 @@ function AskForm({ task, candidates }: { task: Task; candidates: HouseholdMember
   const user = useLoggedInUser();
   const requestTask = useRequestTask(user.id);
   const navigate = useNavigate();
+  const location = useLocation();
   const [memberId, setMemberId] = useState<string | null>(null);
   const { common, tasks } = useMessages();
   const t = tasks.requests;
@@ -72,7 +73,9 @@ function AskForm({ task, candidates }: { task: Task; candidates: HouseholdMember
     event.preventDefault();
     if (memberId === null) return;
     await requestTask.mutateAsync({ taskId: task.id, memberId });
-    await navigate(paths.tasks);
+    // Back to the board or Me page the user asked from, which shows the request.
+    if (location.key === 'default') await navigate(paths.tasks);
+    else await navigate(-1);
   }
 
   if (candidates.length === 0) {

@@ -60,7 +60,8 @@ next one back rather than follow a fixed calendar.
   product's "self-assignment" principle. The card shows the request: Accept/Decline to the member asked (also under
   _Asked of you_ on the Me page), Cancel to whoever asked, and a decline only to whoever asked until dismissed. A
   trigger (`private.settle_task_requests()`) removes a request once the task is done or someone other than the
-  member asked picks it up. Each function touches the task row, so live updates carry requests too.
+  member asked picks it up, and an accepted one once they give it back; the member asked picking the task up
+  accepts it. Answering and cancelling lock the task before the request, like picking up, so they can't deadlock. Each function touches the task row, so live updates carry requests too.
 - **Fixing mistakes**: any adult, and a child for their own tasks, can edit (`update_task()`) or delete
   (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes

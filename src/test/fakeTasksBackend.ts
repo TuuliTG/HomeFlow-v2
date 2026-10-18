@@ -186,7 +186,7 @@ export const fakeTasksBackend = {
     completions += 1;
     // A millisecond apart, so the newest completion sorts first.
     task.completed = { by: userId, at: new Date(Date.now() + completions).toISOString() };
-    fakeRequestsBackend.settle(taskId, null);
+    fakeRequestsBackend.forget(taskId);
     deliver(task, { kind: 'changed' });
     if (task.repeatEveryDays === null) return;
     store(

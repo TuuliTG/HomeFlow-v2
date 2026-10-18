@@ -80,6 +80,22 @@ describe('asking a family member to do a task', () => {
     expect(screen.queryByRole('region', { name: 'Asked of you' })).not.toBeInTheDocument();
   });
 
+  it('accepts the request when the member asked picks the task up instead', async () => {
+    const ben = addMember('ben@example.com', 'Ben');
+    const anna = logInAsFamilyMember();
+    const vacuum = addTask(anna.id, 'Vacuum');
+    fakeAuthBackend.logInAs('ben@example.com');
+    fakeRequestsBackend.requestTaskAs(anna.id, vacuum, ben.id);
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    const task = await screen.findByRole('listitem', { name: 'Vacuum' });
+    await user.click(within(task).getByRole('button', { name: 'Pick up: Vacuum' }));
+
+    expect(await within(task).findByText('Picked up by you')).toBeInTheDocument();
+    expect(within(task).queryByRole('button', { name: /^(Accept|Decline)/ })).toBeNull();
+  });
+
   it('tells whoever asked that the member declined, until they dismiss it', async () => {
     const ben = addMember('ben@example.com', 'Ben');
     const anna = logInAsFamilyMember();

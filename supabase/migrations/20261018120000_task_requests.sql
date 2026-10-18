@@ -91,6 +91,8 @@ begin
   if accept is null then
     raise exception 'Accept or decline the request' using errcode = '22023';
   end if;
+  -- Locks the task before the request, in the same order as request_task() and picking up, so they can't deadlock.
+  perform 1 from public.tasks t where t.id = answer_task_request.task_id for update;
   select * into request from public.task_requests r
     where r.task_id = answer_task_request.task_id
       and r.requested_for = auth.uid()
@@ -104,16 +106,17 @@ begin
       where t.id = request.task_id
         and private.can_see_task(t)
         and t.completed_at is null
-        and (t.picked_up_by is null or t.picked_up_by = request.requested_by);
+        and (t.picked_up_by is null or t.picked_up_by in (request.requested_by, auth.uid()));
     if not found then
       raise exception 'This task is no longer open for you to take' using errcode = 'P0002';
     end if;
   else
     update public.tasks t set title = t.title where t.id = request.task_id;
   end if;
+  -- Picking the task up already accepted the request (the trigger below), so it is answered only once.
   update public.task_requests r
     set answer = case when accept then 'accepted' else 'declined' end, answered_at = now()
-    where r.id = request.id;
+    where r.id = request.id and r.answer is null;
 end;
 $$;
 
@@ -126,6 +129,8 @@ security definer
 set search_path = ''
 as $$
 begin
+  -- Locks the task before the request, like answer_task_request().
+  perform 1 from public.tasks t where t.id = cancel_task_request.task_id for update;
   delete from public.task_requests r
     where r.task_id = cancel_task_request.task_id
       and r.requested_by = auth.uid()
@@ -143,7 +148,8 @@ grant execute on function public.request_task(uuid, uuid), public.answer_task_re
   public.cancel_task_request(uuid) to authenticated;
 
 -- A request is settled once the task is done or someone other than the member asked picks it up, however that
--- happens, so nobody is left asked to do a task that is already taken.
+-- happens, so nobody is left asked to do a task that is already taken; an accepted one also goes once the member
+-- gives the task back. The member asked picking the task up themselves accepts the request.
 create function private.settle_task_requests()
 returns trigger
 language plpgsql
@@ -153,7 +159,13 @@ as $$
 begin
   delete from public.task_requests r
     where r.task_id = new.id
-      and (new.completed_at is not null or r.requested_for is distinct from new.picked_up_by);
+      and (
+        new.completed_at is not null
+        or (new.picked_up_by is not null and r.requested_for <> new.picked_up_by)
+        or (r.answer = 'accepted' and r.requested_for is distinct from new.picked_up_by)
+      );
+  update public.task_requests r set answer = 'accepted', answered_at = now()
+    where r.task_id = new.id and r.requested_for = new.picked_up_by and r.answer is null;
   return null;
 end;
 $$;
@@ -165,6 +177,6 @@ create trigger tasks_settle_task_requests
   for each row
   when (
     (old.completed_at is null and new.completed_at is not null)
-    or (new.picked_up_by is not null and old.picked_up_by is distinct from new.picked_up_by)
+    or old.picked_up_by is distinct from new.picked_up_by
   )
   execute function private.settle_task_requests();

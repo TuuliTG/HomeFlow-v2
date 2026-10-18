@@ -2,7 +2,7 @@
 -- Anna and Ben (adults) and Carol (a child) share a household; Dave has his own.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(28);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -182,6 +182,28 @@ select throws_ok(
   format($$ select public.answer_task_request(%L, true) $$, current_setting('test.plants')),
   'P0002', null,
   'a settled request cannot be accepted'
+);
+
+-- Ben picking up the task he was asked to do accepts the request; giving it back clears it.
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+insert into public.tasks (title, type, points) values ('Dust', 'physical', 1);
+select public.request_task(id, '22222222-2222-2222-2222-222222222222') from public.tasks where title = 'Dust';
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select public.pick_up_task(id) from public.tasks where title = 'Dust';
+select results_eq(
+  $$ select r.answer from public.task_requests r join public.tasks t on t.id = r.task_id where t.title = 'Dust' $$,
+  $$ values ('accepted') $$,
+  'picking up a task one was asked to do accepts the request'
+);
+select throws_ok(
+  $$ select public.answer_task_request(id, false) from public.tasks where title = 'Dust' $$,
+  'P0002', null,
+  'a request accepted by picking the task up cannot be declined'
+);
+select public.put_back_task(id) from public.tasks where title = 'Dust';
+select is_empty(
+  $$ select * from public.task_requests r join public.tasks t on t.id = r.task_id where t.title = 'Dust' $$,
+  'giving back a task one accepted clears the request'
 );
 
 -- Asking again replaces the earlier request.

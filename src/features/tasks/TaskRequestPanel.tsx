@@ -154,8 +154,8 @@ function NoticeButton({
       onClick={onClick}
       className={
         isPrimary
-          ? 'bg-brand-600 hover:bg-brand-900 rounded-lg px-3 py-1.5 font-semibold text-white disabled:opacity-60'
-          : 'rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60'
+          ? 'bg-brand-600 hover:bg-brand-900 min-h-11 rounded-lg px-3 font-semibold text-white disabled:opacity-60'
+          : 'min-h-11 rounded-lg border border-slate-300 bg-white px-3 font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60'
       }
     >
       {label}
