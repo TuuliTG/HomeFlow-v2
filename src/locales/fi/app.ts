@@ -19,6 +19,11 @@ export const app: Messages['app'] = {
     benefit: '. Sen jälkeen HomeFlow aukeaa kuin sovellus ja voi lähettää sinulle ilmoituksia.',
     gotIt: 'Selvä',
   },
+  update: {
+    available: 'HomeFlow’sta on uusi versio.',
+    reload: 'Lataa uudelleen',
+    later: 'Ei nyt',
+  },
   notFound: {
     title: 'Sivua ei löytynyt',
     description: 'Tätä sivua ei ole olemassa.',

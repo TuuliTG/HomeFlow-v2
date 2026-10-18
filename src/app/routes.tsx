@@ -6,6 +6,7 @@ import { NotFoundPage } from '@/app/NotFoundPage';
 import { OnboardingGate } from '@/app/OnboardingGate';
 import { paths } from '@/app/paths';
 import { SettingsPage } from '@/app/SettingsPage';
+import { UpdateBanner } from '@/app/UpdateBanner';
 import { AuthProvider } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { HouseholdPage } from '@/features/household/HouseholdPage';
@@ -27,6 +28,7 @@ export const routes: RouteObject[] = [
   {
     element: (
       <LanguageProvider>
+        <UpdateBanner />
         <Outlet />
       </LanguageProvider>
     ),

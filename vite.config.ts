@@ -22,7 +22,9 @@ export default defineConfig({
       filename: 'sw.ts',
       // The service worker reports nothing to Sentry, so its source map would only be published.
       injectManifest: { sourcemap: false },
-      registerType: 'autoUpdate',
+      // UpdateBanner registers the worker and asks before a new version takes over.
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon-180x180.png'],
       manifest: {
         name: 'HomeFlow',
