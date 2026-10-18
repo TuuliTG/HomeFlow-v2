@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
+import { fakeFavouritesBackend } from '@/test/fakeFavouritesApi';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
@@ -22,7 +23,7 @@ describe('starring tasks from the task lists', () => {
 
     expect(star).toHaveAttribute('aria-pressed', 'true');
     await waitFor(() => {
-      expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
+      expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
     });
     await user.click(screen.getByRole('link', { name: 'New task' }));
     const favourites = await screen.findByRole('region', { name: 'Favourites' });
@@ -32,7 +33,7 @@ describe('starring tasks from the task lists', () => {
   it('shows which tasks are favourites already and unstars one', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, TRASH);
-    fakeTasksBackend.setFavouriteAs(anna.id, 'TAKE OUT TRASH', true);
+    fakeFavouritesBackend.setFavouriteAs(anna.id, 'TAKE OUT TRASH', true);
     const user = userEvent.setup();
     renderAppAt('/');
 
@@ -44,7 +45,7 @@ describe('starring tasks from the task lists', () => {
 
     expect(star).toHaveAttribute('aria-pressed', 'false');
     await waitFor(() => {
-      expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual([]);
+      expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual([]);
     });
   });
 
@@ -61,7 +62,7 @@ describe('starring tasks from the task lists', () => {
     );
 
     await waitFor(() => {
-      expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
+      expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
     });
   });
 
@@ -78,7 +79,7 @@ describe('starring tasks from the task lists', () => {
     );
 
     await waitFor(() => {
-      expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
+      expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
     });
   });
 
@@ -97,15 +98,15 @@ describe('starring tasks from the task lists', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Not saved');
     expect(star).toHaveAttribute('aria-pressed', 'false');
-    expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual([]);
+    expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual([]);
   });
 
   it('undoes only the star that failed while another is still saving', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, TRASH);
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
-    fakeTasksBackend.failFavourite(TRASH.title);
-    const saveVacuum = fakeTasksBackend.holdFavourite('Vacuum');
+    fakeFavouritesBackend.failFavourite(TRASH.title);
+    const saveVacuum = fakeFavouritesBackend.holdFavourite('Vacuum');
     const user = userEvent.setup();
     renderAppAt('/');
     const trash = await screen.findByRole('button', { name: 'Favourite: Take out trash' });
@@ -122,7 +123,7 @@ describe('starring tasks from the task lists', () => {
     expect(vacuum).toHaveAttribute('aria-pressed', 'true');
     saveVacuum();
     await waitFor(() => {
-      expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual(['vacuum']);
+      expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['vacuum']);
     });
     expect(vacuum).toHaveAttribute('aria-pressed', 'true');
   });
@@ -130,7 +131,7 @@ describe('starring tasks from the task lists', () => {
   it('ignores taps on a star while it is saving, keeping the focus on it', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, TRASH);
-    const save = fakeTasksBackend.holdFavourite(TRASH.title);
+    const save = fakeFavouritesBackend.holdFavourite(TRASH.title);
     const user = userEvent.setup();
     renderAppAt('/');
     const star = await screen.findByRole('button', { name: 'Favourite: Take out trash' });
@@ -148,6 +149,6 @@ describe('starring tasks from the task lists', () => {
     await waitFor(() => {
       expect(star).not.toHaveAttribute('aria-disabled');
     });
-    expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
+    expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
   });
 });

@@ -3,6 +3,7 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
+import { fakeFavouritesBackend } from '@/test/fakeFavouritesApi';
 import { fakeGoalsBackend } from '@/test/fakeGoalsApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeImagesBackend } from '@/test/fakeImagesApi';
@@ -51,6 +52,7 @@ afterEach(() => {
   fakeAuthBackend.reset();
   fakeHouseholdBackend.reset();
   fakeTasksBackend.reset();
+  fakeFavouritesBackend.reset();
   fakeSchedulesBackend.reset();
   fakeRequestsBackend.reset();
   fakeImagesBackend.reset();
