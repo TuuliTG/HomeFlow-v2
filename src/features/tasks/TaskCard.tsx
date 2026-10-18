@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { type ReactNode, useCallback, useId, useState } from 'react';
 import { Link } from 'react-router';
 
 import { paths } from '@/app/paths';
@@ -24,15 +24,31 @@ interface TaskCardProps {
   currentUserId: string;
   /** Heading level of the task's title, one below the heading of the list it is in. */
   titleLevel: 3 | 4;
+  /** An item in a list of tasks, or a panel on its own, which takes focus when it opens. */
+  as?: 'li' | 'section';
+  /** More about the task, below its actions. */
+  children?: ReactNode;
 }
 
-export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
+export function TaskCard({
+  task,
+  currentUserId,
+  titleLevel,
+  as: Root = 'li',
+  children,
+}: TaskCardProps) {
   const titleId = useId();
   const t = useMessages();
+  const isPanel = Root === 'section';
+  const focusWhenOpened = useCallback((element: HTMLElement | null) => {
+    element?.focus();
+  }, []);
 
   return (
-    <li
+    <Root
+      ref={isPanel ? focusWhenOpened : undefined}
       aria-labelledby={titleId}
+      tabIndex={isPanel ? -1 : undefined}
       className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
     >
       <div className="flex items-start justify-between gap-2">
@@ -54,7 +70,8 @@ export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
       <TaskImages paths={task.images} title={task.title} currentUserId={currentUserId} />
       {isToDoBy(task, currentUserId) && <TaskReminder task={task} currentUserId={currentUserId} />}
       <TaskActions task={task} currentUserId={currentUserId} />
-    </li>
+      {children}
+    </Root>
   );
 }
 
@@ -63,7 +80,7 @@ function TaskDetails({
   currentUserId,
   titleId,
   titleLevel,
-}: TaskCardProps & { titleId: string }) {
+}: Pick<TaskCardProps, 'task' | 'currentUserId' | 'titleLevel'> & { titleId: string }) {
   const t = useMessages();
   const Title = titleLevel === 3 ? 'h3' : 'h4';
   return (
