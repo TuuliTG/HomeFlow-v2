@@ -8,6 +8,7 @@ import {
   toDateTimeLocal,
 } from '@/features/tasks/reminder';
 import type { Task } from '@/features/tasks/task';
+import { useSchedules } from '@/features/tasks/useSchedules';
 import { useClearReminder, useReminders, useSetReminder } from '@/features/tasks/useTasks';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
 
@@ -21,10 +22,12 @@ const linkButtonClassName =
 
 /**
  * The user's reminder for a task that is theirs to do, with buttons to set, change or remove it. A
- * reminder is a push notification at the chosen time (ADR 0004).
+ * reminder is a push notification at the chosen time (ADR 0004); a new one starts half an hour before
+ * the time the task is scheduled for, if any.
  */
 export function TaskReminder({ task, currentUserId }: TaskReminderProps) {
   const reminders = useReminders(currentUserId);
+  const schedules = useSchedules(currentUserId);
   const clearReminder = useClearReminder(currentUserId);
   // The datetime-local value being edited; null when the form is closed.
   const [draft, setDraft] = useState<string | null>(null);
@@ -32,6 +35,7 @@ export function TaskReminder({ task, currentUserId }: TaskReminderProps) {
   const isReturningFocus = useRef(false);
   const openButton = useRef<HTMLButtonElement>(null);
   const reminder = reminders.data?.find((candidate) => candidate.taskId === task.id);
+  const schedule = schedules.data?.find((candidate) => candidate.taskId === task.id);
   const messages = useMessages();
   const t = messages.taskForm.reminder;
 
@@ -98,7 +102,7 @@ export function TaskReminder({ task, currentUserId }: TaskReminderProps) {
           aria-label={t.remindMeLabel(task.title)}
           disabled={reminders.isPending}
           onClick={() => {
-            setDraft(suggestedReminderTime(new Date()));
+            setDraft(suggestedReminderTime(new Date(), schedule?.startsAt));
           }}
           className={linkButtonClassName}
         >
