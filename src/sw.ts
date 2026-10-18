@@ -8,6 +8,7 @@ import {
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 
 import { notificationPath, openApp, parsePushPayload } from '@/lib/pushNotification';
+import { isSkipWaitingMessage } from '@/lib/serviceWorkerMessages';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -40,12 +41,6 @@ self.addEventListener('notificationclick', (event) => {
   const url = new URL(notificationPath(event.notification.data), self.location.origin).href;
   event.waitUntil(openApp(self.clients, url));
 });
-
-function isSkipWaitingMessage(data: unknown): boolean {
-  return (
-    typeof data === 'object' && data !== null && 'type' in data && data.type === 'SKIP_WAITING'
-  );
-}
 
 function readJson(data: PushMessageData | null): unknown {
   try {
