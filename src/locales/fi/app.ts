@@ -22,6 +22,7 @@ export const app: Messages['app'] = {
   update: {
     available: 'HomeFlow’sta on uusi versio.',
     reload: 'Lataa uudelleen',
+    later: 'Ei nyt',
   },
   notFound: {
     title: 'Sivua ei löytynyt',

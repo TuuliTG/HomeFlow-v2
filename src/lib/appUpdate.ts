@@ -20,3 +20,30 @@ export function checkForUpdatesWhileOpen(registration: { update: () => Promise<u
     clearInterval(interval);
   };
 }
+
+interface NewVersion {
+  registration: Pick<ServiceWorkerRegistration, 'waiting'> | undefined;
+  serviceWorker: Pick<ServiceWorkerContainer, 'addEventListener'>;
+  /** Asks the waiting service worker to take over. */
+  skipWaiting: () => Promise<void>;
+}
+
+/**
+ * Reloads the page into the waiting version once it takes control. vite-plugin-pwa reloads only when
+ * the page had a service worker at load, so a page from the very first install would stay on the old
+ * code. If another window already let the new version in, nothing is waiting and a reload is enough.
+ */
+export function reloadIntoNewVersion({ registration, serviceWorker, skipWaiting }: NewVersion) {
+  if (!registration?.waiting) {
+    location.reload();
+    return;
+  }
+  serviceWorker.addEventListener(
+    'controllerchange',
+    () => {
+      location.reload();
+    },
+    { once: true },
+  );
+  void skipWaiting();
+}

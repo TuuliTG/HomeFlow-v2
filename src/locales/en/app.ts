@@ -22,6 +22,7 @@ export const app = {
   update: {
     available: 'A new version of HomeFlow is available.',
     reload: 'Reload',
+    later: 'Not now',
   },
   notFound: {
     title: 'Page not found',
