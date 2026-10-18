@@ -87,14 +87,18 @@ describe('notify request', () => {
   });
 
   it.each([
-    ['a request that no longer exists', 'unknown', 'asked', request],
-    ['a new request already answered', 'r1', 'asked', { ...request, answer: 'accepted' }],
-    ['an answer to a request still waiting', 'r1', 'answered', request],
-  ] as const)("doesn't notify anyone about %s", async (_case, requestId, kind, stored) => {
+    { what: 'a request that no longer exists', kind: 'asked', stored: null },
+    {
+      what: 'a new request already answered',
+      kind: 'asked',
+      stored: { ...request, answer: 'accepted' },
+    },
+    { what: 'an answer to a request still waiting', kind: 'answered', stored: request },
+  ] as const)("doesn't notify anyone about $what", async ({ kind, stored }) => {
     const deps = fakeDeps();
-    vi.mocked(deps.requestById).mockResolvedValue(requestId === 'r1' ? stored : null);
+    vi.mocked(deps.requestById).mockResolvedValue(stored);
 
-    await expect(notifyRequest({ requestId, kind }, deps)).resolves.toEqual({
+    await expect(notifyRequest({ requestId: 'r1', kind }, deps)).resolves.toEqual({
       sent: 0,
       removed: 0,
       failed: 0,

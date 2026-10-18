@@ -1,6 +1,7 @@
 import type * as tasksApi from '@/features/tasks/api';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
+import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
 import { fakeSchedulesBackend } from '@/test/fakeSchedulesApi';
 import {
   deliver,
@@ -72,6 +73,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           pickerName: pickedUpBy ? fakeAuthBackend.displayNameOf(pickedUpBy) : null,
           images: [...images],
           lastDone: isPrivate ? null : lastDoneOf(previousTaskId),
+          request: fakeRequestsBackend.requestOf(id),
         }),
       ),
   );

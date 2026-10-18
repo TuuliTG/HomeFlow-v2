@@ -9,6 +9,8 @@ export interface HouseholdMember {
   id: string;
   /** Their display name, if they have chosen one. */
   name: string | null;
+  /** Children can only be asked to do tasks for children. */
+  isChild: boolean;
 }
 
 /** A helper's share of a task's points, as chosen by whoever marked it done. */
@@ -17,18 +19,22 @@ export interface HelperShare {
   points: number;
 }
 
-const memberRowsSchema = z.array(z.object({ user_id: z.string() }));
+const memberRowsSchema = z.array(z.object({ user_id: z.string(), is_child: z.boolean() }));
 
 /** The members of the user's household in the order they joined, with their names. */
 export async function fetchHouseholdMembers(): Promise<HouseholdMember[]> {
   const { data, error } = await getSupabaseClient()
     .from('household_members')
-    .select('user_id')
+    .select('user_id, is_child')
     .order('joined_at');
   if (error) throw error;
-  const ids = memberRowsSchema.parse(data).map((row) => row.user_id);
-  const names = await fetchDisplayNames(ids);
-  return ids.map((id) => ({ id, name: names.get(id) ?? null }));
+  const rows = memberRowsSchema.parse(data);
+  const names = await fetchDisplayNames(rows.map((row) => row.user_id));
+  return rows.map(({ user_id, is_child }) => ({
+    id: user_id,
+    name: names.get(user_id) ?? null,
+    isChild: is_child,
+  }));
 }
 
 /**

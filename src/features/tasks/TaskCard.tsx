@@ -1,23 +1,17 @@
 import { type ReactNode, useCallback, useId, useState } from 'react';
-import { Link } from 'react-router';
-
-import { paths } from '@/app/paths';
 
 import { describeDueDate } from '@/features/tasks/dueDate';
 import { today } from '@/lib/dates';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
-import { canChange, isToDoBy, type Task } from '@/features/tasks/task';
+import { isToDoBy, type Task } from '@/features/tasks/task';
+import { AskLink, EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskImages } from '@/features/tasks/TaskImages';
 import { TaskPeople } from '@/features/tasks/TaskPeople';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
+import { TaskRequestPanel } from '@/features/tasks/TaskRequestPanel';
 import { TaskTags } from '@/features/tasks/TaskTags';
-import {
-  useCompleteTask,
-  useMembership,
-  usePickUpTask,
-  usePutBackTask,
-} from '@/features/tasks/useTasks';
+import { useCompleteTask, usePickUpTask, usePutBackTask } from '@/features/tasks/useTasks';
 
 interface TaskCardProps {
   task: Task;
@@ -69,6 +63,7 @@ export function TaskCard({
       </div>
       <TaskImages paths={task.images} title={task.title} currentUserId={currentUserId} />
       {isToDoBy(task, currentUserId) && <TaskReminder task={task} currentUserId={currentUserId} />}
+      <TaskRequestPanel task={task} currentUserId={currentUserId} />
       <TaskActions task={task} currentUserId={currentUserId} />
       {children}
     </Root>
@@ -172,7 +167,10 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
         />
       ) : (
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <EditLink task={task} currentUserId={currentUserId} />
+          <div className="mr-auto flex gap-1">
+            <EditLink task={task} currentUserId={currentUserId} />
+            <AskLink task={task} currentUserId={currentUserId} />
+          </div>
           {pickUp === 'putBack' &&
             button(
               t.putBack,
@@ -201,23 +199,6 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
         </div>
       )}
     </>
-  );
-}
-
-/** Edit, for adults and for a child on a task they added (`private.can_change_task()`). */
-function EditLink({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'currentUserId'>) {
-  const membership = useMembership(currentUserId);
-  const t = useMessages().tasks.card;
-  // Hidden until it's known whether the user is a child.
-  if (!canChange(task, currentUserId, membership.data?.isChild ?? true)) return null;
-  return (
-    <Link
-      to={paths.editTask(task.id)}
-      aria-label={t.editLabel(task.title)}
-      className="text-brand-900 mr-auto rounded-lg px-1 py-1.5 text-sm font-semibold underline-offset-2 hover:underline"
-    >
-      {t.edit}
-    </Link>
   );
 }
 

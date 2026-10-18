@@ -7,6 +7,7 @@ import { fakeGoalsBackend } from '@/test/fakeGoalsApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeImagesBackend } from '@/test/fakeImagesApi';
 import { fakeNewsBackend } from '@/test/fakeNewsApi';
+import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
 import { fakeSchedulesBackend } from '@/test/fakeSchedulesApi';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 
@@ -24,6 +25,7 @@ vi.mock('@/features/tasks/liveApi', () => import('@/test/fakeLiveApi'));
 vi.mock('@/features/tasks/membershipApi', () => import('@/test/fakeMembershipApi'));
 vi.mock('@/features/tasks/pointsApi', () => import('@/test/fakePointsApi'));
 vi.mock('@/features/tasks/remindersApi', () => import('@/test/fakeRemindersApi'));
+vi.mock('@/features/tasks/requestsApi', () => import('@/test/fakeRequestsApi'));
 vi.mock('@/features/tasks/schedulesApi', () => import('@/test/fakeSchedulesApi'));
 // jsdom has no service worker; tests that need a new version waiting mock this hook themselves.
 vi.mock('virtual:pwa-register/react', () => ({
@@ -50,6 +52,7 @@ afterEach(() => {
   fakeHouseholdBackend.reset();
   fakeTasksBackend.reset();
   fakeSchedulesBackend.reset();
+  fakeRequestsBackend.reset();
   fakeImagesBackend.reset();
   fakeGoalsBackend.reset();
   fakeNewsBackend.reset();

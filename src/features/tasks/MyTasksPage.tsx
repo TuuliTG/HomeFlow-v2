@@ -17,6 +17,7 @@ import {
   isToDoBy,
   UNDO_WINDOW_MS,
 } from '@/features/tasks/task';
+import { TaskCard } from '@/features/tasks/TaskCard';
 import { TaskHelpersLine } from '@/features/tasks/TaskHelpersLine';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { useHelpedTasks } from '@/features/tasks/useHelpers';
@@ -47,6 +48,7 @@ export function MyTasksPage() {
       </div>
       <div className="flex flex-col gap-8">
         <PointsTotal />
+        <AskedOfYou />
         <section aria-labelledby="to-do-heading" className="flex flex-col gap-3">
           <h2 id="to-do-heading" className="text-lg font-semibold text-slate-900">
             {t.toDo}
@@ -93,6 +95,29 @@ function PointsTotal() {
       ) : (
         <LoadingMessage />
       )}
+    </section>
+  );
+}
+
+/** Tasks other members have asked the user to do, waiting for their answer; nothing when there are none. */
+function AskedOfYou() {
+  const user = useLoggedInUser();
+  const tasks = useTasks(user.id);
+  const t = useMessages().tasks.requests;
+  const asked = (tasks.data ?? []).filter(
+    ({ request }) => request?.requestedFor === user.id && request.answer === null,
+  );
+  if (asked.length === 0) return null;
+  return (
+    <section aria-labelledby="asked-heading" className="flex flex-col gap-3">
+      <h2 id="asked-heading" className="text-lg font-semibold text-slate-900">
+        {t.askedOfYou}
+      </h2>
+      <ul className="flex flex-col gap-3">
+        {asked.map((task) => (
+          <TaskCard key={task.id} task={task} currentUserId={user.id} titleLevel={3} />
+        ))}
+      </ul>
     </section>
   );
 }

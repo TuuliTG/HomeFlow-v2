@@ -54,6 +54,7 @@ const row = {
   for_children: false,
   task_images: [],
   previous: null,
+  request: null,
 };
 
 /** The tasks query's result: it is ordered twice (due date, then newest), then awaited. */
@@ -282,6 +283,43 @@ describe('tasks api', () => {
     expect(tasks.map((task) => task.lastDone)).toEqual([
       { by: 'u2', name: 'Ben', at: '2026-10-05T09:00:00Z' },
       null,
+      null,
+    ]);
+  });
+
+  it('reads who asked whom to do a task, with their names', async () => {
+    const request = { requested_by: 'u1', requested_for: 'u2', answer: null };
+    respondWithTasks({
+      data: [
+        { ...row, request },
+        { ...row, id: 't2', request: { ...request, answer: 'declined' } },
+        { ...row, id: 't3' },
+      ],
+      error: null,
+    });
+    query.in.mockResolvedValue({
+      data: [
+        { id: 'u1', display_name: 'Anna' },
+        { id: 'u2', display_name: 'Ben' },
+      ],
+      error: null,
+    });
+
+    const tasks = await api.fetchTasks();
+
+    expect(query.select).toHaveBeenCalledWith(
+      expect.stringContaining('request:task_requests(requested_by, requested_for, answer)'),
+    );
+    expect(query.in).toHaveBeenCalledWith('id', ['u1', 'u2']);
+    const asked = {
+      requestedBy: 'u1',
+      requesterName: 'Anna',
+      requestedFor: 'u2',
+      askedName: 'Ben',
+    };
+    expect(tasks.map((task) => task.request)).toEqual([
+      { ...asked, answer: null },
+      { ...asked, answer: 'declined' },
       null,
     ]);
   });

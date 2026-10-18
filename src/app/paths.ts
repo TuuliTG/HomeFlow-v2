@@ -9,6 +9,8 @@ export const paths = {
   /** The Me page with its tasks to do shown as `view` (list, day or week). */
   meAs: (view: string) => `/me?view=${view}`,
   editTask: (taskId: string) => `/tasks/${taskId}/edit`,
+  /** Asking another member to do a task. */
+  askForTask: (taskId: string) => `/tasks/${taskId}/ask`,
   /** Who helped with a task the user marked done. */
   taskHelpers: (taskId: string) => `/tasks/${taskId}/helpers`,
   /** Where a task is listed: private tasks only on the Me page, shared ones on the board. */

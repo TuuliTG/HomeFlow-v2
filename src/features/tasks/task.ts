@@ -119,6 +119,43 @@ export interface Task extends NewTask {
    * occurrence and for private tasks.
    */
   lastDone: LastDone | null;
+  /** A member's request that another do it (`task_requests`), if any. */
+  request: TaskRequest | null;
+}
+
+/**
+ * One member asking another to do a task. Accepting picks the task up for them; a request goes once the
+ * task is done or someone else picks it up.
+ */
+export interface TaskRequest {
+  requestedBy: string;
+  /** Their display name, if they have chosen one. */
+  requesterName: string | null;
+  requestedFor: string;
+  /** Their display name, if they have chosen one. */
+  askedName: string | null;
+  /** Null while waiting for an answer. */
+  answer: 'accepted' | 'declined' | null;
+}
+
+/**
+ * Whether the user can ask someone to do the task: an open shared task that is free or theirs, which
+ * they can hand over this way (`request_task()`).
+ */
+export function canRequest(task: Task, userId: string): boolean {
+  return !task.isPrivate && (task.pickedUpBy === null || task.pickedUpBy === userId);
+}
+
+/**
+ * The other members the user could ask to do the task: everyone else for a task for children, only
+ * adults for the others (`request_task()`).
+ */
+export function membersToAsk<M extends { id: string; isChild: boolean }>(
+  task: Task,
+  members: M[],
+  userId: string,
+): M[] {
+  return members.filter((member) => member.id !== userId && (task.forChildren || !member.isChild));
 }
 
 export interface LastDone {

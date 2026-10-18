@@ -2,6 +2,7 @@ import type * as liveApi from '@/features/tasks/liveApi';
 import { type NewTask, type TaskHelper, titleKey } from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
+import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
 
 /**
  * The in-memory tasks behind `fakeTasksApi.ts`, and what tests use to set them up or act as another member.
@@ -198,6 +199,7 @@ export const fakeTasksBackend = {
     if (task.pickedUpBy === userId) return;
     if (task.pickedUpBy) throw new Error('Someone else has picked up this task');
     task.pickedUpBy = userId;
+    fakeRequestsBackend.settle(taskId, userId);
     deliver(task, { kind: 'changed' });
   },
   /**
@@ -209,6 +211,7 @@ export const fakeTasksBackend = {
     completions += 1;
     // A millisecond apart, so the newest completion sorts first.
     task.completed = { by: userId, at: new Date(Date.now() + completions).toISOString() };
+    fakeRequestsBackend.settle(taskId, null);
     deliver(task, { kind: 'changed' });
     if (task.repeatEveryDays === null) return;
     store(
