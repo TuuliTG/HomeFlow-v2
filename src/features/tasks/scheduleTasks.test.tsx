@@ -144,6 +144,7 @@ describe('scheduling tasks', () => {
     renderAppAt('/me?view=day');
 
     await user.click(await screen.findByRole('button', { name: 'Buy a present, 9:00–9:50' }));
+    await user.click(screen.getByRole('button', { name: 'Change time: Buy a present' }));
     // A length that isn't offered stays as it is.
     expect(screen.getByLabelText('Length')).toHaveDisplayValue('50 min');
     fireEvent.change(screen.getByLabelText('Start'), { target: { value: '10:30' } });
@@ -154,12 +155,55 @@ describe('scheduling tasks', () => {
       expect(moved).toHaveFocus();
     });
     await user.click(moved);
+    await user.click(screen.getByRole('button', { name: 'Change time: Buy a present' }));
     await user.click(screen.getByRole('button', { name: 'Remove from timetable' }));
 
     expect(
       await screen.findByRole('button', { name: 'Schedule: Buy a present' }),
     ).toBeInTheDocument();
     expect(fakeSchedulesBackend.scheduleOf(anna.id, present)).toBeNull();
+  });
+
+  it("shows a task's details when you tap it in the timetable", async () => {
+    const anna = logInAsFamilyMember();
+    const present = fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Buy a present',
+      description: 'Something for the garden',
+      type: 'meta',
+      points: 2,
+      isPrivate: true,
+    });
+    scheduleAt(anna.id, present, { day: today(), start: '9:00', minutes: 30 });
+    const user = userEvent.setup();
+    renderAppAt('/me?view=day');
+
+    const block = await screen.findByRole('button', { name: 'Buy a present, 9:00–9:30' });
+    await user.click(block);
+
+    const details = screen.getByRole('region', { name: 'Buy a present' });
+    expect(details).toHaveFocus();
+    expect(within(details).getByText('Something for the garden')).toBeInTheDocument();
+    expect(
+      within(details).getByText(`${en.common.shortDate(fromIsoDate(today()))}, 9:00–9:30`),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('form', { name: 'When to do Buy a present' }),
+    ).not.toBeInTheDocument();
+
+    await user.click(within(details).getByRole('button', { name: 'Close' }));
+    expect(details).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(block).toHaveFocus();
+    });
+
+    await user.click(block);
+    await user.click(screen.getByRole('button', { name: 'Mark done: Buy a present' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: 'Buy a present' })).not.toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole('button', { name: 'Buy a present, 9:00–9:30' }),
+    ).not.toBeInTheDocument();
   });
 
   it('goes back and forth a week at a time', async () => {

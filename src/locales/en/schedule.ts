@@ -20,7 +20,7 @@ export const schedule = {
   range: (first: string, last: string) => `${first} – ${last}`,
   /** Names the list of blocks in one day's column. */
   plannedFor: (day: string) => `Planned for ${day}`,
-  /** "Vacuum, 9:00–9:30": a block in the timetable, which opens its form. */
+  /** "Vacuum, 9:00–9:30": a block in the timetable, which opens its details. */
   block: (title: string, from: string, to: string) => `${title}, ${from}–${to}`,
   loadFailed: "We couldn't load your timetable. Check your connection and reload the page.",
   notScheduled: 'Not scheduled yet',
@@ -39,6 +39,11 @@ export const schedule = {
   /** On the New task form, when adding a task from the timetable. */
   addingAt: (day: string, time: string) =>
     `It goes in your timetable on ${day} at ${time}. A shared task is picked up for you.`,
+  /** "Sat 17 Oct, 9:00–9:30": when a task is planned, in its details. */
+  when: (day: string, from: string, to: string) => `${day}, ${from}–${to}`,
+  changeTime: 'Change time',
+  changeTimeLabel: (title: string) => `Change time: ${title}`,
+  close: 'Close',
   /** The form for one task's block. */
   formLabel: (title: string) => `When to do ${title}`,
   day: 'Day',

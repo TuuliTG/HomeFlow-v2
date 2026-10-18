@@ -27,8 +27,8 @@ const hours = Array.from({ length: 24 }, (_, hour) => hour);
 /** A task in the timetable, with when it is planned. */
 export type ScheduledTask = Omit<TaskSchedule, 'taskId'> & { task: Task };
 
-/** Opens the form of a task, from the control that was tapped. */
-export type OpenForm = (taskId: string, control: HTMLElement) => void;
+/** Opens a task, from the control that was tapped. */
+export type OpenTask = (taskId: string, control: HTMLElement) => void;
 
 /** Opens what to do at a time in the timetable, from the control that was tapped. */
 export type PickSlot = (slot: Slot, control: HTMLElement) => void;
@@ -42,7 +42,7 @@ interface TimetableProps {
   /** Where the scrolling box and each day's column are, for working out where a drop lands. */
   scrollerRef: (element: HTMLElement | null) => void;
   columnRef: (day: string, element: HTMLElement | null) => void;
-  onOpen: OpenForm;
+  onOpen: OpenTask;
   onPickSlot: PickSlot;
 }
 
@@ -161,7 +161,7 @@ interface DayColumnProps {
   blocks: PlacedBlock<ScheduledTask>[];
   preview: (DragData & { target: DropTarget }) | null;
   columnRef: (element: HTMLElement | null) => void;
-  onOpen: OpenForm;
+  onOpen: OpenTask;
   onPickSlot: PickSlot;
 }
 
@@ -230,7 +230,7 @@ function ScheduledBlock({
   onOpen,
 }: {
   block: PlacedBlock<ScheduledTask>;
-  onOpen: OpenForm;
+  onOpen: OpenTask;
 }) {
   const t = useMessages();
   const { task, durationMinutes } = item;

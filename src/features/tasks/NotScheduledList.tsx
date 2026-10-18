@@ -3,7 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { describeDueDate } from '@/features/tasks/dueDate';
 import { DEFAULT_DURATION_MINUTES } from '@/features/tasks/schedule';
 import type { Task } from '@/features/tasks/task';
-import type { OpenForm } from '@/features/tasks/Timetable';
+import type { OpenTask } from '@/features/tasks/Timetable';
 import { typeColours } from '@/features/tasks/typeColours';
 import type { DragData } from '@/features/tasks/useTimetableDrag';
 import { today } from '@/lib/dates';
@@ -21,7 +21,7 @@ export function NotScheduledList({
   tasks: Task[];
   /** Whether any of the user's tasks are in the timetable. */
   hasScheduled: boolean;
-  onOpen: OpenForm;
+  onOpen: OpenTask;
 }) {
   const t = useMessages().schedule;
   return (
@@ -48,7 +48,7 @@ export function NotScheduledList({
   );
 }
 
-function NotScheduledChip({ task, onOpen }: { task: Task; onOpen: OpenForm }) {
+function NotScheduledChip({ task, onOpen }: { task: Task; onOpen: OpenTask }) {
   const t = useMessages();
   const { setNodeRef, listeners, isDragging } = useDraggable({
     id: task.id,

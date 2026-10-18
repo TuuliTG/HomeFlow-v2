@@ -8,6 +8,7 @@ import {
   atMinutes,
   DEFAULT_DURATION_MINUTES,
   daysShown,
+  endOf,
   type ScheduleView as View,
   suggestedStart,
   type TaskSchedule,
@@ -15,6 +16,7 @@ import {
 import { ScheduleForm } from '@/features/tasks/ScheduleForm';
 import { type Slot, SlotPicker } from '@/features/tasks/SlotPicker';
 import type { Task } from '@/features/tasks/task';
+import { TaskCard } from '@/features/tasks/TaskCard';
 import { type ScheduledTask, Timetable } from '@/features/tasks/Timetable';
 import { useSchedules, useSetSchedule } from '@/features/tasks/useSchedules';
 import { type DropTarget, useTimetableDrag } from '@/features/tasks/useTimetableDrag';
@@ -34,8 +36,11 @@ function firstDayToPlan(days: string[]): string {
   return days.includes(todayDate) ? todayDate : (days[0] ?? todayDate);
 }
 
-/** What is open above the timetable: a task's form, or what to do at a time tapped in it. */
-type Panel = { kind: 'task'; taskId: string } | ({ kind: 'slot' } & Slot);
+/**
+ * What is open above the timetable: the details of a task tapped in it, a task's form, or what to do at a time
+ * tapped in it.
+ */
+type Panel = { kind: 'details' | 'form'; taskId: string } | ({ kind: 'slot' } & Slot);
 
 /**
  * The user's tasks to do in a timetable of a day or a week, which they plan by dragging tasks into it,
@@ -92,7 +97,7 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
           tasks={notScheduled}
           hasScheduled={scheduled.length > 0}
           onOpen={(taskId, control) => {
-            open({ kind: 'task', taskId }, control);
+            open({ kind: 'form', taskId }, control);
           }}
         />
         {panel && (
@@ -104,6 +109,9 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
             notScheduled={notScheduled}
             scheduleOf={scheduleOf}
             currentUserId={currentUserId}
+            onChangeTime={(taskId) => {
+              setPanel({ kind: 'form', taskId });
+            }}
             onClose={close}
           />
         )}
@@ -116,7 +124,7 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
           scrollerRef={drag.scrollerRef}
           columnRef={drag.columnRef}
           onOpen={(taskId, control) => {
-            open({ kind: 'task', taskId }, control);
+            open({ kind: 'details', taskId }, control);
           }}
           onPickSlot={(slot, control) => {
             open({ kind: 'slot', ...slot }, control);
@@ -146,10 +154,14 @@ interface OpenPanelProps {
   notScheduled: Task[];
   scheduleOf: Map<string, TaskSchedule>;
   currentUserId: string;
+  onChangeTime: (taskId: string) => void;
   onClose: () => void;
 }
 
-/** A task's form, or what to do at the time tapped; nothing once the task has gone, e.g. done elsewhere. */
+/**
+ * A task's details or form, or what to do at the time tapped; nothing once the task has gone, e.g. done from
+ * its details.
+ */
 function OpenPanel({ panel, days, scheduleOf, tasks, ...props }: OpenPanelProps) {
   if (panel.kind === 'slot') {
     return (
@@ -165,6 +177,19 @@ function OpenPanel({ panel, days, scheduleOf, tasks, ...props }: OpenPanelProps)
   const task = tasks.find((candidate) => candidate.id === panel.taskId);
   if (!task) return null;
   const schedule = scheduleOf.get(task.id);
+  if (panel.kind === 'details' && schedule) {
+    return (
+      <ScheduledTaskDetails
+        task={task}
+        schedule={schedule}
+        currentUserId={props.currentUserId}
+        onChangeTime={() => {
+          props.onChangeTime(task.id);
+        }}
+        onClose={props.onClose}
+      />
+    );
+  }
   return (
     <ScheduleForm
       key={task.id}
@@ -179,6 +204,50 @@ function OpenPanel({ panel, days, scheduleOf, tasks, ...props }: OpenPanelProps)
       isScheduled={schedule !== undefined}
       onClose={props.onClose}
     />
+  );
+}
+
+interface ScheduledTaskDetailsProps {
+  task: Task;
+  schedule: TaskSchedule;
+  currentUserId: string;
+  onChangeTime: () => void;
+  onClose: () => void;
+}
+
+/** A task tapped in the timetable: its card, as on the list, with when it is planned and a way to change it. */
+function ScheduledTaskDetails({
+  task,
+  schedule,
+  currentUserId,
+  onChangeTime,
+  onClose,
+}: ScheduledTaskDetailsProps) {
+  const { common, schedule: t } = useMessages();
+  const startsAt = new Date(schedule.startsAt);
+  return (
+    <TaskCard key={task.id} as="section" task={task} currentUserId={currentUserId} titleLevel={3}>
+      <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 pt-3 text-sm">
+        <span className="mr-auto font-medium text-slate-700">
+          {t.when(common.shortDate(startsAt), common.time(startsAt), common.time(endOf(schedule)))}
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100"
+        >
+          {t.close}
+        </button>
+        <button
+          type="button"
+          aria-label={t.changeTimeLabel(task.title)}
+          onClick={onChangeTime}
+          className="border-brand-600 text-brand-900 hover:bg-brand-50 rounded-lg border px-3 py-1.5 font-semibold"
+        >
+          {t.changeTime}
+        </button>
+      </div>
+    </TaskCard>
   );
 }
 

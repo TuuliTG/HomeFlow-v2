@@ -41,7 +41,13 @@ test('family member can plan their tasks in a weekly timetable', async ({ page }
   expect(pageWidth).toBeLessThanOrEqual(page.viewportSize()?.width ?? 0);
 
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Vacuum, 9:00–10:00' })).toBeVisible();
+  await page.getByRole('button', { name: 'Vacuum, 9:00–10:00' }).click();
+  const details = page.getByRole('region', { name: 'Vacuum' });
+  await expect(details).toBeFocused();
+  const detailsResults = await new AxeBuilder({ page }).analyze();
+  expect(detailsResults.violations, "a11y violations on a task's details").toEqual([]);
+  await details.getByRole('button', { name: 'Change time: Vacuum' }).click();
+  await expect(page.getByRole('form', { name: 'When to do Vacuum' })).toBeVisible();
 });
 
 test('family member can drag a task into the timetable and move it', async ({ page, isMobile }) => {
