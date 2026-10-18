@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-17 (placing tasks from the timetable)
+- **Updated:** 2026-10-18 (a task's details from the timetable)
 
 ## Context
 
@@ -146,8 +146,9 @@ next one back rather than follow a fixed calendar.
   placed by dragging (`@dnd-kit/core`: mouse, or touch and hold so a swipe still scrolls) in 15-minute steps,
   with a preview of where they land; the day and time come from the pointer over the columns, measured as it moves,
   so they stay right while the timetable scrolls. Tasks not scheduled yet are chips above the timetable, so they
-  show without scrolling; a block or chip opens a form (day, start, length), the way to schedule with a keyboard or
-  screen reader; a live region says where a dragged task went. The empty part of each day is one button: a tap
+  show without scrolling; a chip opens a form (day, start, length), the way to schedule with a keyboard or screen
+  reader, and a block opens the task's card, as on the list, with when it is planned and **Change time** for that
+  form; a live region says where a dragged task went. The empty part of each day is one button: a tap
   opens what to do at the quarter tapped (a key press, at a suggested time), one of the tasks not scheduled yet
   or **Add a new task**, whose form (`paths.newTaskAt`, `?at=`) puts the new task there once added, picking a
   shared one up first, as only tasks that are the user's to do can be scheduled. The timetable shows even

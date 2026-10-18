@@ -34,6 +34,10 @@ export const schedule: Messages['schedule'] = {
   addNewTask: 'Lisää uusi tehtävä',
   addingAt: (day, time) =>
     `Tehtävä tulee aikatauluusi ${day} klo ${time}. Yhteinen tehtävä varataan sinulle.`,
+  when: (day, from, to) => `${day} klo ${from}–${to}`,
+  changeTime: 'Muuta aikaa',
+  changeTimeLabel: (title) => `Muuta aikaa: ${title}`,
+  close: 'Sulje',
   formLabel: (title) => `Milloin teet: ${title}`,
   day: 'Päivä',
   start: 'Alkaa',
