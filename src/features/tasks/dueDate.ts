@@ -11,6 +11,14 @@ export function describeDueDate(dueOn: string, todayDate: string, t: Messages): 
   return dueOn < todayDate ? t.tasks.due.was(formatted) : t.tasks.due.on(formatted);
 }
 
+/** Whether a due date has passed, is today, or is still to come. */
+export type DueStatus = 'overdue' | 'today' | 'upcoming';
+
+export function dueStatus(dueOn: string, todayDate: string): DueStatus {
+  if (dueOn < todayDate) return 'overdue';
+  return dueOn === todayDate ? 'today' : 'upcoming';
+}
+
 /** The last day, counted from today, that gets a group of its own; anything after is "Later". */
 export const LAST_DAY_SHOWN_ONE_BY_ONE = 6;
 
@@ -26,7 +34,8 @@ function dueGroupLabel(dueOn: string | null, todayDate: string, t: Messages): st
 export interface DueGroup<T> {
   /** "Overdue", "Today", "Tomorrow", one of the next five days ("Fri 9 Oct"), "Later" or "No due date". */
   label: string;
-  isOverdue: boolean;
+  /** Tasks without a due date count as upcoming. */
+  status: DueStatus;
   items: T[];
 }
 
@@ -47,7 +56,7 @@ export function groupByDueDate<T extends { dueOn: string | null }>(
     else
       groups.push({
         label,
-        isOverdue: item.dueOn !== null && item.dueOn < todayDate,
+        status: item.dueOn === null ? 'upcoming' : dueStatus(item.dueOn, todayDate),
         items: [item],
       });
   }

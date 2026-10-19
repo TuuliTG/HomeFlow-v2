@@ -1,6 +1,6 @@
 import { useId } from 'react';
 
-import { type DueGroup, groupByDueDate } from '@/features/tasks/dueDate';
+import { type DueGroup, type DueStatus, groupByDueDate } from '@/features/tasks/dueDate';
 import { today } from '@/lib/dates';
 import { useMessages } from '@/lib/i18n/i18n';
 import type { Task } from '@/features/tasks/task';
@@ -34,8 +34,14 @@ export function DueTaskGroups({ tasks, currentUserId, headingLevel }: DueTaskGro
   );
 }
 
+const headingClassNames: Record<DueStatus, { text: string; dot: string }> = {
+  overdue: { text: 'text-overdue-800', dot: 'bg-overdue-600' },
+  today: { text: 'text-due-today-800', dot: 'bg-due-today-500' },
+  upcoming: { text: 'text-ink-muted', dot: 'bg-ink-muted/60' },
+};
+
 function DueTaskGroup({
-  group: { label, isOverdue, items: tasks },
+  group: { label, status, items: tasks },
   currentUserId,
   headingLevel,
 }: Omit<DueTaskGroupsProps, 'tasks'> & { group: DueGroup<Task> }) {
@@ -46,11 +52,12 @@ function DueTaskGroup({
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
       <Heading
         id={headingId}
-        className={[
-          'text-sm font-semibold tracking-wide uppercase',
-          isOverdue ? 'text-red-700' : 'text-slate-600',
-        ].join(' ')}
+        className={`flex items-center gap-2 text-sm font-extrabold tracking-wide uppercase ${headingClassNames[status].text}`}
       >
+        <span
+          aria-hidden="true"
+          className={`size-2 rounded-full ${headingClassNames[status].dot}`}
+        />
         {label}
       </Heading>
       <ul className="flex flex-col gap-3">

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupByDueDate } from '@/features/tasks/dueDate';
+import { dueStatus, groupByDueDate } from '@/features/tasks/dueDate';
 import { en } from '@/locales/en';
 
 /** Wednesday 7 October 2026. */
@@ -13,6 +13,16 @@ function dueDatesByGroup(dueDates: (string | null)[]) {
     grouped.map((item) => item.dueOn),
   ]);
 }
+
+describe('dueStatus', () => {
+  it('is overdue before today, today on the day, and upcoming after it', () => {
+    expect(['2026-10-06', TODAY, '2026-10-08'].map((dueOn) => dueStatus(dueOn, TODAY))).toEqual([
+      'overdue',
+      'today',
+      'upcoming',
+    ]);
+  });
+});
 
 describe('groupByDueDate', () => {
   it('groups by overdue, today, tomorrow, each day of the coming week, later and no due date', () => {
@@ -39,12 +49,14 @@ describe('groupByDueDate', () => {
     ]);
   });
 
-  it('marks only the overdue group as overdue', () => {
+  it('tells whether each group is overdue, due today or later', () => {
     expect(
-      groupByDueDate([{ dueOn: '2026-10-06' }, { dueOn: TODAY }], TODAY, en).map(
-        (group) => group.isOverdue,
-      ),
-    ).toEqual([true, false]);
+      groupByDueDate(
+        [{ dueOn: '2026-10-06' }, { dueOn: TODAY }, { dueOn: '2026-10-08' }, { dueOn: null }],
+        TODAY,
+        en,
+      ).map((group) => group.status),
+    ).toEqual(['overdue', 'today', 'upcoming', 'upcoming']);
   });
 
   it('leaves out groups with nothing in them', () => {
