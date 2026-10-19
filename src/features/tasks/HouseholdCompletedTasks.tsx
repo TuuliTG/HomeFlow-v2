@@ -66,7 +66,7 @@ function CompletedTasksBody({
         <li key={task.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
           <div className="flex min-w-0 flex-col gap-0.5 break-words">
             <span className="font-medium text-slate-900">{task.title}</span>
-            <span className="text-slate-500">
+            <span className="text-ink-muted">
               {doneByLabel(task, userId, t)} · {t.common.shortDate(new Date(task.completedAt))}
               {` · ${task.points === null ? t.tasks.card.waitingForPoints : t.common.points(task.points)}`}
             </span>

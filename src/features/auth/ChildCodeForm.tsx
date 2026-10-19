@@ -66,7 +66,7 @@ export function ChildCodeForm({ onBack }: ChildCodeFormProps) {
             className={`${inputClassName} font-mono tracking-widest uppercase`}
           />
         </label>
-        <p id={hintId} className="text-xs text-slate-500">
+        <p id={hintId} className="text-ink-muted text-xs">
           {t.auth.childCode.hint}
         </p>
       </div>

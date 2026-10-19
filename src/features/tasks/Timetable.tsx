@@ -142,7 +142,7 @@ function DayHeadings({ days }: { days: string[] }) {
 function HourLabels() {
   const t = useMessages();
   return (
-    <div aria-hidden="true" className="relative w-10 shrink-0 text-[11px] text-slate-500">
+    <div aria-hidden="true" className="text-ink-muted relative w-10 shrink-0 text-[11px]">
       {hours.slice(1).map((hour) => (
         <span
           key={hour}

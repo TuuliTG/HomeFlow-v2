@@ -19,7 +19,7 @@ export function NewsCard({ item, userId }: { item: NewsItem; userId: string }) {
           <span className="font-semibold">{doer}</span> {completed}{' '}
           <span className="font-semibold">{item.title}</span>
         </p>
-        <p className="text-slate-500">
+        <p className="text-ink-muted">
           {item.points === null ? t.tasks.card.waitingForPoints : t.common.points(item.points)} ·{' '}
           <span className={item.type === 'meta' ? 'text-purple-700' : undefined}>
             {t.common.taskTypes[item.type]}
@@ -27,7 +27,7 @@ export function NewsCard({ item, userId }: { item: NewsItem; userId: string }) {
           · {t.common.time(new Date(item.completedAt))}
         </p>
         {item.helpers.length > 0 && (
-          <p className="text-slate-500">
+          <p className="text-ink-muted">
             {t.common.helpedBy(
               item.helpers.map(({ person, points }) =>
                 t.common.share(nameFor(person, userId, t), points),

@@ -82,7 +82,7 @@ export function StatisticsFilters(props: StatisticsFiltersProps) {
             {active}
           </span>
         )}
-        <ChevronDownIcon className="ml-auto size-5 shrink-0 text-slate-500 transition-transform group-open:rotate-180" />
+        <ChevronDownIcon className="text-ink-muted ml-auto size-5 shrink-0 transition-transform group-open:rotate-180" />
       </summary>
       <div className="flex flex-col gap-4 border-t border-slate-200 p-4">
         {comparison !== null && (

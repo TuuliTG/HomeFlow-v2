@@ -70,7 +70,7 @@ export function SingleFieldForm({
       >
         {submitLabel}
       </button>
-      {hint && <p className="text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="text-ink-muted text-xs">{hint}</p>}
     </form>
   );
 }
