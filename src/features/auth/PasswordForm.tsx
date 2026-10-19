@@ -96,7 +96,7 @@ export function PasswordForm() {
           />
         </label>
         {isCreating && (
-          <p id={hintId} className="text-xs text-slate-500">
+          <p id={hintId} className="text-ink-muted text-xs">
             {t.auth.passwordHint(PASSWORD_MIN_LENGTH)}
           </p>
         )}

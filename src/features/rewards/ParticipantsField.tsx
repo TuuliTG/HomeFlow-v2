@@ -100,5 +100,5 @@ export function ParticipantsField({
 function ParticipantName({ name, hasGoal }: { name: string; hasGoal: boolean }) {
   const t = useMessages().rewards.form;
   if (!hasGoal) return name;
-  return <span className="text-slate-500">{t.hasOpenGoal(name)}</span>;
+  return <span className="text-ink-muted">{t.hasOpenGoal(name)}</span>;
 }

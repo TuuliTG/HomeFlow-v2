@@ -178,7 +178,7 @@ function FavouriteTaskList({ suggestions, onPick }: FavouriteTaskListProps) {
                 className="hover:border-brand-600 hover:bg-brand-50 min-h-11 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
               >
                 {suggestion.title}
-                <span className="text-slate-500"> · {suggestionPointsLabel(suggestion, t)}</span>
+                <span className="text-ink-muted"> · {suggestionPointsLabel(suggestion, t)}</span>
               </button>
             </li>
           ))}
@@ -228,7 +228,7 @@ function SuggestionList({ id, matches, activeIndex, optionId, onPick }: Suggesti
           className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm text-slate-800 aria-selected:bg-slate-100"
         >
           <span>{suggestion.title}</span>
-          <span className="shrink-0 text-slate-500">
+          <span className="text-ink-muted shrink-0">
             {suggestion.isOpen ? t.taskForm.onTheBoard : ''}
             {suggestionPointsLabel(suggestion, t)}
           </span>

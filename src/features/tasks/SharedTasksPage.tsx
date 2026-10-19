@@ -68,13 +68,13 @@ function FilterChoice({ filter, onChange }: FilterChoiceProps) {
   return (
     <fieldset className="flex flex-wrap items-center gap-2">
       <legend className="sr-only">{t.show}</legend>
-      <span aria-hidden="true" className="text-sm font-medium text-slate-700">
+      <span aria-hidden="true" className="text-ink-muted text-sm font-semibold">
         {t.show}:
       </span>
       {taskFilters.map((option) => (
         <label
           key={option}
-          className="has-checked:border-brand-600 has-checked:bg-brand-600 has-focus-visible:outline-brand-600 flex min-h-11 cursor-pointer items-center rounded-full border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-slate-400 has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2"
+          className="has-checked:bg-brand-900 has-focus-visible:outline-brand-600 bg-surface text-brand-900 shadow-card hover:bg-brand-50 flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold has-checked:font-bold has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2"
         >
           <input
             type="radio"
@@ -101,7 +101,7 @@ interface SwitchProps {
 
 function Switch({ label, checked, onChange }: SwitchProps) {
   return (
-    <label className="flex w-fit items-center gap-2 text-sm font-medium text-slate-700">
+    <label className="text-ink-muted flex min-h-11 w-fit items-center gap-2 text-sm font-semibold">
       <input
         type="checkbox"
         role="switch"
@@ -144,7 +144,7 @@ function TaskList({ filter }: { filter: TaskFilter }) {
 
 function EmptyMessage({ children }: { children: string }) {
   return (
-    <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+    <p className="border-line text-ink-muted rounded-2xl border-2 border-dashed p-6 text-center text-sm">
       {children}
     </p>
   );

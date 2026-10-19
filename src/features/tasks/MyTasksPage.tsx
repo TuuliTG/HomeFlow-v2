@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { paths } from '@/app/paths';
+import { CheckIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
@@ -31,7 +32,9 @@ import { useMessages } from '@/lib/i18n/i18n';
 import { useSearchParam } from '@/lib/useSearchParam';
 
 const emptyClassName =
-  'rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600';
+  'rounded-2xl border-2 border-dashed border-line p-6 text-center text-sm text-ink-muted';
+
+const sectionHeadingClassName = 'text-ink text-xl font-extrabold';
 
 export function MyTasksPage() {
   const { tasks, schedule } = useMessages();
@@ -48,7 +51,7 @@ export function MyTasksPage() {
       <div className="flex flex-col gap-8">
         <PointsTotal />
         <section aria-labelledby="to-do-heading" className="flex flex-col gap-3">
-          <h2 id="to-do-heading" className="text-lg font-semibold text-slate-900">
+          <h2 id="to-do-heading" className={sectionHeadingClassName}>
             {t.toDo}
           </h2>
           <SegmentedChoice
@@ -61,7 +64,7 @@ export function MyTasksPage() {
           <ToDoList view={view} />
         </section>
         <section aria-labelledby="completed-heading" className="flex flex-col gap-3">
-          <h2 id="completed-heading" className="text-lg font-semibold text-slate-900">
+          <h2 id="completed-heading" className={sectionHeadingClassName}>
             {t.completed}
           </h2>
           <CompletedList />
@@ -79,19 +82,19 @@ function PointsTotal() {
   return (
     <section
       aria-labelledby="points-heading"
-      className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4"
+      className="bg-brand-900 shadow-hero flex flex-col gap-1 rounded-3xl p-5 text-white"
     >
-      <h2 id="points-heading" className="text-sm font-medium text-slate-600">
+      <h2 id="points-heading" className="text-brand-100 text-sm font-semibold">
         {t.pointsEarned}
       </h2>
       {points.data !== undefined ? (
-        <span className="text-brand-900 text-3xl font-bold">{points.data}</span>
+        <span className="text-5xl leading-none font-extrabold tracking-tight">{points.data}</span>
       ) : points.isError ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm font-semibold">
           {t.pointsLoadFailed}
         </p>
       ) : (
-        <LoadingMessage />
+        <LoadingMessage className="text-brand-100" />
       )}
     </section>
   );
@@ -152,7 +155,7 @@ function CompletedList() {
   return (
     <ul
       aria-label={t.completedTasks}
-      className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white"
+      className="divide-line bg-surface shadow-card flex flex-col divide-y rounded-2xl"
     >
       {entries.map((entry) =>
         entry.kind === 'done' ? (
@@ -170,13 +173,24 @@ function HelpedItem({ task }: { task: HelpedTask }) {
   const { common, tasks } = useMessages();
   const t = tasks.me;
   return (
-    <li className="flex min-w-0 flex-col gap-0.5 px-4 py-3 text-sm break-words">
-      <span className="font-medium text-slate-900">{task.title}</span>
-      <span className="text-slate-500">
-        {t.doneOn(common.shortDate(new Date(task.completedAt)))} · {common.points(task.points)}
-      </span>
-      <span className="text-brand-900">{t.youHelped(task.doerName ?? common.someone)}</span>
+    <li className="flex items-start gap-3 px-4 py-3 text-sm">
+      <DoneMark />
+      <div className="flex min-w-0 flex-col gap-0.5 break-words">
+        <span className="text-ink font-semibold">{task.title}</span>
+        <span className="text-ink-muted">
+          {t.doneOn(common.shortDate(new Date(task.completedAt)))} · {common.points(task.points)}
+        </span>
+        <span className="text-brand-900">{t.youHelped(task.doerName ?? common.someone)}</span>
+      </div>
     </li>
+  );
+}
+
+function DoneMark() {
+  return (
+    <span className="bg-done-100 text-done-700 mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full">
+      <CheckIcon className="size-4" strokeWidth={3} />
+    </span>
   );
 }
 
@@ -191,10 +205,11 @@ function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }
 
   return (
     <li className="flex flex-col gap-1 px-4 py-3 text-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-0.5 break-words">
-          <span className="font-medium text-slate-900">{task.title}</span>
-          <span className="text-slate-500">
+      <div className="flex items-start gap-3">
+        <DoneMark />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 break-words">
+          <span className="text-ink font-semibold">{task.title}</span>
+          <span className="text-ink-muted">
             {t.doneOn(common.shortDate(new Date(task.completedAt)))}
             {ownPoints !== null && ` · ${common.points(ownPoints)}`}
           </span>

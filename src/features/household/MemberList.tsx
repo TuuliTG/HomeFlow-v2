@@ -137,8 +137,8 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
     <li className="flex items-center justify-between gap-3 px-4 py-3 text-slate-900">
       <div className="flex flex-col items-start gap-1">
         <span>
-          {member.displayName ?? <span className="text-slate-500">{common.newMember}</span>}
-          {isYou && <span className="text-slate-500">{t.you}</span>}
+          {member.displayName ?? <span className="text-ink-muted">{common.newMember}</span>}
+          {isYou && <span className="text-ink-muted">{t.you}</span>}
         </span>
         {newCode && (
           <button

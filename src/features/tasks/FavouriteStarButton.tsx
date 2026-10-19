@@ -42,7 +42,7 @@ export function FavouriteStarButton({
       onClick={() => {
         if (!isSaving) onChange(!isFavourite);
       }}
-      className={`flex size-11 shrink-0 items-center justify-center text-slate-500 disabled:opacity-50 aria-disabled:opacity-50 aria-pressed:text-amber-600 ${variantClassNames[variant]}`}
+      className={`text-ink-muted flex size-11 shrink-0 items-center justify-center disabled:opacity-50 aria-disabled:opacity-50 aria-pressed:text-amber-600 ${variantClassNames[variant]}`}
     >
       <StarIcon className="size-6" fill={isFavourite ? 'currentColor' : 'none'} />
     </button>

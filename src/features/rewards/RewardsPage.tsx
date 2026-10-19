@@ -134,7 +134,7 @@ function ClaimedRewards({ goals, userId }: { goals: Goal[]; userId: string }) {
         {goals.map((goal) => (
           <li key={goal.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
             <span className="font-medium text-slate-900">{goal.title}</span>
-            <span className="shrink-0 text-slate-500">
+            <span className="text-ink-muted shrink-0">
               {ownerLabel(goal, userId, t)} ·{' '}
               {t.rewards.claimedOn(t.common.dayAndMonth(new Date(goal.claimedAt ?? '')))}
             </span>
