@@ -26,7 +26,7 @@ function tagsOf(task: Task, t: Messages): Tag[] {
     shared &&
       task.points === null && {
         label: t.tasks.card.waitingForPoints,
-        className: 'bg-notice-100 text-notice-900',
+        className: 'bg-points-100 text-points-800',
       },
     task.repeatEveryDays !== null && {
       label: t.tasks.repeat(task.repeatEveryDays),

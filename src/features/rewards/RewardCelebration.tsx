@@ -10,9 +10,9 @@ const CONFETTI_COLOURS = [
   'bg-points-400',
   'bg-brand-600',
   'bg-meta-500',
-  'bg-done-500',
-  'bg-danger-300',
-  'bg-info-400',
+  'bg-confetti-green',
+  'bg-confetti-rose',
+  'bg-confetti-sky',
 ];
 
 /**

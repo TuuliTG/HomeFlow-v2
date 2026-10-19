@@ -180,7 +180,7 @@ function ClaimReward({ goal, userId }: { goal: Goal; userId: string }) {
           onClick={() => {
             claim.mutate(goal);
           }}
-          className="bg-done-700 hover:bg-done-900 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="bg-done-700 hover:bg-done-900 rounded-xl px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
         >
           {t.claim}
         </button>
@@ -230,7 +230,7 @@ function DeleteGoal({ goal, userId }: { goal: Goal; userId: string }) {
           onClick={() => {
             deleteGoal.mutate(goal.id);
           }}
-          className="bg-danger-700 hover:bg-danger-900 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="bg-danger-700 hover:bg-danger-900 rounded-xl px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
         >
           {common.yesDelete}
         </button>

@@ -234,7 +234,7 @@ function ScheduledTaskDetails({
         <button
           type="button"
           onClick={onClose}
-          className="border-line-strong bg-surface text-ink hover:bg-page rounded-lg border px-3 py-1.5 font-semibold"
+          className="border-line-strong bg-surface text-ink hover:bg-page rounded-xl border px-3 py-1.5 font-semibold"
         >
           {t.close}
         </button>
@@ -242,7 +242,7 @@ function ScheduledTaskDetails({
           type="button"
           aria-label={t.changeTimeLabel(task.title)}
           onClick={onChangeTime}
-          className="border-brand-600 text-brand-900 hover:bg-brand-50 rounded-lg border px-3 py-1.5 font-semibold"
+          className="border-brand-600 text-brand-900 hover:bg-brand-50 rounded-xl border px-3 py-1.5 font-semibold"
         >
           {t.changeTime}
         </button>

@@ -51,7 +51,7 @@ export function InviteCode({ code }: InviteCodeProps) {
         <button
           type="button"
           onClick={copy}
-          className="border-line-strong text-ink hover:bg-page rounded-lg border px-3 py-1.5 text-sm font-medium"
+          className="border-line-strong text-ink hover:bg-page rounded-xl border px-3 py-1.5 text-sm font-medium"
         >
           {t.copy}
         </button>

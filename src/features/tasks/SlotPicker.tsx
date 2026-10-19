@@ -65,7 +65,7 @@ export function SlotPicker({ slot, view, tasks, currentUserId, onClose }: SlotPi
                     { onSuccess: onClose },
                   );
                 }}
-                className={`flex min-h-11 items-center rounded-lg border-l-4 px-3 text-left font-semibold disabled:opacity-60 ${typeColours[task.type]}`}
+                className={`flex min-h-11 items-center rounded-xl border-l-4 px-3 text-left font-semibold disabled:opacity-60 ${typeColours[task.type]}`}
               >
                 {task.title}
               </button>
@@ -88,7 +88,7 @@ export function SlotPicker({ slot, view, tasks, currentUserId, onClose }: SlotPi
         <button
           type="button"
           onClick={onClose}
-          className="border-line-strong bg-surface text-ink hover:bg-page rounded-lg border px-3 py-1.5 font-semibold"
+          className="border-line-strong bg-surface text-ink hover:bg-page rounded-xl border px-3 py-1.5 font-semibold"
         >
           {t.common.cancel}
         </button>

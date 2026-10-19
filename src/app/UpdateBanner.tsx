@@ -46,7 +46,7 @@ export function UpdateBanner() {
                   skipWaiting: updateServiceWorker,
                 });
               }}
-              className="hover:bg-brand-50 focus-visible:outline-brand-600 bg-surface text-ink min-h-11 shrink-0 rounded-xl px-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="hover:bg-brand-50 focus-visible:outline-brand-200 bg-surface text-ink min-h-11 shrink-0 rounded-xl px-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {t.reload}
             </button>
@@ -55,7 +55,7 @@ export function UpdateBanner() {
               onClick={() => {
                 setDismissed(true);
               }}
-              className="focus-visible:outline-brand-600 text-brand-100 hover:bg-brand-900 min-h-11 min-w-11 shrink-0 rounded-xl hover:text-white focus-visible:outline-2"
+              className="focus-visible:outline-brand-200 text-brand-100 hover:bg-brand-700 min-h-11 min-w-11 shrink-0 rounded-xl hover:text-white focus-visible:outline-2"
             >
               <span aria-hidden="true">✕</span>
               <span className="sr-only">{t.later}</span>

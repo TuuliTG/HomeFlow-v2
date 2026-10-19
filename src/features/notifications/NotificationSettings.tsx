@@ -38,7 +38,7 @@ export function NotificationSettings() {
             else turnOn();
           }}
           className={[
-            'w-fit rounded-lg px-4 py-2 text-sm font-semibold aria-disabled:opacity-60',
+            'w-fit rounded-xl px-4 py-2 text-sm font-bold aria-disabled:opacity-60',
             isOn
               ? 'border-line-strong text-ink hover:bg-page border'
               : 'bg-brand-700 hover:bg-brand-900 text-white',

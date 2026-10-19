@@ -174,7 +174,7 @@ function DayColumn({ day, blocks, preview, columnRef, onOpen, onPickSlot }: DayC
       {day === toIsoDate(now) && (
         <div
           aria-hidden="true"
-          className="border-danger-500 pointer-events-none absolute inset-x-0 z-10 border-t-2"
+          className="border-now pointer-events-none absolute inset-x-0 z-10 border-t-2"
           style={{ top: minutesIntoDay(now) * PX_PER_MINUTE }}
         />
       )}

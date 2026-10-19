@@ -202,7 +202,7 @@ function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFo
         <button
           type="button"
           onClick={onClose}
-          className="border-line-strong bg-surface text-ink hover:bg-page rounded-lg border px-3 py-1.5 font-semibold"
+          className="border-line-strong bg-surface text-ink hover:bg-brand-50 rounded-xl border px-3 py-1.5 font-semibold"
         >
           {messages.common.cancel}
         </button>

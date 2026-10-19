@@ -54,14 +54,14 @@ export function WhoHelpedPrompt() {
             to={paths.taskHelpers(prompt.task.id)}
             onClick={close}
             aria-label={tasks.helpers.whoHelpedLabel(prompt.task.title)}
-            className="hover:bg-brand-900 flex min-h-11 shrink-0 items-center rounded-full px-2 font-bold whitespace-nowrap text-white underline underline-offset-2"
+            className="hover:bg-brand-700 flex min-h-11 shrink-0 items-center rounded-full px-2 font-bold whitespace-nowrap text-white underline underline-offset-2"
           >
             {tasks.helpers.whoHelped}
           </Link>
           <button
             type="button"
             onClick={close}
-            className="text-brand-100 hover:bg-brand-900 min-h-11 shrink-0 rounded-full px-2 hover:text-white"
+            className="text-brand-100 hover:bg-brand-700 min-h-11 shrink-0 rounded-full px-2 hover:text-white"
           >
             <span aria-hidden="true">✕</span>
             <span className="sr-only">{tasks.activity.dismiss}</span>

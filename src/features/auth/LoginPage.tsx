@@ -54,7 +54,7 @@ function LoginForms() {
           onClick={() => {
             setWithChildCode(true);
           }}
-          className="border-line-strong text-ink hover:bg-page rounded-xl border px-4 py-2.5 font-medium"
+          className="border-line-strong text-ink hover:bg-surface rounded-xl border px-4 py-2.5 font-medium"
         >
           {t.auth.childCode.open}
         </button>

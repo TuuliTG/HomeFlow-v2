@@ -10,7 +10,7 @@ interface DayNavigationProps {
 }
 
 const buttonClassName =
-  'flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-ink hover:bg-page';
+  'flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-line-strong bg-surface px-3 text-sm font-semibold text-ink hover:bg-page';
 
 /** Which day or week the timetable shows, with buttons to go back, forward, or to today. */
 export function DayNavigation({ view, days, onShow }: DayNavigationProps) {

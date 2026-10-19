@@ -105,7 +105,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
         onClick={() => {
           setIsConfirming(true);
         }}
-        className="border-danger-300 text-danger-700 hover:bg-danger-50 w-fit rounded-lg border px-4 py-2.5 font-semibold"
+        className="border-danger-300 text-danger-700 hover:bg-danger-50 w-fit rounded-xl border px-4 py-2.5 font-semibold"
       >
         {t.delete}
       </button>
@@ -134,7 +134,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
               () => undefined,
             );
           }}
-          className="bg-danger-700 hover:bg-danger-900 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+          className="bg-danger-700 hover:bg-danger-900 rounded-xl px-4 py-2.5 font-bold text-white disabled:opacity-60"
         >
           {common.yesDelete}
         </button>

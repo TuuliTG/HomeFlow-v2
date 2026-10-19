@@ -19,7 +19,7 @@ export function AccountStatus() {
       <button
         type="button"
         onClick={() => void logOut()}
-        className="border-line-strong text-ink hover:bg-page shrink-0 rounded-lg border px-3 py-1.5 font-medium"
+        className="border-line-strong text-ink hover:bg-surface shrink-0 rounded-xl border px-3 py-1.5 font-medium"
       >
         {t.common.logOut}
       </button>

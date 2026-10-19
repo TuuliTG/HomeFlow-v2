@@ -40,7 +40,7 @@ export function TaskActivityToast() {
         <button
           type="button"
           onClick={dismiss}
-          className="text-brand-100 hover:bg-brand-900 shrink-0 rounded-full px-2 py-0.5 hover:text-white"
+          className="text-brand-100 hover:bg-brand-700 shrink-0 rounded-full px-2 py-0.5 hover:text-white"
         >
           <span aria-hidden="true">✕</span>
           <span className="sr-only">{tasks.activity.dismiss}</span>

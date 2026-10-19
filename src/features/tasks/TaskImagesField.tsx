@@ -120,7 +120,7 @@ export function TaskImagesField({
                   }}
                   aria-label={t.remove(index + 1)}
                   disabled={isPreparing}
-                  className="border-line-strong text-ink hover:bg-page min-h-11 rounded-lg border px-3 text-sm font-semibold disabled:opacity-60"
+                  className="border-line-strong text-ink hover:bg-surface min-h-11 rounded-xl border px-3 text-sm font-semibold disabled:opacity-60"
                 >
                   {t.removeButton}
                 </button>
@@ -130,7 +130,7 @@ export function TaskImagesField({
         </ul>
       )}
       {images.length < MAX_TASK_IMAGES && (
-        <label className="border-brand-600 text-brand-900 hover:bg-brand-50 focus-within:outline-brand-600 flex min-h-11 w-fit cursor-pointer items-center rounded-lg border px-3 text-sm font-semibold focus-within:outline-2 focus-within:outline-offset-2">
+        <label className="border-brand-600 text-brand-900 hover:bg-brand-50 focus-within:outline-brand-600 flex min-h-11 w-fit cursor-pointer items-center rounded-xl border px-3 text-sm font-semibold focus-within:outline-2 focus-within:outline-offset-2">
           {isPreparing ? t.preparing : t.add}
           <input
             type="file"
