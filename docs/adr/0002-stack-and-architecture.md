@@ -27,8 +27,9 @@ maintained by agents, so strict types and a predictable structure matter more th
 - **Visual design ("Calm Indigo")**: colours, shadows and the font are Tailwind theme tokens in `src/index.css`;
   components use their names (`bg-page`, `bg-surface shadow-card`, `text-ink`, `text-ink-muted`, `brand-*`,
   `meta-*` for meta work, `overdue-*`/`due-today-*` from `dueStatus()`, `points-*`, `done-*`, `danger-*` for errors
-  and deleting, `notice-*`, `info-*`), never Tailwind's own palette, so a dark theme ("Night") can redefine them in
-  one place; `src/themeTokens.test.ts` fails on a raw palette colour. Cards are white with `shadow-card` on a
+  and deleting, `notice-*`, `info-*`, `now`, `confetti-*`), never Tailwind's palette colours, `bg-white` or
+  arbitrary colours, so a dark theme ("Night") can redefine them in one place; `src/themeTokens.test.ts` fails on
+  those. White text on filled colours and Tailwind's shadows for floating toasts stay. Cards are white with `shadow-card` on a
   tinted page; text on the page uses `ink-muted` or darker for AA contrast. The **Figtree** font is self-hosted
   with `@fontsource-variable/figtree` and precached by the service worker, so it works offline.
 - **Vercel** hosts the static build.

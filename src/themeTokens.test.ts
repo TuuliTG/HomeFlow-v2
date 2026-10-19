@@ -7,9 +7,25 @@ const sources = import.meta.glob<string>(['./**/*.{ts,tsx}', '!./**/*.test.{ts,t
   eager: true,
 });
 
-/** Tailwind's own colours, e.g. `text-slate-600` or `var(--color-red-700)`, and plain white or black backgrounds. */
-const RAW_COLOUR =
-  /\b(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b|\bbg-(?:white|black)\b/g;
+/** Tailwind's own palettes, as `tailwindcss/theme.css` defines them (`--color-<name>-50`). */
+const palettes = (
+  'slate gray zinc neutral stone mauve olive mist taupe red orange amber yellow lime green emerald teal cyan sky ' +
+  'blue indigo violet purple fuchsia pink rose'
+).split(' ');
+
+/**
+ * A palette colour (`text-slate-600`, `var(--color-red-700)`), white or black other than white text on a
+ * filled colour, or an arbitrary colour like `bg-[#fff]`.
+ */
+const RAW_COLOUR = new RegExp(
+  [
+    `\\b(?:${palettes.join('|')})-\\d{2,3}\\b`,
+    String.raw`\b(?:bg|border|ring|outline|divide|fill|stroke)-(?:white|black)\b`,
+    String.raw`\btext-black\b`,
+    String.raw`-\[(?:#|rgb|hsl|oklch)`,
+  ].join('|'),
+  'g',
+);
 
 describe('theme tokens', () => {
   it('styles the app only with the theme colours from index.css (ADR 0002)', () => {
