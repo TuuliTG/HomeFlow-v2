@@ -1,10 +1,70 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/figtree';
 
+/* The Calm Indigo look (ADR 0002): a tinted page with white cards, indigo for physical work and actions,
+   purple for meta work, and status colours for due dates and points. */
 @theme {
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-page: #f1f2f9;
+  --color-surface: #ffffff;
+  --color-line: #e3e5f1;
+  --color-line-strong: #c5c9dd;
+  --color-ink: #1e1b4b;
+  --color-ink-muted: #4b5079;
+
   --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
   --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
   --color-brand-900: #312e81;
+
+  --color-meta-100: #f3e8ff;
   --color-meta-500: #a855f7;
+  --color-meta-700: #7e22ce;
+  --color-meta-800: #6b21a8;
+
+  --color-overdue-100: #fee2e2;
+  --color-overdue-600: #dc2626;
+  --color-overdue-800: #991b1b;
+  --color-due-today-100: #ffedd5;
+  --color-due-today-500: #f97316;
+  --color-due-today-800: #9a3412;
+  --color-points-100: #fef3c7;
+  --color-points-400: #fbbf24;
+  --color-points-500: #f59e0b;
+  --color-points-600: #d97706;
+  --color-points-800: #92400e;
+  --color-done-100: #d1fae5;
+  --color-done-600: #059669;
+  --color-done-700: #047857;
+  --color-done-800: #065f46;
+  --color-done-900: #064e3b;
+
+  /* Errors and destructive actions; notices that need attention; neutral information. */
+  --color-danger-50: #fef2f2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-700: #b91c1c;
+  --color-danger-900: #7f1d1d;
+  /* Notices share points' amber on purpose, but mean something else: keep them apart. */
+  --color-notice-50: #fffbeb;
+  --color-notice-100: #fef3c7;
+  --color-notice-200: #fde68a;
+  --color-notice-800: #92400e;
+  --color-notice-900: #78350f;
+  --color-info-100: #e0f2fe;
+  --color-info-800: #075985;
+
+  /* The timetable's current-time line, and confetti for a claimed reward (with points-400, brand-600, meta-500). */
+  --color-now: #ef4444;
+  --color-confetti-green: #10b981;
+  --color-confetti-rose: #fb7185;
+  --color-confetti-sky: #38bdf8;
+
+  --shadow-card: 0 1px 2px rgb(30 27 75 / 0.06), 0 4px 16px rgb(30 27 75 / 0.06);
+  --shadow-hero: 0 8px 24px rgb(49 46 129 / 0.25);
 
   /* Celebrating a done task (TaskCelebration, CELEBRATION_DURATION_MS). */
   --animate-star-burst: star-burst 900ms ease-out both;
@@ -71,6 +131,6 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-page text-ink antialiased;
   }
 }

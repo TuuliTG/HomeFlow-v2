@@ -86,17 +86,17 @@ export function MemberList({ householdId, currentUserId, onSignInCode }: MemberL
 
   return (
     <section aria-labelledby="members" className="flex flex-col gap-3">
-      <h2 id="members" className="font-semibold text-slate-900">
+      <h2 id="members" className="text-ink font-semibold">
         {t.heading}
       </h2>
       {members.isPending && <LoadingMessage />}
       {members.isError && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {t.loadFailed}
         </p>
       )}
       {members.data && (
-        <ul className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+        <ul className="divide-line bg-surface shadow-card flex flex-col divide-y rounded-2xl">
           {members.data.map((member) => (
             <MemberRow
               key={member.userId}
@@ -110,11 +110,11 @@ export function MemberList({ householdId, currentUserId, onSignInCode }: MemberL
         </ul>
       )}
       {failure && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {failure}
         </p>
       )}
-      {members.data && <p className="text-sm text-slate-600">{t.childrenHint}</p>}
+      {members.data && <p className="text-ink-muted text-sm">{t.childrenHint}</p>}
     </section>
   );
 }
@@ -134,11 +134,11 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
   const name = member.displayName ?? common.newMember;
   const { newCode, setIsChild, setCanAddTasks } = actions;
   return (
-    <li className="flex items-center justify-between gap-3 px-4 py-3 text-slate-900">
+    <li className="text-ink flex items-center justify-between gap-3 px-4 py-3">
       <div className="flex flex-col items-start gap-1">
         <span>
-          {member.displayName ?? <span className="text-slate-500">{common.newMember}</span>}
-          {isYou && <span className="text-slate-500">{t.you}</span>}
+          {member.displayName ?? <span className="text-ink-muted">{common.newMember}</span>}
+          {isYou && <span className="text-ink-muted">{t.you}</span>}
         </span>
         {newCode && (
           <button
@@ -165,7 +165,7 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
           />
         ) : (
           member.isChild && (
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+            <span className="bg-done-100 text-done-800 rounded-full px-2 py-0.5 text-xs font-medium">
               {t.child}
             </span>
           )

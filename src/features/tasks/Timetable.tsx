@@ -67,7 +67,7 @@ export function Timetable({
     [scrollerRef],
   );
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    <div className="bg-surface shadow-card overflow-hidden rounded-2xl">
       {days.length > 1 && <DayHeadings days={days} />}
       {/* Focusable, so the hours can be scrolled with the keyboard. */}
       <div
@@ -83,8 +83,7 @@ export function Timetable({
             className="grid flex-1"
             style={{
               gridTemplateColumns: `repeat(${String(days.length)}, minmax(0, 1fr))`,
-              backgroundImage:
-                'linear-gradient(to bottom, var(--color-slate-200) 1px, transparent 1px)',
+              backgroundImage: 'linear-gradient(to bottom, var(--color-line) 1px, transparent 1px)',
               backgroundSize: `100% ${String(60 * PX_PER_MINUTE)}px`,
             }}
           >
@@ -113,7 +112,7 @@ function DayHeadings({ days }: { days: string[] }) {
   const t = useMessages();
   const todayDate = today();
   return (
-    <div aria-hidden="true" className="flex border-b border-slate-200 text-center text-xs">
+    <div aria-hidden="true" className="border-line flex border-b text-center text-xs">
       <div className="w-10 shrink-0" />
       <div
         className="grid flex-1"
@@ -126,7 +125,7 @@ function DayHeadings({ days }: { days: string[] }) {
               key={day}
               className={[
                 'flex flex-col py-1',
-                day === todayDate ? 'text-brand-900 font-bold' : 'text-slate-600',
+                day === todayDate ? 'text-brand-900 font-bold' : 'text-ink-muted',
               ].join(' ')}
             >
               <span>{t.common.weekday(date)}</span>
@@ -142,7 +141,7 @@ function DayHeadings({ days }: { days: string[] }) {
 function HourLabels() {
   const t = useMessages();
   return (
-    <div aria-hidden="true" className="relative w-10 shrink-0 text-[11px] text-slate-500">
+    <div aria-hidden="true" className="text-ink-muted relative w-10 shrink-0 text-[11px]">
       {hours.slice(1).map((hour) => (
         <span
           key={hour}
@@ -170,12 +169,12 @@ function DayColumn({ day, blocks, preview, columnRef, onOpen, onPickSlot }: DayC
   const [now] = useState(() => new Date());
   const date = t.common.shortDate(fromIsoDate(day));
   return (
-    <div ref={columnRef} className="relative border-l border-slate-200">
+    <div ref={columnRef} className="border-line relative border-l">
       <EmptyTimeButton day={day} label={t.schedule.addAt(date)} onPickSlot={onPickSlot} />
       {day === toIsoDate(now) && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-red-500"
+          className="border-now pointer-events-none absolute inset-x-0 z-10 border-t-2"
           style={{ top: minutesIntoDay(now) * PX_PER_MINUTE }}
         />
       )}

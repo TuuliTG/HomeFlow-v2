@@ -35,11 +35,11 @@ export function InstallHint() {
   return (
     <aside
       aria-label={t.title}
-      className="bg-brand-50 mb-4 flex items-start gap-3 rounded-2xl border border-indigo-200 p-4 text-sm text-slate-700"
+      className="bg-brand-50 border-brand-200 text-ink mb-4 flex items-start gap-3 rounded-2xl border p-4 text-sm"
     >
       <div className="flex flex-col gap-1">
         {/* Not a heading: the hint sits above the page's h1 and shouldn't break the heading order. */}
-        <p className="font-semibold text-slate-900">{t.title}</p>
+        <p className="text-ink font-semibold">{t.title}</p>
         <p>
           {t.tapShare} <strong>{t.share}</strong>
           {t.then} <strong>{t.addToHomeScreen}</strong>
@@ -52,7 +52,7 @@ export function InstallHint() {
           rememberDismissal();
           setVisible(false);
         }}
-        className="text-brand-600 shrink-0 rounded-lg px-2 py-1 font-medium hover:bg-indigo-100"
+        className="text-brand-600 hover:bg-brand-100 shrink-0 rounded-lg px-2 py-1 font-medium"
       >
         {t.gotIt}
       </button>

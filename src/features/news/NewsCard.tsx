@@ -12,22 +12,22 @@ export function NewsCard({ item, userId }: { item: NewsItem; userId: string }) {
   return (
     <li
       aria-label={`${doer} ${completed} ${item.title}`}
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+      className="bg-surface shadow-card flex flex-col gap-3 rounded-2xl p-4"
     >
       <div className="flex flex-col gap-0.5 text-sm">
-        <p className="text-slate-900">
+        <p className="text-ink">
           <span className="font-semibold">{doer}</span> {completed}{' '}
           <span className="font-semibold">{item.title}</span>
         </p>
-        <p className="text-slate-500">
+        <p className="text-ink-muted">
           {item.points === null ? t.tasks.card.waitingForPoints : t.common.points(item.points)} ·{' '}
-          <span className={item.type === 'meta' ? 'text-purple-700' : undefined}>
+          <span className={item.type === 'meta' ? 'text-meta-700' : undefined}>
             {t.common.taskTypes[item.type]}
           </span>{' '}
           · {t.common.time(new Date(item.completedAt))}
         </p>
         {item.helpers.length > 0 && (
-          <p className="text-slate-500">
+          <p className="text-ink-muted">
             {t.common.helpedBy(
               item.helpers.map(({ person, points }) =>
                 t.common.share(nameFor(person, userId, t), points),
@@ -67,7 +67,7 @@ function Likes({ item, userId }: { item: NewsItem; userId: string }) {
             'flex min-h-11 items-center gap-2 rounded-full border px-4 font-semibold',
             liked
               ? 'border-brand-600 bg-brand-600 text-white'
-              : 'hover:border-brand-600 hover:text-brand-900 border-slate-300 text-slate-700',
+              : 'hover:border-brand-600 hover:text-brand-900 border-line-strong text-ink',
           ].join(' ')}
         >
           <ThumbsUpIcon className="size-5" />
@@ -75,13 +75,13 @@ function Likes({ item, userId }: { item: NewsItem; userId: string }) {
         </button>
       )}
       {likers.length > 0 && (
-        <p className="text-slate-600">
+        <p className="text-ink-muted">
           <span aria-hidden="true">👍 </span>
           {t.news.likedBy(likers)}
         </p>
       )}
       {toggleLike.isError && (
-        <p role="alert" className="w-full text-red-700">
+        <p role="alert" className="text-danger-700 w-full">
           {t.news.likeFailed}
         </p>
       )}

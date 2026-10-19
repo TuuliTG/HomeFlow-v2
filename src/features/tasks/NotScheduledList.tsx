@@ -28,15 +28,15 @@ export function NotScheduledList({
     <section aria-labelledby="not-scheduled-heading" className="flex flex-col gap-2">
       <h3
         id="not-scheduled-heading"
-        className="text-sm font-semibold tracking-wide text-slate-600 uppercase"
+        className="text-ink-muted text-sm font-semibold tracking-wide uppercase"
       >
         {t.notScheduled}
       </h3>
       {tasks.length === 0 ? (
-        <p className="text-sm text-slate-600">{hasScheduled ? t.allScheduled : t.nothingToPlan}</p>
+        <p className="text-ink-muted text-sm">{hasScheduled ? t.allScheduled : t.nothingToPlan}</p>
       ) : (
         <>
-          <p className="text-xs text-slate-600">{t.dragHint}</p>
+          <p className="text-ink-muted text-xs">{t.dragHint}</p>
           <ul className="flex flex-wrap gap-2">
             {tasks.map((task) => (
               <NotScheduledChip key={task.id} task={task} onOpen={onOpen} />

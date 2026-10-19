@@ -42,6 +42,10 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node 22 (≥ 22.22
   `household_id = (select private.current_household_id())` ([ADR 0003](docs/adr/0003-accounts-and-households.md)).
 - User-facing text goes in `src/locales/en/` and every other language (`fi`), never inline: read it with
   `useMessages()` from `@/lib/i18n/i18n`, or pass `t: Messages` to helpers (ADR 0002).
+- Colours come from the theme tokens in `src/index.css` (`bg-page`, `bg-surface shadow-card`, `text-ink`,
+  `text-ink-muted`, `brand-*`, `meta-*`, `danger-*`, `notice-*`…, ADR 0002), never Tailwind's own palette
+  (`slate-*`, `red-*`, `bg-white`, `bg-[#…]`); `src/themeTokens.test.ts` fails on those. `text-white` on a filled
+  colour is fine. Need a new colour? Add a token.
 - Mobile first: design for ~390px wide, then enhance with `md:` breakpoints. Accessible by default (roles, labels, contrast).
 - Import with the `@/` alias. Add dependencies with `npm install <pkg>` (exact versions are saved automatically).
 

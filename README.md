@@ -10,7 +10,7 @@ rewards instead of control. The app is available in English and Finnish.
 | ------------ | --------------------------------------------------------------------------- |
 | App          | Vite · React 19 · TypeScript (strict) · React Router · dnd-kit              |
 | Data & state | TanStack Query · Zod (validation of external data)                          |
-| Styling      | Tailwind CSS v4                                                             |
+| Styling      | Tailwind CSS v4 · Figtree (Fontsource)                                      |
 | PWA          | vite-plugin-pwa · custom service worker (offline, push)                     |
 | Backend      | Supabase (Postgres with Row Level Security, Auth, Edge Functions, Realtime) |
 | Testing      | Vitest · Testing Library · Playwright + axe                                 |

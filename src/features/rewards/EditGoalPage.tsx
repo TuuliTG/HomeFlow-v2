@@ -42,7 +42,7 @@ export function EditGoalPage() {
           ) : goals.isPending ? (
             <LoadingMessage />
           ) : (
-            <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+            <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
               {t.form.edit.notFound}{' '}
               <Link to={paths.rewards} className="text-brand-900 font-semibold underline">
                 {t.form.edit.backToRewards}

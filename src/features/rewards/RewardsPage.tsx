@@ -11,7 +11,7 @@ import { useLoggedInUser } from '@/lib/auth';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
 
 const emptyClassName =
-  'rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600';
+  'rounded-2xl border border-dashed border-line-strong bg-surface p-6 text-sm text-ink-muted';
 
 type Section = keyof Messages['rewards']['sections'];
 
@@ -50,7 +50,7 @@ function NewGoalLink() {
   return (
     <Link
       to={paths.newGoal}
-      className="bg-brand-600 hover:bg-brand-900 shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-white"
+      className="bg-brand-700 hover:bg-brand-900 shrink-0 rounded-xl px-3 py-2 text-sm font-bold text-white"
     >
       <span aria-hidden="true">+ </span>
       {t.newGoal}
@@ -68,7 +68,7 @@ function Goals() {
   if (goals.data === undefined) {
     if (!goals.isError) return <LoadingMessage />;
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.rewards.loadFailed}
       </p>
     );
@@ -107,7 +107,7 @@ function GoalSection({
   if (goals.length === 0 && empty === null) return null;
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
-      <h2 id={headingId} className="text-lg font-semibold text-slate-900">
+      <h2 id={headingId} className="text-ink text-lg font-semibold">
         {heading}
       </h2>
       {goals.length === 0 ? (
@@ -127,14 +127,14 @@ function ClaimedRewards({ goals, userId }: { goals: Goal[]; userId: string }) {
   const t = useMessages();
   return (
     <section aria-labelledby="claimed-heading" className="flex flex-col gap-3">
-      <h2 id="claimed-heading" className="text-lg font-semibold text-slate-900">
+      <h2 id="claimed-heading" className="text-ink text-lg font-semibold">
         {t.rewards.claimedHeading}
       </h2>
-      <ul className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+      <ul className="divide-line bg-surface shadow-card flex flex-col divide-y rounded-2xl">
         {goals.map((goal) => (
           <li key={goal.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-            <span className="font-medium text-slate-900">{goal.title}</span>
-            <span className="shrink-0 text-slate-500">
+            <span className="text-ink font-medium">{goal.title}</span>
+            <span className="text-ink-muted shrink-0">
               {ownerLabel(goal, userId, t)} ·{' '}
               {t.rewards.claimedOn(t.common.dayAndMonth(new Date(goal.claimedAt ?? '')))}
             </span>

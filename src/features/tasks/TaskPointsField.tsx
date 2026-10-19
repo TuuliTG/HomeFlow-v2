@@ -22,9 +22,9 @@ export function TaskPointsField({
   errorProps,
 }: TaskPointsFieldProps) {
   const t = useMessages().taskForm;
-  if (isChild) return <p className="text-sm text-slate-600">{t.adultAwardsPoints}</p>;
+  if (isChild) return <p className="text-ink-muted text-sm">{t.adultAwardsPoints}</p>;
   return (
-    <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+    <label className="text-ink flex flex-col gap-1 text-sm font-medium">
       {t.points}
       <input
         type="number"

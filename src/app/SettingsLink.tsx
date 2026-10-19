@@ -14,8 +14,8 @@ export function SettingsLink() {
       title={t.title}
       className={({ isActive }) =>
         [
-          '-m-1 shrink-0 rounded-lg p-2.5 hover:bg-slate-100',
-          isActive ? 'text-brand-900 bg-brand-50' : 'text-slate-600',
+          'hover:bg-surface -m-1 shrink-0 rounded-lg p-2.5',
+          isActive ? 'text-brand-900 bg-brand-50' : 'text-ink-muted',
         ].join(' ')
       }
     >

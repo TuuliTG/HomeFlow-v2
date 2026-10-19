@@ -30,7 +30,7 @@ export function EditLink({ task, currentUserId }: TaskLinkProps) {
 }
 
 const textLinkClassName =
-  'text-brand-900 rounded-lg px-1 py-1.5 text-sm font-semibold underline-offset-2 hover:underline';
+  'text-brand-900 flex min-h-11 items-center rounded-lg px-1 text-sm font-semibold underline-offset-2 hover:underline';
 
 /**
  * Ask, to ask another member to do a task that is free or the user's, unless someone is already asked

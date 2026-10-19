@@ -19,7 +19,7 @@ export function TaskPeople({ task, currentUserId }: { task: Task; currentUserId:
   const t = useMessages().tasks.card;
   return (
     <>
-      <span className="text-xs text-slate-500">
+      <span className="text-ink-muted text-xs">
         {byPerson(t.addedBy, { userId: task.createdBy, name: task.creatorName }, currentUserId)}
       </span>
       {task.pickedUpBy !== null && (
@@ -43,7 +43,7 @@ function LastDoneLine({ lastDone, currentUserId }: { lastDone: LastDone; current
   const t = useMessages().tasks.card;
   const days = Math.max(0, daysBetween(toIsoDate(new Date(lastDone.at)), today()));
   return (
-    <span className="text-xs text-slate-500">
+    <span className="text-ink-muted text-xs">
       {byPerson(
         t.lastDoneBy(t.daysAgo(days)),
         { userId: lastDone.by, name: lastDone.name },

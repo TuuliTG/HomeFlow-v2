@@ -104,8 +104,8 @@ function OthersRequest({ request }: { request: TaskRequest }) {
 
 const toneClassNames = {
   asked: 'bg-brand-50 text-brand-900',
-  waiting: 'bg-slate-50 text-slate-700',
-  declined: 'bg-amber-50 text-amber-900',
+  waiting: 'bg-page text-ink-muted',
+  declined: 'bg-notice-50 text-notice-900',
 } as const;
 
 interface NoticeProps {
@@ -123,7 +123,7 @@ function Notice({ tone, text, failure = null, children }: NoticeProps) {
         {children && <div className="flex gap-2">{children}</div>}
       </div>
       {failure && (
-        <p role="alert" className="text-xs text-red-700">
+        <p role="alert" className="text-danger-700 text-xs">
           {failure}
         </p>
       )}
@@ -154,8 +154,8 @@ function NoticeButton({
       onClick={onClick}
       className={
         isPrimary
-          ? 'bg-brand-600 hover:bg-brand-900 min-h-11 rounded-lg px-3 font-semibold text-white disabled:opacity-60'
-          : 'min-h-11 rounded-lg border border-slate-300 bg-white px-3 font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60'
+          ? 'bg-brand-700 hover:bg-brand-900 min-h-11 rounded-xl px-4 font-bold text-white disabled:opacity-60'
+          : 'bg-surface text-ink hover:bg-line min-h-11 rounded-xl px-4 font-bold disabled:opacity-60'
       }
     >
       {label}

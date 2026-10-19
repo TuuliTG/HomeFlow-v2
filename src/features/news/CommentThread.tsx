@@ -47,9 +47,9 @@ function Comment({ comment, userId }: { comment: NewsComment; userId: string }) 
   const isOwn = comment.author.userId === userId;
   const t = useMessages();
   return (
-    <li className="flex flex-col gap-1 rounded-xl bg-slate-50 px-3 py-2 text-sm">
+    <li className="bg-page flex flex-col gap-1 rounded-xl px-3 py-2 text-sm">
       <div className="flex items-start justify-between gap-2">
-        <p className="min-w-0 break-words text-slate-800">
+        <p className="text-ink min-w-0 break-words">
           <span className="font-semibold">{nameFor(comment.author, userId, t)}</span> {comment.body}
         </p>
         {isOwn && (
@@ -60,14 +60,14 @@ function Comment({ comment, userId }: { comment: NewsComment; userId: string }) 
             onClick={() => {
               deleteComment.mutate(comment.id);
             }}
-            className="-my-1 shrink-0 rounded px-2 py-1 text-slate-500 hover:text-red-700 disabled:opacity-60"
+            className="text-ink-muted hover:text-danger-700 -my-1 shrink-0 rounded px-2 py-1 disabled:opacity-60"
           >
             {t.common.delete}
           </button>
         )}
       </div>
       {deleteComment.isError && (
-        <p role="alert" className="text-red-700">
+        <p role="alert" className="text-danger-700">
           {t.news.deleteFailed}
         </p>
       )}
@@ -134,7 +134,7 @@ function CommentForm({
         <button
           type="submit"
           disabled={addComment.isPending}
-          className="bg-brand-600 hover:bg-brand-900 shrink-0 rounded-lg px-4 py-2 font-semibold text-white disabled:opacity-60"
+          className="bg-brand-700 hover:bg-brand-900 shrink-0 rounded-xl px-4 py-2 font-bold text-white disabled:opacity-60"
         >
           {t.news.send}
         </button>
@@ -142,12 +142,12 @@ function CommentForm({
       <button
         type="button"
         onClick={onDone}
-        className="self-start text-sm font-semibold text-slate-600 hover:text-slate-900"
+        className="text-ink-muted hover:text-ink self-start text-sm font-semibold"
       >
         {t.common.cancel}
       </button>
       {error && (
-        <p id={errorId} role="alert" className="text-sm text-red-700">
+        <p id={errorId} role="alert" className="text-danger-700 text-sm">
           {error}
         </p>
       )}

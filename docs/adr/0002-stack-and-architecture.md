@@ -1,6 +1,6 @@
 # 0002. Stack and architecture
 
-- **Updated:** 2026-10-18 (update banner for new versions)
+- **Updated:** 2026-10-19 (every screen on the visual design tokens)
 
 ## Context
 
@@ -24,6 +24,14 @@ maintained by agents, so strict types and a predictable structure matter more th
   control, and checks for a new version whenever the app returns to the foreground and hourly
   (`src/lib/appUpdate.ts`), because iOS resumes Home Screen apps instead of reloading them. An automatic reload
   could lose what someone is typing.
+- **Visual design ("Calm Indigo")**: colours, shadows and the font are Tailwind theme tokens in `src/index.css`;
+  components use their names (`bg-page`, `bg-surface shadow-card`, `text-ink`, `text-ink-muted`, `brand-*`,
+  `meta-*` for meta work, `overdue-*`/`due-today-*` from `dueStatus()`, `points-*`, `done-*`, `danger-*` for errors
+  and deleting, `notice-*`, `info-*`, `now`, `confetti-*`), never Tailwind's palette colours, `bg-white` or
+  arbitrary colours, so a dark theme ("Night") can redefine them in one place; `src/themeTokens.test.ts` fails on
+  those. White text on filled colours and Tailwind's shadows for floating toasts stay. Cards are white with `shadow-card` on a
+  tinted page; text on the page uses `ink-muted` or darker for AA contrast. The **Figtree** font is self-hosted
+  with `@fontsource-variable/figtree` and precached by the service worker, so it works offline.
 - **Vercel** hosts the static build.
 - **Languages** (English and Finnish) without an i18n library: each language is a typed object in
   `src/locales/<code>/`, one file per area, with English (`src/locales/en`) as the source and its type

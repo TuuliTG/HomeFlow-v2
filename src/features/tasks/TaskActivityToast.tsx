@@ -25,7 +25,7 @@ export function TaskActivityToast() {
   return (
     <div
       className={[
-        'flex max-w-sm items-center gap-3 rounded-full bg-slate-900 py-2 pr-2 pl-4 text-sm text-white shadow-lg',
+        'bg-ink flex max-w-sm items-center gap-3 rounded-full py-2 pr-2 pl-4 text-sm text-white shadow-lg',
         activity ? 'pointer-events-auto' : 'sr-only',
       ].join(' ')}
     >
@@ -40,7 +40,7 @@ export function TaskActivityToast() {
         <button
           type="button"
           onClick={dismiss}
-          className="shrink-0 rounded-full px-2 py-0.5 text-slate-300 hover:bg-slate-700 hover:text-white"
+          className="text-brand-100 hover:bg-brand-700 shrink-0 rounded-full px-2 py-0.5 hover:text-white"
         >
           <span aria-hidden="true">✕</span>
           <span className="sr-only">{tasks.activity.dismiss}</span>

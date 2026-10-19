@@ -97,17 +97,17 @@ export function MetricSection({
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
       <div>
-        <h2 id={headingId} className="text-lg font-semibold text-slate-900">
+        <h2 id={headingId} className="text-ink text-lg font-semibold">
           {title}
         </h2>
-        <p className="text-sm text-slate-600">{description}</p>
+        <p className="text-ink-muted text-sm">{description}</p>
       </div>
-      <div className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+      <div className="divide-line bg-surface shadow-card flex flex-col divide-y rounded-2xl">
         <FairnessScore contributions={contributions} metric={metric} empty={empty} />
         {legend && <Legend entries={legend} />}
         <ol
           aria-label={t.statistics.byMember(title)}
-          className="flex flex-col divide-y divide-slate-200"
+          className="divide-line flex flex-col divide-y"
         >
           {rankBy(contributions, metric).map((member) => (
             <li
@@ -116,8 +116,8 @@ export function MetricSection({
               className="flex flex-col gap-2 px-4 py-3 text-sm"
             >
               <div className="flex items-baseline justify-between gap-4">
-                <span className="font-medium text-slate-900">{memberName(member, userId, t)}</span>
-                <span className="text-slate-600">{summary(member)}</span>
+                <span className="text-ink font-medium">{memberName(member, userId, t)}</span>
+                <span className="text-ink-muted">{summary(member)}</span>
               </div>
               <Bar segments={bar(member)} most={most} />
             </li>
@@ -141,7 +141,7 @@ function Bar({ segments, most }: { segments: BarSegment[]; most: number }) {
           : undefined
       }
       aria-hidden={split ? undefined : true}
-      className="flex h-2 overflow-hidden rounded-full bg-slate-100"
+      className="bg-page flex h-2 overflow-hidden rounded-full"
     >
       {segments.map(({ kind, value, className }) => (
         <div
@@ -157,7 +157,7 @@ function Bar({ segments, most }: { segments: BarSegment[]; most: number }) {
 /** The bars' colours; each split bar also names its parts for screen readers. */
 function Legend({ entries }: { entries: { label: string; className: string }[] }) {
   return (
-    <p aria-hidden="true" className="flex gap-4 px-4 py-2 text-xs text-slate-600">
+    <p aria-hidden="true" className="text-ink-muted flex gap-4 px-4 py-2 text-xs">
       {entries.map(({ label, className }) => (
         <span key={label} className="flex items-center gap-1.5">
           <span className={`size-2.5 rounded-full ${className}`} />
@@ -180,11 +180,11 @@ function FairnessScore({
   const t = useMessages().statistics;
   if (contributions.length < 2) return null;
   const fairness = fairnessOf(contributions, metric);
-  if (!fairness) return <p className="px-4 py-3 text-sm text-slate-600">{empty}</p>;
+  if (!fairness) return <p className="text-ink-muted px-4 py-3 text-sm">{empty}</p>;
   return (
-    <p className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600">
+    <p className="text-ink-muted flex items-center gap-2 px-4 py-3 text-sm">
       {t.fairness}
-      <span className="text-lg font-bold text-slate-900">{fairness.score}</span>/ 100
+      <span className="text-ink text-lg font-bold">{fairness.score}</span>/ 100
       <span className="bg-brand-50 text-brand-900 ml-auto rounded-full px-3 py-1 font-semibold">
         {t.fairnessLabels[fairness.label]}
       </span>

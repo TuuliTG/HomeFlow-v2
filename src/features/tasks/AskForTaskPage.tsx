@@ -36,7 +36,7 @@ export function AskForTaskPage() {
       {tasks.isPending || members.isPending ? (
         <LoadingMessage />
       ) : tasks.isError || members.isError ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {t.loadFailed}
         </p>
       ) : task ? (
@@ -51,7 +51,7 @@ export function AskForTaskPage() {
 function Unavailable() {
   const { tasks } = useMessages();
   return (
-    <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+    <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
       {tasks.requests.unavailable}{' '}
       <Link to={paths.tasks} className="text-brand-900 font-semibold underline">
         {tasks.board.title}
@@ -80,7 +80,7 @@ function AskForm({ task, candidates }: { task: Task; candidates: HouseholdMember
 
   if (candidates.length === 0) {
     return (
-      <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+      <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
         {t.noOne}
       </p>
     );
@@ -95,11 +95,11 @@ function AskForm({ task, candidates }: { task: Task; candidates: HouseholdMember
       className="flex flex-col gap-5"
     >
       <fieldset className="flex flex-col gap-1">
-        <legend className="text-sm font-medium text-slate-700">{t.whoToAsk}</legend>
-        <ul className="flex flex-col divide-y divide-slate-200">
+        <legend className="text-ink text-sm font-medium">{t.whoToAsk}</legend>
+        <ul className="divide-line flex flex-col divide-y">
           {candidates.map((member) => (
             <li key={member.id}>
-              <label className="flex min-h-14 items-center gap-3 text-base text-slate-900">
+              <label className="text-ink flex min-h-14 items-center gap-3 text-base">
                 <input
                   type="radio"
                   name="member"
@@ -117,7 +117,7 @@ function AskForm({ task, candidates }: { task: Task; candidates: HouseholdMember
         </ul>
       </fieldset>
       {requestTask.isError && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {t.sendFailed}
         </p>
       )}
@@ -125,7 +125,7 @@ function AskForm({ task, candidates }: { task: Task; candidates: HouseholdMember
         <button
           type="submit"
           disabled={requestTask.isPending || memberId === null}
-          className="bg-brand-600 hover:bg-brand-900 flex-1 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+          className="bg-brand-700 hover:bg-brand-900 flex-1 rounded-xl px-4 py-2.5 font-bold text-white disabled:opacity-60"
         >
           {t.send}
         </button>

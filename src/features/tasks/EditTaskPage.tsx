@@ -35,7 +35,7 @@ export function EditTaskPage() {
       ) : tasks.isPending || membership.isPending ? (
         <LoadingMessage />
       ) : (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+        <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
           {t.taskForm.edit.notOnBoard}{' '}
           <Link to={paths.tasks} className="text-brand-900 font-semibold underline">
             {t.taskForm.edit.backToTasks}
@@ -51,7 +51,7 @@ function ImagesNotSavedNotice() {
   const t = useMessages().taskForm.edit;
   if (!isImagesNotSavedState(useLocation().state)) return null;
   return (
-    <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+    <p role="status" className="bg-notice-50 text-notice-900 rounded-xl p-3 text-sm">
       {t.imagesNotSaved}
     </p>
   );
@@ -105,7 +105,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
         onClick={() => {
           setIsConfirming(true);
         }}
-        className="w-fit rounded-lg border border-red-300 px-4 py-2.5 font-semibold text-red-700 hover:bg-red-50"
+        className="border-danger-300 text-danger-700 hover:bg-danger-50 w-fit rounded-xl border px-4 py-2.5 font-semibold"
       >
         {t.delete}
       </button>
@@ -114,11 +114,11 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
   return (
     <section
       aria-label={t.delete}
-      className="flex flex-col gap-3 rounded-2xl border border-red-200 bg-red-50 p-4"
+      className="border-danger-200 bg-danger-50 flex flex-col gap-3 rounded-2xl border p-4"
     >
-      <p className="text-sm text-red-900">{t.confirmDelete(task.title)}</p>
+      <p className="text-danger-900 text-sm">{t.confirmDelete(task.title)}</p>
       {deleteTask.isError && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {t.deleteFailed}
         </p>
       )}
@@ -134,7 +134,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
               () => undefined,
             );
           }}
-          className="rounded-lg bg-red-700 px-4 py-2.5 font-semibold text-white hover:bg-red-900 disabled:opacity-60"
+          className="bg-danger-700 hover:bg-danger-900 rounded-xl px-4 py-2.5 font-bold text-white disabled:opacity-60"
         >
           {common.yesDelete}
         </button>
@@ -143,7 +143,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
           onClick={() => {
             setIsConfirming(false);
           }}
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-100"
+          className="border-line-strong bg-surface text-ink hover:bg-page rounded-xl border px-4 py-2.5 font-semibold"
         >
           {common.keepIt}
         </button>

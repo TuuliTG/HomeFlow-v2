@@ -30,7 +30,7 @@ export function UpdateBanner() {
       <div
         role="status"
         className={[
-          'flex max-w-sm items-center gap-2 rounded-2xl bg-slate-900 py-1 pr-1 pl-4 text-sm text-white shadow-lg',
+          'bg-ink flex max-w-sm items-center gap-2 rounded-2xl py-1 pr-1 pl-4 text-sm text-white shadow-lg',
           visible ? 'pointer-events-auto' : 'sr-only',
         ].join(' ')}
       >
@@ -46,7 +46,7 @@ export function UpdateBanner() {
                   skipWaiting: updateServiceWorker,
                 });
               }}
-              className="hover:bg-brand-50 focus-visible:outline-brand-600 min-h-11 shrink-0 rounded-xl bg-white px-3 font-medium text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="hover:bg-brand-50 focus-visible:outline-brand-200 bg-surface text-ink min-h-11 shrink-0 rounded-xl px-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {t.reload}
             </button>
@@ -55,7 +55,7 @@ export function UpdateBanner() {
               onClick={() => {
                 setDismissed(true);
               }}
-              className="focus-visible:outline-brand-600 min-h-11 min-w-11 shrink-0 rounded-xl text-slate-300 hover:bg-slate-700 hover:text-white focus-visible:outline-2"
+              className="focus-visible:outline-brand-200 text-brand-100 hover:bg-brand-700 min-h-11 min-w-11 shrink-0 rounded-xl hover:text-white focus-visible:outline-2"
             >
               <span aria-hidden="true">✕</span>
               <span className="sr-only">{t.later}</span>

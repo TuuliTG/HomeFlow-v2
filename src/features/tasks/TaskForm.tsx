@@ -148,7 +148,7 @@ export function TaskForm({
         errorProps={errorPropsFor('title')}
       />
 
-      <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+      <label className="text-ink flex flex-col gap-1 text-sm font-medium">
         {t.taskForm.description}
         <textarea
           name="description"
@@ -197,7 +197,7 @@ export function TaskForm({
       )}
 
       <div className="flex gap-3">
-        <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
+        <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
           {t.taskForm.repeats}
           <select
             name="repeatEveryDays"
@@ -216,7 +216,7 @@ export function TaskForm({
             ))}
           </select>
         </label>
-        <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
+        <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
           {t.taskForm.dueDate}
           <input
             type="date"
@@ -232,13 +232,13 @@ export function TaskForm({
         </label>
       </div>
       {repeatEveryDays !== '' && (
-        <p id={repeatHintId} className="-mt-3 text-sm text-slate-600">
+        <p id={repeatHintId} className="text-ink-muted -mt-3 text-sm">
           {t.taskForm.repeatHint(Number(repeatEveryDays))}
         </p>
       )}
 
       {error && (
-        <p id={errorId} role="alert" className="text-sm text-red-700">
+        <p id={errorId} role="alert" className="text-danger-700 text-sm">
           {error.message}
         </p>
       )}
@@ -247,7 +247,7 @@ export function TaskForm({
         <button
           type="submit"
           disabled={isSaving || isPreparingImages}
-          className="bg-brand-600 hover:bg-brand-900 flex-1 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+          className="bg-brand-700 hover:bg-brand-900 flex-1 rounded-xl px-4 py-2.5 font-bold text-white disabled:opacity-60"
         >
           {submitLabel}
         </button>
