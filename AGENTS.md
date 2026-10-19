@@ -42,8 +42,9 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node 22 (≥ 22.22
   `household_id = (select private.current_household_id())` ([ADR 0003](docs/adr/0003-accounts-and-households.md)).
 - User-facing text goes in `src/locales/en/` and every other language (`fi`), never inline: read it with
   `useMessages()` from `@/lib/i18n/i18n`, or pass `t: Messages` to helpers (ADR 0002).
-- Colours, shadows and fonts come from the theme tokens in `src/index.css` (`bg-page`, `bg-surface`, `text-ink`,
-  `text-ink-muted`, `brand-*`, `meta-*`…, ADR 0002), not raw palette classes like `slate-*`.
+- New and restyled UI takes colours, shadows and fonts from the theme tokens in `src/index.css` (`bg-page`,
+  `bg-surface`, `text-ink`, `text-ink-muted`, `brand-*`, `meta-*`…, ADR 0002). Older screens still use raw palette
+  classes (`slate-*`, `red-*`…) until they are restyled; don't copy them.
 - Mobile first: design for ~390px wide, then enhance with `md:` breakpoints. Accessible by default (roles, labels, contrast).
 - Import with the `@/` alias. Add dependencies with `npm install <pkg>` (exact versions are saved automatically).
 

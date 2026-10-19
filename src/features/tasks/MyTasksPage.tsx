@@ -77,8 +77,7 @@ export function MyTasksPage() {
 function PointsTotal() {
   const user = useLoggedInUser();
   const points = useTotalPoints(user.id);
-  const { common, tasks } = useMessages();
-  const t = tasks.me;
+  const t = useMessages().tasks.me;
 
   return (
     <section
@@ -95,10 +94,7 @@ function PointsTotal() {
           {t.pointsLoadFailed}
         </p>
       ) : (
-        // LoadingMessage's grey wouldn't show on the dark card.
-        <p role="status" className="text-brand-100 text-sm">
-          {common.loading}
-        </p>
+        <LoadingMessage className="text-brand-100" />
       )}
     </section>
   );

@@ -32,7 +32,7 @@ export default defineConfig({
         short_name: 'HomeFlow',
         description: 'Share household tasks fairly — and make meta work visible.',
         theme_color: '#312e81',
-        background_color: '#f8fafc',
+        background_color: '#f1f2f9',
         display: 'standalone',
         start_url: '/',
         icons: [
