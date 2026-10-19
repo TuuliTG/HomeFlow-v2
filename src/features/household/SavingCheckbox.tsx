@@ -24,7 +24,7 @@ export function SavingCheckbox({
   /** The choice being saved; null once the saved one has loaded. */
   const [saving, setSaving] = useState<boolean | null>(null);
   return (
-    <label className="flex shrink-0 items-center gap-2 text-sm font-medium text-slate-700">
+    <label className="text-ink flex shrink-0 items-center gap-2 text-sm font-medium">
       <input
         type="checkbox"
         aria-label={ariaLabel}

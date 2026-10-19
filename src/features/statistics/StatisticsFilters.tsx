@@ -73,9 +73,9 @@ export function StatisticsFilters(props: StatisticsFiltersProps) {
       onToggle={(event) => {
         onOpenChange(event.currentTarget.open);
       }}
-      className="group rounded-xl border border-slate-200 bg-white"
+      className="group bg-surface shadow-card rounded-xl"
     >
-      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 px-4 text-sm font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
+      <summary className="text-ink flex min-h-11 cursor-pointer list-none items-center gap-3 px-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
         {t.filters}
         {active && (
           <span className="bg-brand-50 text-brand-900 min-w-0 rounded-full px-3 py-0.5 text-xs font-semibold">
@@ -84,7 +84,7 @@ export function StatisticsFilters(props: StatisticsFiltersProps) {
         )}
         <ChevronDownIcon className="text-ink-muted ml-auto size-5 shrink-0 transition-transform group-open:rotate-180" />
       </summary>
-      <div className="flex flex-col gap-4 border-t border-slate-200 p-4">
+      <div className="border-line flex flex-col gap-4 border-t p-4">
         {comparison !== null && (
           <CompareMembers
             contributions={contributions}

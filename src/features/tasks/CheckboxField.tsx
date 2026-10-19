@@ -14,7 +14,7 @@ export function CheckboxField({ name, label, hint, checked, onChange }: Checkbox
   const hintId = useId();
   return (
     <div className="flex flex-col gap-1">
-      <label className="flex items-center gap-2 text-sm font-medium text-slate-800">
+      <label className="text-ink flex items-center gap-2 text-sm font-medium">
         <input
           type="checkbox"
           name={name}
@@ -27,7 +27,7 @@ export function CheckboxField({ name, label, hint, checked, onChange }: Checkbox
         />
         {label}
       </label>
-      <p id={hintId} className="text-sm text-slate-600">
+      <p id={hintId} className="text-ink-muted text-sm">
         {hint}
       </p>
     </div>

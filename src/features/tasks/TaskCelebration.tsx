@@ -9,7 +9,7 @@ import { useMessages } from '@/lib/i18n/i18n';
 /** How long the celebration lasts; the longest animation in `index.css` (`float-up`). */
 export const CELEBRATION_DURATION_MS = 1200;
 
-const STAR_COLOURS = ['text-amber-400', 'text-brand-600', 'text-meta-500'];
+const STAR_COLOURS = ['text-points-400', 'text-brand-600', 'text-meta-500'];
 
 /** Where each star flies to: evenly around the centre, alternately near and far. */
 const STARS = Array.from({ length: 10 }, (_, index) => {

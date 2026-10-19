@@ -84,10 +84,10 @@ export function TaskImagesField({
       aria-describedby={hintId}
       className="flex flex-col gap-2"
     >
-      <span id={labelId} className="text-sm font-medium text-slate-700">
+      <span id={labelId} className="text-ink text-sm font-medium">
         {t.label}
       </span>
-      <p id={hintId} className="-mt-1 text-sm text-slate-600">
+      <p id={hintId} className="text-ink-muted -mt-1 text-sm">
         {t.hint(MAX_TASK_IMAGES)}
       </p>
       {images.length > 0 && (
@@ -104,13 +104,13 @@ export function TaskImagesField({
                     {...(urls.isError
                       ? { role: 'img', 'aria-label': t.loadFailed }
                       : { 'aria-hidden': true })}
-                    className="size-20 rounded-lg bg-slate-100"
+                    className="bg-page size-20 rounded-lg"
                   />
                 ) : (
                   <img
                     src={src}
                     alt={t.picture(index + 1)}
-                    className="size-20 rounded-lg border border-slate-200 object-cover"
+                    className="border-line size-20 rounded-lg border object-cover"
                   />
                 )}
                 <button
@@ -120,7 +120,7 @@ export function TaskImagesField({
                   }}
                   aria-label={t.remove(index + 1)}
                   disabled={isPreparing}
-                  className="min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                  className="border-line-strong text-ink hover:bg-page min-h-11 rounded-lg border px-3 text-sm font-semibold disabled:opacity-60"
                 >
                   {t.removeButton}
                 </button>
@@ -145,7 +145,7 @@ export function TaskImagesField({
         </label>
       )}
       {problem && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {problem}
         </p>
       )}

@@ -20,12 +20,12 @@ export function NotificationSettings() {
   return (
     <section
       aria-labelledby="notification-settings"
-      className="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+      className="bg-surface shadow-card mt-6 flex flex-col gap-3 rounded-2xl p-4"
     >
-      <h2 id="notification-settings" className="font-semibold text-slate-900">
+      <h2 id="notification-settings" className="text-ink font-semibold">
         {t.heading}
       </h2>
-      <p aria-live="polite" className="text-sm text-slate-600">
+      <p aria-live="polite" className="text-ink-muted text-sm">
         {explanations[status]}
       </p>
       {canToggle && (
@@ -40,15 +40,15 @@ export function NotificationSettings() {
           className={[
             'w-fit rounded-lg px-4 py-2 text-sm font-semibold aria-disabled:opacity-60',
             isOn
-              ? 'border border-slate-300 text-slate-700 hover:bg-slate-100'
-              : 'bg-brand-600 hover:bg-brand-900 text-white',
+              ? 'border-line-strong text-ink hover:bg-page border'
+              : 'bg-brand-700 hover:bg-brand-900 text-white',
           ].join(' ')}
         >
           {isOn ? t.turnOff : t.turnOn}
         </button>
       )}
       {failed && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {t.changeFailed}
         </p>
       )}

@@ -17,20 +17,20 @@ function tagsOf(task: Task, t: Messages): Tag[] {
       label: t.common.taskTypes[task.type],
       className: task.type === 'meta' ? 'bg-meta-100 text-meta-800' : 'bg-brand-100 text-brand-900',
     },
-    task.isPrivate && { label: t.tasks.card.private, className: 'bg-amber-100 text-amber-900' },
+    task.isPrivate && { label: t.tasks.card.private, className: 'bg-notice-100 text-notice-900' },
     shared &&
       task.forChildren && {
         label: t.tasks.card.forChildren,
-        className: 'bg-emerald-100 text-emerald-800',
+        className: 'bg-done-100 text-done-800',
       },
     shared &&
       task.points === null && {
         label: t.tasks.card.waitingForPoints,
-        className: 'bg-amber-100 text-amber-900',
+        className: 'bg-notice-100 text-notice-900',
       },
     task.repeatEveryDays !== null && {
       label: t.tasks.repeat(task.repeatEveryDays),
-      className: 'bg-sky-100 text-sky-800',
+      className: 'bg-info-100 text-info-800',
     },
   ];
   return tags.filter((tag): tag is Tag => tag !== false);

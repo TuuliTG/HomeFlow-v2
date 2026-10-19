@@ -97,7 +97,7 @@ function StatisticsBody({
   if (contributions.data === undefined) {
     if (!contributions.isError) return <LoadingMessage />;
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.loadFailed}
       </p>
     );
@@ -120,7 +120,7 @@ function StatisticsBody({
         onOpenChange={setFiltersOpen}
       />
       {contributions.data.length < 2 && (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
+        <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-4 text-sm">
           {t.inviteFamily}
         </p>
       )}

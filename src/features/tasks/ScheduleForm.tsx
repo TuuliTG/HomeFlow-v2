@@ -93,15 +93,15 @@ export function ScheduleForm({
   const failure =
     invalidStart ??
     (setSchedule.isError ? t.saveFailed : clearSchedule.isError ? t.removeFailed : null);
-  const fieldClassName = 'flex min-w-0 flex-col gap-1 font-medium text-slate-900';
+  const fieldClassName = 'flex min-w-0 flex-col gap-1 font-medium text-ink';
   return (
     <form
       aria-label={t.formLabel(task.title)}
       onSubmit={save}
       noValidate
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm"
+      className="bg-surface shadow-card flex flex-col gap-3 rounded-2xl p-4 text-sm"
     >
-      <h3 className="font-semibold break-words text-slate-900">{task.title}</h3>
+      <h3 className="text-ink font-semibold break-words">{task.title}</h3>
       <div className="grid grid-cols-2 gap-3">
         <div className={`${fieldClassName} col-span-2`}>
           <label htmlFor={ids.day}>{t.day}</label>
@@ -152,7 +152,7 @@ export function ScheduleForm({
         </div>
       </div>
       {failure && (
-        <p role="alert" className="text-xs text-red-700">
+        <p role="alert" className="text-danger-700 text-xs">
           {failure}
         </p>
       )}
@@ -164,7 +164,7 @@ export function ScheduleForm({
             onClick={() => {
               clearSchedule.mutate(task.id, { onSuccess: onClose });
             }}
-            className="mr-auto rounded-lg px-1 py-1.5 font-semibold text-red-700 hover:underline disabled:opacity-60"
+            className="text-danger-700 mr-auto rounded-lg px-1 py-1.5 font-semibold hover:underline disabled:opacity-60"
           >
             {t.remove}
           </button>
@@ -172,14 +172,14 @@ export function ScheduleForm({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100"
+          className="border-line-strong bg-surface text-ink hover:bg-page rounded-lg border px-3 py-1.5 font-semibold"
         >
           {messages.common.cancel}
         </button>
         <button
           type="submit"
           disabled={setSchedule.isPending}
-          className="bg-brand-600 hover:bg-brand-900 rounded-lg px-3 py-1.5 font-semibold text-white disabled:opacity-60"
+          className="bg-brand-700 hover:bg-brand-900 rounded-xl px-3 py-1.5 font-bold text-white disabled:opacity-60"
         >
           {t.save}
         </button>

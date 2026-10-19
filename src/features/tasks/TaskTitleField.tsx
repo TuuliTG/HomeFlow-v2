@@ -88,7 +88,7 @@ export function TaskTitleField({
         />
       )}
       <div className="relative flex items-end gap-2">
-        <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
+        <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
           {t.taskForm.task}
           <input
             type="text"
@@ -127,7 +127,7 @@ export function TaskTitleField({
         />
       </div>
       {picked?.isOpen && (
-        <p className="text-sm text-amber-800">{t.taskForm.alreadyOnBoard(picked.title)}</p>
+        <p className="text-notice-800 text-sm">{t.taskForm.alreadyOnBoard(picked.title)}</p>
       )}
     </div>
   );
@@ -161,11 +161,11 @@ function FavouriteTaskList({ suggestions, onPick }: FavouriteTaskListProps) {
   const t = useMessages();
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-2">
-      <h2 id={headingId} className="text-sm font-medium text-slate-700">
+      <h2 id={headingId} className="text-ink text-sm font-medium">
         {t.taskForm.favourites}
       </h2>
       {suggestions.length === 0 ? (
-        <p className="text-sm text-slate-600">{t.taskForm.noFavourites}</p>
+        <p className="text-ink-muted text-sm">{t.taskForm.noFavourites}</p>
       ) : (
         <ul className="flex flex-wrap gap-2">
           {suggestions.map((suggestion) => (
@@ -175,7 +175,7 @@ function FavouriteTaskList({ suggestions, onPick }: FavouriteTaskListProps) {
                 onClick={() => {
                   onPick(suggestion);
                 }}
-                className="hover:border-brand-600 hover:bg-brand-50 min-h-11 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+                className="hover:border-brand-600 hover:bg-brand-50 border-line-strong bg-surface text-ink min-h-11 rounded-full border px-3 py-2 text-sm"
               >
                 {suggestion.title}
                 <span className="text-ink-muted"> · {suggestionPointsLabel(suggestion, t)}</span>
@@ -205,7 +205,7 @@ function SuggestionList({ id, matches, activeIndex, optionId, onPick }: Suggesti
       role="listbox"
       aria-label={t.taskForm.earlierTasks}
       hidden={matches.length === 0}
-      className="absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
+      className="border-line bg-surface absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-lg border shadow-lg"
     >
       {matches.map((suggestion, index) => (
         <div
@@ -225,7 +225,7 @@ function SuggestionList({ id, matches, activeIndex, optionId, onPick }: Suggesti
           onKeyDown={(event) => {
             if (event.key === 'Enter') onPick(suggestion);
           }}
-          className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm text-slate-800 aria-selected:bg-slate-100"
+          className="text-ink aria-selected:bg-page flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm"
         >
           <span>{suggestion.title}</span>
           <span className="text-ink-muted shrink-0">

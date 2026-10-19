@@ -3,9 +3,9 @@ import { StarIcon } from '@/components/ui/icons';
 const variantClassNames = {
   /** Boxed like an input, next to the task name field. */
   field:
-    'rounded-lg border border-slate-300 bg-white hover:border-amber-500 aria-pressed:border-amber-500',
+    'rounded-lg border border-line-strong bg-surface hover:border-points-500 aria-pressed:border-points-500',
   /** Just the star, on a task in a list. */
-  plain: 'rounded-full hover:bg-amber-50',
+  plain: 'rounded-full hover:bg-notice-50',
 };
 
 interface FavouriteStarButtonProps {
@@ -42,7 +42,7 @@ export function FavouriteStarButton({
       onClick={() => {
         if (!isSaving) onChange(!isFavourite);
       }}
-      className={`text-ink-muted flex size-11 shrink-0 items-center justify-center disabled:opacity-50 aria-disabled:opacity-50 aria-pressed:text-amber-600 ${variantClassNames[variant]}`}
+      className={`text-ink-muted aria-pressed:text-points-600 flex size-11 shrink-0 items-center justify-center disabled:opacity-50 aria-disabled:opacity-50 ${variantClassNames[variant]}`}
     >
       <StarIcon className="size-6" fill={isFavourite ? 'currentColor' : 'none'} />
     </button>

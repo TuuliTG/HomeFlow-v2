@@ -61,10 +61,10 @@ export function PasswordForm() {
       className="flex flex-col gap-4"
       noValidate
     >
-      <h2 id="login-form-heading" className="font-semibold text-slate-900">
+      <h2 id="login-form-heading" className="text-ink font-semibold">
         {copy.heading}
       </h2>
-      <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+      <label className="text-ink flex flex-col gap-1 text-sm font-medium">
         {t.auth.email}
         <input
           type="email"
@@ -80,7 +80,7 @@ export function PasswordForm() {
         />
       </label>
       <div className="flex flex-col gap-1">
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+        <label className="text-ink flex flex-col gap-1 text-sm font-medium">
           {t.auth.password}
           <input
             type="password"
@@ -102,18 +102,18 @@ export function PasswordForm() {
         )}
       </div>
       {error && (
-        <p id={errorId} role="alert" className="text-sm text-red-700">
+        <p id={errorId} role="alert" className="text-danger-700 text-sm">
           {error}
         </p>
       )}
       <button
         type="submit"
         disabled={submit.isPending}
-        className="bg-brand-600 hover:bg-brand-900 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+        className="bg-brand-700 hover:bg-brand-900 rounded-xl px-4 py-2.5 font-bold text-white disabled:opacity-60"
       >
         {copy.submit}
       </button>
-      <p className="text-center text-sm text-slate-600">
+      <p className="text-ink-muted text-center text-sm">
         {copy.switchPrompt}{' '}
         <button type="button" onClick={switchMode} className="text-brand-600 font-medium underline">
           {copy.switchLabel}

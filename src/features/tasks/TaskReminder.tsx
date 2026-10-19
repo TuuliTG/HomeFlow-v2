@@ -60,7 +60,7 @@ export function TaskReminder({ task, currentUserId }: TaskReminderProps) {
   }
   if (reminders.isError) {
     return (
-      <p role="alert" className="text-xs text-red-700">
+      <p role="alert" className="text-danger-700 text-xs">
         {t.loadFailed}
       </p>
     );
@@ -69,7 +69,7 @@ export function TaskReminder({ task, currentUserId }: TaskReminderProps) {
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
       {reminder ? (
         <>
-          <span className="mr-auto text-xs font-medium text-slate-700">
+          <span className="text-ink mr-auto text-xs font-medium">
             {describeReminder(reminder.remindAt, new Date(), messages)}
           </span>
           <button
@@ -110,7 +110,7 @@ export function TaskReminder({ task, currentUserId }: TaskReminderProps) {
         </button>
       )}
       {clearReminder.isError && (
-        <p role="alert" className="w-full text-xs text-red-700">
+        <p role="alert" className="text-danger-700 w-full text-xs">
           {t.removeFailed}
         </p>
       )}
@@ -171,9 +171,9 @@ function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFo
       aria-label={t.formLabel(task.title)}
       onSubmit={save}
       noValidate
-      className="flex flex-col gap-2 rounded-xl bg-slate-50 p-3 text-sm"
+      className="bg-page flex flex-col gap-2 rounded-xl p-3 text-sm"
     >
-      <label htmlFor={inputId} className="font-medium text-slate-900">
+      <label htmlFor={inputId} className="text-ink font-medium">
         {t.remindMeAt}
       </label>
       <input
@@ -190,11 +190,11 @@ function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFo
         }}
         className={inputClassName}
       />
-      <p id={hintId} className="text-xs text-slate-600">
+      <p id={hintId} className="text-ink-muted text-xs">
         {t.hint}
       </p>
       {failure && (
-        <p role="alert" className="text-xs text-red-700">
+        <p role="alert" className="text-danger-700 text-xs">
           {failure}
         </p>
       )}
@@ -202,14 +202,14 @@ function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFo
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100"
+          className="border-line-strong bg-surface text-ink hover:bg-page rounded-lg border px-3 py-1.5 font-semibold"
         >
           {messages.common.cancel}
         </button>
         <button
           type="submit"
           disabled={setReminder.isPending}
-          className="bg-brand-600 hover:bg-brand-900 rounded-lg px-3 py-1.5 font-semibold text-white disabled:opacity-60"
+          className="bg-brand-700 hover:bg-brand-900 rounded-xl px-3 py-1.5 font-bold text-white disabled:opacity-60"
         >
           {t.save}
         </button>

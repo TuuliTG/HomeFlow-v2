@@ -38,12 +38,12 @@ export function InviteCode({ code }: InviteCodeProps) {
   return (
     <section
       aria-labelledby="invite-code"
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+      className="bg-surface shadow-card flex flex-col gap-3 rounded-2xl p-4"
     >
-      <h2 id="invite-code" className="font-semibold text-slate-900">
+      <h2 id="invite-code" className="text-ink font-semibold">
         {t.heading}
       </h2>
-      <p className="text-sm text-slate-600">{t.intro}</p>
+      <p className="text-ink-muted text-sm">{t.intro}</p>
       <div className="flex flex-wrap items-center gap-3">
         <p className="text-brand-900 font-mono text-2xl font-semibold tracking-widest select-all">
           {code}
@@ -51,11 +51,11 @@ export function InviteCode({ code }: InviteCodeProps) {
         <button
           type="button"
           onClick={copy}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          className="border-line-strong text-ink hover:bg-page rounded-lg border px-3 py-1.5 text-sm font-medium"
         >
           {t.copy}
         </button>
-        <span role="status" className="text-sm text-slate-600">
+        <span role="status" className="text-ink-muted text-sm">
           {copyMessages[copyStatus]}
         </span>
       </div>

@@ -62,7 +62,7 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
   if (schedules.isPending) return <LoadingMessage />;
   if (schedules.isError) {
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.schedule.loadFailed}
       </p>
     );
@@ -91,7 +91,7 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-slate-600">{t.schedule.description}</p>
+      <p className="text-ink-muted text-sm">{t.schedule.description}</p>
       <DndContext sensors={drag.sensors} {...drag.handlers}>
         <NotScheduledList
           tasks={notScheduled}
@@ -131,7 +131,7 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
           }}
         />
         {setSchedule.isError && (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-danger-700 text-sm">
             {t.schedule.moveFailed}
           </p>
         )}
@@ -227,14 +227,14 @@ function ScheduledTaskDetails({
   const startsAt = new Date(schedule.startsAt);
   return (
     <TaskCard key={task.id} as="section" task={task} currentUserId={currentUserId} titleLevel={3}>
-      <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 pt-3 text-sm">
-        <span className="mr-auto font-medium text-slate-700">
+      <div className="border-line flex flex-wrap items-center justify-end gap-2 border-t pt-3 text-sm">
+        <span className="text-ink mr-auto font-medium">
           {t.when(common.shortDate(startsAt), common.time(startsAt), common.time(endOf(schedule)))}
         </span>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100"
+          className="border-line-strong bg-surface text-ink hover:bg-page rounded-lg border px-3 py-1.5 font-semibold"
         >
           {t.close}
         </button>

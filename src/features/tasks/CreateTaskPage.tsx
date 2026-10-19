@@ -35,7 +35,7 @@ export function CreateTaskPage() {
       {membership.isPending ? (
         <LoadingMessage />
       ) : membership.data?.canAddTasks === false ? (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+        <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
           {t.taskForm.create.askAnAdult}
         </p>
       ) : (

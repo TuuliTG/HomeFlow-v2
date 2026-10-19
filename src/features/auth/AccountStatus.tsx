@@ -12,14 +12,14 @@ export function AccountStatus() {
   return (
     <div className="flex min-w-0 items-center gap-3 text-sm">
       {!profile.isPending && (
-        <span className="truncate font-medium text-slate-800">
+        <span className="text-ink truncate font-medium">
           {profile.data ? t.auth.hello(profile.data.displayName) : t.auth.loggedInAs(user.email)}
         </span>
       )}
       <button
         type="button"
         onClick={() => void logOut()}
-        className="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+        className="border-line-strong text-ink hover:bg-page shrink-0 rounded-lg border px-3 py-1.5 font-medium"
       >
         {t.common.logOut}
       </button>

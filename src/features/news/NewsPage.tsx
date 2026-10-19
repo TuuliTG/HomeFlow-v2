@@ -27,14 +27,14 @@ function NewsBody({ news, userId }: { news: ReturnType<typeof useNews>; userId: 
   if (news.data === undefined) {
     if (!news.isError) return <LoadingMessage />;
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.news.loadFailed}
       </p>
     );
   }
   if (news.data.length === 0) {
     return (
-      <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+      <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
         {t.news.empty}
       </p>
     );
@@ -53,7 +53,7 @@ function NewsDaySection({ day, userId }: { day: NewsDay; userId: string }) {
   const t = useMessages();
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
-      <h2 id={headingId} className="text-lg font-semibold text-slate-900">
+      <h2 id={headingId} className="text-ink text-lg font-semibold">
         {day.label}
       </h2>
       <ul

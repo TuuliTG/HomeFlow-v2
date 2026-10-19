@@ -171,7 +171,7 @@ export function GoalForm({
         className="flex flex-col gap-5"
         noValidate
       >
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+        <label className="text-ink flex flex-col gap-1 text-sm font-medium">
           {t.reward}
           <input
             type="text"
@@ -187,7 +187,7 @@ export function GoalForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+        <label className="text-ink flex flex-col gap-1 text-sm font-medium">
           {t.pointsNeeded}
           <input
             type="number"
@@ -205,7 +205,7 @@ export function GoalForm({
         </label>
 
         <div className="flex flex-col gap-1">
-          <p aria-hidden="true" className="text-sm font-medium text-slate-700">
+          <p aria-hidden="true" className="text-ink text-sm font-medium">
             {t.whoFor}
           </p>
           <SegmentedChoice
@@ -215,7 +215,7 @@ export function GoalForm({
             value={scope}
             onChange={setScope}
           />
-          <p className="text-sm text-slate-600">{t.scopeHints[scope]}</p>
+          <p className="text-ink-muted text-sm">{t.scopeHints[scope]}</p>
         </div>
 
         {scope === 'personal' ? (
@@ -238,7 +238,7 @@ export function GoalForm({
         )}
 
         {error && (
-          <p id={errorId} role="alert" className="text-sm text-red-700">
+          <p id={errorId} role="alert" className="text-danger-700 text-sm">
             {error.message}
           </p>
         )}
@@ -247,7 +247,7 @@ export function GoalForm({
           <button
             type="submit"
             disabled={isSaving}
-            className="bg-brand-600 hover:bg-brand-900 flex-1 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+            className="bg-brand-700 hover:bg-brand-900 flex-1 rounded-xl px-4 py-2.5 font-bold text-white disabled:opacity-60"
           >
             {submitLabel}
           </button>

@@ -38,13 +38,13 @@ export function SlotPicker({ slot, view, tasks, currentUserId, onClose }: SlotPi
   return (
     <section
       aria-labelledby="slot-picker-heading"
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm"
+      className="bg-surface shadow-card flex flex-col gap-3 rounded-2xl p-4 text-sm"
     >
       <h3
         ref={heading}
         id="slot-picker-heading"
         tabIndex={-1}
-        className="font-semibold text-slate-900 focus:outline-none"
+        className="text-ink font-semibold focus:outline-none"
       >
         {when}
       </h3>
@@ -74,7 +74,7 @@ export function SlotPicker({ slot, view, tasks, currentUserId, onClose }: SlotPi
         </ul>
       )}
       {setSchedule.isError && (
-        <p role="alert" className="text-xs text-red-700">
+        <p role="alert" className="text-danger-700 text-xs">
           {t.schedule.saveFailed}
         </p>
       )}
@@ -88,7 +88,7 @@ export function SlotPicker({ slot, view, tasks, currentUserId, onClose }: SlotPi
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100"
+          className="border-line-strong bg-surface text-ink hover:bg-page rounded-lg border px-3 py-1.5 font-semibold"
         >
           {t.common.cancel}
         </button>

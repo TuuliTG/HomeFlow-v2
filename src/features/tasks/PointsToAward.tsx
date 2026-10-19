@@ -32,12 +32,12 @@ export function PointsToAward() {
   return (
     <section
       aria-labelledby={headingId}
-      className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4"
+      className="border-notice-200 bg-notice-50 flex flex-col gap-3 rounded-2xl border p-4"
     >
-      <h2 id={headingId} className="font-semibold text-slate-900">
+      <h2 id={headingId} className="text-ink font-semibold">
         {t.heading}
       </h2>
-      <p className="text-sm text-slate-700">{t.hint}</p>
+      <p className="text-ink text-sm">{t.hint}</p>
       <ul className="flex flex-col gap-3">
         {waiting.data.map((task) => (
           <AwardRow key={task.id} task={task} userId={user.id} />
@@ -57,10 +57,10 @@ function AwardRow({ task, userId }: { task: TaskWaitingForPoints; userId: string
     task.completedBy === null ? t.notDoneYet : t.doneBy(task.completerName ?? common.someone);
 
   return (
-    <li className="flex flex-col gap-2 rounded-xl bg-white p-3">
+    <li className="bg-surface flex flex-col gap-2 rounded-xl p-3">
       <div>
-        <p className="font-semibold text-slate-900">{task.title}</p>
-        <p className="text-xs text-slate-600">{doneBy}</p>
+        <p className="text-ink font-semibold">{task.title}</p>
+        <p className="text-ink-muted text-xs">{doneBy}</p>
       </div>
       <div className="flex items-center gap-2">
         <label htmlFor={selectId} className="sr-only">
@@ -87,13 +87,13 @@ function AwardRow({ task, userId }: { task: TaskWaitingForPoints; userId: string
           onClick={() => {
             award.mutate({ taskId: task.id, points });
           }}
-          className="bg-brand-600 hover:bg-brand-900 rounded-lg px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="bg-brand-700 hover:bg-brand-900 rounded-xl px-3 py-2 text-sm font-bold text-white disabled:opacity-60"
         >
           {t.award}
         </button>
       </div>
       {award.isError && (
-        <p role="alert" className="text-xs text-red-700">
+        <p role="alert" className="text-danger-700 text-xs">
           {t.failed}
         </p>
       )}

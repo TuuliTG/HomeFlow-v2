@@ -27,7 +27,7 @@ export function HouseholdCompletedTasks() {
 
   return (
     <section aria-labelledby="household-completed-heading" className="mt-4 flex flex-col gap-3">
-      <h2 id="household-completed-heading" className="text-lg font-semibold text-slate-900">
+      <h2 id="household-completed-heading" className="text-ink text-lg font-semibold">
         {t.tasks.completed.heading}
       </h2>
       <CompletedTasksBody completed={completed} userId={user.id} />
@@ -48,24 +48,24 @@ function CompletedTasksBody({
   if (completed.data === undefined) {
     if (!completed.isError) return <LoadingMessage />;
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.tasks.completed.loadFailed}
       </p>
     );
   }
   if (completed.data.length === 0) {
     return (
-      <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+      <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
         {t.tasks.completed.empty}
       </p>
     );
   }
   return (
-    <ul className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+    <ul className="divide-line bg-surface shadow-card flex flex-col divide-y rounded-2xl">
       {completed.data.map((task) => (
         <li key={task.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
           <div className="flex min-w-0 flex-col gap-0.5 break-words">
-            <span className="font-medium text-slate-900">{task.title}</span>
+            <span className="text-ink font-medium">{task.title}</span>
             <span className="text-ink-muted">
               {doneByLabel(task, userId, t)} · {t.common.shortDate(new Date(task.completedAt))}
               {` · ${task.points === null ? t.tasks.card.waitingForPoints : t.common.points(task.points)}`}
