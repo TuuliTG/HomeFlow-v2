@@ -89,7 +89,9 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
 - **Vercel** builds the app (settings and SPA routing in `vercel.json`) and deploys `main` to production and every
   PR to a preview URL.
 - **GitHub Actions** runs lint, types, dead-code check, unit, database and e2e tests, dependency audit and CodeQL on
-  every PR. `main` is protected and only accepts changes through a PR with green CI.
+  every PR. `main` is protected and only accepts changes through a PR with green CI. Database migrations and Edge
+  Functions reach production only through the manual **Deploy database** workflow
+  (`.github/workflows/deploy-database.yml`): Actions → Deploy database → Run workflow on `main`.
 
 ### Environment variables
 
@@ -106,24 +108,27 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
 ### One-time setup
 
 1. **Supabase:** create a project in an EU region.
-   - Apply the migrations: `npx supabase link --project-ref <ref>` and `npx supabase db push`.
    - **Auth → Sign In / Providers → Email:** keep it enabled, turn off _Confirm email_ and set the minimum password
      length to 8. **Auth → URL Configuration:** set the Site URL to the production URL.
-   - Deploy the child-account functions: `npx supabase functions deploy add-child child-sign-in`.
    - Accept Supabase's DPA (Organization → Legal documents).
-2. **Vercel:** import the GitHub repo and set the environment variables above for Production and Preview.
-3. **GitHub → Settings → Branches:** protect `main`, require a PR and the CI status checks, block force pushes.
-4. **Push notifications** (optional):
+2. **GitHub → Settings → Environments:** create `production` and set _Deployment branches_ to `main` only (this
+   keeps other branches away from the secrets; adding yourself as required reviewer is optional). Add the secrets
+   `SUPABASE_ACCESS_TOKEN` (Supabase → Account → Access Tokens) and `SUPABASE_DB_PASSWORD`, and the variable
+   `SUPABASE_PROJECT_REF`. Then run the **Deploy database** workflow to apply the migrations and deploy the Edge
+   Functions.
+3. **Vercel:** import the GitHub repo and set the environment variables above for Production and Preview.
+4. **GitHub → Settings → Branches:** protect `main`, require a PR and the CI status checks, block force pushes.
+5. **Push notifications** (optional):
    1. Generate VAPID keys: `npx web-push@3.6.7 generate-vapid-keys`. Set `VITE_VAPID_PUBLIC_KEY` in Vercel.
    2. **Supabase → Edge Functions → Secrets:** add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
       (`mailto:` + your email) and `NOTIFY_WEBHOOK_SECRET` (e.g. `openssl rand -hex 32`).
-   3. Deploy: `npx supabase functions deploy notify-household send-reminders`.
+   3. Run the **Deploy database** workflow if the functions aren't deployed yet.
    4. **Supabase → Database Webhooks:** on insert into `tasks`, call the `notify-household` function (POST) with
       header `x-webhook-secret` set to the secret.
    5. **Supabase → Integrations → Cron:** every minute (`* * * * *`), call the `send-reminders` function (POST)
       with the same `x-webhook-secret` header.
    6. In the app, turn on notifications on each device (on iPhone, add HomeFlow to the Home Screen first).
-5. **Error monitoring** (optional):
+6. **Error monitoring** (optional):
    1. **Sentry account:** sign up at [sentry.io](https://sentry.io) and choose **EU data storage** (it can't be
       changed later). In **Settings → Security & Privacy**, turn on _Prevent Storing of IP Addresses_ and
       _Data Scrubber_.
@@ -146,7 +151,6 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
 
       Then redeploy (**Deployments → ⋯ → Redeploy**); variables apply only to new builds.
 
-   6. **Supabase → Edge Functions → Secrets:** add `SENTRY_DSN` with the same DSN. Then deploy the functions from
-      an up-to-date `main` (first `npx supabase login` and `npx supabase link --project-ref <ref>` if the CLI
-      asks): `npx supabase functions deploy`.
+   6. **Supabase → Edge Functions → Secrets:** add `SENTRY_DSN` with the same DSN. Then run the **Deploy database**
+      workflow to redeploy the functions.
    7. **Notifications:** alerts arrive by email; install the Sentry mobile app and sign in for push notifications.

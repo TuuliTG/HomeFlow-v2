@@ -1,6 +1,6 @@
 # 0005. Push notifications
 
-- **Updated:** 2026-10-11
+- **Updated:** 2026-10-19
 
 ## Context
 
@@ -31,7 +31,8 @@ for apps added to the home screen (iOS 16.4+).
 ## Consequences
 
 - Payloads are encrypted to the device; Apple, Google and Mozilla only relay them, but learn a device is notified.
-- One-time setup outside the repo: VAPID keys, function deploys and secrets, the webhook and the cron job (README).
+- One-time setup outside the repo: VAPID keys and function secrets, the webhook and the cron job (README).
+  Functions deploy with the `Deploy database` workflow.
 - A reminder is taken before it is sent: if sending fails it is lost rather than sent twice.
 
 ## Alternatives considered
