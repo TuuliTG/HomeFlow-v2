@@ -1,6 +1,6 @@
 # 0001. How we work
 
-- **Updated:** 2026-10-08
+- **Updated:** 2026-10-19
 
 ## Context
 
@@ -18,6 +18,10 @@ and the reasons behind choices must survive between sessions without becoming a 
   `.github/pull_request_template.md` and merge (squash) only when CI is green; `main` is branch-protected.
 - **CI** (GitHub Actions): format, lint, types, knip, unit tests with coverage, build, Playwright e2e, database
   tests (pgTAP), dependency audit and CodeQL. **Vercel** deploys a preview per PR and production from `main`.
+- **Database deploys** — migrations and Edge Functions go to production only through the manual `Deploy database`
+  workflow (`workflow_dispatch`, `main` only, GitHub environment `production` holding the Supabase token and DB
+  password), so no laptop needs the Supabase CLI or credentials. It runs after the PR merges, so migrations must
+  stay compatible with the app version Vercel is still serving (add before you remove).
 - **Tests** — Vitest + Testing Library, queried by role and label as a user would (coverage ≥ 80%). Feature `api`
   modules are replaced by in-memory fakes (`src/test/`). Playwright e2e runs on Pixel, iPhone and desktop with axe
   checks against a faked Supabase (`e2e/fakeSupabase.ts`). RLS and database functions are tested with pgTAP
