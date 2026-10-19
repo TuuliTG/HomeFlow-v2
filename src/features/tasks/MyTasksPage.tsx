@@ -6,6 +6,7 @@ import { CheckIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
+import { AskedOfYou } from '@/features/tasks/AskedOfYou';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import { parseToDoView, type ToDoView, toDoViews } from '@/features/tasks/schedule';
@@ -50,6 +51,7 @@ export function MyTasksPage() {
       </div>
       <div className="flex flex-col gap-8">
         <PointsTotal />
+        <AskedOfYou headingClassName={sectionHeadingClassName} />
         <section aria-labelledby="to-do-heading" className="flex flex-col gap-3">
           <h2 id="to-do-heading" className={sectionHeadingClassName}>
             {t.toDo}

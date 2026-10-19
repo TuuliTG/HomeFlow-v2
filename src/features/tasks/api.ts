@@ -11,6 +11,7 @@ import {
   taskTypes,
 } from '@/features/tasks/task';
 import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
+import { requestRowSchema, taskRequestOf } from '@/features/tasks/requestRow';
 import { getSupabaseClient } from '@/lib/supabase';
 
 const taskRowsSchema = z.array(
@@ -31,6 +32,7 @@ const taskRowsSchema = z.array(
     previous: z
       .object({ completed_by: z.string().nullable(), completed_at: z.string().nullable() })
       .nullable(),
+    request: requestRowSchema.nullable(),
   }),
 );
 const helperRowsSchema = z.array(z.object({ user_id: z.string(), points: z.number() }));
@@ -55,7 +57,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, task_images(path, position), previous:previous_occurrence(completed_by, completed_at)',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -67,6 +69,8 @@ export async function fetchTasks(): Promise<Task[]> {
     row.created_by,
     row.picked_up_by,
     row.previous?.completed_by ?? null,
+    row.request?.requested_by ?? null,
+    row.request?.requested_for ?? null,
   ]);
   const names = await fetchDisplayNames([
     ...new Set(userIds.filter((id): id is string => id !== null)),
@@ -82,6 +86,7 @@ export async function fetchTasks(): Promise<Task[]> {
       for_children,
       task_images,
       previous,
+      request,
       ...task
     }) => ({
       ...task,
@@ -103,6 +108,7 @@ export async function fetchTasks(): Promise<Task[]> {
               name: nameOf(previous.completed_by),
               at: previous.completed_at,
             },
+      request: request && taskRequestOf(request, nameOf),
     }),
   );
 }

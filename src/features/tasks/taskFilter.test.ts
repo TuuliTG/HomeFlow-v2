@@ -23,6 +23,7 @@ function task(title: string, dueOn: string | null, pickedUpBy: string | null = n
     pickerName: null,
     images: [],
     lastDone: null,
+    request: null,
   };
 }
 

@@ -1,6 +1,7 @@
 import type * as tasksApi from '@/features/tasks/api';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
+import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
 import { fakeSchedulesBackend } from '@/test/fakeSchedulesApi';
 import {
   deliver,
@@ -72,6 +73,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           pickerName: pickedUpBy ? fakeAuthBackend.displayNameOf(pickedUpBy) : null,
           images: [...images],
           lastDone: isPrivate ? null : lastDoneOf(previousTaskId),
+          request: fakeRequestsBackend.requestOf(id),
         }),
       ),
   );
@@ -193,6 +195,7 @@ export const putBackTask: typeof tasksApi.putBackTask = (taskId) =>
     const task = openTaskOf(userId, taskId);
     if (task.pickedUpBy !== userId) throw new Error('You have not picked up this task');
     task.pickedUpBy = null;
+    fakeRequestsBackend.settle(taskId, null);
     fakeTasksBackend.clearReminderAs(userId, taskId);
     // Like the trigger on tasks: whoever gives a task back no longer plans to do it.
     fakeSchedulesBackend.clearScheduleAs(userId, taskId);

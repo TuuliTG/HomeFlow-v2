@@ -1,7 +1,8 @@
 import type * as liveApi from '@/features/tasks/liveApi';
-import { type NewTask, type TaskHelper, titleKey } from '@/features/tasks/task';
+import type { NewTask, TaskHelper } from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
+import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
 
 /**
  * The in-memory tasks behind `fakeTasksApi.ts`, and what tests use to set them up or act as another member.
@@ -36,11 +37,6 @@ type TaskDetails = Pick<NewTask, 'title' | 'type' | 'points'> & Partial<NewTask>
 export const tasks: StoredTask[] = [];
 /** Reminders by user id, then task id (ISO timestamps). */
 export const reminders = new Map<string, Map<string, string>>();
-/** Stars on tasks, like `favourite_tasks`: one per household, name (`titleKey`) and member who starred it. */
-const favourites: { householdId: string; key: string; starredBy: string }[] = [];
-/** Names (`titleKey`) whose star fails to save, and saves held until released (`holdFavourite`). */
-const failingFavourites = new Set<string>();
-const heldFavourites = new Map<string, Promise<void>>();
 let requestsFail = false;
 let reminderRequestsFail = false;
 let completions = 0;
@@ -124,23 +120,6 @@ export function isToDoBy(task: StoredTask, userId: string): boolean {
   return (task.isPrivate && task.createdBy === userId) || task.pickedUpBy === userId;
 }
 
-/**
- * Whether `userId` sees the star (`private.can_see_favourite()`): in their household, and starred by them or on a
- * task they can see, so a star on another member's private task stays hidden.
- */
-function canSeeFavourite(userId: string, star: (typeof favourites)[number]): boolean {
-  return (
-    star.householdId === fakeHouseholdBackend.householdIdOf(userId) &&
-    (star.starredBy === userId ||
-      tasks.some(
-        (task) =>
-          task.householdId === star.householdId &&
-          titleKey(task.title) === star.key &&
-          canSee(userId, task),
-      ))
-  );
-}
-
 /** Whether loading reminders fails (`fakeTasksBackend.failReminderRequests()`). */
 export function reminderRequestsFailing(): boolean {
   return requestsFail || reminderRequestsFail;
@@ -155,9 +134,6 @@ export const fakeTasksBackend = {
   reset() {
     tasks.length = 0;
     reminders.clear();
-    favourites.length = 0;
-    failingFavourites.clear();
-    heldFavourites.clear();
     requestsFail = false;
     reminderRequestsFail = false;
     completions = 0;
@@ -198,6 +174,7 @@ export const fakeTasksBackend = {
     if (task.pickedUpBy === userId) return;
     if (task.pickedUpBy) throw new Error('Someone else has picked up this task');
     task.pickedUpBy = userId;
+    fakeRequestsBackend.settle(taskId, userId);
     deliver(task, { kind: 'changed' });
   },
   /**
@@ -209,6 +186,7 @@ export const fakeTasksBackend = {
     completions += 1;
     // A millisecond apart, so the newest completion sorts first.
     task.completed = { by: userId, at: new Date(Date.now() + completions).toISOString() };
+    fakeRequestsBackend.forget(taskId);
     deliver(task, { kind: 'changed' });
     if (task.repeatEveryDays === null) return;
     store(
@@ -268,52 +246,6 @@ export const fakeTasksBackend = {
         byTask.set(taskId, new Date(new Date(remindAt).getTime() - ms).toISOString());
       }
     }
-  },
-  /**
-   * Stars or unstars the task with this name for `userId`'s household, like `favourite_tasks`: unstarring
-   * removes every star on it they can see.
-   */
-  setFavouriteAs(userId: string, title: string, isFavourite: boolean) {
-    if (failingFavourites.has(titleKey(title))) throw new Error('Saving the star failed');
-    const householdId = fakeHouseholdBackend.householdIdOf(userId);
-    if (!householdId) throw new Error(`${userId} is not in a household`);
-    const key = titleKey(title);
-    const own = (star: (typeof favourites)[number]) =>
-      star.key === key && canSeeFavourite(userId, star);
-    if (!isFavourite) {
-      favourites.splice(0, favourites.length, ...favourites.filter((star) => !own(star)));
-    } else if (!favourites.some((star) => own(star) && star.starredBy === userId)) {
-      favourites.push({ householdId, key, starredBy: userId });
-    }
-  },
-  /** Makes starring or unstarring the task with this name fail. */
-  failFavourite(title: string) {
-    failingFavourites.add(titleKey(title));
-  },
-  /** Holds saving a star on the task with this name until the returned function is called. */
-  holdFavourite(title: string): () => void {
-    let release: (() => void) | undefined;
-    heldFavourites.set(
-      titleKey(title),
-      new Promise<void>((resolve) => {
-        release = resolve;
-      }),
-    );
-    return () => {
-      release?.();
-    };
-  },
-  /** Resolves when a held save of a star on this name may go ahead (`holdFavourite`). */
-  favouriteSaved(title: string): Promise<void> {
-    return heldFavourites.get(titleKey(title)) ?? Promise.resolve();
-  },
-  /** The names (`titleKey`) of the favourites `userId` can see, each once. */
-  favouritesOf(userId: string): string[] {
-    return [
-      ...new Set(
-        favourites.filter((star) => canSeeFavourite(userId, star)).map((star) => star.key),
-      ),
-    ];
   },
   /** Makes loading reminders fail, while tasks still load. */
   failReminderRequests() {

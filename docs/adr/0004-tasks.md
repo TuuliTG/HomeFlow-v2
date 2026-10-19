@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-18 (a task's details from the timetable)
+- **Updated:** 2026-10-18 (asking a member to do a task)
 
 ## Context
 
@@ -52,6 +52,16 @@ next one back rather than follow a fixed calendar.
   open task. A task someone has picked up can't be taken by another member (55006); only they can put it back. Anyone
   can still mark any task done (credited to whoever does), so a task left picked up never blocks the family, but
   the app asks first ("Ben has picked this up. Mark it done anyway?").
+- **Asking someone**: a member can ask another to do an open shared task that is free or that they picked up
+  (handing it over). `task_requests` (one per task; asking again replaces it) is written only through
+  `request_task()`, `answer_task_request()` and `cancel_task_request()` and is visible with its task; only members
+  who may do the task can be asked (a child only a task for children). The member asked is notified (ADR 0005) and
+  accepts, which picks the task up for them, or declines; nobody gets a task without saying yes, keeping the
+  product's "self-assignment" principle. The card shows the request: Accept/Decline to the member asked (also under
+  _Asked of you_ on the Me page), Cancel to whoever asked, and a decline only to whoever asked until dismissed. A
+  trigger (`private.settle_task_requests()`) removes a request once the task is done or someone other than the
+  member asked picks it up, and an accepted one once they give it back; the member asked picking the task up
+  accepts it. Answering and cancelling lock the task before the request, like picking up, so they can't deadlock. Each function touches the task row, so live updates carry requests too.
 - **Fixing mistakes**: any adult, and a child for their own tasks, can edit (`update_task()`) or delete
   (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes

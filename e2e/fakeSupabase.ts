@@ -189,6 +189,31 @@ export async function fakeSupabase(page: Page) {
     };
   }
 
+  /** Who the user asked to do each task (task_requests), by task id; Ben never answers. */
+  const requests = new Map<string, { requested_by: string; requested_for: string; answer: null }>();
+
+  /** Like request_task(), without its checks. */
+  async function requestTask(route: Route) {
+    const { task_id, member_id } = route.request().postDataJSON() as {
+      task_id: string;
+      member_id: string;
+    };
+    requests.set(task_id, { requested_by: user.id, requested_for: member_id, answer: null });
+    return reply(route, 204);
+  }
+
+  /** Like cancel_task_request(), without its checks. */
+  async function cancelTaskRequest(route: Route) {
+    const { task_id } = route.request().postDataJSON() as { task_id: string };
+    requests.delete(task_id);
+    return reply(route, 204);
+  }
+
+  /** A task with who was asked to do it, like `request:task_requests(...)` embedded in the select. */
+  function withRequest<T extends TaskRow>(task: T) {
+    return { ...task, request: requests.get(task.id) ?? null };
+  }
+
   /** A task with the occurrence it repeats, like `previous_occurrence(completed_by, completed_at)` embedded. */
   function withPrevious<T extends TaskRow>(task: T) {
     const previous = tasks.find((candidate) => candidate.id === task.previous_task_id);
@@ -390,7 +415,7 @@ export async function fakeSupabase(page: Page) {
         .filter((task) => task.household_id === householdId && task.completed_at === null)
         // Stable sort, so tasks with the same due date (or none) stay newest first.
         .sort((a, b) => (a.due_on ?? '9999-12-31').localeCompare(b.due_on ?? '9999-12-31'))
-        .map((task) => withPrevious(withImages(task))),
+        .map((task) => withRequest(withPrevious(withImages(task)))),
     );
   }
 
@@ -480,6 +505,8 @@ export async function fakeSupabase(page: Page) {
       );
       if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
       task.picked_up_by = pickedUpBy;
+      // Like the trigger on tasks: picking a task up settles a request for someone else.
+      if (pickedUpBy !== null) requests.delete(task_id);
       if (pickedUpBy === null) {
         reminders.delete(task_id);
         schedules.delete(task_id);
@@ -913,6 +940,8 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/own_total_points': ownTotalPoints,
     '/rest/v1/rpc/own_helped_tasks': ownHelpedTasks,
     '/rest/v1/rpc/pick_up_task': setPickedUp(user.id),
+    '/rest/v1/rpc/request_task': requestTask,
+    '/rest/v1/rpc/cancel_task_request': cancelTaskRequest,
     '/rest/v1/rpc/put_back_task': setPickedUp(null),
     '/rest/v1/rpc/update_task': updateTask,
     '/rest/v1/rpc/delete_task': deleteTask,

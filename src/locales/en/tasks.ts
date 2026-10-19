@@ -153,6 +153,39 @@ export const tasks = {
     /** The prompt that appears after marking a task done. */
     askAfterDone: (title: string) => `${title} done! Did someone help?`,
   },
+  /** Asking another member to do a task, and answering when asked. */
+  requests: {
+    ask: 'Ask',
+    askLabel: (title: string) => `Ask someone to do ${title}`,
+    eyebrow: 'Tasks',
+    title: 'Ask someone',
+    description: (title: string) =>
+      `Who would you like to do ${title}? They get a notification and can accept or decline.`,
+    whoToAsk: 'Who to ask',
+    send: 'Send request',
+    noOne: 'Nobody else in your household can do this task.',
+    unavailable:
+      'This task can no longer be asked of anyone: it may be done, or someone else has picked it up.',
+    loadFailed:
+      "We couldn't load the task and your household. Check your connection and reload the page.",
+    sendFailed: "We couldn't send the request. Try again.",
+    /** The Me page's list of tasks waiting for the user's answer. */
+    askedOfYou: 'Asked of you',
+    askedYou: (name: string) => `${name} asked you to do this.`,
+    youAsked: (name: string) => `You asked ${name} to do this.`,
+    asked: (requester: string, asked: string) => `${requester} asked ${asked} to do this.`,
+    declined: (name: string) => `${name} can't do this.`,
+    accept: 'Accept',
+    acceptLabel: (title: string) => `Accept: ${title}`,
+    decline: 'Decline',
+    declineLabel: (title: string) => `Decline: ${title}`,
+    cancel: 'Cancel request',
+    cancelLabel: (title: string) => `Cancel request: ${title}`,
+    dismiss: 'OK',
+    dismissLabel: (title: string) => `OK, dismiss: ${title}`,
+    answerFailed: "We couldn't save your answer. The task may be done or taken already.",
+    cancelFailed: "We couldn't cancel the request. Try again.",
+  },
   /** The short celebration when the user marks a task done. */
   celebration: {
     done: (title: string) => `${title} done!`,

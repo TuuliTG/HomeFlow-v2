@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
+import { fakeFavouritesBackend } from '@/test/fakeFavouritesApi';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
@@ -18,7 +19,7 @@ function addBen() {
 
 /** Stars tasks for `userId`, as if they had pressed the star by each name. */
 function favourite(userId: string, ...titles: string[]) {
-  for (const title of titles) fakeTasksBackend.setFavouriteAs(userId, title, true);
+  for (const title of titles) fakeFavouritesBackend.setFavouriteAs(userId, title, true);
 }
 
 async function favouriteButtons() {
@@ -78,7 +79,7 @@ describe('adding a task again', () => {
 
     expect(star).toHaveAttribute('aria-pressed', 'true');
     await waitFor(() => {
-      expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
+      expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
     });
     await user.clear(screen.getByLabelText('Task'));
     expect((await favouriteButtons()).map((button) => button.textContent)).toEqual([
@@ -90,7 +91,7 @@ describe('adding a task again', () => {
 
     expect(star).toHaveAttribute('aria-pressed', 'false');
     await waitFor(() => {
-      expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual([]);
+      expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual([]);
     });
   });
 
@@ -108,7 +109,7 @@ describe('adding a task again', () => {
     expect((await screen.findByRole('button', { name: /Water plants/ })).textContent).toBe(
       'Water plants · 3 points',
     );
-    expect(fakeTasksBackend.favouritesOf(anna.id)).toEqual(['water plants']);
+    expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['water plants']);
   });
 
   it('takes the star back when saving it fails', async () => {
@@ -150,7 +151,7 @@ describe('adding a task again', () => {
     await user.click(star);
 
     await waitFor(() => {
-      expect(fakeTasksBackend.favouritesOf(ben.id)).toEqual([]);
+      expect(fakeFavouritesBackend.favouritesOf(ben.id)).toEqual([]);
     });
   });
 
