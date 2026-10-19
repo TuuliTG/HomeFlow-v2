@@ -111,12 +111,13 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
    - **Auth → Sign In / Providers → Email:** keep it enabled, turn off _Confirm email_ and set the minimum password
      length to 8. **Auth → URL Configuration:** set the Site URL to the production URL.
    - Accept Supabase's DPA (Organization → Legal documents).
-2. **Vercel:** import the GitHub repo and set the environment variables above for Production and Preview.
-3. **GitHub → Settings → Branches:** protect `main`, require a PR and the CI status checks, block force pushes.
-4. **GitHub → Settings → Environments:** create `production` (optionally with yourself as required reviewer and
-   only `main` as deployment branch). Add the secrets `SUPABASE_ACCESS_TOKEN` (Supabase → Account → Access Tokens)
-   and `SUPABASE_DB_PASSWORD`, and the variable `SUPABASE_PROJECT_REF`. Then run the **Deploy database** workflow
-   to apply the migrations and deploy the Edge Functions.
+2. **GitHub → Settings → Environments:** create `production` and set _Deployment branches_ to `main` only (this
+   keeps other branches away from the secrets; adding yourself as required reviewer is optional). Add the secrets
+   `SUPABASE_ACCESS_TOKEN` (Supabase → Account → Access Tokens) and `SUPABASE_DB_PASSWORD`, and the variable
+   `SUPABASE_PROJECT_REF`. Then run the **Deploy database** workflow to apply the migrations and deploy the Edge
+   Functions.
+3. **Vercel:** import the GitHub repo and set the environment variables above for Production and Preview.
+4. **GitHub → Settings → Branches:** protect `main`, require a PR and the CI status checks, block force pushes.
 5. **Push notifications** (optional):
    1. Generate VAPID keys: `npx web-push@3.6.7 generate-vapid-keys`. Set `VITE_VAPID_PUBLIC_KEY` in Vercel.
    2. **Supabase → Edge Functions → Secrets:** add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
