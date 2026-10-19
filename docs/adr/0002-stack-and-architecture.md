@@ -1,6 +1,6 @@
 # 0002. Stack and architecture
 
-- **Updated:** 2026-10-19 (visual design tokens and font)
+- **Updated:** 2026-10-19 (every screen on the visual design tokens)
 
 ## Context
 
@@ -26,11 +26,12 @@ maintained by agents, so strict types and a predictable structure matter more th
   could lose what someone is typing.
 - **Visual design ("Calm Indigo")**: colours, shadows and the font are Tailwind theme tokens in `src/index.css`;
   components use their names (`bg-page`, `bg-surface shadow-card`, `text-ink`, `text-ink-muted`, `brand-*`,
-  `meta-*` for meta work, `overdue-*`/`due-today-*` from `dueStatus()`, `points-*`, `done-*`) rather than raw
-  palette colours, so a dark theme ("Night") can later redefine them in one place. Screens move to the tokens as
-  they are restyled; dark mode waits until none use raw palette colours. Cards are white on a tinted
-  page; text on the page uses `ink-muted` or darker for AA contrast. The **Figtree** font is self-hosted with
-  `@fontsource-variable/figtree` and precached by the service worker, so it works offline.
+  `meta-*` for meta work, `overdue-*`/`due-today-*` from `dueStatus()`, `points-*`, `done-*`, `danger-*` for errors
+  and deleting, `notice-*`, `info-*`, `now`, `confetti-*`), never Tailwind's palette colours, `bg-white` or
+  arbitrary colours, so a dark theme ("Night") can redefine them in one place; `src/themeTokens.test.ts` fails on
+  those. White text on filled colours and Tailwind's shadows for floating toasts stay. Cards are white with `shadow-card` on a
+  tinted page; text on the page uses `ink-muted` or darker for AA contrast. The **Figtree** font is self-hosted
+  with `@fontsource-variable/figtree` and precached by the service worker, so it works offline.
 - **Vercel** hosts the static build.
 - **Languages** (English and Finnish) without an i18n library: each language is a typed object in
   `src/locales/<code>/`, one file per area, with English (`src/locales/en`) as the source and its type

@@ -109,7 +109,7 @@ function ToDoList({ view }: { view: ToDoView }) {
   if (tasks.data === undefined) {
     if (!tasks.isError) return <LoadingMessage />;
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.loadFailed}
       </p>
     );
@@ -143,7 +143,7 @@ function CompletedList() {
   if (completed.isPending || helped.isPending) return <LoadingMessage />;
   if (completed.isError || helped.isError) {
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.completedLoadFailed}
       </p>
     );
@@ -242,7 +242,7 @@ function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }
         </div>
       </div>
       {undo.isError && (
-        <p role="alert" className="text-xs text-red-700">
+        <p role="alert" className="text-danger-700 text-xs">
           {t.undoFailed}
         </p>
       )}

@@ -7,12 +7,12 @@ import { useMessages } from '@/lib/i18n/i18n';
 export const CLAIM_CELEBRATION_DURATION_MS = 3000;
 
 const CONFETTI_COLOURS = [
-  'bg-amber-400',
+  'bg-points-400',
   'bg-brand-600',
   'bg-meta-500',
-  'bg-emerald-500',
-  'bg-rose-400',
-  'bg-sky-400',
+  'bg-confetti-green',
+  'bg-confetti-rose',
+  'bg-confetti-sky',
 ];
 
 /**
@@ -83,7 +83,7 @@ function Confetti({ title }: { title: string }) {
           className={`animate-confetti-fall absolute top-0 motion-reduce:hidden ${className}`}
         />
       ))}
-      <div className="animate-reward-pop flex max-w-xs flex-col items-center gap-1 rounded-2xl bg-emerald-700 px-6 py-4 text-center text-white shadow-xl motion-reduce:animate-none">
+      <div className="animate-reward-pop bg-done-700 flex max-w-xs flex-col items-center gap-1 rounded-2xl px-6 py-4 text-center text-white shadow-xl motion-reduce:animate-none">
         <span className="text-4xl">🎉</span>
         <span className="text-lg font-bold">{t.badge}</span>
         <span className="font-medium break-words">{title}</span>

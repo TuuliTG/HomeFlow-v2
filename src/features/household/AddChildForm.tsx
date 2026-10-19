@@ -37,7 +37,7 @@ export function AddChildForm({ householdId, onAdded }: AddChildFormProps) {
 
   return (
     <section aria-labelledby="add-child" className="flex flex-col gap-3">
-      <h2 id="add-child" className="font-semibold text-slate-900">
+      <h2 id="add-child" className="text-ink font-semibold">
         {t.heading}
       </h2>
       <SingleFieldForm

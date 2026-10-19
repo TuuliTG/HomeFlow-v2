@@ -59,7 +59,7 @@ function HelpersBody({
   if (completed.isPending || members.isPending) return <LoadingMessage />;
   if (completed.isError || members.isError) {
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.loadFailed}
       </p>
     );
@@ -77,7 +77,7 @@ function HelpersBody({
 function Unavailable() {
   const { tasks } = useMessages();
   return (
-    <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+    <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
       {tasks.helpers.unavailable}{' '}
       <Link to={paths.me} className="text-brand-900 font-semibold underline">
         {tasks.me.title}
@@ -131,7 +131,7 @@ function HelpersForm({
 
   if (others.length === 0) {
     return (
-      <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+      <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
         {t.noOneElse}
       </p>
     );
@@ -146,8 +146,8 @@ function HelpersForm({
       className="flex flex-col gap-5"
     >
       <fieldset aria-describedby={summaryId} className="flex flex-col gap-1">
-        <legend className="text-sm font-medium text-slate-700">{t.whoHelped}</legend>
-        <ul className="flex flex-col divide-y divide-slate-200">
+        <legend className="text-ink text-sm font-medium">{t.whoHelped}</legend>
+        <ul className="divide-line flex flex-col divide-y">
           {others.map((member) => (
             <HelperRow
               key={member.id}
@@ -167,12 +167,12 @@ function HelpersForm({
       <p
         id={summaryId}
         role={isTooMany ? 'alert' : undefined}
-        className={isTooMany ? 'text-sm text-red-700' : 'text-sm text-slate-600'}
+        className={isTooMany ? 'text-danger-700 text-sm' : 'text-ink-muted text-sm'}
       >
         {isTooMany ? t.tooMany(common.points(points)) : t.youKeep(common.points(points - given))}
       </p>
       {setHelpers.isError && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {t.saveFailed}
         </p>
       )}
@@ -180,7 +180,7 @@ function HelpersForm({
         <button
           type="submit"
           disabled={setHelpers.isPending || isTooMany}
-          className="bg-brand-600 hover:bg-brand-900 flex-1 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+          className="bg-brand-700 hover:bg-brand-900 flex-1 rounded-xl px-4 py-2.5 font-bold text-white disabled:opacity-60"
         >
           {common.save}
         </button>
@@ -209,7 +209,7 @@ function HelperRow({
   const choices = Array.from({ length: maxPoints }, (_, index) => index + 1);
   return (
     <li className="flex min-h-14 items-center justify-between gap-3">
-      <label className="flex min-h-11 flex-1 items-center gap-3 text-base text-slate-900">
+      <label className="text-ink flex min-h-11 flex-1 items-center gap-3 text-base">
         <input
           type="checkbox"
           checked={share !== undefined}

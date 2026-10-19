@@ -125,7 +125,7 @@ function TaskList({ filter }: { filter: TaskFilter }) {
   if (tasks.data === undefined) {
     if (!tasks.isError) return <LoadingMessage />;
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.loadFailed}
       </p>
     );

@@ -154,7 +154,7 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
   return (
     <>
       {failure && (
-        <p role="alert" className="text-xs text-red-700">
+        <p role="alert" className="text-danger-700 text-xs">
           {t.failures[failure]}
         </p>
       )}
@@ -230,7 +230,7 @@ function ConfirmTakeOver({ pickerName, onConfirm, onCancel }: ConfirmTakeOverPro
     <div
       role="group"
       aria-label={t.tasks.card.confirmTakeOverLabel(pickerName)}
-      className="flex flex-col gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900"
+      className="bg-notice-50 text-notice-900 flex flex-col gap-2 rounded-xl p-3 text-sm"
     >
       <p>{t.tasks.card.confirmTakeOver(pickerName)}</p>
       <div className="flex justify-end gap-2">
