@@ -17,6 +17,7 @@ function task(title: string, dueOn: string | null, pickedUpBy: string | null = n
     dueOn,
     isPrivate: false,
     forChildren: false,
+    icon: null,
     createdBy: 'anna',
     creatorName: 'Anna',
     pickedUpBy,

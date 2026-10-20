@@ -44,6 +44,7 @@ export function suggestionAsTask({
   repeatEveryDays,
   isPrivate,
   forChildren,
+  icon,
 }: TaskSuggestion): NewTask {
   return {
     title,
@@ -53,6 +54,7 @@ export function suggestionAsTask({
     repeatEveryDays,
     isPrivate,
     forChildren,
+    icon,
     dueOn: null,
   };
 }

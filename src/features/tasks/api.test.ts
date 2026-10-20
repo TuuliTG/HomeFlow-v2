@@ -39,6 +39,7 @@ const newTask = {
   dueOn: null,
   isPrivate: false,
   forChildren: false,
+  icon: null,
 } as const;
 const row = {
   id: 't1',
@@ -52,6 +53,7 @@ const row = {
   picked_up_by: null,
   is_private: false,
   for_children: false,
+  icon: null,
   task_images: [],
   previous: null,
   request: null,
@@ -234,6 +236,7 @@ describe('tasks api', () => {
       repeatEveryDays: 7,
       dueOn: '2026-10-10',
       forChildren: true,
+      icon: 'vacuum',
     });
 
     expect(client.rpc).toHaveBeenCalledWith('update_task', {
@@ -245,6 +248,7 @@ describe('tasks api', () => {
       task_due_on: '2026-10-10',
       task_repeat_every_days: 7,
       task_for_children: true,
+      task_icon: 'vacuum',
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
@@ -365,6 +369,21 @@ describe('tasks api', () => {
     expect(task?.images).toEqual(['h1/a.jpg', 'h1/b.jpg']);
   });
 
+  it("reads a task's icon, and one this version doesn't know as none", async () => {
+    respondWithTasks({
+      data: [
+        { ...row, icon: 'vacuum' },
+        { ...row, id: 't2', icon: 'rocket' },
+      ],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const tasks = await api.fetchTasks();
+
+    expect(tasks.map((task) => task.icon)).toEqual(['vacuum', null]);
+  });
+
   it('skips the name lookup when there are no tasks', async () => {
     respondWithTasks({ data: [], error: null });
 
@@ -397,6 +416,7 @@ describe('tasks api', () => {
       dueOn: '2026-10-10',
       isPrivate: true,
       forChildren: true,
+      icon: 'vacuum',
     });
 
     expect(client.from).toHaveBeenCalledWith('tasks');
@@ -409,6 +429,7 @@ describe('tasks api', () => {
       due_on: '2026-10-10',
       is_private: true,
       for_children: true,
+      icon: 'vacuum',
     });
     expect(query.select).toHaveBeenCalledWith('id');
     expect(id).toBe('t9');
