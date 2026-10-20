@@ -133,6 +133,16 @@ export const tasks = {
     /** Under a task the user helped someone else with. */
     youHelped: (name: string) => `You helped ${name}`,
   },
+  /** The Me page for children: their tasks as big tiles, and tasks to pick. */
+  child: {
+    eyebrow: 'Me',
+    title: 'My stars',
+    description: 'Do your tasks to earn points for your goal.',
+    myTasks: 'My tasks',
+    nothingToDo: 'Nothing to do yet. Pick a task below!',
+    pickOne: 'Pick a task',
+    nothingToPick: 'No tasks to pick right now.',
+  },
   /** Saying who helped with a task the user did, and sharing its points with them. */
   helpers: {
     eyebrow: 'Completed',

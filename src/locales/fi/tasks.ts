@@ -124,6 +124,15 @@ export const tasks: Messages['tasks'] = {
       'Tätä ei voitu kumota. Tehdyksi merkinnän voi kumota tunnin sisällä, jos seuraavaa kertaa ei ole vielä tehty.',
     youHelped: (name) => `${name} teki, sinä autoit`,
   },
+  child: {
+    eyebrow: 'Minä',
+    title: 'Omat tähdet',
+    description: 'Tee tehtäviäsi, niin saat pisteitä tavoitettasi varten.',
+    myTasks: 'Omat tehtävät',
+    nothingToDo: 'Ei vielä tehtäviä. Valitse tehtävä alta!',
+    pickOne: 'Valitse tehtävä',
+    nothingToPick: 'Juuri nyt ei ole tehtäviä valittavaksi.',
+  },
   helpers: {
     eyebrow: 'Tehdyt',
     title: 'Kuka auttoi?',

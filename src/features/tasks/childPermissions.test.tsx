@@ -79,7 +79,10 @@ describe('what children may do with tasks', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Keep it private' }));
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    await screen.findByRole('heading', { level: 1, name: 'My tasks' });
+    // Back on their Me page, where it is theirs to do.
+    const myTasks = await screen.findByRole('list', { name: 'My tasks' });
+    const book = within(myTasks).getByRole('listitem', { name: 'Read my book' });
+    expect(within(book).getByText('Private')).toBeInTheDocument();
     expect(tasks.at(-1)).toMatchObject({ isPrivate: true, points: null });
   });
 });

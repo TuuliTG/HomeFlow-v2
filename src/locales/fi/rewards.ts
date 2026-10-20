@@ -29,6 +29,14 @@ export const rewards: Messages['rewards'] = {
     claimed: (title) => `Palkinto lunastettu: ${title}!`,
     badge: 'Palkinto lunastettu!',
   },
+  jar: {
+    savingFor: 'Säästät tähän:',
+    ofTarget: (target) => `/ ${String(target)}`,
+    claimOnRewards: 'Lunasta se Palkinnoissa',
+    noGoal: 'Ei vielä tavoitetta',
+    noGoalHint: 'Pyydä perheesi aikuista asettamaan sinulle tavoite.',
+    loadFailed: 'Tavoitettasi ei voitu ladata.',
+  },
   goal: {
     othersGoal: (name) => `Tavoitteen asettaja: ${name}`,
     progress: (points, target) => `${String(points)} / ${String(target)} pistettä`,
