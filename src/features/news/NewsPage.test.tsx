@@ -240,7 +240,7 @@ describe('news page', () => {
     renderAppAt('/');
 
     await user.click(
-      within(await screen.findByRole('navigation', { name: 'Main' })).getByRole('link', {
+      await within(await screen.findByRole('navigation', { name: 'Main' })).findByRole('link', {
         name: 'News',
       }),
     );

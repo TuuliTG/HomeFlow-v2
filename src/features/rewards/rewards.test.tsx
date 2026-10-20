@@ -430,43 +430,22 @@ describe('rewards and goals', () => {
     expect(football).toHaveTextContent("Ben's goal");
   });
 
-  it('are claimed by a child but never added or deleted by one', async () => {
+  it("aren't set or changed by a child, who is sent to their Me page instead", async () => {
     const anna = fakeAuthBackend.addProfile('anna@example.com', 'Anna');
     fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
     const ben = logInAsFamilyMember('ben@example.com', 'Ben');
     fakeHouseholdBackend.setChild(ben.id, true);
     fakeGoalsBackend.addGoalAs(ben.id, { title: 'Football', targetPoints: 2, isShared: false });
-    fakeTasksBackend.addTaskAs(anna.id, {
-      title: 'Feed the cat',
-      type: 'physical',
-      points: 2,
-      forChildren: true,
-    });
-    fakeTasksBackend.completeTaskAs(ben.id, idOf('Feed the cat'), '2026-10-10');
-    const user = userEvent.setup();
-    renderAppAt('/rewards');
 
-    const football = await findGoal('Your goals', 'Football');
-    expect(within(football).getByRole('button', { name: /Claim/ })).toBeInTheDocument();
-    expect(within(football).queryByRole('button', { name: /Delete/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'New goal' })).not.toBeInTheDocument();
-    await user.click(within(football).getByRole('button', { name: /Claim/ }));
-    expect(
-      await within(await screen.findByRole('region', { name: 'Rewards claimed' })).findByText(
-        'Football',
-      ),
-    ).toBeInTheDocument();
-  });
-
-  it("aren't set by a child, even from the New goal address", async () => {
-    const anna = fakeAuthBackend.addProfile('anna@example.com', 'Anna');
-    fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
-    const ben = logInAsFamilyMember('ben@example.com', 'Ben');
-    fakeHouseholdBackend.setChild(ben.id, true);
-    renderAppAt('/rewards/new');
-
-    expect(await screen.findByText(/Only adults set goals/)).toBeInTheDocument();
-    expect(screen.queryByLabelText('Reward')).not.toBeInTheDocument();
+    for (const address of ['/rewards/new', '/rewards/goal:0/edit']) {
+      const { router, unmount } = renderAppAt(address);
+      expect(
+        await screen.findByRole('progressbar', { name: 'Progress towards Football' }),
+      ).toBeInTheDocument();
+      expect(router.state.location.pathname).toBe('/me');
+      expect(screen.queryByLabelText('Reward')).not.toBeInTheDocument();
+      unmount();
+    }
   });
 });
 
@@ -590,22 +569,5 @@ describe('editing goals', () => {
       'href',
       '/rewards',
     );
-  });
-
-  it("aren't changed by a child, even from the edit address", async () => {
-    const anna = fakeAuthBackend.addProfile('anna@example.com', 'Anna');
-    fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
-    const ben = logInAsFamilyMember('ben@example.com', 'Ben');
-    fakeHouseholdBackend.setChild(ben.id, true);
-    fakeGoalsBackend.addGoalAs(ben.id, { title: 'Football', targetPoints: 2, isShared: false });
-    const { unmount } = renderAppAt('/rewards');
-
-    await findGoal('Your goals', 'Football');
-    expect(screen.queryByRole('link', { name: /Edit goal/ })).not.toBeInTheDocument();
-    unmount();
-
-    renderAppAt('/rewards/goal:0/edit');
-    expect(await screen.findByText(/Only adults set goals/)).toBeInTheDocument();
-    expect(screen.queryByLabelText('Reward')).not.toBeInTheDocument();
   });
 });

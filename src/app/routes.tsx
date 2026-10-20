@@ -1,5 +1,6 @@
 import { Outlet, type RouteObject } from 'react-router';
 
+import { AdultsOnly } from '@/app/AdultsOnly';
 import { AppShell } from '@/app/AppShell';
 import { ErrorPage } from '@/app/ErrorPage';
 import { MePage } from '@/app/MePage';
@@ -58,11 +59,16 @@ export const routes: RouteObject[] = [
               { path: paths.taskHelpers(':taskId'), element: <TaskHelpersPage /> },
               { path: paths.askForTask(':taskId'), element: <AskForTaskPage /> },
               { path: paths.me, element: <MePage /> },
-              { path: paths.news, element: <NewsPage /> },
-              { path: paths.rewards, element: <RewardsPage /> },
-              { path: paths.newGoal, element: <NewGoalPage /> },
-              { path: paths.editGoal(':goalId'), element: <EditGoalPage /> },
-              { path: paths.statistics, element: <StatisticsPage /> },
+              {
+                element: <AdultsOnly />,
+                children: [
+                  { path: paths.news, element: <NewsPage /> },
+                  { path: paths.rewards, element: <RewardsPage /> },
+                  { path: paths.newGoal, element: <NewGoalPage /> },
+                  { path: paths.editGoal(':goalId'), element: <EditGoalPage /> },
+                  { path: paths.statistics, element: <StatisticsPage /> },
+                ],
+              },
               { path: paths.household, element: <HouseholdPage /> },
               { path: paths.settings, element: <SettingsPage /> },
               { path: '*', element: <NotFoundPage /> },
