@@ -8,8 +8,8 @@ const typeIconClassNames: Record<TaskType, string> = {
 };
 
 const sizeClassNames = {
-  md: { tile: 'size-10 rounded-xl', icon: 'size-5' },
-  lg: { tile: 'size-16 rounded-2xl', icon: 'size-9' },
+  md: { tile: 'size-10 rounded-xl', icon: 'size-5', emoji: 'text-xl' },
+  lg: { tile: 'size-16 rounded-2xl', icon: 'size-9', emoji: 'text-4xl' },
 } as const;
 
 interface TaskTypeIconProps {
@@ -31,7 +31,7 @@ export function TaskTypeIcon({ type, icon = null, size = 'md' }: TaskTypeIconPro
       className={`flex shrink-0 items-center justify-center ${classNames.tile} ${typeIconClassNames[type]}`}
     >
       {icon ? (
-        <TaskIcon name={icon} className={classNames.icon} />
+        <TaskIcon name={icon} className={classNames.emoji} />
       ) : (
         <TypeIcon className={classNames.icon} />
       )}
