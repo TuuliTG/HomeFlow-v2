@@ -26,20 +26,20 @@ const COMPARISON_PARAM = 'compare';
 
 /** The period shown, kept in the address as `?period=<period>`; this week by default. */
 function usePeriodParam() {
-  return useSearchParam<Period>(
-    PERIOD_PARAM,
-    (value) => periods.find((period) => period === value) ?? 'week',
-    (period) => (period === 'week' ? null : period),
-  );
+  return useSearchParam<Period>({
+    name: PERIOD_PARAM,
+    parse: (value) => periods.find((period) => period === value) ?? 'week',
+    serialise: (period) => (period === 'week' ? null : period),
+  });
 }
 
 /** Which tasks' points are shown, kept in the address as `?work=<filter>`; all by default. */
 function usePointsFilterParam() {
-  return useSearchParam<PointsFilter>(
-    POINTS_FILTER_PARAM,
-    (value) => pointsFilters.find((filter) => filter === value) ?? 'all',
-    (filter) => (filter === 'all' ? null : filter),
-  );
+  return useSearchParam<PointsFilter>({
+    name: POINTS_FILTER_PARAM,
+    parse: (value) => pointsFilters.find((filter) => filter === value) ?? 'all',
+    serialise: (filter) => (filter === 'all' ? null : filter),
+  });
 }
 
 /**
@@ -47,17 +47,17 @@ function usePointsFilterParam() {
  * everyone by default.
  */
 function useComparisonParam() {
-  return useSearchParam<Comparison>(
-    COMPARISON_PARAM,
-    (value) =>
+  return useSearchParam<Comparison>({
+    name: COMPARISON_PARAM,
+    parse: (value) =>
       value === null
         ? 'everyone'
         : (memberGroups.find((group) => group === value) ?? value.split(',')),
-    (comparison) => {
+    serialise: (comparison) => {
       if (comparison === 'everyone') return null;
       return typeof comparison === 'string' ? comparison : comparison.join(',');
     },
-  );
+  });
 }
 
 export function StatisticsPage() {

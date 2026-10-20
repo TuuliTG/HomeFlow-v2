@@ -64,18 +64,20 @@ function CompletedTasks() {
 
 /** An on/off choice kept in the address as `?<name>=1`. */
 function useSwitchParam(name: string) {
-  return useSearchParam(
+  return useSearchParam({
     name,
-    (value) => value === '1',
-    (on) => (on ? '1' : null),
-  );
+    parse: (value) => value === '1',
+    serialise: (on) => (on ? '1' : null),
+  });
 }
 
 /** Which tasks to show, kept in the address as `?show=<filter>`; all tasks by default. */
 function useFilterParam() {
-  return useSearchParam<TaskFilter>(FILTER_PARAM, parseTaskFilter, (filter) =>
-    filter === 'all' ? null : filter,
-  );
+  return useSearchParam<TaskFilter>({
+    name: FILTER_PARAM,
+    parse: parseTaskFilter,
+    serialise: (filter) => (filter === 'all' ? null : filter),
+  });
 }
 
 interface FilterChoiceProps {

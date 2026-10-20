@@ -17,9 +17,11 @@ import { useSearchParam } from '@/lib/useSearchParam';
 export function MyTasksPage() {
   const { tasks, schedule } = useMessages();
   const t = tasks.me;
-  const [view, setView] = useSearchParam<ToDoView>('view', parseToDoView, (chosen) =>
-    chosen === 'list' ? null : chosen,
-  );
+  const [view, setView] = useSearchParam<ToDoView>({
+    name: 'view',
+    parse: parseToDoView,
+    serialise: (chosen) => (chosen === 'list' ? null : chosen),
+  });
   return (
     <>
       <div className="flex items-start justify-between gap-4">

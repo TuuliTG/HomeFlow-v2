@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 
+interface SearchParamOptions<T> {
+  name: string;
+  parse: (value: string | null) => T;
+  serialise: (value: T) => string | null;
+}
+
 /**
  * A choice kept in the address as `?<name>=<value>`, so it survives a reload; `null` leaves it out.
  * Local state keeps the control from flickering while the router updates the address, and follows the
  * address when it changes otherwise (the nav link, back and forward).
  */
-export function useSearchParam<T>(
-  name: string,
-  parse: (value: string | null) => T,
-  serialise: (value: T) => string | null,
-): [T, (value: T) => void] {
+export function useSearchParam<T>({
+  name,
+  parse,
+  serialise,
+}: SearchParamOptions<T>): [T, (value: T) => void] {
   const [searchParams, setSearchParams] = useSearchParams();
   const inAddress = searchParams.get(name);
   const [value, setValue] = useState(() => parse(inAddress));
