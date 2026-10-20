@@ -21,8 +21,7 @@ export const auth: Messages['auth'] = {
   },
   email: 'Sähköposti',
   password: 'Salasana',
-  passwordHint: (minLength) =>
-    `Vähintään ${String(minLength)} merkkiä. Selain tai puhelin voi tallentaa sen puolestasi.`,
+  passwordHint: (minLength) => `Vähintään ${String(minLength)} merkkiä.`,
   invalidEmail: 'Anna toimiva sähköpostiosoite.',
   shortPassword: (minLength) => `Salasanassa pitää olla vähintään ${String(minLength)} merkkiä.`,
   failures: {
@@ -38,16 +37,13 @@ export const auth: Messages['auth'] = {
   },
   childCode: {
     open: 'Kirjaudu lapsen koodilla',
-    openHint: 'Ei sähköpostia? Perheesi aikuinen lisää sinut HomeFlow’hun ja antaa sinulle koodin.',
     heading: 'Kirjaudu lapsen koodilla',
     label: 'Kirjautumiskoodi',
-    hint: 'Perheesi aikuinen voi tehdä sinulle koodin kotitaloussivulla.',
     invalid: 'Kirjoita 8-merkkinen koodi.',
     submit: 'Kirjaudu',
     back: 'Kirjaudu sähköpostilla',
   },
   yourName: 'Nimesi',
-  nameHint: 'Tällä nimellä perheesi näkee sinut HomeFlow’ssa.',
   enterName: 'Kirjoita nimesi.',
   nameNotSaved: 'Nimeä ei voitu tallentaa. Yritä uudelleen.',
 };

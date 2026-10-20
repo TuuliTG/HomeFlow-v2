@@ -157,7 +157,7 @@ test('family member can pick up a task, find it on the Me screen and mark it don
 
   await toDo.getByRole('button', { name: 'Mark done: Vacuum' }).click();
 
-  await expect(toDo.getByText('Nothing picked up yet. Pick a task on the board.')).toBeVisible();
+  await expect(toDo.getByText('Nothing picked up yet.')).toBeVisible();
   await expect(
     page.getByRole('list', { name: 'Completed tasks' }).getByText('Vacuum'),
   ).toBeVisible();

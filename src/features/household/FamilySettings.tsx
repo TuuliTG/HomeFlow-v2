@@ -17,8 +17,6 @@ export function FamilySettings() {
   const t = useMessages().household.family;
 
   if (!household.data) return null;
-  // Only adults get the invite code (household_invite_code()), and only adults add children.
-  const isAdult = household.data.inviteCode !== null;
   return (
     <section
       aria-labelledby={headingId}
@@ -27,7 +25,6 @@ export function FamilySettings() {
       <h2 id={headingId} className="text-ink font-semibold">
         {t.heading}
       </h2>
-      <p className="text-ink-muted text-sm">{isAdult ? t.adultHint : t.childHint}</p>
       <Link to={paths.household} className="text-brand-600 w-fit text-sm font-semibold underline">
         {t.link(household.data.name)}
       </Link>

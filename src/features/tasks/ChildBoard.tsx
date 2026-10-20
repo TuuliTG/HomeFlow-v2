@@ -1,7 +1,4 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
-
-import { paths } from '@/app/paths';
 
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -25,11 +22,7 @@ export function ChildBoard({ completed }: { completed: ReactNode }) {
   return (
     <>
       <div className="flex items-start justify-between gap-4">
-        <PageHeader
-          eyebrow={t.eyebrow}
-          title={t.childBoard.title}
-          description={t.childBoard.description}
-        />
+        <PageHeader eyebrow={t.eyebrow} title={t.childBoard.title} />
         <NewTaskLink />
       </div>
       {tasks.data === undefined ? (
@@ -53,11 +46,6 @@ export function ChildBoard({ completed }: { completed: ReactNode }) {
             heading={t.childBoard.yours}
             tasks={tasks.data.filter((task) => !task.isPrivate && task.pickedUpBy === user.id)}
             action={null}
-            note={() => (
-              <Link to={paths.me} className="text-brand-900 underline">
-                {t.childBoard.onYourMePage}
-              </Link>
-            )}
           />
           <TileSection
             heading={t.childBoard.othersDoing}

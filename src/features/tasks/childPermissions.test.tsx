@@ -59,9 +59,6 @@ describe('what children may do with tasks', () => {
 
     await user.type(await screen.findByLabelText('Task'), 'Tidy my room');
     expect(screen.queryByLabelText('Points')).not.toBeInTheDocument();
-    expect(
-      screen.getByText('An adult in your family chooses the points once you have done it.'),
-    ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     const task = await screen.findByRole('listitem', { name: 'Tidy my room' });

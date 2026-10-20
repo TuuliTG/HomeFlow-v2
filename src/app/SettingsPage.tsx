@@ -9,7 +9,7 @@ export function SettingsPage() {
   const t = useMessages().app.settings;
   return (
     <>
-      <PageHeader title={t.title} description={t.description} />
+      <PageHeader title={t.title} />
       <FamilySettings />
       <NotificationSettings />
       <LanguageSettings />

@@ -36,11 +36,9 @@ export const app = {
   },
   settings: {
     title: 'Settings',
-    description: 'Your family, notifications and language.',
   },
   language: {
     heading: 'Language',
     label: 'Language of HomeFlow',
-    hint: 'Changes the language on this device.',
   },
 };

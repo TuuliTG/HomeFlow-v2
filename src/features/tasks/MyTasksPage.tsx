@@ -23,7 +23,7 @@ export function MyTasksPage() {
   return (
     <>
       <div className="flex items-start justify-between gap-4">
-        <PageHeader eyebrow={t.eyebrow} title={t.title} description={t.description} />
+        <PageHeader eyebrow={t.eyebrow} title={t.title} />
         <NewTaskLink />
       </div>
       <div className="flex flex-col gap-8">

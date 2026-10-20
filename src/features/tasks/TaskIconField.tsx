@@ -1,5 +1,3 @@
-import { useId } from 'react';
-
 import { type TaskIconName, taskIconNames } from '@/features/tasks/task';
 import { TaskIcon } from '@/features/tasks/TaskIcon';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -15,7 +13,6 @@ const optionClassName =
 /** A choice of icons for the task's tile, as radio buttons named for screen readers. */
 export function TaskIconField({ value, onChange }: TaskIconFieldProps) {
   const t = useMessages().taskForm.icon;
-  const hintId = useId();
 
   function option(icon: TaskIconName | null, label: string) {
     return (
@@ -43,11 +40,8 @@ export function TaskIconField({ value, onChange }: TaskIconFieldProps) {
   }
 
   return (
-    <fieldset aria-describedby={hintId} className="flex flex-col gap-2">
+    <fieldset className="flex flex-col gap-2">
       <legend className="text-ink mb-1 text-sm font-medium">{t.label}</legend>
-      <p id={hintId} className="text-ink-muted -mt-1 text-sm">
-        {t.hint}
-      </p>
       <div className="grid grid-cols-5 gap-2 md:grid-cols-10">
         {option(null, t.none)}
         {taskIconNames.map((icon) => option(icon, t.names[icon]))}

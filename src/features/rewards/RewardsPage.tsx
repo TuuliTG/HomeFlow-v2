@@ -32,7 +32,7 @@ export function RewardsPage() {
   return (
     <>
       <div className="flex items-start justify-between gap-4">
-        <PageHeader eyebrow={t.eyebrow} title={t.title} description={t.description} />
+        <PageHeader eyebrow={t.eyebrow} title={t.title} />
         <NewGoalLink />
       </div>
       <Goals />

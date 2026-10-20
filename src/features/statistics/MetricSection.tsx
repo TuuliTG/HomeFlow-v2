@@ -11,7 +11,6 @@ type WorkType = 'physical' | 'meta';
 
 interface MetricDetails {
   title: string;
-  description: string;
   /** "12 points · 3 tasks done" */
   summary: (member: MemberContribution) => string;
   /** Shown instead of a fairness score while no one has any. */
@@ -33,13 +32,12 @@ const META_BAR = 'bg-meta-500';
 
 function metricDetails(metric: Metric, t: Messages): MetricDetails {
   const { pointsSummary } = t.statistics;
-  const { description, empty } = t.statistics.metrics[metric];
+  const { empty } = t.statistics.metrics[metric];
   const pointsTitle = t.statistics.pointsEarned;
   switch (metric) {
     case 'points':
       return {
         title: pointsTitle,
-        description,
         empty,
         summary: ({ points, done }) => pointsSummary(points, done),
         bar: ({ physicalPoints, metaPoints }) => [
@@ -54,7 +52,6 @@ function metricDetails(metric: Metric, t: Messages): MetricDetails {
     case 'physicalPoints':
       return {
         title: pointsTitle,
-        description,
         empty,
         summary: ({ physicalPoints, physicalDone }) => pointsSummary(physicalPoints, physicalDone),
         bar: ({ physicalPoints }) => [
@@ -64,7 +61,6 @@ function metricDetails(metric: Metric, t: Messages): MetricDetails {
     case 'metaPoints':
       return {
         title: pointsTitle,
-        description,
         empty,
         summary: ({ metaPoints, metaDone }) => pointsSummary(metaPoints, metaDone),
         bar: ({ metaPoints }) => [{ kind: 'meta', value: metaPoints, className: META_BAR }],
@@ -72,7 +68,6 @@ function metricDetails(metric: Metric, t: Messages): MetricDetails {
     case 'created':
       return {
         title: t.statistics.tasksCreated,
-        description,
         empty,
         summary: ({ created }) => t.statistics.tasksCount(created),
         bar: ({ created }) => [{ kind: 'meta', value: created, className: META_BAR }],
@@ -91,17 +86,14 @@ export function MetricSection({
   userId: string;
 }) {
   const t = useMessages();
-  const { title, description, summary, empty, bar, legend } = metricDetails(metric, t);
+  const { title, summary, empty, bar, legend } = metricDetails(metric, t);
   const headingId = `${metric}-heading`;
   const most = Math.max(1, ...contributions.map((member) => member[metric]));
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
-      <div>
-        <h2 id={headingId} className="text-ink text-lg font-semibold">
-          {title}
-        </h2>
-        <p className="text-ink-muted text-sm">{description}</p>
-      </div>
+      <h2 id={headingId} className="text-ink text-lg font-semibold">
+        {title}
+      </h2>
       <div className="divide-line bg-surface shadow-card flex flex-col divide-y rounded-2xl">
         <FairnessScore contributions={contributions} metric={metric} empty={empty} />
         {legend && <Legend entries={legend} />}

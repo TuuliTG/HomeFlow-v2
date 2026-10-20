@@ -28,11 +28,7 @@ export function AskForTaskPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow={t.eyebrow}
-        title={t.title}
-        {...(task && { description: t.description(task.title) })}
-      />
+      <PageHeader eyebrow={t.eyebrow} title={t.title} />
       {tasks.isPending || members.isPending ? (
         <LoadingMessage />
       ) : tasks.isError || members.isError ? (

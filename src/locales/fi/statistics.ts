@@ -6,8 +6,6 @@ const tasksCount = (count: number) => (count === 1 ? '1 tehtävä' : `${String(c
 export const statistics: Messages['statistics'] = {
   eyebrow: 'Tilastot',
   title: 'Reiluus ja edistyminen',
-  description:
-    'Koko perheen ansaitsemat pisteet ja luomat tehtävät. Yksityisiä tehtäviä ei lasketa.',
   period: 'Ajanjakso',
   periods: { week: 'Tämä viikko', month: 'Tämä kuukausi', all: 'Koko ajalta' },
   filters: 'Suodattimet',
@@ -23,19 +21,15 @@ export const statistics: Messages['statistics'] = {
   tasksCreated: 'Luodut tehtävät',
   metrics: {
     points: {
-      description: 'Yhteisistä tehtävistä, sekä fyysisestä työstä että metatyöstä.',
       empty: 'Tällä ajanjaksolla ei ole vielä ansaittu pisteitä.',
     },
     physicalPoints: {
-      description: 'Fyysisistä tehtävistä: siivoamisesta, ruoanlaitosta, korjaamisesta.',
       empty: 'Tällä ajanjaksolla ei ole vielä pisteitä fyysisestä työstä.',
     },
     metaPoints: {
-      description: 'Metatyön tehtävistä: suunnittelusta, varaamisesta, muistamisesta.',
       empty: 'Tällä ajanjaksolla ei ole vielä pisteitä metatyöstä.',
     },
     created: {
-      description: 'Yhteisten tehtävien lisääminen on metatyötä: suunnittelua ja muistamista.',
       empty: 'Tällä ajanjaksolla ei ole vielä luotu tehtäviä.',
     },
   },

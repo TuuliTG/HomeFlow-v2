@@ -25,11 +25,7 @@ export function EditGoalPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow={t.eyebrow}
-        title={t.form.edit.title}
-        description={t.form.edit.description}
-      />
+      <PageHeader eyebrow={t.eyebrow} title={t.form.edit.title} />
       <ForAdults userId={user.id}>
         {(members) =>
           goal ? (

@@ -37,7 +37,6 @@ export function PointsToAward() {
       <h2 id={headingId} className="text-ink font-semibold">
         {t.heading}
       </h2>
-      <p className="text-ink text-sm">{t.hint}</p>
       <ul className="flex flex-col gap-3">
         {waiting.data.map((task) => (
           <AwardRow key={task.id} task={task} userId={user.id} />

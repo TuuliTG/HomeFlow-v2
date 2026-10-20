@@ -1,10 +1,4 @@
-import {
-  type InputHTMLAttributes,
-  type ReactNode,
-  type SyntheticEvent,
-  useId,
-  useState,
-} from 'react';
+import { type InputHTMLAttributes, type SyntheticEvent, useId, useState } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
 
@@ -21,7 +15,6 @@ interface SingleFieldFormProps {
   error: string | null;
   isPending: boolean;
   onSubmit: (value: string) => void;
-  hint?: ReactNode;
 }
 
 /** A form with one text field and a submit button; the caller validates and saves the value. */
@@ -32,7 +25,6 @@ export function SingleFieldForm({
   error,
   isPending,
   onSubmit,
-  hint,
 }: SingleFieldFormProps) {
   const [value, setValue] = useState('');
   const errorId = useId();
@@ -70,7 +62,6 @@ export function SingleFieldForm({
       >
         {submitLabel}
       </button>
-      {hint && <p className="text-ink-muted text-xs">{hint}</p>}
     </form>
   );
 }

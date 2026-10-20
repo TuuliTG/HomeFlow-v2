@@ -237,10 +237,8 @@ describe('Me screen', () => {
     logInAsFamilyMember();
     renderAppAt('/me');
 
-    expect(
-      await screen.findByText('Nothing picked up yet. Pick a task on the board.'),
-    ).toBeInTheDocument();
-    expect(await screen.findByText('Tasks you mark done will show up here.')).toBeInTheDocument();
+    expect(await screen.findByText('Nothing picked up yet.')).toBeInTheDocument();
+    expect(await screen.findByText('Nothing done yet.')).toBeInTheDocument();
   });
 
   it('moves a task from To do to Completed when you mark it done', async () => {

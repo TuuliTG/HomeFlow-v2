@@ -46,7 +46,6 @@ export function CreateHouseholdForm({ userId }: FormProps) {
       error={error}
       isPending={create.isPending}
       onSubmit={handleSubmit}
-      hint={t.hint}
     />
   );
 }

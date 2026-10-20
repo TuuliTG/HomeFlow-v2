@@ -56,7 +56,6 @@ function Jars({ pointsChangedAt }: StarJarsProps) {
         <h2 id="no-goal-heading" className="text-2xl font-extrabold">
           {t.noGoal}
         </h2>
-        <p className="text-brand-100 text-[0.9375rem]">{t.noGoalHint}</p>
       </section>
     );
   }
