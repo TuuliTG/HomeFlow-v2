@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useRef, useState } from 'react';
 
 import { type TaskIconName, taskIconNames } from '@/features/tasks/task';
 import { TaskIcon } from '@/features/tasks/TaskIcon';
@@ -9,49 +9,81 @@ interface TaskIconFieldProps {
   onChange: (icon: TaskIconName | null) => void;
 }
 
-const optionClassName =
-  'has-checked:border-brand-600 has-checked:bg-brand-50 has-checked:text-brand-900 has-focus-visible:outline-brand-600 border-line-strong bg-surface text-ink-muted flex aspect-square min-h-11 cursor-pointer items-center justify-center rounded-xl border has-focus-visible:outline-2';
+const buttonClassName =
+  'border-line-strong bg-surface text-brand-900 hover:bg-brand-50 min-h-11 rounded-xl border px-4 text-sm font-semibold';
 
-/** A choice of icons for the task's tile, as radio buttons named for screen readers. */
+const optionClassName =
+  'aria-pressed:border-brand-600 aria-pressed:bg-brand-50 hover:bg-brand-50 border-line bg-surface flex aspect-square min-h-11 items-center justify-center rounded-xl border';
+
+/**
+ * The task's icon, if any, and a button that opens the emojis to choose from, each a button named for
+ * screen readers. Choosing one closes them again.
+ */
 export function TaskIconField({ value, onChange }: TaskIconFieldProps) {
   const t = useMessages().taskForm.icon;
-  const hintId = useId();
+  const [isOpen, setIsOpen] = useState(false);
+  const choicesId = useId();
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
-  function option(icon: TaskIconName | null, label: string) {
-    return (
-      <label key={icon ?? 'none'} title={label} className={optionClassName}>
-        <input
-          type="radio"
-          name="icon"
-          value={icon ?? ''}
-          checked={value === icon}
-          onChange={() => {
-            onChange(icon);
-          }}
-          className="sr-only"
-        />
-        <span className="sr-only">{label}</span>
-        {icon ? (
-          <TaskIcon name={icon} className="size-6" />
-        ) : (
-          <span aria-hidden="true" className="px-1 text-center text-xs leading-tight font-semibold">
-            {t.none}
-          </span>
-        )}
-      </label>
-    );
+  function close() {
+    setIsOpen(false);
+    toggleRef.current?.focus();
   }
 
   return (
-    <fieldset aria-describedby={hintId} className="flex flex-col gap-2">
+    <fieldset className="flex flex-col gap-2">
       <legend className="text-ink mb-1 text-sm font-medium">{t.label}</legend>
-      <p id={hintId} className="text-ink-muted -mt-1 text-sm">
-        {t.hint}
-      </p>
-      <div className="grid grid-cols-5 gap-2 md:grid-cols-10">
-        {option(null, t.none)}
-        {taskIconNames.map((icon) => option(icon, t.names[icon]))}
+      <div className="flex flex-wrap items-center gap-2">
+        {value && (
+          <span className="bg-brand-50 flex size-11 items-center justify-center rounded-xl">
+            <TaskIcon name={value} className="text-2xl" />
+            <span className="sr-only">{t.chosen(t.names[value])}</span>
+          </span>
+        )}
+        <button
+          ref={toggleRef}
+          type="button"
+          aria-expanded={isOpen}
+          aria-controls={choicesId}
+          onClick={() => {
+            setIsOpen((open) => !open);
+          }}
+          className={buttonClassName}
+        >
+          {value ? t.change : t.choose}
+        </button>
+        {value && (
+          <button
+            type="button"
+            onClick={() => {
+              onChange(null);
+            }}
+            className="text-brand-900 min-h-11 px-2 text-sm font-semibold hover:underline"
+          >
+            {t.remove}
+          </button>
+        )}
       </div>
+      <div id={choicesId} hidden={!isOpen} className="grid grid-cols-6 gap-2 md:grid-cols-10">
+        {isOpen &&
+          taskIconNames.map((icon) => (
+            <button
+              key={icon}
+              type="button"
+              title={t.names[icon]}
+              aria-label={t.names[icon]}
+              aria-pressed={value === icon}
+              onClick={() => {
+                onChange(icon);
+                close();
+              }}
+              className={optionClassName}
+            >
+              <TaskIcon name={icon} className="text-2xl" />
+            </button>
+          ))}
+      </div>
+      {!value && !isOpen && <p className="text-ink-muted text-sm">{t.hint}</p>}
     </fieldset>
   );
 }
