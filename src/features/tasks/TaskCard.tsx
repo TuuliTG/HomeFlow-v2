@@ -46,7 +46,7 @@ export function TaskCard({
       className="bg-surface shadow-card flex flex-col gap-3 rounded-2xl p-4"
     >
       <div className="flex items-start gap-3">
-        <TaskTypeIcon type={task.type} />
+        <TaskTypeIcon type={task.type} icon={task.icon} />
         <TaskDetails
           task={task}
           currentUserId={currentUserId}

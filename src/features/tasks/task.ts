@@ -6,6 +6,33 @@ export const taskTypes = ['physical', 'meta'] as const;
 
 export type TaskType = (typeof taskTypes)[number];
 
+/**
+ * The icons a task can show to make clear what it is about, e.g. for children who don't read yet. The
+ * database stores the name and checks only its format (ADR 0004), so the set can grow without a migration.
+ */
+export const taskIconNames = [
+  'bed',
+  'dishes',
+  'laundry',
+  'vacuum',
+  'cleaning',
+  'trash',
+  'recycling',
+  'plants',
+  'pet',
+  'toys',
+  'table',
+  'cooking',
+  'shopping',
+  'car',
+  'homework',
+  'calendar',
+  'phone',
+  'bills',
+] as const;
+
+export type TaskIconName = (typeof taskIconNames)[number];
+
 export const TITLE_MAX_LENGTH = 80;
 
 export const DESCRIPTION_MAX_LENGTH = 500;
@@ -85,6 +112,8 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
        * tasks are always for children.
        */
       forChildren: z.boolean(),
+      /** What the task's tile shows instead of its type's icon; null for none. */
+      icon: z.enum(taskIconNames).nullable(),
     })
     .refine((task) => !task.isPrivate || task.points === null, {
       path: ['points'],
@@ -100,6 +129,7 @@ export const NEW_TASK_DEFAULTS = {
   repeatEveryDays: null,
   isPrivate: false,
   forChildren: false,
+  icon: null,
 } as const satisfies Partial<NewTask>;
 
 export interface Task extends NewTask {

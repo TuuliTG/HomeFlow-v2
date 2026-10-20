@@ -22,6 +22,7 @@ export function fieldValues(
     dueOn: task.dueOn ?? '',
     isPrivate: task.isPrivate,
     forChildren: task.forChildren,
+    icon: task.icon,
   };
 }
 
@@ -40,5 +41,6 @@ export function taskInput(values: FieldValues, isChild: boolean) {
     isPrivate: values.isPrivate,
     // An adult's private task is theirs alone, so it isn't for children either.
     forChildren: isChild || (!values.isPrivate && values.forChildren),
+    icon: values.icon,
   };
 }

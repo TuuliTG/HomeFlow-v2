@@ -151,6 +151,7 @@ export const fakeTasksBackend = {
         description: null,
         isPrivate: false,
         forChildren: false,
+        icon: null,
         ...task,
         id,
         householdId,

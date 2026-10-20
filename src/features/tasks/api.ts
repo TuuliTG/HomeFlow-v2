@@ -7,12 +7,15 @@ import {
   type NewTask,
   type Task,
   type TaskHelper,
-  type TaskSuggestion,
+  taskIconNames,
   taskTypes,
 } from '@/features/tasks/task';
 import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
 import { requestRowSchema, taskRequestOf } from '@/features/tasks/requestRow';
 import { getSupabaseClient } from '@/lib/supabase';
+
+/** A task's icon; one this version of the app doesn't know, e.g. added by a newer one, shows as none. */
+const iconSchema = z.enum(taskIconNames).nullable().catch(null);
 
 const taskRowsSchema = z.array(
   z.object({
@@ -27,6 +30,7 @@ const taskRowsSchema = z.array(
     picked_up_by: z.string().nullable(),
     is_private: z.boolean(),
     for_children: z.boolean(),
+    icon: iconSchema,
     task_images: z.array(z.object({ path: z.string(), position: z.number() })),
     /** The occurrence this one repeats; it is done, since completing it added this one. */
     previous: z
@@ -57,7 +61,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -180,39 +184,6 @@ export async function fetchHouseholdCompletedTasks(): Promise<HouseholdCompleted
   }));
 }
 
-const suggestionRowsSchema = z.array(
-  z.object({
-    title: z.string(),
-    description: z.string().nullable(),
-    type: z.enum(taskTypes),
-    points: z.number().nullable(),
-    repeat_every_days: z.number().nullable(),
-    is_private: z.boolean(),
-    for_children: z.boolean(),
-    times_added: z.number(),
-    is_open: z.boolean(),
-  }),
-);
-
-/**
- * The tasks the household has added before, one per title with its newest details, most often added
- * first. Other members' private tasks are left out.
- */
-export async function fetchTaskSuggestions(): Promise<TaskSuggestion[]> {
-  const result = await getSupabaseClient().rpc('task_suggestions');
-  if (result.error) throw result.error;
-  return suggestionRowsSchema
-    .parse(result.data)
-    .map(({ repeat_every_days, is_private, for_children, times_added, is_open, ...task }) => ({
-      ...task,
-      repeatEveryDays: repeat_every_days,
-      isPrivate: is_private,
-      forChildren: for_children,
-      timesAdded: times_added,
-      isOpen: is_open,
-    }));
-}
-
 /**
  * Adds a task to the user's household and returns its id; the database fills in the household and the
  * creator.
@@ -269,7 +240,7 @@ export async function putBackTask(taskId: string): Promise<void> {
  */
 export async function updateTask(
   taskId: string,
-  { title, description, type, points, dueOn, repeatEveryDays, forChildren }: NewTask,
+  { title, description, type, points, dueOn, repeatEveryDays, forChildren, icon }: NewTask,
 ): Promise<void> {
   const { error } = await getSupabaseClient().rpc('update_task', {
     task_id: taskId,
@@ -280,6 +251,7 @@ export async function updateTask(
     task_due_on: dueOn,
     task_repeat_every_days: repeatEveryDays,
     task_for_children: forChildren,
+    task_icon: icon,
   });
   if (error) throw error;
 }

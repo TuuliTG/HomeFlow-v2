@@ -2,6 +2,7 @@ import { Outlet, type RouteObject } from 'react-router';
 
 import { AppShell } from '@/app/AppShell';
 import { ErrorPage } from '@/app/ErrorPage';
+import { MePage } from '@/app/MePage';
 import { NotFoundPage } from '@/app/NotFoundPage';
 import { OnboardingGate } from '@/app/OnboardingGate';
 import { paths } from '@/app/paths';
@@ -20,7 +21,6 @@ import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { SharedTasksPage } from '@/features/tasks/SharedTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
 import { EditTaskPage } from '@/features/tasks/EditTaskPage';
-import { MyTasksPage } from '@/features/tasks/MyTasksPage';
 import { AskForTaskPage } from '@/features/tasks/AskForTaskPage';
 import { TaskHelpersPage } from '@/features/tasks/TaskHelpersPage';
 import { LanguageProvider } from '@/lib/i18n/LanguageProvider';
@@ -57,10 +57,7 @@ export const routes: RouteObject[] = [
               { path: paths.editTask(':taskId'), element: <EditTaskPage /> },
               { path: paths.taskHelpers(':taskId'), element: <TaskHelpersPage /> },
               { path: paths.askForTask(':taskId'), element: <AskForTaskPage /> },
-              {
-                path: paths.me,
-                element: <MyTasksPage />,
-              },
+              { path: paths.me, element: <MePage /> },
               { path: paths.news, element: <NewsPage /> },
               { path: paths.rewards, element: <RewardsPage /> },
               { path: paths.newGoal, element: <NewGoalPage /> },

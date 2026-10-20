@@ -32,6 +32,15 @@ export const rewards = {
     claimed: (title: string) => `Reward claimed: ${title}!`,
     badge: 'Reward claimed!',
   },
+  /** A child's goal on their Me page, as a jar that fills with points. */
+  jar: {
+    savingFor: 'Saving for',
+    ofTarget: (target: number) => `/ ${String(target)}`,
+    claimOnRewards: 'Claim it on Rewards',
+    noGoal: 'No goal yet',
+    noGoalHint: 'Ask a grown-up in your family to set one for you.',
+    loadFailed: "We couldn't load your goal.",
+  },
   goal: {
     othersGoal: (name: string) => `${name}'s goal`,
     progress: (points: number, target: number) => `${String(points)} / ${String(target)} points`,

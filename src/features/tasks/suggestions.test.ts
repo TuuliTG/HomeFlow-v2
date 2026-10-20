@@ -19,6 +19,7 @@ function suggestion(title: string, details: Partial<TaskSuggestion> = {}): TaskS
     repeatEveryDays: null,
     isPrivate: false,
     forChildren: false,
+    icon: null,
     timesAdded: 1,
     isOpen: false,
     ...details,
@@ -64,6 +65,7 @@ describe('suggestionAsTask', () => {
       points: 2,
       repeatEveryDays: 7,
       forChildren: true,
+      icon: 'trash',
       timesAdded: 4,
       isOpen: true,
     } as const;
@@ -75,6 +77,7 @@ describe('suggestionAsTask', () => {
       repeatEveryDays: 7,
       isPrivate: false,
       forChildren: true,
+      icon: 'trash',
       dueOn: null,
     });
   });

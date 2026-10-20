@@ -28,6 +28,7 @@ vi.mock('@/features/tasks/pointsApi', () => import('@/test/fakePointsApi'));
 vi.mock('@/features/tasks/remindersApi', () => import('@/test/fakeRemindersApi'));
 vi.mock('@/features/tasks/requestsApi', () => import('@/test/fakeRequestsApi'));
 vi.mock('@/features/tasks/schedulesApi', () => import('@/test/fakeSchedulesApi'));
+vi.mock('@/features/tasks/suggestionsApi', () => import('@/test/fakeSuggestionsApi'));
 // jsdom has no service worker; tests that need a new version waiting mock this hook themselves.
 vi.mock('virtual:pwa-register/react', () => ({
   useRegisterSW: vi.fn(() => ({

@@ -8,11 +8,13 @@ import {
   type NewTask,
   newTaskSchema,
   repeatChoices,
+  type TaskIconName,
   type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
 import { fieldValues, taskInput } from '@/features/tasks/taskFormValues';
 import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
+import { TaskIconField } from '@/features/tasks/TaskIconField';
 import { TaskImagesField } from '@/features/tasks/TaskImagesField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
@@ -76,6 +78,7 @@ export function TaskForm({
   const [dueOn, setDueOn] = useState(initialValues.dueOn);
   const [isPrivate, setIsPrivate] = useState(initialValues.isPrivate);
   const [forChildren, setForChildren] = useState(initialValues.forChildren);
+  const [icon, setIcon] = useState<TaskIconName | null>(initialValues.icon);
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
@@ -108,6 +111,7 @@ export function TaskForm({
     setDueOn(values.dueOn);
     setIsPrivate(values.isPrivate);
     setForChildren(values.forChildren);
+    setIcon(values.icon);
     setError(null);
   }
 
@@ -115,7 +119,7 @@ export function TaskForm({
     event.preventDefault();
     const values = { title, description, type, points, repeat: repeatEveryDays, dueOn };
     const parsed = newTaskSchema(t).safeParse(
-      taskInput({ ...values, isPrivate, forChildren }, isChild),
+      taskInput({ ...values, isPrivate, forChildren, icon }, isChild),
     );
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
@@ -176,6 +180,8 @@ export function TaskForm({
       />
 
       <TaskTypeField value={type} onChange={setType} />
+
+      <TaskIconField value={icon} onChange={setIcon} />
 
       <TaskAudienceFields
         canBePrivate={!initial}

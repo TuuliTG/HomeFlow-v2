@@ -133,6 +133,26 @@ export const tasks = {
     /** Under a task the user helped someone else with. */
     youHelped: (name: string) => `You helped ${name}`,
   },
+  /** The Me page for children: their tasks as big tiles, and tasks to pick. */
+  child: {
+    eyebrow: 'Me',
+    title: 'My stars',
+    description: 'Do your tasks to earn points for your goal.',
+    myTasks: 'My tasks',
+    nothingToDo: 'Nothing to do yet.',
+    pickOnBoard: 'Pick a task on Shared tasks',
+  },
+  /** The Shared tasks screen for children: the tasks for children as big tiles. */
+  childBoard: {
+    title: 'Tasks for you',
+    description: 'Pick a task, then do it from your Me page to earn points!',
+    free: 'Free to pick',
+    nothingFree: 'No free tasks right now.',
+    yours: 'Picked by you',
+    onYourMePage: 'Do it from your Me page',
+    othersDoing: 'Others are doing',
+    doingIt: (name: string) => `${name} is doing it`,
+  },
   /** Saying who helped with a task the user did, and sharing its points with them. */
   helpers: {
     eyebrow: 'Completed',
