@@ -116,11 +116,12 @@ describe('filtering the board', () => {
   it('remembers the choice for each family member on a shared device', async () => {
     const anna = logInAsFamilyMember();
     addTask(anna.id, 'Dust');
+    localStorage.setItem(`homeflow:choice:board.show:${anna.id}`, 'undated');
     localStorage.setItem('homeflow:choice:board.show:someone-else', 'today');
     renderAppAt('/');
 
     await screen.findByRole('listitem', { name: 'Dust' });
-    expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'No due date' })).toBeChecked();
   });
 
   it('still filters when this device cannot remember the choice', async () => {

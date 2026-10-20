@@ -43,7 +43,10 @@ maintained by agents, so strict types and a predictable structure matter more th
 - **View choices** (filters, periods, views) live in the address (`useSearchParam()` in `src/lib`), so they survive
   a reload and can be shared. Those worth keeping are also remembered per device and user in `localStorage`
   (`rememberAs`, keyed by user id since a family may share a tablet) and used when the address names none, so
-  leaving a page through the nav doesn't reset them. Blocked storage just falls back to the defaults.
+  leaving a page through the nav doesn't reset them. A remembered choice isn't written back into the address
+  (several hooks rewriting it at once would overwrite each other), so the address names a choice only once the user
+  changes it there. Blocked storage just falls back to the defaults. Remembered choices aren't cleared on sign-out:
+  they hold no secrets, and stale member ids in a comparison are ignored.
 
 - **Error monitoring with Sentry** (EU region, free plan), on only where a DSN is set. The app loads the SDK
   lazily from `startMonitoring()` (`src/lib/monitoring.ts`) and sends no user info, cookies, headers, bodies or
