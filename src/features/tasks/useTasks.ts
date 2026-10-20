@@ -7,7 +7,6 @@ import {
   fetchCompletedTasks,
   fetchHouseholdCompletedTasks,
   fetchTasks,
-  fetchTaskSuggestions,
   pickUpTask,
   putBackTask,
   undoCompleteTask,
@@ -22,6 +21,7 @@ import {
   fetchTotalPoints,
 } from '@/features/tasks/pointsApi';
 import { clearTaskReminder, fetchReminders, setTaskReminder } from '@/features/tasks/remindersApi';
+import { fetchTaskSuggestions } from '@/features/tasks/suggestionsApi';
 import {
   IMAGE_URL_LIFETIME_SECONDS,
   type NewTask,
