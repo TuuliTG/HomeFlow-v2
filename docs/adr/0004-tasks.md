@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-20 (task icons, the Me page for children, children's tabs, no hints for children)
+- **Updated:** 2026-10-20 (task icons as emojis, no hints for children)
 
 ## Context
 
@@ -81,11 +81,13 @@ next one back rather than follow a fixed calendar.
   (`private.task_image_removals`, noted by a trigger): after removing a picture or deleting a task. Uploads come
   first and are deleted again if saving fails; if a new task's pictures can't be attached, its edit page opens to
   add them again. Editing compares against the pictures the form opened with, so it keeps ones others added.
-- **Icons**: whoever may edit a task can give it an icon from a fixed set (`taskIconNames`: bed, dishes, pets, …;
-  drawn in `TaskIcon`, inline SVG, no dependency), so children who can't read yet see what it is about. The tile on
-  its card shows it in the type's colours instead of the type's icon. `tasks.icon` is a name, checked only for its
-  format, so the set can grow without a migration; the app reads a name it doesn't know as no icon. Insert,
-  `update_task()` (`task_icon`), the next occurrence (`complete_task()`) and `task_suggestions()` carry it.
+- **Icons**: whoever may edit a task can give it an icon, chosen behind a "Choose an icon" button from a fixed set of
+  emojis (`taskIconNames`, drawn as the device's emoji by `TaskIcon`, no dependency), so children who can't read
+  yet see what it is about. The tile on its card shows it in the type's colours instead of the type's icon.
+  `tasks.icon` is a name (`bed`, `dog`, …), checked only for its format, so the set can grow without a
+  migration; the app reads a name it doesn't know as no icon. Insert, `update_task()` (`task_icon`), the next
+  occurrence (`complete_task()`) and `task_suggestions()` carry it. Line icons were tried first and were too hard
+  to tell apart.
 - **Screens for children** (`useIsChild()`; until known, a loading message, and if it can't be told, the adults'
   screens, which show a child only what they may see): the Me page (`src/app/MePage`) shows their open goals as
   star jars (ADR 0007), their own tasks as big tiles (`ChildTaskTiles`: icon, name, one star per point, a round
