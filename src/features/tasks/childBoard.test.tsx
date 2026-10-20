@@ -48,7 +48,7 @@ describe('the Shared tasks screen for children', () => {
     expect(screen.queryByRole('group', { name: 'Show' })).not.toBeInTheDocument();
   });
 
-  it('lets them pick up a task and mark it done there', async () => {
+  it('lets them pick up a task, which they then do from their Me page', async () => {
     logInAsChild();
     const user = userEvent.setup();
     renderAppAt('/');
@@ -56,10 +56,15 @@ describe('the Shared tasks screen for children', () => {
     const free = await screen.findByRole('list', { name: 'Free to pick' });
     await user.click(within(free).getByRole('button', { name: 'Pick up: Feed the cat' }));
 
-    const yours = await screen.findByRole('list', { name: 'Your tasks' });
-    await user.click(within(yours).getByRole('button', { name: 'Mark done: Feed the cat' }));
-
     expect(await screen.findByText('No free tasks right now.')).toBeInTheDocument();
-    expect(screen.queryByRole('list', { name: 'Your tasks' })).not.toBeInTheDocument();
+    const picked = screen.getByRole('list', { name: 'Picked by you' });
+    const cat = within(picked).getByRole('listitem', { name: 'Feed the cat' });
+    expect(within(cat).queryByRole('button')).not.toBeInTheDocument();
+    await user.click(within(cat).getByRole('link', { name: 'Do it from your Me page' }));
+
+    const myTasks = await screen.findByRole('list', { name: 'My tasks' });
+    expect(
+      within(myTasks).getByRole('button', { name: 'Mark done: Feed the cat' }),
+    ).toBeInTheDocument();
   });
 });

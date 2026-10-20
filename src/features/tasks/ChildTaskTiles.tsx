@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 
 import { CheckIcon, StarIcon } from '@/components/ui/icons';
 import { emptyClassName, sectionHeadingClassName } from '@/features/tasks/meStyles';
@@ -16,13 +16,15 @@ type TileAction = 'markDone' | 'pickUp';
 interface TileSectionProps {
   heading: string;
   /** What to say when there are no tasks; without it, the section is left out then. */
-  empty?: string;
+  empty?: ReactNode;
   tasks: Task[];
-  /** The tiles' button; none for tasks others have picked up, which say who is doing them. */
+  /** The tiles' button, if any. */
   action: TileAction | null;
+  /** A line under each tile's stars, e.g. who is doing it. */
+  note?: (task: Task) => ReactNode;
 }
 
-export function TileSection({ heading, empty, tasks, action }: TileSectionProps) {
+export function TileSection({ heading, empty, tasks, action, note }: TileSectionProps) {
   const headingId = useId();
   if (tasks.length === 0 && empty === undefined) return null;
   return (
@@ -35,7 +37,7 @@ export function TileSection({ heading, empty, tasks, action }: TileSectionProps)
       ) : (
         <ul aria-labelledby={headingId} className="flex flex-col gap-3">
           {tasks.map((task) => (
-            <TaskTile key={task.id} task={task} action={action} />
+            <TaskTile key={task.id} task={task} action={action} note={note?.(task)} />
           ))}
         </ul>
       )}
@@ -43,13 +45,18 @@ export function TileSection({ heading, empty, tasks, action }: TileSectionProps)
   );
 }
 
-/** A task as a big tile: its icon, name and points as stars, and one button or who is doing it. */
-function TaskTile({ task, action }: { task: Task; action: TileAction | null }) {
+interface TaskTileProps {
+  task: Task;
+  action: TileAction | null;
+  note: ReactNode;
+}
+
+/** A task as a big tile: its icon, name and points as stars, a note, and one button. */
+function TaskTile({ task, action, note }: TaskTileProps) {
   const user = useLoggedInUser();
   const completeTask = useCompleteTask(user.id);
   const pickUpTask = usePickUpTask(user.id);
-  const { common, tasks } = useMessages();
-  const t = tasks.card;
+  const t = useMessages().tasks.card;
   const titleId = useId();
   const mutation = action === 'markDone' ? completeTask : pickUpTask;
 
@@ -64,11 +71,7 @@ function TaskTile({ task, action }: { task: Task; action: TileAction | null }) {
           {task.title}
         </h3>
         <PointsAsStars task={task} />
-        {action === null && (
-          <p className="text-ink-muted text-sm font-semibold">
-            {tasks.childBoard.doingIt(task.pickerName ?? common.someone)}
-          </p>
-        )}
+        {note && <p className="text-ink-muted text-sm font-semibold">{note}</p>}
         <div className="-my-2 -ml-1 w-fit">
           <EditLink task={task} currentUserId={user.id} />
         </div>

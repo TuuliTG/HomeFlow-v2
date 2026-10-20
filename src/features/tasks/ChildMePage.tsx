@@ -1,4 +1,7 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
+
+import { paths } from '@/app/paths';
 
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -18,8 +21,8 @@ interface ChildMePageProps {
 }
 
 /**
- * The Me page for a child: their goals, then their tasks and tasks to pick as big tiles with icons and
- * stars, with little text, and what they have done.
+ * The Me page for a child: their goals, then their tasks as big tiles with icons and stars, with little
+ * text, and what they have done.
  */
 export function ChildMePage({ goals }: ChildMePageProps) {
   const t = useMessages().tasks;
@@ -48,7 +51,7 @@ export function ChildMePage({ goals }: ChildMePageProps) {
   );
 }
 
-/** The tasks the child has picked up, to mark done, and the free ones, to pick up. */
+/** The child's tasks, to mark done; they pick tasks on Shared tasks, like adults. */
 function ChildTasks() {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
@@ -63,22 +66,19 @@ function ChildTasks() {
       </p>
     );
   }
-  const mine = tasks.data.filter((task) => isToDoBy(task, user.id));
-  const free = tasks.data.filter((task) => !task.isPrivate && task.pickedUpBy === null);
   return (
-    <>
-      <TileSection
-        heading={t.child.myTasks}
-        empty={t.child.nothingToDo}
-        tasks={mine}
-        action="markDone"
-      />
-      <TileSection
-        heading={t.child.pickOne}
-        empty={t.child.nothingToPick}
-        tasks={free}
-        action="pickUp"
-      />
-    </>
+    <TileSection
+      heading={t.child.myTasks}
+      empty={
+        <>
+          {t.child.nothingToDo}{' '}
+          <Link to={paths.tasks} className="text-brand-900 font-semibold underline">
+            {t.child.pickOnBoard}
+          </Link>
+        </>
+      }
+      tasks={tasks.data.filter((task) => isToDoBy(task, user.id))}
+      action="markDone"
+    />
   );
 }

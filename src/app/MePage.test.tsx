@@ -59,19 +59,19 @@ describe('the Me page for children', () => {
     expect(within(completed).getByText('Make your bed')).toBeInTheDocument();
   });
 
-  it('lets them pick a task to do', async () => {
+  it('shows only their own tasks, and sends them to Shared tasks to pick more', async () => {
     logInAsChild();
     const user = userEvent.setup();
     renderAppAt('/me');
 
-    const toPick = await screen.findByRole('list', { name: 'Pick a task' });
-    await user.click(within(toPick).getByRole('button', { name: 'Pick up: Feed the cat' }));
+    const myTasks = await screen.findByRole('list', { name: 'My tasks' });
+    await user.click(within(myTasks).getByRole('button', { name: 'Mark done: Make your bed' }));
+    expect(screen.queryByText('Feed the cat')).not.toBeInTheDocument();
 
-    const myTasks = screen.getByRole('list', { name: 'My tasks' });
+    await user.click(await screen.findByRole('link', { name: 'Pick a task on Shared tasks' }));
     expect(
-      await within(myTasks).findByRole('listitem', { name: 'Feed the cat' }),
+      await screen.findByRole('heading', { level: 1, name: 'Tasks for you' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('No tasks to pick right now.')).toBeInTheDocument();
   });
 
   it('asks them to have a grown-up set a goal when they have none', async () => {

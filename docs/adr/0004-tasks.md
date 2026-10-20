@@ -88,10 +88,11 @@ next one back rather than follow a fixed calendar.
   `update_task()` (`task_icon`), the next occurrence (`complete_task()`) and `task_suggestions()` carry it.
 - **Screens for children** (`useIsChild()`; until known, a loading message, and if it can't be told, the adults'
   screens, which show a child only what they may see): the Me page (`src/app/MePage`) shows their open goals as
-  star jars (ADR 0007), their tasks and the free tasks for children as big tiles (`ChildTaskTiles`: icon, name,
-  one star per point, a round Mark done or Pick up button, Edit on their own), and their Completed list. Shared
-  tasks (`ChildBoard`) shows the tasks for children, the only ones they see, as tiles: free to pick, theirs, and
-  who is doing the rest, without the filters, then Show completed. Adults' screens are unchanged. Points are
+  star jars (ADR 0007), their own tasks as big tiles (`ChildTaskTiles`: icon, name, one star per point, a round
+  Mark done button, Edit on ones they added), and their Completed list. Like adults, they pick tasks on Shared
+  tasks (`ChildBoard`), which shows the tasks for children, the only ones they see, as tiles: free to pick (Pick
+  up), picked by them (pointing to the Me page) and who is doing the rest, without the filters, then Show
+  completed. Adults' screens are unchanged. Points are
   still called points, as elsewhere.
 - **Points**: the Me screen shows the user's total points, summed when read (`own_total_points()`), not stored.
   Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
