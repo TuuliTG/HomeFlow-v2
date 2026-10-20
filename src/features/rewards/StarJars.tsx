@@ -1,11 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { Link } from 'react-router';
 
-import { paths } from '@/app/paths';
 import { StarIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { type Goal, isClaimableBy, participantsShortOfMinimum } from '@/features/rewards/goal';
-import { useGoals } from '@/features/rewards/useGoals';
+import { RewardCelebration } from '@/features/rewards/RewardCelebration';
+import { useClaimGoalReward, useGoals } from '@/features/rewards/useGoals';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -18,9 +17,19 @@ interface StarJarsProps {
 
 /**
  * The user's open goals, their own and the shared ones they take part in, each as a jar that fills with
- * points: the Me page's picture of progress for children (ADR 0007).
+ * points and whose reward they claim once reached: the Me page's picture of progress for children, who
+ * have no Rewards screen (ADR 0007).
  */
 export function StarJars({ pointsChangedAt }: StarJarsProps) {
+  return (
+    <>
+      <Jars pointsChangedAt={pointsChangedAt} />
+      <RewardCelebration />
+    </>
+  );
+}
+
+function Jars({ pointsChangedAt }: StarJarsProps) {
   const user = useLoggedInUser();
   const goals = useGoals(user.id);
   const t = useMessages().rewards.jar;
@@ -105,18 +114,8 @@ function StarJar({ goal }: { goal: Goal }) {
 
 /** What's left to do: points to go, others' minimums still to earn, or claiming the reward. */
 function JarStatus({ goal, shownPoints }: { goal: Goal; shownPoints: number }) {
-  const messages = useMessages();
-  const goalT = messages.rewards.goal;
-  if (goal.reached) {
-    return (
-      <p className="font-semibold">
-        {goalT.reached}{' '}
-        <Link to={paths.rewards} className="underline hover:no-underline">
-          {messages.rewards.jar.claimOnRewards}
-        </Link>
-      </p>
-    );
-  }
+  const goalT = useMessages().rewards.goal;
+  if (goal.reached) return <ClaimFromJar goal={goal} />;
   const missing = goal.targetPoints - shownPoints;
   return (
     <p className="text-brand-100 font-semibold">
@@ -124,5 +123,32 @@ function JarStatus({ goal, shownPoints }: { goal: Goal; shownPoints: number }) {
         ? goalT.pointsToGo(missing)
         : goalT.participantsShort(participantsShortOfMinimum(goal).length)}
     </p>
+  );
+}
+
+function ClaimFromJar({ goal }: { goal: Goal }) {
+  const user = useLoggedInUser();
+  const claim = useClaimGoalReward(user.id);
+  const t = useMessages().rewards.goal;
+  return (
+    <div className="flex flex-col items-start gap-2">
+      <p className="font-semibold">{t.reached}</p>
+      <button
+        type="button"
+        aria-label={t.claimLabel(goal.title)}
+        disabled={claim.isPending}
+        onClick={() => {
+          claim.mutate(goal);
+        }}
+        className="bg-points-400 text-brand-900 hover:bg-points-100 min-h-11 rounded-full px-5 font-extrabold disabled:opacity-60"
+      >
+        {t.claim}
+      </button>
+      {claim.isError && (
+        <p role="alert" className="text-danger-200 text-sm font-semibold">
+          {t.claimFailed}
+        </p>
+      )}
+    </div>
   );
 }

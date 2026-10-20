@@ -74,6 +74,33 @@ describe('the Me page for children', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows their own goal and the shared goal they take part in', async () => {
+    const ben = logInAsChild();
+    fakeGoalsBackend.addGoalAs(ben.id, { title: 'Zoo day', targetPoints: 50, isShared: true });
+    renderAppAt('/me');
+
+    expect(
+      await screen.findByRole('progressbar', { name: 'Progress towards Cinema trip' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('progressbar', { name: 'Progress towards Zoo day' }),
+    ).toBeInTheDocument();
+  });
+
+  it('lets them claim a reached reward right from its jar', async () => {
+    const ben = logInAsChild({ withGoal: false });
+    fakeGoalsBackend.addGoalAs(ben.id, { title: 'Ice cream', targetPoints: 2, isShared: false });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    const myTasks = await screen.findByRole('list', { name: 'My tasks' });
+    await user.click(within(myTasks).getByRole('button', { name: 'Mark done: Make your bed' }));
+    await user.click(await screen.findByRole('button', { name: 'Claim reward: Ice cream' }));
+
+    expect(await screen.findByText('Reward claimed: Ice cream!')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No goal yet' })).toBeInTheDocument();
+  });
+
   it('asks them to have a grown-up set a goal when they have none', async () => {
     logInAsChild({ withGoal: false });
     renderAppAt('/me');
