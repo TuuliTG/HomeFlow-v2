@@ -47,7 +47,6 @@ export function AddChildForm({ householdId, onAdded }: AddChildFormProps) {
         error={error}
         isPending={addChild.isPending}
         onSubmit={handleSubmit}
-        hint={t.hint}
       />
     </section>
   );

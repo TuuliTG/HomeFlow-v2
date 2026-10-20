@@ -43,7 +43,6 @@ export function TaskImagesField({
 }: TaskImagesFieldProps) {
   const t = useMessages().taskForm.images;
   const labelId = useId();
-  const hintId = useId();
   const [isPreparing, setIsPreparing] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const saved = images.flatMap((draft) => (draft.kind === 'saved' ? [draft.path] : []));
@@ -78,18 +77,10 @@ export function TaskImagesField({
   }
 
   return (
-    <div
-      role="group"
-      aria-labelledby={labelId}
-      aria-describedby={hintId}
-      className="flex flex-col gap-2"
-    >
+    <div role="group" aria-labelledby={labelId} className="flex flex-col gap-2">
       <span id={labelId} className="text-ink text-sm font-medium">
         {t.label}
       </span>
-      <p id={hintId} className="text-ink-muted -mt-1 text-sm">
-        {t.hint(MAX_TASK_IMAGES)}
-      </p>
       {images.length > 0 && (
         <ul className="flex flex-wrap gap-3">
           {images.map((draft, index) => {

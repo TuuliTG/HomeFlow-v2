@@ -7,7 +7,6 @@ const tasksCount = (count: number) => (count === 1 ? '1 task' : `${String(count)
 export const statistics = {
   eyebrow: 'Statistics',
   title: 'Fairness & progress',
-  description: "Points earned and tasks created across the family. Private tasks don't count.",
   period: 'Period',
   periods: { week: 'This week', month: 'This month', all: 'All time' },
   filters: 'Filters',
@@ -23,19 +22,15 @@ export const statistics = {
   tasksCreated: 'Tasks created',
   metrics: {
     points: {
-      description: 'From doing shared tasks, physical and meta work.',
       empty: 'No points earned yet in this period.',
     },
     physicalPoints: {
-      description: 'From doing physical tasks: cleaning, cooking, fixing.',
       empty: 'No physical work points yet in this period.',
     },
     metaPoints: {
-      description: 'From doing meta work tasks: planning, booking, remembering.',
       empty: 'No meta work points yet in this period.',
     },
     created: {
-      description: 'Adding shared tasks is meta work: planning and remembering.',
       empty: 'No tasks created yet in this period.',
     },
   },

@@ -1,5 +1,3 @@
-import { useId } from 'react';
-
 import { inputClassName } from '@/components/ui/formStyles';
 import { type GoalSetter, nameOf } from '@/features/rewards/goal';
 import type { ParticipantChoice, ParticipantChoices } from '@/features/rewards/participantChoices';
@@ -33,7 +31,6 @@ export function ParticipantsField({
 }: ParticipantsFieldProps) {
   const messages = useMessages();
   const t = messages.rewards.form;
-  const hintId = useId();
 
   function update(memberId: string, change: Partial<ParticipantChoice>) {
     const choice = choices[memberId] ?? { takesPart: false, minPoints: '' };
@@ -41,11 +38,8 @@ export function ParticipantsField({
   }
 
   return (
-    <fieldset aria-describedby={hintId} className="flex flex-col gap-1">
+    <fieldset className="flex flex-col gap-1">
       <legend className="text-ink text-sm font-medium">{t.participants}</legend>
-      <p id={hintId} className="text-ink-muted text-sm">
-        {t.participantsHint}
-      </p>
       <ul className="divide-line flex flex-col divide-y">
         {members.map((member, index) => {
           const name = member.id === userId ? t.me : nameOf(member, messages);

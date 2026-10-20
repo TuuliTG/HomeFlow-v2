@@ -60,7 +60,7 @@ describe('the Shared tasks screen for children', () => {
     const picked = screen.getByRole('list', { name: 'Picked by you' });
     const cat = within(picked).getByRole('listitem', { name: 'Feed the cat' });
     expect(within(cat).queryByRole('button')).not.toBeInTheDocument();
-    await user.click(within(cat).getByRole('link', { name: 'Do it from your Me page' }));
+    await user.click(screen.getByRole('link', { name: 'Me' }));
 
     const myTasks = await screen.findByRole('list', { name: 'My tasks' });
     expect(

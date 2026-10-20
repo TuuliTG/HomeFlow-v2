@@ -9,8 +9,8 @@ export const notifications: Messages['notifications'] = {
     checking: 'Tarkistetaan tätä laitetta…',
     blocked:
       'HomeFlow’n ilmoitukset on estetty. Salli ne puhelimen tai selaimen asetuksista ja palaa sitten tänne.',
-    off: 'Laita ilmoitukset päälle, niin saat tälle laitteelle ilmoituksen, kun joku kotitaloudestasi lisää tehtävän.',
-    on: 'Saat tälle laitteelle ilmoituksen, kun joku kotitaloudestasi lisää tehtävän.',
+    off: 'Saa ilmoitus tälle laitteelle, kun joku lisää tehtävän.',
+    on: 'Saat ilmoituksen tälle laitteelle, kun joku lisää tehtävän.',
   },
   turnOn: 'Laita ilmoitukset päälle',
   turnOff: 'Laita ilmoitukset pois päältä',

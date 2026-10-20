@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { Navigate } from 'react-router';
 
 import { paths } from '@/app/paths';
@@ -32,7 +32,6 @@ export function LoginPage() {
 
 function LoginForms() {
   const [withChildCode, setWithChildCode] = useState(false);
-  const hintId = useId();
   const t = useMessages();
 
   if (withChildCode) {
@@ -50,7 +49,6 @@ function LoginForms() {
       <div className="border-line flex flex-col gap-2 border-t pt-6">
         <button
           type="button"
-          aria-describedby={hintId}
           onClick={() => {
             setWithChildCode(true);
           }}
@@ -58,9 +56,6 @@ function LoginForms() {
         >
           {t.auth.childCode.open}
         </button>
-        <p id={hintId} className="text-ink-muted text-center text-sm">
-          {t.auth.childCode.openHint}
-        </p>
       </div>
     </div>
   );

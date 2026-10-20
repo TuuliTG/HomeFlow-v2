@@ -23,13 +23,12 @@ describe('children without email', () => {
     expect(await within(members).findByRole('checkbox', { name: 'Ben is a child' })).toBeChecked();
   });
 
-  it('are found in the settings, where adults are told they can add one', async () => {
+  it('are found in the settings, through the household page', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
     renderAppAt('/settings');
 
     const family = await screen.findByRole('region', { name: 'Your family' });
-    expect(family).toHaveTextContent('add a child without email who signs in with a code');
     await user.click(within(family).getByRole('link', { name: 'Open The Virtanens' }));
 
     expect(await screen.findByLabelText("Child's name")).toBeInTheDocument();
@@ -78,10 +77,14 @@ describe('children without email', () => {
     const ben = fakeAuthBackend.logInAs('ben@example.com', 'Ben');
     fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
     fakeHouseholdBackend.setChild(ben.id, true);
+    const user = userEvent.setup();
     renderAppAt('/settings');
 
     const family = await screen.findByRole('region', { name: 'Your family' });
-    expect(family).toHaveTextContent("See who's in your family.");
+    await user.click(within(family).getByRole('link', { name: 'Open The Virtanens' }));
+
+    expect(await screen.findByRole('region', { name: 'Members' })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Child's name")).not.toBeInTheDocument();
   });
 
   it('need a name, and adding says so when it fails', async () => {

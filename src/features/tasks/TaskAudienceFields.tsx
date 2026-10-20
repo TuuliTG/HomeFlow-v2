@@ -28,7 +28,6 @@ export function TaskAudienceFields({
         <CheckboxField
           name="isPrivate"
           label={t.keepPrivate}
-          hint={t.privateHint}
           checked={isPrivate}
           onChange={onPrivateChange}
         />
@@ -37,7 +36,6 @@ export function TaskAudienceFields({
         <CheckboxField
           name="forChildren"
           label={t.forChildren}
-          hint={t.forChildrenHint}
           checked={forChildren}
           onChange={onForChildrenChange}
         />

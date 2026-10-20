@@ -9,7 +9,6 @@ export function LanguageSettings() {
   const t = useMessages().app.language;
   const { language, setLanguage } = useLanguage();
   const headingId = useId();
-  const hintId = useId();
 
   return (
     <section
@@ -23,7 +22,6 @@ export function LanguageSettings() {
         {t.label}
         <select
           value={language}
-          aria-describedby={hintId}
           onChange={(event) => {
             if (isLanguage(event.target.value)) setLanguage(event.target.value);
           }}
@@ -37,9 +35,6 @@ export function LanguageSettings() {
           ))}
         </select>
       </label>
-      <p id={hintId} className="text-ink-muted text-sm">
-        {t.hint}
-      </p>
     </section>
   );
 }

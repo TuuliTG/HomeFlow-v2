@@ -5,7 +5,6 @@ export const tasks: Messages['tasks'] = {
   newTask: 'Uusi tehtävä',
   board: {
     title: 'Yhteiset tehtävät',
-    description: 'Valitse mikä tahansa tehtävä. Omat yksityiset tehtäväsi ovat Minä-sivulla.',
     showCompleted: 'Näytä tehdyt',
     show: 'Näytä',
     loadFailed: 'Tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
@@ -43,7 +42,6 @@ export const tasks: Messages['tasks'] = {
   },
   award: {
     heading: 'Odottaa pisteitä',
-    hint: 'Lapset lisäsivät nämä tehtävät. Valitse, minkä arvoinen kukin oli; pisteet saa tehtävän tekijä.',
     notDoneYet: 'Ei vielä tehty',
     doneBy: (name: string) => `Teki: ${name}`,
     pointsFor: (title: string) => `Pisteet tehtävästä ${title}`,
@@ -106,17 +104,16 @@ export const tasks: Messages['tasks'] = {
   me: {
     eyebrow: 'Minä',
     title: 'Omat tehtävät',
-    description: 'Varaamasi tehtävät, yksityiset tehtäväsi ja se, mitä olet tehnyt.',
     pointsEarned: 'Ansaitut pisteet',
     pointsLoadFailed: 'Pisteitäsi ei voitu ladata.',
     toDo: 'Työn alla',
     loadFailed: 'Tehtäviäsi ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
-    nothingPickedUp: 'Et ole vielä varannut mitään. Valitse tehtävä yhteisistä tehtävistä.',
+    nothingPickedUp: 'Et ole vielä varannut mitään.',
     completed: 'Tehdyt',
     completedTasks: 'Tehdyt tehtävät',
     completedLoadFailed:
       'Tehtyjä tehtäviäsi ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
-    completedEmpty: 'Tehdyiksi merkitsemäsi tehtävät näkyvät tässä.',
+    completedEmpty: 'Mitään ei ole vielä tehty.',
     doneOn: (date) => `Tehty ${date}`,
     undo: 'Kumoa',
     undoLabel: (title) => `Kumoa: ${title}`,
@@ -127,18 +124,15 @@ export const tasks: Messages['tasks'] = {
   child: {
     eyebrow: 'Minä',
     title: 'Omat tähdet',
-    description: 'Tee tehtäviäsi, niin saat pisteitä tavoitettasi varten.',
     myTasks: 'Omat tehtävät',
     nothingToDo: 'Ei vielä tehtäviä.',
     pickOnBoard: 'Valitse tehtävä Yhteiset-sivulta',
   },
   childBoard: {
     title: 'Tehtävät sinulle',
-    description: 'Valitse tehtävä ja tee se Minä-sivultasi, niin ansaitset pisteitä!',
     free: 'Vapaana',
     nothingFree: 'Juuri nyt ei ole vapaita tehtäviä.',
     yours: 'Sinun valitsemasi',
-    onYourMePage: 'Tee se Minä-sivultasi',
     othersDoing: 'Muut tekevät',
     doingIt: (name) => `${name} tekee tätä`,
   },
@@ -146,7 +140,7 @@ export const tasks: Messages['tasks'] = {
     eyebrow: 'Tehdyt',
     title: 'Kuka auttoi?',
     description: (title, points) =>
-      `Anna tehtävässä ${title} auttaneille osa sen pisteistä (${points}). Antamasi pisteet vähennetään omistasi, joten tehtävä on yhä saman arvoinen.`,
+      `Jaa tehtävän ${title} pisteitä (${points}) auttaneille. Antamasi pisteet vähennetään omistasi.`,
     whoHelped: 'Kuka auttoi?',
     whoHelpedLabel: (title) => `Kuka auttoi: ${title}?`,
     helped: (name) => `${name} auttoi`,
@@ -166,8 +160,6 @@ export const tasks: Messages['tasks'] = {
     askLabel: (title) => `Pyydä jotakuta tekemään: ${title}`,
     eyebrow: 'Tehtävät',
     title: 'Pyydä tekijää',
-    description: (title) =>
-      `Kenet haluat pyytää tekemään tehtävän ${title}? Hän saa ilmoituksen ja voi hyväksyä tai kieltäytyä.`,
     whoToAsk: 'Keneltä pyydetään',
     send: 'Lähetä pyyntö',
     noOne: 'Kukaan muu kotitaloudessasi ei voi tehdä tätä tehtävää.',

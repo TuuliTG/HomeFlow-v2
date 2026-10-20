@@ -114,7 +114,6 @@ export function MemberList({ householdId, currentUserId, onSignInCode }: MemberL
           {failure}
         </p>
       )}
-      {members.data && <p className="text-ink-muted text-sm">{t.childrenHint}</p>}
     </section>
   );
 }

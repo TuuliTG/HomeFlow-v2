@@ -20,7 +20,6 @@ export function ChildCodeForm({ onBack }: ChildCodeFormProps) {
   const [error, setError] = useState<string | null>(null);
   const t = useMessages();
   const headingId = useId();
-  const hintId = useId();
   const errorId = useId();
   const submit = useMutation({
     mutationFn: signInWithChildCode,
@@ -49,27 +48,22 @@ export function ChildCodeForm({ onBack }: ChildCodeFormProps) {
       <h2 id={headingId} className="text-ink font-semibold">
         {t.auth.childCode.heading}
       </h2>
-      <div className="flex flex-col gap-1">
-        <label className="text-ink flex flex-col gap-1 text-sm font-medium">
-          {t.auth.childCode.label}
-          <input
-            name="code"
-            autoComplete="one-time-code"
-            autoCapitalize="characters"
-            spellCheck={false}
-            value={code}
-            onChange={(event) => {
-              setCode(event.target.value);
-            }}
-            aria-invalid={error !== null}
-            aria-describedby={error === null ? hintId : `${hintId} ${errorId}`}
-            className={`${inputClassName} font-mono tracking-widest uppercase`}
-          />
-        </label>
-        <p id={hintId} className="text-ink-muted text-xs">
-          {t.auth.childCode.hint}
-        </p>
-      </div>
+      <label className="text-ink flex flex-col gap-1 text-sm font-medium">
+        {t.auth.childCode.label}
+        <input
+          name="code"
+          autoComplete="one-time-code"
+          autoCapitalize="characters"
+          spellCheck={false}
+          value={code}
+          onChange={(event) => {
+            setCode(event.target.value);
+          }}
+          aria-invalid={error !== null}
+          aria-describedby={error === null ? undefined : errorId}
+          className={`${inputClassName} font-mono tracking-widest uppercase`}
+        />
+      </label>
       {error && (
         <p id={errorId} role="alert" className="text-danger-700 text-sm">
           {error}

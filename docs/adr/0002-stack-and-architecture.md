@@ -1,6 +1,6 @@
 # 0002. Stack and architecture
 
-- **Updated:** 2026-10-19 (every screen on the visual design tokens)
+- **Updated:** 2026-10-20 (few explanatory texts)
 
 ## Context
 
@@ -40,6 +40,8 @@ maintained by agents, so strict types and a predictable structure matter more th
   helpers that build text take `t: Messages` (e.g. `groupByDueDate`, `newTaskSchema(t)`). The language is the one
   chosen in the settings (stored per device in `localStorage`), else the browser's, else English; `<html lang>`
   follows it. Adding one: copy `src/locales/en`, translate, register it in `src/lib/i18n/languages.ts`.
+  Screens speak through headings, labels and buttons: no page descriptions or field hints unless a rule isn't
+  obvious from the screen (e.g. a password's length), and none on children's screens.
 
 - **Error monitoring with Sentry** (EU region, free plan), on only where a DSN is set. The app loads the SDK
   lazily from `startMonitoring()` (`src/lib/monitoring.ts`) and sends no user info, cookies, headers, bodies or

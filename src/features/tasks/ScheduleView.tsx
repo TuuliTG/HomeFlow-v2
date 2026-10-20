@@ -91,7 +91,6 @@ export function ScheduleView({ view, tasks, currentUserId }: ScheduleViewProps) 
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-ink-muted text-sm">{t.schedule.description}</p>
       <DndContext sensors={drag.sensors} {...drag.handlers}>
         <NotScheduledList
           tasks={notScheduled}

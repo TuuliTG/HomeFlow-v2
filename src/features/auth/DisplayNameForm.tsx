@@ -37,7 +37,6 @@ export function DisplayNameForm({ userId }: DisplayNameFormProps) {
       error={error}
       isPending={saveProfile.isPending}
       onSubmit={handleSubmit}
-      hint={t.auth.nameHint}
     />
   );
 }

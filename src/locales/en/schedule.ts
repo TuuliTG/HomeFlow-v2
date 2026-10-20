@@ -10,7 +10,6 @@ const duration = (minutes: number) => {
 export const schedule = {
   viewLegend: 'Show your tasks as',
   views: { list: 'List', day: 'Day', week: 'Week' },
-  description: 'Plan when to do your tasks. Only you see your timetable.',
   timetable: 'Timetable',
   previousDay: 'Previous day',
   nextDay: 'Next day',
@@ -24,9 +23,7 @@ export const schedule = {
   block: (title: string, from: string, to: string) => `${title}, ${from}–${to}`,
   loadFailed: "We couldn't load your timetable. Check your connection and reload the page.",
   notScheduled: 'Not scheduled yet',
-  dragHint:
-    'Tap a task or an empty time to plan it, or drag a task into the timetable (on a phone, touch and hold it first).',
-  nothingToPlan: 'Nothing to plan yet. Tap a time to add a task, or pick one up on the board.',
+  nothingToPlan: 'Nothing to plan yet.',
   allScheduled: 'All your tasks are in the timetable.',
   scheduleLabel: (title: string) => `Schedule: ${title}`,
   /** Names the empty part of a day's column, which opens what to do at the time tapped. */

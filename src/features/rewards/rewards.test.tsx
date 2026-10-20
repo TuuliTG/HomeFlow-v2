@@ -55,7 +55,7 @@ describe('rewards and goals', () => {
     expect(await screen.findByText(/No shared goals yet/)).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'New goal' }));
     expect(await screen.findByRole('radio', { name: 'Together' })).toBeChecked();
-    expect(screen.getByText(/The points of everyone taking part count/)).toBeInTheDocument();
+    expect(screen.getByText('Everyone taking part earns points towards it.')).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Me' })).toBeChecked();
     await user.type(await screen.findByLabelText('Reward'), 'Pizza night');
     await user.clear(screen.getByLabelText('Points needed'));
@@ -152,7 +152,6 @@ describe('rewards and goals', () => {
     renderAppAt('/rewards/new');
 
     const participants = await screen.findByRole('group', { name: 'Who takes part' });
-    expect(participants).toHaveAccessibleDescription(/less for a younger child/);
     await user.type(screen.getByLabelText('Reward'), 'Zoo trip');
     await user.click(within(participants).getByRole('checkbox', { name: 'Me' }));
     await user.click(within(participants).getByRole('checkbox', { name: 'Ben' }));
