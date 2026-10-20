@@ -91,19 +91,54 @@ describe('filtering the board', () => {
     expectShown(['Water plants'], ['Vacuum', 'Book dentist', 'Buy a present']);
   });
 
-  it('keeps the choice in the address, and goes back to all from the nav', async () => {
+  it('keeps the choice in the address, and remembers it after leaving the page', async () => {
     const anna = logInAsFamilyMember();
     addTask(anna.id, 'Dust');
     const user = userEvent.setup();
     const { router } = renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Dust' });
 
-    await user.click(screen.getByRole('radio', { name: 'This week' }));
-    expect(router.state.location.search).toBe('?show=week');
+    await user.click(screen.getByRole('radio', { name: 'No due date' }));
+    await user.click(screen.getByRole('switch', { name: 'Show completed' }));
+    expect(router.state.location.search).toBe('?show=undated&completed=1');
 
-    await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
+    await user.click(screen.getByRole('link', { name: 'Statistics' }));
+    await user.click(await screen.findByRole('link', { name: 'Shared tasks' }));
     expect(router.state.location.search).toBe('');
+    expect(await screen.findByRole('radio', { name: 'No due date' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Show completed' })).toBeChecked();
+
+    await user.click(screen.getByRole('radio', { name: 'All' }));
+    await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
     expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+  });
+
+  it('remembers the choice for each family member on a shared device', async () => {
+    const anna = logInAsFamilyMember();
+    addTask(anna.id, 'Dust');
+    localStorage.setItem(`homeflow:choice:board.show:${anna.id}`, 'undated');
+    localStorage.setItem('homeflow:choice:board.show:someone-else', 'today');
+    renderAppAt('/');
+
+    await screen.findByRole('listitem', { name: 'Dust' });
+    expect(screen.getByRole('radio', { name: 'No due date' })).toBeChecked();
+  });
+
+  it('still filters when this device cannot remember the choice', async () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    const anna = logInAsFamilyMember();
+    addTask(anna.id, 'Dust');
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/');
+    await screen.findByRole('listitem', { name: 'Dust' });
+
+    await user.click(screen.getByRole('radio', { name: 'No due date' }));
+    expect(router.state.location.search).toBe('?show=undated');
     expectShown(['Dust'], []);
   });
 
