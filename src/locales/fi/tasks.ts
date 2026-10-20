@@ -133,6 +133,15 @@ export const tasks: Messages['tasks'] = {
     pickOne: 'Valitse tehtävä',
     nothingToPick: 'Juuri nyt ei ole tehtäviä valittavaksi.',
   },
+  childBoard: {
+    title: 'Tehtävät sinulle',
+    description: 'Valitse tehtävä, tee se ja ansaitse pisteitä!',
+    free: 'Vapaana',
+    nothingFree: 'Juuri nyt ei ole vapaita tehtäviä.',
+    yours: 'Sinun tehtäväsi',
+    othersDoing: 'Muut tekevät',
+    doingIt: (name) => `${name} tekee tätä`,
+  },
   helpers: {
     eyebrow: 'Tehdyt',
     title: 'Kuka auttoi?',

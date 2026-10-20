@@ -4,7 +4,8 @@ import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import { PointsToAward } from '@/features/tasks/PointsToAward';
-import { useTasks } from '@/features/tasks/useTasks';
+import { ChildBoard } from '@/features/tasks/ChildBoard';
+import { useIsChild, useTasks } from '@/features/tasks/useTasks';
 import { today } from '@/lib/dates';
 import {
   filterTasks,
@@ -20,6 +21,14 @@ const SHOW_COMPLETED_PARAM = 'completed';
 const FILTER_PARAM = 'show';
 
 export function SharedTasksPage() {
+  const user = useLoggedInUser();
+  const isChild = useIsChild(user.id);
+  if (isChild === undefined) return <LoadingMessage />;
+  return isChild ? <ChildBoard completed={<CompletedTasks />} /> : <Board />;
+}
+
+/** The board for adults: every shared task by due date, with filters and the household's completed tasks. */
+function Board() {
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM);
   const [filter, setFilter] = useFilterParam();
   const t = useMessages().tasks;
@@ -36,6 +45,18 @@ export function SharedTasksPage() {
         <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       </div>
       <TaskList filter={filter} />
+      {showCompleted && <HouseholdCompletedTasks />}
+    </>
+  );
+}
+
+/** "Show completed" below a child's tiles, which lists the household's recently done tasks (for children). */
+function CompletedTasks() {
+  const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM);
+  const t = useMessages().tasks.board;
+  return (
+    <>
+      <Switch label={t.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
   );

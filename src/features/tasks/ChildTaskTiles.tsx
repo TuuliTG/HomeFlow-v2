@@ -3,6 +3,7 @@ import { useId } from 'react';
 import { CheckIcon, StarIcon } from '@/components/ui/icons';
 import { emptyClassName, sectionHeadingClassName } from '@/features/tasks/meStyles';
 import type { Task } from '@/features/tasks/task';
+import { EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskTypeIcon } from '@/features/tasks/TaskTypeIcon';
 import { useCompleteTask, usePickUpTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
@@ -14,14 +15,16 @@ type TileAction = 'markDone' | 'pickUp';
 
 interface TileSectionProps {
   heading: string;
-  /** What to say when there are no tasks. */
-  empty: string;
+  /** What to say when there are no tasks; without it, the section is left out then. */
+  empty?: string;
   tasks: Task[];
-  action: TileAction;
+  /** The tiles' button; none for tasks others have picked up, which say who is doing them. */
+  action: TileAction | null;
 }
 
 export function TileSection({ heading, empty, tasks, action }: TileSectionProps) {
   const headingId = useId();
+  if (tasks.length === 0 && empty === undefined) return null;
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
       <h2 id={headingId} className={sectionHeadingClassName}>
@@ -40,15 +43,15 @@ export function TileSection({ heading, empty, tasks, action }: TileSectionProps)
   );
 }
 
-/** A task as a big tile: its icon, name and points as stars, and one button. */
-function TaskTile({ task, action }: { task: Task; action: TileAction }) {
+/** A task as a big tile: its icon, name and points as stars, and one button or who is doing it. */
+function TaskTile({ task, action }: { task: Task; action: TileAction | null }) {
   const user = useLoggedInUser();
   const completeTask = useCompleteTask(user.id);
   const pickUpTask = usePickUpTask(user.id);
-  const t = useMessages().tasks.card;
+  const { common, tasks } = useMessages();
+  const t = tasks.card;
   const titleId = useId();
   const mutation = action === 'markDone' ? completeTask : pickUpTask;
-  const label = `${t[action]}: ${task.title}`;
 
   return (
     <li
@@ -61,16 +64,24 @@ function TaskTile({ task, action }: { task: Task; action: TileAction }) {
           {task.title}
         </h3>
         <PointsAsStars task={task} />
+        {action === null && (
+          <p className="text-ink-muted text-sm font-semibold">
+            {tasks.childBoard.doingIt(task.pickerName ?? common.someone)}
+          </p>
+        )}
+        <div className="-my-2 -ml-1 w-fit">
+          <EditLink task={task} currentUserId={user.id} />
+        </div>
         {mutation.isError && (
           <p role="alert" className="text-danger-700 text-xs">
             {t.failures[action === 'markDone' ? 'complete' : 'pickUp']}
           </p>
         )}
       </div>
-      {action === 'markDone' ? (
+      {action === 'markDone' && (
         <button
           type="button"
-          aria-label={label}
+          aria-label={`${t.markDone}: ${task.title}`}
           disabled={mutation.isPending}
           onClick={() => {
             completeTask.mutate(task);
@@ -79,10 +90,11 @@ function TaskTile({ task, action }: { task: Task; action: TileAction }) {
         >
           <CheckIcon className="size-7" strokeWidth={3} />
         </button>
-      ) : (
+      )}
+      {action === 'pickUp' && (
         <button
           type="button"
-          aria-label={label}
+          aria-label={`${t.pickUp}: ${task.title}`}
           disabled={mutation.isPending}
           onClick={() => {
             pickUpTask.mutate(task.id);

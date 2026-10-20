@@ -143,6 +143,16 @@ export const tasks = {
     pickOne: 'Pick a task',
     nothingToPick: 'No tasks to pick right now.',
   },
+  /** The Shared tasks screen for children: the tasks for children as big tiles. */
+  childBoard: {
+    title: 'Tasks for you',
+    description: 'Pick a task, do it and earn points!',
+    free: 'Free to pick',
+    nothingFree: 'No free tasks right now.',
+    yours: 'Your tasks',
+    othersDoing: 'Others are doing',
+    doingIt: (name: string) => `${name} is doing it`,
+  },
   /** Saying who helped with a task the user did, and sharing its points with them. */
   helpers: {
     eyebrow: 'Completed',
