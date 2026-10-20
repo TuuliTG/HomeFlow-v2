@@ -29,8 +29,9 @@ export function SharedTasksPage() {
 
 /** The board for adults: every shared task by due date, with filters and the household's completed tasks. */
 function Board() {
-  const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM);
-  const [filter, setFilter] = useFilterParam();
+  const user = useLoggedInUser();
+  const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
+  const [filter, setFilter] = useFilterParam(user.id);
   const t = useMessages().tasks;
 
   return (
@@ -52,7 +53,8 @@ function Board() {
 
 /** "Show completed" below a child's tiles, which lists the household's recently done tasks (for children). */
 function CompletedTasks() {
-  const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM);
+  const user = useLoggedInUser();
+  const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
   const t = useMessages().tasks.board;
   return (
     <>
@@ -62,21 +64,26 @@ function CompletedTasks() {
   );
 }
 
-/** An on/off choice kept in the address as `?<name>=1`. */
-function useSwitchParam(name: string) {
+/** An on/off choice kept in the address as `?<name>=1` and remembered on this device. */
+function useSwitchParam(name: string, userId: string) {
   return useSearchParam({
     name,
     parse: (value) => value === '1',
     serialise: (on) => (on ? '1' : null),
+    rememberAs: `board.${name}:${userId}`,
   });
 }
 
-/** Which tasks to show, kept in the address as `?show=<filter>`; all tasks by default. */
-function useFilterParam() {
+/**
+ * Which tasks to show, kept in the address as `?show=<filter>` and remembered on this device; all tasks by
+ * default.
+ */
+function useFilterParam(userId: string) {
   return useSearchParam<TaskFilter>({
     name: FILTER_PARAM,
     parse: parseTaskFilter,
     serialise: (filter) => (filter === 'all' ? null : filter),
+    rememberAs: `board.${FILTER_PARAM}:${userId}`,
   });
 }
 

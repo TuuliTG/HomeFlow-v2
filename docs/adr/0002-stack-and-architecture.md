@@ -40,6 +40,10 @@ maintained by agents, so strict types and a predictable structure matter more th
   helpers that build text take `t: Messages` (e.g. `groupByDueDate`, `newTaskSchema(t)`). The language is the one
   chosen in the settings (stored per device in `localStorage`), else the browser's, else English; `<html lang>`
   follows it. Adding one: copy `src/locales/en`, translate, register it in `src/lib/i18n/languages.ts`.
+- **View choices** (filters, periods, views) live in the address (`useSearchParam()` in `src/lib`), so they survive
+  a reload and can be shared. Those worth keeping are also remembered per device and user in `localStorage`
+  (`rememberAs`, keyed by user id since a family may share a tablet) and used when the address names none, so
+  leaving a page through the nav doesn't reset them. Blocked storage just falls back to the defaults.
 
 - **Error monitoring with Sentry** (EU region, free plan), on only where a DSN is set. The app loads the SDK
   lazily from `startMonitoring()` (`src/lib/monitoring.ts`) and sends no user info, cookies, headers, bodies or

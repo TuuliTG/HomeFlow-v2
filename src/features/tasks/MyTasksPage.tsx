@@ -17,10 +17,12 @@ import { useSearchParam } from '@/lib/useSearchParam';
 export function MyTasksPage() {
   const { tasks, schedule } = useMessages();
   const t = tasks.me;
+  const user = useLoggedInUser();
   const [view, setView] = useSearchParam<ToDoView>({
     name: 'view',
     parse: parseToDoView,
     serialise: (chosen) => (chosen === 'list' ? null : chosen),
+    rememberAs: `me.view:${user.id}`,
   });
   return (
     <>

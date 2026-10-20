@@ -122,7 +122,8 @@ next one back rather than follow a fixed calendar.
   "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done shared tasks.
   A **Show** filter (`?show=`, one choice at a time, `taskFilter.ts`) narrows the board to tasks due **Today** or
   **This week** (the next seven days, so it ends where "Later" begins; both include overdue tasks, which still need
-  doing), with **No due date**, or **Available** (nobody has picked them up); **All** is the default.
+  doing), with **No due date**, or **Available** (nobody has picked them up); **All** is the default. Both choices,
+  like the Me page's view (`?view=`), are remembered on the device (ADR 0002), so the nav link brings them back.
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
   long ago in the user's calendar days ("Last done by Ben, 3 days ago"), so the family sees who usually carries it
   and can take turns. It comes from `previous_task_id`, embedded as `previous_occurrence(...)`: PostgREST finds no
