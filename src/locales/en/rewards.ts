@@ -36,7 +36,6 @@ export const rewards = {
   jar: {
     savingFor: 'Saving for',
     ofTarget: (target: number) => `/ ${String(target)}`,
-    claimOnRewards: 'Claim it on Rewards',
     noGoal: 'No goal yet',
     noGoalHint: 'Ask a grown-up in your family to set one for you.',
     loadFailed: "We couldn't load your goal.",

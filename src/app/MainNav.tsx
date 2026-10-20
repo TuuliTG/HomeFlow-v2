@@ -2,18 +2,28 @@ import { NavLink } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { ChartIcon, CheckListIcon, NewsIcon, StarIcon, UserIcon } from '@/components/ui/icons';
+import { useIsChild } from '@/features/tasks/useTasks';
+import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
-const navItems = [
+/** The tabs everyone has, children included. */
+const childNavItems = [
   { to: paths.me, labelKey: 'me', Icon: UserIcon },
   { to: paths.tasks, labelKey: 'tasks', Icon: CheckListIcon },
+] as const;
+
+const adultNavItems = [
+  ...childNavItems,
   { to: paths.news, labelKey: 'news', Icon: NewsIcon },
   { to: paths.rewards, labelKey: 'rewards', Icon: StarIcon },
   { to: paths.statistics, labelKey: 'statistics', Icon: ChartIcon },
 ] as const;
 
+/** The tabs: a child has only Me and Shared tasks; the rest appear once the user is known to be an adult. */
 export function MainNav() {
   const t = useMessages();
+  const user = useLoggedInUser();
+  const navItems = useIsChild(user.id) === false ? adultNavItems : childNavItems;
   return (
     <nav
       aria-label={t.app.nav.label}

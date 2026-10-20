@@ -14,7 +14,9 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
    points, and the tasks each member creates are counted (creating earns no points).
 3. **Low effort, non-intrusive** — quick interactions; must not become another chore for the organiser.
 4. **Positive motivation** — points, progress, shared family goals; no punishment.
-5. **Child-friendly mode** — minimal text, icons, colours, stars/progress (a child's Me page so far; other screens in a later iteration).
+5. **Child-friendly mode** — minimal text, icons, colours, stars/progress. Children have only two tabs, Me (their
+   tasks and the progress of their personal and shared goals, claimed there) and Shared tasks, without filters; no
+   News, Rewards or Statistics.
 6. **Transparency over time** — simple history/fairness trend, not data-heavy.
 
 ## Screens (mid-fi prototype, mobile, bottom tab bar: Me · Tasks · News · Rewards · Statistics)

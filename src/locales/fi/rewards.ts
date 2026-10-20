@@ -32,7 +32,6 @@ export const rewards: Messages['rewards'] = {
   jar: {
     savingFor: 'Säästät tähän:',
     ofTarget: (target) => `/ ${String(target)}`,
-    claimOnRewards: 'Lunasta se Palkinnoissa',
     noGoal: 'Ei vielä tavoitetta',
     noGoalHint: 'Pyydä perheesi aikuista asettamaan sinulle tavoite.',
     loadFailed: 'Tavoitettasi ei voitu ladata.',
