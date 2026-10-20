@@ -11,7 +11,6 @@ const duration = (minutes: number) => {
 export const schedule: Messages['schedule'] = {
   viewLegend: 'Näytä tehtäväsi',
   views: { list: 'Lista', day: 'Päivä', week: 'Viikko' },
-  description: 'Suunnittele, milloin teet tehtäväsi. Aikataulusi näkyy vain sinulle.',
   timetable: 'Aikataulu',
   previousDay: 'Edellinen päivä',
   nextDay: 'Seuraava päivä',
@@ -22,10 +21,7 @@ export const schedule: Messages['schedule'] = {
   block: (title, from, to) => `${title}, ${from}–${to}`,
   loadFailed: 'Aikatauluasi ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
   notScheduled: 'Ei vielä aikataulussa',
-  dragHint:
-    'Napauta tehtävää tai tyhjää kohtaa aikataulussa, tai vedä tehtävä aikatauluun (puhelimella paina sitä ensin hetken).',
-  nothingToPlan:
-    'Ei vielä suunniteltavaa. Napauta aikaa lisätäksesi tehtävän tai varaa tehtävä yhteisistä.',
+  nothingToPlan: 'Ei vielä suunniteltavaa.',
   allScheduled: 'Kaikki tehtäväsi ovat aikataulussa.',
   scheduleLabel: (title) => `Ajoita: ${title}`,
   addAt: (day) => `Suunnittele tehtävä: ${day}`,

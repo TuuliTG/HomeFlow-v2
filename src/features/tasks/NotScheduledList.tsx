@@ -35,14 +35,11 @@ export function NotScheduledList({
       {tasks.length === 0 ? (
         <p className="text-ink-muted text-sm">{hasScheduled ? t.allScheduled : t.nothingToPlan}</p>
       ) : (
-        <>
-          <p className="text-ink-muted text-xs">{t.dragHint}</p>
-          <ul className="flex flex-wrap gap-2">
-            {tasks.map((task) => (
-              <NotScheduledChip key={task.id} task={task} onOpen={onOpen} />
-            ))}
-          </ul>
-        </>
+        <ul className="flex flex-wrap gap-2">
+          {tasks.map((task) => (
+            <NotScheduledChip key={task.id} task={task} onOpen={onOpen} />
+          ))}
+        </ul>
       )}
     </section>
   );

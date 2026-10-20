@@ -239,9 +239,6 @@ describe('creating a task', () => {
 
     await user.type(await screen.findByLabelText('Task'), 'Change bed linen');
     await user.selectOptions(screen.getByLabelText('Repeats'), 'Every 2 weeks');
-    expect(screen.getByLabelText('Repeats')).toHaveAccessibleDescription(
-      "Each time it's done, it comes back 14 days later.",
-    );
     await user.type(screen.getByLabelText('Due date'), '2026-10-10');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 

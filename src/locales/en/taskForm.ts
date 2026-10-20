@@ -1,13 +1,11 @@
 /** Creating and editing tasks, favourites and reminders. */
 export const taskForm = {
   create: {
-    description: 'Adding a task is meta work, and it counts.',
     submit: 'Create task',
     askAnAdult: 'Ask an adult in your family to let you add tasks.',
   },
   edit: {
     title: 'Edit task',
-    description: 'Fix the details of an open task.',
     notOnBoard: "This task isn't on the board any more: it may have been done or deleted.",
     backToTasks: 'Back to the tasks',
     submit: 'Save changes',
@@ -31,7 +29,6 @@ export const taskForm = {
   type: 'Type',
   icon: {
     label: 'Icon (optional)',
-    hint: 'Shows what the task is about at a glance, e.g. for children who are learning to read.',
     choose: 'Choose an icon',
     change: 'Change icon',
     remove: 'Remove icon',
@@ -78,14 +75,10 @@ export const taskForm = {
     },
   },
   keepPrivate: 'Keep it private',
-  privateHint: "Only you can see it. It isn't shared with your family and earns no points.",
   forChildren: 'Children can do it',
-  forChildrenHint: 'Children in your household see only the tasks they can do.',
   points: 'Points',
-  adultAwardsPoints: 'An adult in your family chooses the points once you have done it.',
   images: {
     label: 'Pictures (optional)',
-    hint: (max: number) => `Up to ${String(max)}, e.g. to show what to do or where.`,
     add: 'Add a picture',
     preparing: 'Preparing the picture…',
     picture: (position: number) => `Picture ${String(position)}`,
@@ -98,8 +91,6 @@ export const taskForm = {
   repeats: 'Repeats',
   doesNotRepeat: "Doesn't repeat",
   dueDate: 'Due date',
-  repeatHint: (days: number) =>
-    `Each time it's done, it comes back ${days === 1 ? '1 day' : `${String(days)} days`} later.`,
   errors: {
     titleRequired: 'Give the task a name.',
     titleTooLong: (max: number) => `Keep the name to ${String(max)} characters or fewer.`,
@@ -126,7 +117,6 @@ export const taskForm = {
     remindMeLabel: (title: string) => `Remind me: ${title}`,
     formLabel: (title: string) => `Reminder: ${title}`,
     remindMeAt: 'Remind me at',
-    hint: "You'll get a notification on each device where you've turned notifications on.",
     pastTime: 'Pick a time in the future.',
     tooFar: 'Pick a time within the next year.',
     saveFailed: "We couldn't save the reminder. Try again.",

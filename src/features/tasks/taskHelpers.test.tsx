@@ -44,7 +44,7 @@ describe('helping with a task', () => {
     await user.click(await screen.findByRole('link', { name: 'Who helped with Laundry?' }));
 
     expect(await screen.findByRole('heading', { name: 'Who helped?' })).toBeInTheDocument();
-    expect(screen.getByText(/some of its 5 points/)).toBeInTheDocument();
+    expect(screen.getByText(/Share Laundry's 5 points/)).toBeInTheDocument();
     expect(screen.queryByRole('checkbox', { name: 'Anna helped' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: 'Ben helped' }));
     // An even split by default, which the user can change.

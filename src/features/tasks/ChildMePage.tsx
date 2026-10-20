@@ -29,11 +29,7 @@ export function ChildMePage({ goals }: ChildMePageProps) {
   return (
     <>
       <div className="flex items-start justify-between gap-4">
-        <PageHeader
-          eyebrow={t.child.eyebrow}
-          title={t.child.title}
-          description={t.child.description}
-        />
+        <PageHeader eyebrow={t.child.eyebrow} title={t.child.title} />
         <NewTaskLink />
       </div>
       <div className="flex flex-col gap-8">

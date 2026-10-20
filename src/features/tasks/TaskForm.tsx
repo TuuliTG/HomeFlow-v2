@@ -84,7 +84,6 @@ export function TaskForm({
   const [error, setError] = useState<FormError | null>(null);
   const t = useMessages();
   const errorId = useId();
-  const repeatHintId = useId();
   const titleRef = useRef<HTMLInputElement>(null);
   const pointsRef = useRef<HTMLInputElement>(null);
   const dueOnRef = useRef<HTMLInputElement>(null);
@@ -207,7 +206,6 @@ export function TaskForm({
           {t.taskForm.repeats}
           <select
             name="repeatEveryDays"
-            aria-describedby={repeatEveryDays === '' ? undefined : repeatHintId}
             value={repeatEveryDays}
             onChange={(event) => {
               setRepeatEveryDays(event.target.value);
@@ -237,11 +235,6 @@ export function TaskForm({
           />
         </label>
       </div>
-      {repeatEveryDays !== '' && (
-        <p id={repeatHintId} className="text-ink-muted -mt-3 text-sm">
-          {t.taskForm.repeatHint(Number(repeatEveryDays))}
-        </p>
-      )}
 
       {error && (
         <p id={errorId} role="alert" className="text-danger-700 text-sm">

@@ -83,7 +83,6 @@ export function TaskIconField({ value, onChange }: TaskIconFieldProps) {
             </button>
           ))}
       </div>
-      {!value && !isOpen && <p className="text-ink-muted text-sm">{t.hint}</p>}
     </fieldset>
   );
 }

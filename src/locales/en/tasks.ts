@@ -4,7 +4,6 @@ export const tasks = {
   newTask: 'New task',
   board: {
     title: 'Shared tasks',
-    description: 'Pick any task. Your private tasks are on your Me page.',
     showCompleted: 'Show completed',
     show: 'Show',
     loadFailed: "We couldn't load the tasks. Check your connection and reload the page.",
@@ -44,7 +43,6 @@ export const tasks = {
   },
   award: {
     heading: 'Waiting for points',
-    hint: 'Children added these tasks. Choose what each one was worth; the points go to whoever did it.',
     notDoneYet: 'Not done yet',
     doneBy: (name: string) => `Done by ${name}`,
     pointsFor: (title: string) => `Points for ${title}`,
@@ -114,17 +112,16 @@ export const tasks = {
   me: {
     eyebrow: 'Me',
     title: 'My tasks',
-    description: "Things you've picked up, your private tasks and what you've completed.",
     pointsEarned: 'Points earned',
     pointsLoadFailed: "We couldn't load your points.",
     toDo: 'To do',
     loadFailed: "We couldn't load your tasks. Check your connection and reload the page.",
-    nothingPickedUp: 'Nothing picked up yet. Pick a task on the board.',
+    nothingPickedUp: 'Nothing picked up yet.',
     completed: 'Completed',
     completedTasks: 'Completed tasks',
     completedLoadFailed:
       "We couldn't load your completed tasks. Check your connection and reload the page.",
-    completedEmpty: 'Tasks you mark done will show up here.',
+    completedEmpty: 'Nothing done yet.',
     doneOn: (date: string) => `Done ${date}`,
     undo: 'Undo',
     undoLabel: (title: string) => `Undo: ${title}`,
@@ -137,7 +134,6 @@ export const tasks = {
   child: {
     eyebrow: 'Me',
     title: 'My stars',
-    description: 'Do your tasks to earn points for your goal.',
     myTasks: 'My tasks',
     nothingToDo: 'Nothing to do yet.',
     pickOnBoard: 'Pick a task on Shared tasks',
@@ -145,11 +141,9 @@ export const tasks = {
   /** The Shared tasks screen for children: the tasks for children as big tiles. */
   childBoard: {
     title: 'Tasks for you',
-    description: 'Pick a task, then do it from your Me page to earn points!',
     free: 'Free to pick',
     nothingFree: 'No free tasks right now.',
     yours: 'Picked by you',
-    onYourMePage: 'Do it from your Me page',
     othersDoing: 'Others are doing',
     doingIt: (name: string) => `${name} is doing it`,
   },
@@ -158,7 +152,7 @@ export const tasks = {
     eyebrow: 'Completed',
     title: 'Who helped?',
     description: (title: string, points: string) =>
-      `Give whoever helped with ${title} some of its ${points}. What you give comes out of your points, so the task is worth the same.`,
+      `Share ${title}'s ${points} with whoever helped. What you give comes out of your points.`,
     whoHelped: 'Who helped?',
     whoHelpedLabel: (title: string) => `Who helped with ${title}?`,
     helped: (name: string) => `${name} helped`,
@@ -179,8 +173,6 @@ export const tasks = {
     askLabel: (title: string) => `Ask someone to do ${title}`,
     eyebrow: 'Tasks',
     title: 'Ask someone',
-    description: (title: string) =>
-      `Who would you like to do ${title}? They get a notification and can accept or decline.`,
     whoToAsk: 'Who to ask',
     send: 'Send request',
     noOne: 'Nobody else in your household can do this task.',

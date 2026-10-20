@@ -4,11 +4,8 @@ import { common } from '@/locales/fi/common';
 export const news: Messages['news'] = {
   eyebrow: 'Uutiset',
   title: 'Mitä perhe on tehnyt',
-  description:
-    'Viimeisen viikon aikana tehdyt yhteiset tehtävät. Anna peukku tai kirjoita kommentti.',
   loadFailed: 'Uutisia ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
-  empty:
-    'Viimeisen viikon aikana ei ole vielä tehty yhteisiä tehtäviä. Kun joku merkitsee tehtävän tehdyksi, se näkyy tässä.',
+  empty: 'Viimeisen viikon aikana ei ole vielä tehty yhteisiä tehtäviä.',
   pointsEarned: 'Ansaitut pisteet',
   tasksDone: 'Tehdyt tehtävät',
   // "Anna: 10 pistettä (…)" rather than a verb, which would have to agree with "Sinä".

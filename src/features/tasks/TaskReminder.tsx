@@ -133,7 +133,6 @@ function invalidTimeMessage(remindAt: Date, t: Messages): string | null {
 
 function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFormProps) {
   const inputId = useId();
-  const hintId = useId();
   const input = useRef<HTMLInputElement>(null);
   const setReminder = useSetReminder(currentUserId);
   const [value, setValue] = useState(initialValue);
@@ -184,15 +183,11 @@ function ReminderForm({ task, currentUserId, initialValue, onClose }: ReminderFo
         min={limits.min}
         max={limits.max}
         value={value}
-        aria-describedby={hintId}
         onChange={(event) => {
           setValue(event.target.value);
         }}
         className={inputClassName}
       />
-      <p id={hintId} className="text-ink-muted text-xs">
-        {t.hint}
-      </p>
       {failure && (
         <p role="alert" className="text-danger-700 text-xs">
           {failure}

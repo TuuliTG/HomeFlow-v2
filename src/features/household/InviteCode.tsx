@@ -43,7 +43,6 @@ export function InviteCode({ code }: InviteCodeProps) {
       <h2 id="invite-code" className="text-ink font-semibold">
         {t.heading}
       </h2>
-      <p className="text-ink-muted text-sm">{t.intro}</p>
       <div className="flex flex-wrap items-center gap-3">
         <p className="text-brand-900 font-mono text-2xl font-semibold tracking-widest select-all">
           {code}

@@ -18,11 +18,7 @@ export function HouseholdSetupPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center px-4 py-10">
-      <PageHeader
-        eyebrow="HomeFlow"
-        title={t.household.setUp.title}
-        description={t.household.setUp.description}
-      />
+      <PageHeader eyebrow="HomeFlow" title={t.household.setUp.title} />
       <SetupForms userId={user.id} />
       <button
         type="button"
@@ -62,7 +58,6 @@ function SetupForms({ userId }: { userId: string }) {
         <h2 id="join-household" className="text-ink font-semibold">
           {t.joinHeading}
         </h2>
-        <p className="text-ink-muted text-sm">{t.joinIntro}</p>
         <JoinHouseholdForm userId={userId} />
       </section>
     </div>

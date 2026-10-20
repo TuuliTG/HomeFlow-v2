@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-20 (task icons as emojis)
+- **Updated:** 2026-10-20 (task icons as emojis, no hints for children)
 
 ## Context
 
@@ -93,10 +93,10 @@ next one back rather than follow a fixed calendar.
   star jars (ADR 0007), their own tasks as big tiles (`ChildTaskTiles`: icon, name, one star per point, a round
   Mark done button, Edit on ones they added), and their Completed list. Like adults, they pick tasks on Shared
   tasks (`ChildBoard`), which shows the tasks for children, the only ones they see, as tiles: free to pick (Pick
-  up), picked by them (pointing to the Me page) and who is doing the rest, without the filters, then Show
+  up), picked by them and who is doing the rest, without the filters, then Show
   completed. These are a child's only tabs (`MainNav`, showing the others once the user is known to be an adult):
   News, Rewards and Statistics, and the goal forms, send a child to their Me page (`src/app/AdultsOnly`), where
-  their jars show their goals' progress. Adults' screens are unchanged. Points are still called points, as
+  their jars show their goals' progress. Children's screens carry no hints or explanations. Adults' screens are unchanged. Points are still called points, as
   elsewhere.
 - **Points**: the Me screen shows the user's total points, summed when read (`own_total_points()`), not stored.
   Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).

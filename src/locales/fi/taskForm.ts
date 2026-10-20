@@ -2,13 +2,11 @@ import type { Messages } from '@/locales/en';
 
 export const taskForm: Messages['taskForm'] = {
   create: {
-    description: 'Tehtävän lisääminen on metatyötä, ja sekin lasketaan.',
     submit: 'Luo tehtävä',
     askAnAdult: 'Pyydä perheesi aikuista sallimaan, että lisäät tehtäviä.',
   },
   edit: {
     title: 'Muokkaa tehtävää',
-    description: 'Korjaa avoimen tehtävän tietoja.',
     notOnBoard: 'Tätä tehtävää ei enää ole listalla: se on ehkä tehty tai poistettu.',
     backToTasks: 'Takaisin tehtäviin',
     submit: 'Tallenna muutokset',
@@ -30,7 +28,6 @@ export const taskForm: Messages['taskForm'] = {
   type: 'Tyyppi',
   icon: {
     label: 'Kuvake (valinnainen)',
-    hint: 'Kertoo yhdellä silmäyksellä, mistä tehtävässä on kyse, esimerkiksi lapselle, joka opettelee vasta lukemaan.',
     choose: 'Valitse kuvake',
     change: 'Vaihda kuvake',
     remove: 'Poista kuvake',
@@ -77,14 +74,10 @@ export const taskForm: Messages['taskForm'] = {
     },
   },
   keepPrivate: 'Pidä yksityisenä',
-  privateHint: 'Vain sinä näet sen. Sitä ei jaeta perheesi kanssa, eikä siitä saa pisteitä.',
   forChildren: 'Lapset voivat tehdä sen',
-  forChildrenHint: 'Kotitaloutesi lapset näkevät vain tehtävät, jotka he voivat tehdä.',
   points: 'Pisteet',
-  adultAwardsPoints: 'Perheesi aikuinen valitsee pisteet, kun olet tehnyt tehtävän.',
   images: {
     label: 'Kuvat (vapaaehtoinen)',
-    hint: (max) => `Enintään ${String(max)}, esim. näyttämään mitä tai missä.`,
     add: 'Lisää kuva',
     preparing: 'Kuvaa valmistellaan…',
     picture: (position) => `Kuva ${String(position)}`,
@@ -97,8 +90,6 @@ export const taskForm: Messages['taskForm'] = {
   repeats: 'Toistuu',
   doesNotRepeat: 'Ei toistu',
   dueDate: 'Määräpäivä',
-  repeatHint: (days) =>
-    `Aina kun se on tehty, se palaa ${days === 1 ? '1 päivän' : `${String(days)} päivän`} päästä.`,
   errors: {
     titleRequired: 'Anna tehtävälle nimi.',
     titleTooLong: (max) => `Nimessä saa olla enintään ${String(max)} merkkiä.`,
@@ -123,7 +114,6 @@ export const taskForm: Messages['taskForm'] = {
     remindMeLabel: (title) => `Muistuta minua: ${title}`,
     formLabel: (title) => `Muistutus: ${title}`,
     remindMeAt: 'Muistutuksen aika',
-    hint: 'Saat ilmoituksen jokaiselle laitteelle, jossa olet laittanut ilmoitukset päälle.',
     pastTime: 'Valitse tuleva ajankohta.',
     tooFar: 'Valitse ajankohta seuraavan vuoden sisältä.',
     saveFailed: 'Muistutusta ei voitu tallentaa. Yritä uudelleen.',
