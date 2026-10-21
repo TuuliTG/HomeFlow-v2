@@ -9,6 +9,7 @@ export const tasks: Messages['tasks'] = {
     show: 'Näytä',
     search: 'Hae tehtäviä',
     noMatches: (search) => `Hakua ”${search}” vastaavia tehtäviä ei löytynyt.`,
+    matches: (count) => (count === 1 ? '1 tehtävä löytyi' : `${String(count)} tehtävää löytyi`),
     loadFailed: 'Tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
     filters: {
       all: 'Kaikki',

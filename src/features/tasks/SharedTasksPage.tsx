@@ -217,11 +217,20 @@ function TaskList({ filter, search }: TaskListProps) {
     return <EmptyMessage>{t.empty.all}</EmptyMessage>;
   }
   const shown = searchTasks(filterTasks(shared, filter, today()), search);
-  if (shown.length === 0) {
-    const searched = search.trim();
-    return <EmptyMessage>{searched === '' ? t.empty[filter] : t.noMatches(searched)}</EmptyMessage>;
-  }
-  return <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />;
+  const searched = search.trim();
+  return (
+    <>
+      {/* Mounted while the tasks show, so screen readers hear how many match as the search is typed. */}
+      <p role="status" className="sr-only">
+        {searched === '' ? '' : t.matches(shown.length)}
+      </p>
+      {shown.length === 0 ? (
+        <EmptyMessage>{searched === '' ? t.empty[filter] : t.noMatches(searched)}</EmptyMessage>
+      ) : (
+        <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />
+      )}
+    </>
+  );
 }
 
 function EmptyMessage({ children }: { children: string }) {

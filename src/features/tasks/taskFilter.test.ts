@@ -114,4 +114,9 @@ describe('searchTasks', () => {
     expect(found('IKKUNAT')).toEqual(['Pese ikkunat']);
     expect(found('ikkunät')).toEqual([]);
   });
+
+  it('finds ä however it was typed', () => {
+    const decomposed = [task('Lakaise pa\u0308a\u0308ty', null)];
+    expect(searchTasks(decomposed, 'päät')).toEqual(decomposed);
+  });
 });

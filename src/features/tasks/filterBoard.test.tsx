@@ -165,12 +165,13 @@ describe('filtering the board', () => {
     await user.type(screen.getByRole('searchbox', { name: 'Search tasks' }), 'dish');
     expectShown(['Wash the dishes', 'Empty the dishwasher'], ['Vacuum']);
     expect(router.state.location.search).toBe('?q=dish');
+    expect(screen.getByText('2 tasks found')).toHaveAttribute('role', 'status');
 
     await user.click(screen.getByRole('radio', { name: 'Today' }));
     expectShown(['Wash the dishes'], ['Empty the dishwasher', 'Vacuum']);
 
     await user.type(screen.getByRole('searchbox', { name: 'Search tasks' }), 'es window');
-    expect(screen.getByText('No tasks match "dishes window".')).toBeInTheDocument();
+    expect(screen.getByText('No tasks match “dishes window”.')).toBeInTheDocument();
 
     await user.clear(screen.getByRole('searchbox', { name: 'Search tasks' }));
     expectShown(['Wash the dishes', 'Vacuum'], ['Empty the dishwasher']);

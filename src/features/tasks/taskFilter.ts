@@ -29,9 +29,17 @@ export function filterTasks(tasks: Task[], filter: TaskFilter, todayDate: string
   return tasks.filter((task) => matchers[filter](task, todayDate));
 }
 
-/** Words of a search, lower-cased; none for an empty search. */
+/**
+ * Text ready to compare: lower-cased, and with ä as one character however the device typed it (it can also be
+ * a followed by a combining mark).
+ */
+function comparable(text: string): string {
+  return text.normalize('NFC').toLocaleLowerCase();
+}
+
+/** Words of a search; none for an empty search. */
 function searchWords(query: string): string[] {
-  return query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  return comparable(query).split(/\s+/).filter(Boolean);
 }
 
 /**
@@ -43,7 +51,7 @@ export function searchTasks(tasks: Task[], query: string): Task[] {
   const words = searchWords(query);
   if (words.length === 0) return tasks;
   return tasks.filter((task) => {
-    const text = `${task.title} ${task.description ?? ''}`.toLocaleLowerCase();
+    const text = comparable(`${task.title} ${task.description ?? ''}`);
     return words.every((word) => text.includes(word));
   });
 }

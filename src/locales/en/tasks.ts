@@ -7,7 +7,9 @@ export const tasks = {
     showCompleted: 'Show completed',
     show: 'Show',
     search: 'Search tasks',
-    noMatches: (search: string) => `No tasks match "${search}".`,
+    noMatches: (search: string) => `No tasks match “${search}”.`,
+    /** Read out by screen readers while searching. */
+    matches: (count: number) => (count === 1 ? '1 task found' : `${String(count)} tasks found`),
     loadFailed: "We couldn't load the tasks. Check your connection and reload the page.",
     filters: {
       all: 'All',
