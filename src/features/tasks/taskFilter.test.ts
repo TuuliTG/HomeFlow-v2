@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Task } from '@/features/tasks/task';
-import { filterTasks, parseTaskFilter, type TaskFilter } from '@/features/tasks/taskFilter';
+import {
+  filterTasks,
+  parseTaskFilter,
+  searchTasks,
+  type TaskFilter,
+} from '@/features/tasks/taskFilter';
 
 /** Wednesday 7 October 2026. */
 const TODAY = '2026-10-07';
@@ -71,5 +76,42 @@ describe('parseTaskFilter', () => {
   it('falls back to all for anything else', () => {
     expect(parseTaskFilter(null)).toBe('all');
     expect(parseTaskFilter('tomorrow')).toBe('all');
+  });
+});
+
+describe('searchTasks', () => {
+  const searchable = [
+    task('Wash the dishes', null),
+    { ...task('Book dentist', null), description: 'Call the clinic about Ella' },
+    task('Pese ikkunat', null),
+    task('Vacuum', null),
+  ];
+
+  function found(query: string) {
+    return searchTasks(searchable, query).map(({ title }) => title);
+  }
+
+  it('shows every task without a search', () => {
+    expect(found('')).toEqual(searchable.map(({ title }) => title));
+    expect(found('   ')).toEqual(searchable.map(({ title }) => title));
+  });
+
+  it('finds tasks by any part of the title, ignoring case', () => {
+    expect(found('DISH')).toEqual(['Wash the dishes']);
+  });
+
+  it('finds tasks by their description', () => {
+    expect(found('clinic')).toEqual(['Book dentist']);
+  });
+
+  it('needs every word, in any order and across title and description', () => {
+    expect(found('dishes wash')).toEqual(['Wash the dishes']);
+    expect(found('dentist ella')).toEqual(['Book dentist']);
+    expect(found('wash vacuum')).toEqual([]);
+  });
+
+  it('keeps ä and a apart, as Finnish does', () => {
+    expect(found('IKKUNAT')).toEqual(['Pese ikkunat']);
+    expect(found('ikkunät')).toEqual([]);
   });
 });

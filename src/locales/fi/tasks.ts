@@ -7,6 +7,8 @@ export const tasks: Messages['tasks'] = {
     title: 'Yhteiset tehtävät',
     showCompleted: 'Näytä tehdyt',
     show: 'Näytä',
+    search: 'Hae tehtäviä',
+    noMatches: (search) => `Hakua ”${search}” vastaavia tehtäviä ei löytynyt.`,
     loadFailed: 'Tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
     filters: {
       all: 'Kaikki',

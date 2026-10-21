@@ -28,3 +28,22 @@ const matchers: Record<TaskFilter, (task: Task, todayDate: string) => boolean> =
 export function filterTasks(tasks: Task[], filter: TaskFilter, todayDate: string): Task[] {
   return tasks.filter((task) => matchers[filter](task, todayDate));
 }
+
+/** Words of a search, lower-cased; none for an empty search. */
+function searchWords(query: string): string[] {
+  return query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
+}
+
+/**
+ * The tasks whose title or description contains every word of the search, in any order and ignoring case,
+ * so "dishes wash" finds "Wash the dishes". Letters like ä stay distinct from a: they are different letters
+ * in Finnish.
+ */
+export function searchTasks(tasks: Task[], query: string): Task[] {
+  const words = searchWords(query);
+  if (words.length === 0) return tasks;
+  return tasks.filter((task) => {
+    const text = `${task.title} ${task.description ?? ''}`.toLocaleLowerCase();
+    return words.every((word) => text.includes(word));
+  });
+}

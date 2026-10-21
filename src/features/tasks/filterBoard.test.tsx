@@ -152,4 +152,39 @@ describe('filtering the board', () => {
     expect(screen.getByRole('switch', { name: 'Show completed' })).toBeChecked();
     expectShown([], ['Dust']);
   });
+
+  it('finds tasks by searching, together with the filter, and keeps the search in the address', async () => {
+    const anna = logInAsFamilyMember();
+    addTask(anna.id, 'Wash the dishes', '2026-10-08');
+    addTask(anna.id, 'Empty the dishwasher');
+    addTask(anna.id, 'Vacuum', '2026-10-08');
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/');
+    await screen.findByRole('listitem', { name: 'Vacuum' });
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search tasks' }), 'dish');
+    expectShown(['Wash the dishes', 'Empty the dishwasher'], ['Vacuum']);
+    expect(router.state.location.search).toBe('?q=dish');
+
+    await user.click(screen.getByRole('radio', { name: 'Today' }));
+    expectShown(['Wash the dishes'], ['Empty the dishwasher', 'Vacuum']);
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search tasks' }), 'es window');
+    expect(screen.getByText('No tasks match "dishes window".')).toBeInTheDocument();
+
+    await user.clear(screen.getByRole('searchbox', { name: 'Search tasks' }));
+    expectShown(['Wash the dishes', 'Vacuum'], ['Empty the dishwasher']);
+    expect(router.state.location.search).toBe('?show=today');
+  });
+
+  it('reads the search from the address', async () => {
+    const anna = logInAsFamilyMember();
+    addTask(anna.id, 'Wash the dishes');
+    addTask(anna.id, 'Vacuum');
+    renderAppAt('/?q=vacuum');
+
+    await screen.findByRole('listitem', { name: 'Vacuum' });
+    expect(screen.getByRole('searchbox', { name: 'Search tasks' })).toHaveValue('vacuum');
+    expectShown(['Vacuum'], ['Wash the dishes']);
+  });
 });

@@ -1,3 +1,5 @@
+import { inputClassName } from '@/components/ui/formStyles';
+import { SearchIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
@@ -10,6 +12,7 @@ import { today } from '@/lib/dates';
 import {
   filterTasks,
   parseTaskFilter,
+  searchTasks,
   type TaskFilter,
   taskFilters,
 } from '@/features/tasks/taskFilter';
@@ -19,6 +22,7 @@ import { useSearchParam } from '@/lib/useSearchParam';
 
 const SHOW_COMPLETED_PARAM = 'completed';
 const FILTER_PARAM = 'show';
+const SEARCH_PARAM = 'q';
 
 export function SharedTasksPage() {
   const user = useLoggedInUser();
@@ -27,11 +31,15 @@ export function SharedTasksPage() {
   return isChild ? <ChildBoard completed={<CompletedTasks />} /> : <Board />;
 }
 
-/** The board for adults: every shared task by due date, with filters and the household's completed tasks. */
+/**
+ * The board for adults: every shared task by due date, with a search, filters and the household's completed
+ * tasks.
+ */
 function Board() {
   const user = useLoggedInUser();
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
   const [filter, setFilter] = useFilterParam(user.id);
+  const [search, setSearch] = useSearchTextParam();
   const t = useMessages().tasks;
 
   return (
@@ -42,10 +50,11 @@ function Board() {
       </div>
       <PointsToAward />
       <div className="flex flex-col gap-3">
+        <SearchField search={search} onChange={setSearch} />
         <FilterChoice filter={filter} onChange={setFilter} />
         <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       </div>
-      <TaskList filter={filter} />
+      <TaskList filter={filter} search={search} />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
   );
@@ -85,6 +94,43 @@ function useFilterParam(userId: string) {
     serialise: (filter) => (filter === 'all' ? null : filter),
     rememberAs: `board.${FILTER_PARAM}:${userId}`,
   });
+}
+
+/**
+ * What to search for, kept in the address as `?q=<search>` so it survives a reload. Not remembered on this
+ * device: a search left over from last time would hide tasks without anyone noticing.
+ */
+function useSearchTextParam() {
+  return useSearchParam({
+    name: SEARCH_PARAM,
+    parse: (value) => value ?? '',
+    serialise: (search) => (search === '' ? null : search),
+  });
+}
+
+interface SearchFieldProps {
+  search: string;
+  onChange: (search: string) => void;
+}
+
+/** Finds tasks by title or description, e.g. to check whether someone already added one. */
+function SearchField({ search, onChange }: SearchFieldProps) {
+  const t = useMessages().tasks.board;
+  return (
+    <div role="search" className="relative">
+      <SearchIcon className="text-ink-muted pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2" />
+      <input
+        type="search"
+        aria-label={t.search}
+        placeholder={t.search}
+        value={search}
+        onChange={(event) => {
+          onChange(event.target.value);
+        }}
+        className={`${inputClassName} min-h-11 w-full pl-10`}
+      />
+    </div>
+  );
 }
 
 interface FilterChoiceProps {
@@ -146,7 +192,12 @@ function Switch({ label, checked, onChange }: SwitchProps) {
   );
 }
 
-function TaskList({ filter }: { filter: TaskFilter }) {
+interface TaskListProps {
+  filter: TaskFilter;
+  search: string;
+}
+
+function TaskList({ filter, search }: TaskListProps) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
   const t = useMessages().tasks.board;
@@ -165,9 +216,10 @@ function TaskList({ filter }: { filter: TaskFilter }) {
   if (shared.length === 0) {
     return <EmptyMessage>{t.empty.all}</EmptyMessage>;
   }
-  const shown = filterTasks(shared, filter, today());
+  const shown = searchTasks(filterTasks(shared, filter, today()), search);
   if (shown.length === 0) {
-    return <EmptyMessage>{t.empty[filter]}</EmptyMessage>;
+    const searched = search.trim();
+    return <EmptyMessage>{searched === '' ? t.empty[filter] : t.noMatches(searched)}</EmptyMessage>;
   }
   return <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />;
 }

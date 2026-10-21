@@ -6,6 +6,8 @@ export const tasks = {
     title: 'Shared tasks',
     showCompleted: 'Show completed',
     show: 'Show',
+    search: 'Search tasks',
+    noMatches: (search: string) => `No tasks match "${search}".`,
     loadFailed: "We couldn't load the tasks. Check your connection and reload the page.",
     filters: {
       all: 'All',
