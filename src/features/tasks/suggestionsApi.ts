@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-import { type TaskSuggestion, taskIconNames, taskTypes } from '@/features/tasks/task';
+import { type TaskSuggestion, taskTypes } from '@/features/tasks/task';
 import { getSupabaseClient } from '@/lib/supabase';
+import { taskIconSchema } from '@/lib/taskIcons';
 
 const suggestionRowsSchema = z.array(
   z.object({
@@ -12,8 +13,7 @@ const suggestionRowsSchema = z.array(
     repeat_every_days: z.number().nullable(),
     is_private: z.boolean(),
     for_children: z.boolean(),
-    /** One this version of the app doesn't know, e.g. added by a newer one, shows as none. */
-    icon: z.enum(taskIconNames).nullable().catch(null),
+    icon: taskIconSchema,
     times_added: z.number(),
     is_open: z.boolean(),
   }),

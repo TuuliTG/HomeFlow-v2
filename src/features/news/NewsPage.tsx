@@ -3,7 +3,7 @@ import { useId } from 'react';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { NewsCard } from '@/features/news/NewsCard';
-import { groupByDay, nameFor, type NewsDay } from '@/features/news/news';
+import { type DaySummary, groupByDay, nameFor, type NewsDay, totalOf } from '@/features/news/news';
 import { useNews } from '@/features/news/useNews';
 import { useLoggedInUser } from '@/lib/auth';
 import { today } from '@/lib/dates';
@@ -53,28 +53,48 @@ function NewsDaySection({ day, userId }: { day: NewsDay; userId: string }) {
   const t = useMessages();
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
-      <h2 id={headingId} className="text-ink text-lg font-semibold">
+      <h2
+        id={headingId}
+        className="text-brand-900 flex items-center gap-2 text-sm font-extrabold tracking-wide uppercase"
+      >
+        <span aria-hidden="true" className="bg-brand-600 size-2 rounded-full" />
         {day.label}
       </h2>
-      <ul
-        aria-label={t.news.pointsEarned}
-        className="bg-brand-50 text-brand-900 flex flex-col gap-1 rounded-2xl px-4 py-3 text-sm"
-      >
-        {day.summaries.map((summary) => (
-          <li key={summary.member.userId ?? 'someone'}>
-            {t.news.summary(
-              nameFor(summary.member, userId, t),
-              summary.physicalPoints,
-              summary.metaPoints,
-            )}
-          </li>
-        ))}
-      </ul>
+      <DaySummaries summaries={day.summaries} userId={userId} />
       <ul aria-label={t.news.tasksDone} className="flex flex-col gap-3">
         {day.items.map((item) => (
           <NewsCard key={item.taskId} item={item} userId={userId} />
         ))}
       </ul>
     </section>
+  );
+}
+
+/** Each member's points that day, with a bar split into physical and meta work, the most first. */
+function DaySummaries({ summaries, userId }: { summaries: DaySummary[]; userId: string }) {
+  const t = useMessages();
+  const most = Math.max(...summaries.map(totalOf), 1);
+  const widthOf = (points: number) => `${String((points / most) * 100)}%`;
+  return (
+    <ul
+      aria-label={t.news.pointsEarned}
+      className="bg-surface shadow-card flex flex-col gap-3 rounded-2xl p-4 text-sm"
+    >
+      {summaries.map((summary) => (
+        <li key={summary.member.userId ?? 'someone'} className="flex flex-col gap-1.5">
+          <span className="text-ink">
+            {t.news.summary(
+              nameFor(summary.member, userId, t),
+              summary.physicalPoints,
+              summary.metaPoints,
+            )}
+          </span>
+          <div aria-hidden="true" className="bg-line flex h-2 overflow-hidden rounded-full">
+            <div className="bg-brand-600" style={{ width: widthOf(summary.physicalPoints) }} />
+            <div className="bg-meta-500" style={{ width: widthOf(summary.metaPoints) }} />
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

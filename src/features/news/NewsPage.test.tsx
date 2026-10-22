@@ -86,7 +86,9 @@ describe('news page', () => {
         .getAllByRole('listitem', { name: /completed/ })
         .map((news) => news.getAttribute('aria-label')),
     ).toEqual(['You completed Water plants', 'Ben completed Book dentist', 'Ben completed Vacuum']);
-    expect(card('Ben completed Book dentist')).toHaveTextContent('3 points · Meta work');
+    const dentist = card('Ben completed Book dentist');
+    expect(dentist).toHaveTextContent('3 points');
+    expect(dentist).toHaveTextContent('Meta work');
     expect(day('Yesterday')).toHaveTextContent('Ben earned 4 points of physical work');
     expect(
       within(day('Yesterday')).getByRole('listitem', { name: 'Ben completed Wash the car' }),
@@ -164,11 +166,12 @@ describe('news page', () => {
     await user.type(field, '  Thank you, looks great!  ');
     await user.click(screen.getByRole('button', { name: 'Send' }));
 
-    const comments = await within(card('Ben completed Vacuum')).findAllByRole('listitem');
-    expect(comments.map((comment) => comment.textContent)).toEqual([
-      'Ben Took ages!',
-      'You Thank you, looks great!Delete',
-    ]);
+    const [bens, yours] = await within(
+      within(card('Ben completed Vacuum')).getByRole('list', { name: 'Comments' }),
+    ).findAllByRole('listitem');
+    expect(bens).toHaveTextContent('Ben Took ages!');
+    expect(yours).toHaveTextContent('You Thank you, looks great!');
+    expect(screen.getAllByRole('button', { name: /^Delete your comment/ })).toHaveLength(1);
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
 
     await user.click(

@@ -7,15 +7,12 @@ import {
   type NewTask,
   type Task,
   type TaskHelper,
-  taskIconNames,
   taskTypes,
 } from '@/features/tasks/task';
 import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
 import { requestRowSchema, taskRequestOf } from '@/features/tasks/requestRow';
 import { getSupabaseClient } from '@/lib/supabase';
-
-/** A task's icon; one this version of the app doesn't know, e.g. added by a newer one, shows as none. */
-const iconSchema = z.enum(taskIconNames).nullable().catch(null);
+import { taskIconSchema } from '@/lib/taskIcons';
 
 const taskRowsSchema = z.array(
   z.object({
@@ -30,7 +27,7 @@ const taskRowsSchema = z.array(
     picked_up_by: z.string().nullable(),
     is_private: z.boolean(),
     for_children: z.boolean(),
-    icon: iconSchema,
+    icon: taskIconSchema,
     task_images: z.array(z.object({ path: z.string(), position: z.number() })),
     /** The occurrence this one repeats; it is done, since completing it added this one. */
     previous: z

@@ -5,40 +5,16 @@ import { COMMENT_MAX_LENGTH, nameFor, type NewsComment, type NewsItem } from '@/
 import { useAddComment, useDeleteComment } from '@/features/news/useNews';
 import { useMessages } from '@/lib/i18n/i18n';
 
-/** The comments on a done task, oldest first, and a form to add one. */
-export function CommentThread({ item, userId }: { item: NewsItem; userId: string }) {
-  const [isWriting, setIsWriting] = useState(false);
+/** The comments on a done task, oldest first. */
+export function CommentList({ item, userId }: { item: NewsItem; userId: string }) {
   const t = useMessages().news;
+  if (item.comments.length === 0) return null;
   return (
-    <div className="flex flex-col gap-2">
-      {item.comments.length > 0 && (
-        <ul aria-label={t.comments} className="flex flex-col gap-2">
-          {item.comments.map((comment) => (
-            <Comment key={comment.id} comment={comment} userId={userId} />
-          ))}
-        </ul>
-      )}
-      {isWriting ? (
-        <CommentForm
-          item={item}
-          userId={userId}
-          onDone={() => {
-            setIsWriting(false);
-          }}
-        />
-      ) : (
-        <button
-          type="button"
-          aria-label={t.commentOn(item.title)}
-          onClick={() => {
-            setIsWriting(true);
-          }}
-          className="text-brand-600 hover:text-brand-900 flex min-h-11 items-center self-start text-sm font-semibold"
-        >
-          {t.comment}
-        </button>
-      )}
-    </div>
+    <ul aria-label={t.comments} className="flex flex-col gap-2">
+      {item.comments.map((comment) => (
+        <Comment key={comment.id} comment={comment} userId={userId} />
+      ))}
+    </ul>
   );
 }
 
@@ -46,36 +22,46 @@ function Comment({ comment, userId }: { comment: NewsComment; userId: string }) 
   const deleteComment = useDeleteComment(userId);
   const isOwn = comment.author.userId === userId;
   const t = useMessages();
+  const name = nameFor(comment.author, userId, t);
   return (
-    <li className="bg-page flex flex-col gap-1 rounded-xl px-3 py-2 text-sm">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-ink min-w-0 break-words">
-          <span className="font-semibold">{nameFor(comment.author, userId, t)}</span> {comment.body}
-        </p>
-        {isOwn && (
-          <button
-            type="button"
-            aria-label={t.news.deleteLabel(comment.body)}
-            disabled={deleteComment.isPending}
-            onClick={() => {
-              deleteComment.mutate(comment.id);
-            }}
-            className="text-ink-muted hover:text-danger-700 -my-1 shrink-0 rounded px-2 py-1 disabled:opacity-60"
-          >
-            {t.common.delete}
-          </button>
+    <li className="flex items-start gap-2 text-sm">
+      <span
+        aria-hidden="true"
+        className="bg-brand-100 text-brand-900 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+      >
+        {Array.from(name)[0]?.toUpperCase()}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="bg-page flex items-start justify-between gap-2 rounded-2xl rounded-tl-md px-3 py-2">
+          <p className="text-ink min-w-0 break-words">
+            <span className="block font-semibold">{name}</span> {comment.body}
+          </p>
+          {isOwn && (
+            <button
+              type="button"
+              aria-label={t.news.deleteLabel(comment.body)}
+              disabled={deleteComment.isPending}
+              onClick={() => {
+                deleteComment.mutate(comment.id);
+              }}
+              className="text-ink-muted hover:text-danger-700 -my-2 -mr-2 min-h-11 shrink-0 rounded px-2 text-xs font-semibold disabled:opacity-60"
+            >
+              {t.common.delete}
+            </button>
+          )}
+        </div>
+        {deleteComment.isError && (
+          <p role="alert" className="text-danger-700">
+            {t.news.deleteFailed}
+          </p>
         )}
       </div>
-      {deleteComment.isError && (
-        <p role="alert" className="text-danger-700">
-          {t.news.deleteFailed}
-        </p>
-      )}
     </li>
   );
 }
 
-function CommentForm({
+/** A form to comment on a done task; `onDone` closes it, after sending or on Cancel. */
+export function CommentForm({
   item,
   userId,
   onDone,
