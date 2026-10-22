@@ -4,7 +4,7 @@ import { CheckIcon, StarIcon } from '@/components/ui/icons';
 import { emptyClassName, sectionHeadingClassName } from '@/features/tasks/meStyles';
 import type { Task } from '@/features/tasks/task';
 import { EditLink } from '@/features/tasks/TaskCardLinks';
-import { TaskTypeIcon } from '@/features/tasks/TaskTypeIcon';
+import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
 import { useCompleteTask, usePickUpTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';

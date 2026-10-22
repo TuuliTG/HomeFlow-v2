@@ -10,7 +10,7 @@ import { TaskPeople } from '@/features/tasks/TaskPeople';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
 import { TaskRequestPanel } from '@/features/tasks/TaskRequestPanel';
 import { TaskTags } from '@/features/tasks/TaskTags';
-import { TaskTypeIcon } from '@/features/tasks/TaskTypeIcon';
+import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
 import { useCompleteTask, usePickUpTask, usePutBackTask } from '@/features/tasks/useTasks';
 
 interface TaskCardProps {

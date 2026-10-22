@@ -8,10 +8,10 @@ import {
   type NewTask,
   newTaskSchema,
   repeatChoices,
-  type TaskIconName,
   type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
+import type { TaskIconName } from '@/lib/taskIcons';
 import { fieldValues, taskInput } from '@/features/tasks/taskFormValues';
 import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
 import { TaskIconField } from '@/features/tasks/TaskIconField';

@@ -1,58 +1,11 @@
 import { z } from 'zod';
 
 import type { Messages } from '@/lib/i18n/i18n';
+import { taskIconNames } from '@/lib/taskIcons';
 
 export const taskTypes = ['physical', 'meta'] as const;
 
 export type TaskType = (typeof taskTypes)[number];
-
-/**
- * The icons a task can show to make clear what it is about, e.g. for children who don't read yet, each an
- * emoji (`TaskIcon`). The database stores the name and checks only its format (ADR 0004), so the set can
- * grow without a migration.
- */
-export const taskIconNames = [
-  'bed',
-  'clothes',
-  'laundry',
-  'dishes',
-  'table',
-  'cooking',
-  'vacuum',
-  'cleaning',
-  'bath',
-  'toilet',
-  'window',
-  'trash',
-  'recycling',
-  'toys',
-  'shoes',
-  'plants',
-  'garden',
-  'leaves',
-  'snow',
-  'pet',
-  'dog',
-  'cat',
-  'shopping',
-  'groceries',
-  'car',
-  'tools',
-  'baby',
-  'medicine',
-  'homework',
-  'school',
-  'reading',
-  'music',
-  'sport',
-  'gift',
-  'mail',
-  'calendar',
-  'phone',
-  'bills',
-] as const;
-
-export type TaskIconName = (typeof taskIconNames)[number];
 
 export const TITLE_MAX_LENGTH = 80;
 

@@ -1,4 +1,4 @@
-import type { TaskIconName } from '@/features/tasks/task';
+import type { TaskIconName } from '@/lib/taskIcons';
 
 /** Each icon's emoji, shown as the device draws it. */
 const emojis: Record<TaskIconName, string> = {

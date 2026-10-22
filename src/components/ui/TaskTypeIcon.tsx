@@ -1,6 +1,8 @@
 import { HomeIcon, LightbulbIcon } from '@/components/ui/icons';
-import type { TaskIconName, TaskType } from '@/features/tasks/task';
-import { TaskIcon } from '@/features/tasks/TaskIcon';
+import type { TaskIconName } from '@/lib/taskIcons';
+import { TaskIcon } from '@/components/ui/TaskIcon';
+
+type TaskType = 'physical' | 'meta';
 
 const typeIconClassNames: Record<TaskType, string> = {
   physical: 'bg-brand-100 text-brand-700',

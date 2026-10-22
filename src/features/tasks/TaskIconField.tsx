@@ -1,8 +1,8 @@
 import { useId, useRef, useState } from 'react';
 
-import { type TaskIconName, taskIconNames } from '@/features/tasks/task';
-import { TaskIcon } from '@/features/tasks/TaskIcon';
+import { TaskIcon } from '@/components/ui/TaskIcon';
 import { useMessages } from '@/lib/i18n/i18n';
+import { type TaskIconName, taskIconNames } from '@/lib/taskIcons';
 
 interface TaskIconFieldProps {
   value: TaskIconName | null;
