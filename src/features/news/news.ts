@@ -79,6 +79,11 @@ function creditsOf({ doneBy, helpers, points }: NewsItem): NewsHelper[] {
   return [{ person: doneBy, points: (points ?? 0) - helped }, ...helpers];
 }
 
+/** All the points a member earned that day. */
+export function totalOf(summary: DaySummary): number {
+  return summary.physicalPoints + summary.metaPoints;
+}
+
 function summarise(items: NewsItem[]): DaySummary[] {
   const byMember = new Map<string | null, DaySummary>();
   for (const item of items) {
@@ -93,8 +98,7 @@ function summarise(items: NewsItem[]): DaySummary[] {
       byMember.set(person.userId, summary);
     }
   }
-  const total = (summary: DaySummary) => summary.physicalPoints + summary.metaPoints;
-  return [...byMember.values()].sort((a, b) => total(b) - total(a));
+  return [...byMember.values()].sort((a, b) => totalOf(b) - totalOf(a));
 }
 
 /** Splits news items, newest first, by the local day they were done, with each member's points that day. */

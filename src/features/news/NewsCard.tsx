@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { CommentIcon, StarIcon, ThumbsUpIcon } from '@/components/ui/icons';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
-import { CommentForm, CommentList } from '@/features/news/CommentThread';
+import { CommentForm, CommentList } from '@/features/news/Comments';
 import { nameFor, type NewsItem } from '@/features/news/news';
 import { useToggleLike } from '@/features/news/useNews';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -38,6 +38,11 @@ export function NewsCard({ item, userId }: { item: NewsItem; userId: string }) {
             >
               {t.common.taskTypes[item.type]}
             </span>
+            {item.points === null && (
+              <span className="bg-points-100 text-points-800 rounded-full px-2.5 py-0.5 font-semibold">
+                {t.tasks.card.waitingForPoints}
+              </span>
+            )}
             <time dateTime={item.completedAt} className="text-ink-muted">
               {t.common.time(new Date(item.completedAt))}
             </time>
@@ -52,7 +57,7 @@ export function NewsCard({ item, userId }: { item: NewsItem; userId: string }) {
             </p>
           )}
         </div>
-        <Points points={item.points} />
+        {item.points !== null && <Points points={item.points} />}
       </div>
       <div className="border-line flex flex-col gap-3 border-t pt-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -87,19 +92,13 @@ export function NewsCard({ item, userId }: { item: NewsItem; userId: string }) {
   );
 }
 
-/** The task's points as a pill, like on the task's card, or that an adult has yet to award them. */
-function Points({ points }: { points: number | null }) {
+/** The task's points as a pill, like on the task's card. */
+function Points({ points }: { points: number }) {
   const t = useMessages();
   return (
     <span className="bg-points-100 text-points-800 -mt-1 -mr-1 ml-auto flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-sm font-extrabold whitespace-nowrap">
-      {points === null ? (
-        t.tasks.card.waitingForPoints
-      ) : (
-        <>
-          <StarIcon className="size-4 fill-current" />
-          {t.common.points(points)}
-        </>
-      )}
+      <StarIcon className="size-4 fill-current" />
+      {t.common.points(points)}
     </span>
   );
 }

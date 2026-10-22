@@ -44,7 +44,7 @@ function Comment({ comment, userId }: { comment: NewsComment; userId: string }) 
               onClick={() => {
                 deleteComment.mutate(comment.id);
               }}
-              className="text-ink-muted hover:text-danger-700 -my-1 -mr-1 shrink-0 rounded px-2 py-1 text-xs font-semibold disabled:opacity-60"
+              className="text-ink-muted hover:text-danger-700 -my-2 -mr-2 min-h-11 shrink-0 rounded px-2 text-xs font-semibold disabled:opacity-60"
             >
               {t.common.delete}
             </button>

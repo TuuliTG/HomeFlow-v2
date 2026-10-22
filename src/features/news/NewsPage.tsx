@@ -3,7 +3,7 @@ import { useId } from 'react';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { NewsCard } from '@/features/news/NewsCard';
-import { type DaySummary, groupByDay, nameFor, type NewsDay } from '@/features/news/news';
+import { type DaySummary, groupByDay, nameFor, type NewsDay, totalOf } from '@/features/news/news';
 import { useNews } from '@/features/news/useNews';
 import { useLoggedInUser } from '@/lib/auth';
 import { today } from '@/lib/dates';
@@ -69,8 +69,6 @@ function NewsDaySection({ day, userId }: { day: NewsDay; userId: string }) {
     </section>
   );
 }
-
-const totalOf = (summary: DaySummary) => summary.physicalPoints + summary.metaPoints;
 
 /** Each member's points that day, with a bar split into physical and meta work, the most first. */
 function DaySummaries({ summaries, userId }: { summaries: DaySummary[]; userId: string }) {
