@@ -1,5 +1,6 @@
 import { addDays, fromIsoDate, toIsoDate } from '@/lib/dates';
 import type { Messages } from '@/lib/i18n/i18n';
+import type { TaskIconName } from '@/lib/taskIcons';
 
 /** How many days back the news goes, today included. */
 const NEWS_DAYS = 7;
@@ -32,6 +33,7 @@ export interface NewsItem {
   taskId: string;
   title: string;
   type: WorkType;
+  icon: TaskIconName | null;
   /** Null for a child's task until an adult awards its points. */
   points: number | null;
   /** ISO timestamp. */
@@ -45,7 +47,7 @@ export interface NewsItem {
 }
 
 /** The points one member earned in a day, physical and meta work apart. */
-interface DaySummary {
+export interface DaySummary {
   member: NewsPerson;
   physicalPoints: number;
   metaPoints: number;

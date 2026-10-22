@@ -16,6 +16,7 @@ function item(details: Partial<NewsItem> & Pick<NewsItem, 'taskId' | 'completedA
   return {
     title: 'Vacuum',
     type: 'physical',
+    icon: null,
     points: 3,
     doneBy: anna,
     helpers: [],
