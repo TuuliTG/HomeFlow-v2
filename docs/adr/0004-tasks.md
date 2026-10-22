@@ -127,6 +127,12 @@ next one back rather than follow a fixed calendar.
   doing), with **No due date**, or **Available** (nobody has picked them up); **All** is the default. Both choices
   ("Show completed" on a child's board too), like the Me page's view (`?view=`), are remembered on the device (ADR
   0002), so the nav link brings them back.
+  A **search** above the filter (`?q=`, `searchTasks()`) narrows the board further to tasks whose title or
+  description contains every word typed, ignoring case but keeping ä apart from a (different letters in Finnish), so
+  a family member can check whether a task already exists before adding it. It is done in the app on the tasks
+  already loaded, and isn't remembered on the device: a forgotten search would hide tasks unnoticed. It leaves the
+  completed tasks below as they are: they answer "what was done lately", not "does this task exist". A hidden
+  status region reads out how many tasks match while typing.
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
   long ago in the user's calendar days ("Last done by Ben, 3 days ago"), so the family sees who usually carries it
   and can take turns. It comes from `previous_task_id`, embedded as `previous_occurrence(...)`: PostgREST finds no

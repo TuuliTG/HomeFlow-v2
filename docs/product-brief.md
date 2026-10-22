@@ -21,7 +21,7 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 
 ## Screens (mid-fi prototype, mobile, bottom tab bar: Me · Tasks · News · Rewards · Statistics)
 
-- **Shared tasks** (formerly Available tasks) — filter; task cards with points, tags
+- **Shared tasks** (formerly Available tasks) — search and filter; task cards with points, tags
   (frequency, type physical/meta), bonus points (e.g. "new for you", fairness boost; later iteration), "last done by …";
   **Pick up task** button; **Ask** someone else to do a task (they're notified and accept or decline); **+** to
   create a task.
