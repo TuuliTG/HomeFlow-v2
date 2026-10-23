@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { en, type Messages } from '@/locales/en';
 import { fi } from '@/locales/fi';
+import { sv } from '@/locales/sv';
 
 /** Every plain text in a language, by its path ("tasks.card.edit"). */
 function texts(messages: object, path = ''): [string, string][] {
@@ -15,6 +16,7 @@ function texts(messages: object, path = ''): [string, string][] {
 describe.each([
   ['en', en],
   ['fi', fi],
+  ['sv', sv],
 ] as [string, Messages][])('%s', (_code, messages) => {
   it('leaves no text empty', () => {
     for (const [path, text] of texts(messages)) expect(text, path).not.toBe('');
@@ -79,5 +81,42 @@ describe('Finnish', () => {
 
   it("splits a day's points by the kind of work", () => {
     expect(fi.news.summary('Sinä', 7, 3)).toBe('Sinä: 10 pistettä (7 fyysistä, 3 metatyötä)');
+  });
+});
+
+describe('Swedish', () => {
+  it('formats dates and times the Swedish way', () => {
+    expect(sv.common.shortDate(date)).toBe('tors 8 okt');
+    expect(sv.common.dayAndMonth(date)).toBe('8 okt');
+    expect(sv.common.time(date)).toBe('9.05');
+  });
+
+  it('counts points and lists names', () => {
+    expect(sv.common.points(1)).toBe('1 poäng');
+    expect(sv.common.points(3)).toBe('3 poäng');
+    expect(sv.common.joinNames(['Anna', 'Ben', 'Carl'])).toBe('Anna, Ben och Carl');
+  });
+
+  it('describes how often a task repeats, with ordinals', () => {
+    expect([1, 2, 3, 7, 14, 21, 22, 11].map(sv.tasks.repeat)).toEqual([
+      'Varje dag',
+      'Varannan dag',
+      'Var 3:e dag',
+      'Varje vecka',
+      'Varannan vecka',
+      'Var 3:e vecka',
+      'Var 22:a dag',
+      'Var 11:e dag',
+    ]);
+  });
+
+  it('names whose a goal is, without an extra s after s, x or z', () => {
+    expect(sv.rewards.goal.othersGoal('Ben')).toBe('Bens mål');
+    expect(sv.rewards.goal.othersGoal('Lars')).toBe('Lars mål');
+  });
+
+  it('agrees "done" with the number of tasks', () => {
+    expect(sv.statistics.pointsSummary(1, 1)).toBe('1 poäng · 1 uppgift gjord');
+    expect(sv.statistics.pointsSummary(12, 3)).toBe('12 poäng · 3 uppgifter gjorda');
   });
 });

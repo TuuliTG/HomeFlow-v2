@@ -11,7 +11,7 @@ describe('stored language', () => {
 
   it('ignores a stored value that is not a language HomeFlow speaks', () => {
     vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['fi-FI']);
-    localStorage.setItem('homeflow:language', 'sv');
+    localStorage.setItem('homeflow:language', 'de');
     expect(initialLanguage()).toBe('fi');
   });
 

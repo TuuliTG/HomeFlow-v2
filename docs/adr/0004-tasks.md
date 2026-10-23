@@ -128,7 +128,7 @@ next one back rather than follow a fixed calendar.
   ("Show completed" on a child's board too), like the Me page's view (`?view=`), are remembered on the device (ADR
   0002), so the nav link brings them back.
   A **search** above the filter (`?q=`, `searchTasks()`) narrows the board further to tasks whose title or
-  description contains every word typed, ignoring case but keeping ä apart from a (different letters in Finnish), so
+  description contains every word typed, ignoring case but keeping ä apart from a (different letters in Finnish and Swedish), so
   a family member can check whether a task already exists before adding it. It is done in the app on the tasks
   already loaded, and isn't remembered on the device: a forgotten search would hide tasks unnoticed. It leaves the
   completed tasks below as they are: they answer "what was done lately", not "does this task exist". A hidden

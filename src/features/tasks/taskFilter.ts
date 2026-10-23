@@ -45,7 +45,7 @@ function searchWords(query: string): string[] {
 /**
  * The tasks whose title or description contains every word of the search, in any order and ignoring case,
  * so "dishes wash" finds "Wash the dishes". Letters like ä stay distinct from a: they are different letters
- * in Finnish.
+ * in Finnish and Swedish.
  */
 export function searchTasks(tasks: Task[], query: string): Task[] {
   const words = searchWords(query);
