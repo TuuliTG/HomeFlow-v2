@@ -33,7 +33,7 @@ maintained by agents, so strict types and a predictable structure matter more th
   tinted page; text on the page uses `ink-muted` or darker for AA contrast. The **Figtree** font is self-hosted
   with `@fontsource-variable/figtree` and precached by the service worker, so it works offline.
 - **Vercel** hosts the static build.
-- **Languages** (English and Finnish) without an i18n library: each language is a typed object in
+- **Languages** (English, Finnish and Swedish) without an i18n library: each language is a typed object in
   `src/locales/<code>/`, one file per area, with English (`src/locales/en`) as the source and its type
   `Messages`. Texts that take values are functions, so plurals, word order and date formats (`common.shortDate`,
   `common.time`) live with the language. Components read texts with `useMessages()` from `@/lib/i18n/i18n`;

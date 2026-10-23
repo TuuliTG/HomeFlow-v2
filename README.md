@@ -2,7 +2,7 @@
 
 A mobile-first web app (PWA) that helps families share household tasks fairly. It credits both physical chores and
 the invisible meta work behind them (planning, remembering, organising), and motivates through shared goals and
-rewards instead of control. The app is available in English and Finnish.
+rewards instead of control. The app is available in English, Finnish and Swedish.
 
 ## Tech stack
 

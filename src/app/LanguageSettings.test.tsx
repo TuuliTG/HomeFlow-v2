@@ -15,7 +15,7 @@ describe('language', () => {
   });
 
   it('is English when the browser prefers a language HomeFlow does not speak', async () => {
-    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['sv-SE']);
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['de-DE']);
     renderAppAt('/');
 
     expect(
@@ -32,6 +32,16 @@ describe('language', () => {
       await screen.findByRole('heading', { level: 1, name: 'Yhteiset tehtävät' }),
     ).toBeInTheDocument();
     expect(document.documentElement.lang).toBe('fi');
+  });
+
+  it('speaks Swedish to a browser that prefers it', async () => {
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['sv-FI', 'fi-FI']);
+    renderAppAt('/');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Gemensamma uppgifter' }),
+    ).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe('sv');
   });
 
   it('can be changed in the settings, and is remembered on this device', async () => {
