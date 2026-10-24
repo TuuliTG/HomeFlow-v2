@@ -146,8 +146,9 @@ next one back rather than follow a fixed calendar.
   is a separate toggle that combines with it, e.g. what is due today and still free. The due dates stay one choice
   because two of them together would show nothing or the same as one. A
   **Picked up by** row (`?who=<user id>`, `pickerFilter.ts`; not shown to someone alone in their household) narrows
-  it further to the tasks one member has picked up: **Everyone** (the default), **You**, then the others in the
-  order they joined; a member not in the household (any more) shows everyone's. It and **Available** exclude each
+  it further to the tasks one member has picked up: **You**, then the others in the order they joined, as chips
+  where tapping the chosen one again shows everyone's again (the default, with none chosen; an "Everyone" chip
+  confused); a member not in the household (any more) shows everyone's. It and **Available** exclude each
   other, as together they would always show nothing: choosing one clears the other. It leaves "Show completed" as
   it is, like the search. These choices
   ("Show completed" on a child's board too), like the Me page's view (`?view=`), are remembered on the device (ADR

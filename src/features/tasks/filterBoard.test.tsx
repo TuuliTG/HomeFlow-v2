@@ -246,24 +246,30 @@ describe('filtering the board by who has picked tasks up', () => {
     return { anna, ben, mia };
   }
 
-  it("shows everyone's tasks until a family member is chosen, then only theirs", async () => {
+  function expectNobodyChosen(who: HTMLElement) {
+    for (const member of within(who).getAllByRole('checkbox')) expect(member).not.toBeChecked();
+  }
+
+  it("shows everyone's tasks until a family member is chosen, then only theirs, until chosen again", async () => {
     familyWithTasks();
     const user = userEvent.setup();
     const { router } = renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Dust' });
 
     const who = screen.getByRole('group', { name: 'Picked up by' });
-    expect(within(who).getByRole('radio', { name: 'Everyone' })).toBeChecked();
+    expectNobodyChosen(who);
     expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
 
-    await user.click(within(who).getByRole('radio', { name: 'Ben' }));
+    await user.click(within(who).getByRole('checkbox', { name: 'Ben' }));
     expectShown(['Vacuum'], ['Cook', 'Mop', 'Dust']);
     expect(router.state.location.search).toMatch(/^\?who=/);
 
-    await user.click(within(who).getByRole('radio', { name: 'You' }));
+    await user.click(within(who).getByRole('checkbox', { name: 'You' }));
+    expect(within(who).getByRole('checkbox', { name: 'Ben' })).not.toBeChecked();
     expectShown(['Cook'], ['Vacuum', 'Mop', 'Dust']);
 
-    await user.click(within(who).getByRole('radio', { name: 'Everyone' }));
+    await user.click(within(who).getByRole('checkbox', { name: 'You' }));
+    expectNobodyChosen(who);
     expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
     expect(router.state.location.search).toBe('');
   });
@@ -286,13 +292,13 @@ describe('filtering the board by who has picked tasks up', () => {
     await screen.findByRole('listitem', { name: 'Dust' });
     const who = screen.getByRole('group', { name: 'Picked up by' });
 
-    await user.click(within(who).getByRole('radio', { name: 'Ben' }));
+    await user.click(within(who).getByRole('checkbox', { name: 'Ben' }));
     await user.click(screen.getByRole('checkbox', { name: 'Available' }));
-    expect(within(who).getByRole('radio', { name: 'Everyone' })).toBeChecked();
+    expectNobodyChosen(who);
     expectShown(['Dust'], ['Cook', 'Vacuum', 'Mop']);
     expect(router.state.location.search).toBe('?available=1');
 
-    await user.click(within(who).getByRole('radio', { name: 'Mia' }));
+    await user.click(within(who).getByRole('checkbox', { name: 'Mia' }));
     expect(screen.getByRole('checkbox', { name: 'Available' })).not.toBeChecked();
     expectShown(['Mop'], ['Cook', 'Vacuum', 'Dust']);
     expect(router.state.location.search).toMatch(/^\?who=[^&]+$/);
@@ -303,7 +309,7 @@ describe('filtering the board by who has picked tasks up', () => {
     renderAppAt('/?who=someone-else');
 
     await screen.findByRole('listitem', { name: 'Dust' });
-    expect(screen.getByRole('radio', { name: 'Everyone' })).toBeChecked();
+    expectNobodyChosen(screen.getByRole('group', { name: 'Picked up by' }));
     expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
   });
 
