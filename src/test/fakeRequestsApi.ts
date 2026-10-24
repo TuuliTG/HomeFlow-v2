@@ -26,6 +26,7 @@ export const fakeRequestsBackend = {
   requestTaskAs(userId: string, taskId: string, memberId: string) {
     const task = openTaskOf(userId, taskId);
     if (task.isPrivate) throw new Error('A private task cannot be asked of anyone');
+    if (task.assignedTo !== null) throw new Error('A task given to a child is theirs alone');
     if (task.pickedUpBy !== null && task.pickedUpBy !== userId) {
       throw new Error('Someone else has picked up this task');
     }

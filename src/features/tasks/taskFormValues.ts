@@ -23,6 +23,7 @@ export function fieldValues(
     isPrivate: task.isPrivate,
     forChildren: task.forChildren,
     icon: task.icon,
+    assignedTo: task.assignedTo,
   };
 }
 
@@ -38,9 +39,19 @@ export function taskInput(values: FieldValues, isChild: boolean) {
     repeatEveryDays: values.repeat === '' ? null : Number(values.repeat),
     dueOn: values.dueOn === '' ? null : values.dueOn,
     description: values.description.trim() === '' ? null : values.description,
-    isPrivate: values.isPrivate,
-    // An adult's private task is theirs alone, so it isn't for children either.
-    forChildren: isChild || (!values.isPrivate && values.forChildren),
     icon: values.icon,
+    ...audience(values, isChild),
+  };
+}
+
+/** Who the task is for, as the field values say. */
+function audience(values: FieldValues, isChild: boolean) {
+  // An adult's private task is theirs alone, so it isn't for children either.
+  const sharedWithChildren = !isChild && !values.isPrivate && values.forChildren;
+  return {
+    isPrivate: values.isPrivate,
+    forChildren: isChild || sharedWithChildren,
+    // Only adults give a task for children to one child; a child's edit keeps it (`update_task()`).
+    assignedTo: sharedWithChildren ? values.assignedTo : null,
   };
 }

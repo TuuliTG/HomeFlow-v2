@@ -76,6 +76,8 @@ export const taskForm = {
   },
   keepPrivate: 'Keep it private',
   forChildren: 'Children can do it',
+  assignedTo: 'Whose chore is it?',
+  anyChild: 'Any child',
   points: 'Points',
   images: {
     label: 'Pictures (optional)',

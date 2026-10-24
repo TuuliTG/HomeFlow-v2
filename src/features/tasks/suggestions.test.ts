@@ -79,6 +79,7 @@ describe('suggestionAsTask', () => {
       forChildren: true,
       icon: 'trash',
       dueOn: null,
+      assignedTo: null,
     });
   });
 

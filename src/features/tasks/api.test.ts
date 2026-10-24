@@ -40,6 +40,7 @@ const newTask = {
   isPrivate: false,
   forChildren: false,
   icon: null,
+  assignedTo: null,
 } as const;
 const row = {
   id: 't1',
@@ -54,6 +55,7 @@ const row = {
   is_private: false,
   for_children: false,
   icon: null,
+  assigned_to: null,
   task_images: [],
   previous: null,
   request: null,
@@ -237,6 +239,7 @@ describe('tasks api', () => {
       dueOn: '2026-10-10',
       forChildren: true,
       icon: 'vacuum',
+      assignedTo: 'ben',
     });
 
     expect(client.rpc).toHaveBeenCalledWith('update_task', {
@@ -249,6 +252,7 @@ describe('tasks api', () => {
       task_repeat_every_days: 7,
       task_for_children: true,
       task_icon: 'vacuum',
+      task_assigned_to: 'ben',
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
@@ -346,6 +350,18 @@ describe('tasks api', () => {
     expect(task).toMatchObject({ forChildren: true });
   });
 
+  it('reads which child a task was given to', async () => {
+    respondWithTasks({
+      data: [{ ...row, for_children: true, assigned_to: 'ben', picked_up_by: 'ben' }],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const [task] = await api.fetchTasks();
+
+    expect(task).toMatchObject({ assignedTo: 'ben', pickedUpBy: 'ben' });
+  });
+
   it("reads a task's pictures in order", async () => {
     respondWithTasks({
       data: [
@@ -414,9 +430,9 @@ describe('tasks api', () => {
       ...newTask,
       repeatEveryDays: 7,
       dueOn: '2026-10-10',
-      isPrivate: true,
       forChildren: true,
       icon: 'vacuum',
+      assignedTo: 'ben',
     });
 
     expect(client.from).toHaveBeenCalledWith('tasks');
@@ -427,9 +443,10 @@ describe('tasks api', () => {
       points: 3,
       repeat_every_days: 7,
       due_on: '2026-10-10',
-      is_private: true,
+      is_private: false,
       for_children: true,
       icon: 'vacuum',
+      assigned_to: 'ben',
     });
     expect(query.select).toHaveBeenCalledWith('id');
     expect(id).toBe('t9');

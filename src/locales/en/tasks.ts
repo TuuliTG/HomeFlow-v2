@@ -6,6 +6,10 @@ export const tasks = {
     title: 'Shared tasks',
     showCompleted: 'Show completed',
     show: 'Show',
+    /** The filter by who has picked tasks up. */
+    who: 'Picked up by',
+    everyone: 'Everyone',
+    you: 'You',
     search: 'Search tasks',
     noMatches: (search: string) => `No tasks match “${search}”.`,
     /** Read out by screen readers while searching. */
@@ -26,6 +30,9 @@ export const tasks = {
       undated: 'Every task has a due date.',
       available: 'Every task has been picked up.',
     },
+    /** When nothing shown is picked up by the member chosen. */
+    noneFor: (name: string) => `${name} has no tasks picked up here.`,
+    noneForYou: 'You have no tasks picked up here.',
   },
   due: {
     today: 'Due today',
@@ -57,6 +64,8 @@ export const tasks = {
   card: {
     private: 'Private',
     forChildren: 'For children',
+    /** A task an adult gave to one child. */
+    onlyFor: (name: string) => `Only for ${name}`,
     waitingForPoints: 'Waiting for points',
     addedBy: {
       you: 'Added by you',

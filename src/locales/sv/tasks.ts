@@ -8,6 +8,9 @@ export const tasks: Messages['tasks'] = {
     title: 'Gemensamma uppgifter',
     showCompleted: 'Visa gjorda',
     show: 'Visa',
+    who: 'Tagen av',
+    everyone: 'Alla',
+    you: 'Du',
     search: 'Sök uppgifter',
     noMatches: (search) => `Inga uppgifter matchar ”${search}”.`,
     matches: (count) =>
@@ -27,6 +30,8 @@ export const tasks: Messages['tasks'] = {
       undated: 'Alla uppgifter har en förfallodag.',
       available: 'Alla uppgifter har redan tagits.',
     },
+    noneFor: (name) => `${name} har inte tagit någon av de här uppgifterna.`,
+    noneForYou: 'Du har inte tagit någon av de här uppgifterna.',
   },
   due: {
     today: 'Ska göras i dag',
@@ -59,6 +64,7 @@ export const tasks: Messages['tasks'] = {
   card: {
     private: 'Privat',
     forChildren: 'För barn',
+    onlyFor: (name) => `Bara för ${name}`,
     waitingForPoints: 'Väntar på poäng',
     addedBy: {
       you: 'Tillagd av dig',

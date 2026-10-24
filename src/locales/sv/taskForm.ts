@@ -76,6 +76,8 @@ export const taskForm: Messages['taskForm'] = {
   },
   keepPrivate: 'Håll privat',
   forChildren: 'Barn kan göra den',
+  assignedTo: 'Vems syssla är det?',
+  anyChild: 'Vilket barn som helst',
   points: 'Poäng',
   images: {
     label: 'Bilder (valfritt)',

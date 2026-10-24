@@ -21,6 +21,7 @@ describe('taskFromLink', () => {
       isPrivate: false,
       forChildren: false,
       icon: null,
+      assignedTo: null,
     });
   });
 

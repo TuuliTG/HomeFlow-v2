@@ -7,6 +7,9 @@ export const tasks: Messages['tasks'] = {
     title: 'Yhteiset tehtävät',
     showCompleted: 'Näytä tehdyt',
     show: 'Näytä',
+    who: 'Varaaja',
+    everyone: 'Kaikki',
+    you: 'Sinä',
     search: 'Hae tehtäviä',
     noMatches: (search) => `Hakua ”${search}” vastaavia tehtäviä ei löytynyt.`,
     matches: (count) => (count === 1 ? '1 tehtävä löytyi' : `${String(count)} tehtävää löytyi`),
@@ -25,6 +28,8 @@ export const tasks: Messages['tasks'] = {
       undated: 'Kaikilla tehtävillä on määräpäivä.',
       available: 'Kaikki tehtävät on jo varattu.',
     },
+    noneFor: (name) => `${name} ei ole varannut näistä tehtävistä yhtään.`,
+    noneForYou: 'Et ole varannut näistä tehtävistä yhtään.',
   },
   due: {
     today: 'Määräpäivä tänään',
@@ -55,6 +60,7 @@ export const tasks: Messages['tasks'] = {
   card: {
     private: 'Yksityinen',
     forChildren: 'Lapsille',
+    onlyFor: (name) => `Vain: ${name}`,
     waitingForPoints: 'Odottaa pisteitä',
     addedBy: {
       you: 'Lisääjä: sinä',
