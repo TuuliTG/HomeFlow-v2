@@ -39,10 +39,19 @@ export function useSearchParam<T>({
     setValue(next);
     const serialised = serialise(next);
     if (rememberAs !== undefined) rememberChoice(rememberAs, serialised);
+    if (pendingChanges === null) {
+      pendingChanges = new Map();
+      queueMicrotask(() => {
+        pendingChanges = null;
+      });
+    }
+    const changes = pendingChanges.set(name, serialised);
     setSearchParams(
       (params) => {
-        if (serialised === null) params.delete(name);
-        else params.set(name, serialised);
+        for (const [changed, value] of changes) {
+          if (value === null) params.delete(changed);
+          else params.set(changed, value);
+        }
         return params;
       },
       { replace: true },
@@ -51,6 +60,12 @@ export function useSearchParam<T>({
 
   return [value, set];
 }
+
+/**
+ * Choices changed together, e.g. one that clears another: each `setSearchParams` starts from the address as
+ * last rendered, so the later ones repeat the earlier changes rather than undo them.
+ */
+let pendingChanges: Map<string, string | null> | null = null;
 
 const storageKey = (key: string) => `homeflow:choice:${key}`;
 

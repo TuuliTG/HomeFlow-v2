@@ -8,7 +8,6 @@ export const tasks = {
     show: 'Show',
     /** The filter by who has picked tasks up. */
     who: 'Picked up by',
-    everyone: 'Everyone',
     you: 'You',
     search: 'Search tasks',
     noMatches: (search: string) => `No tasks match “${search}”.`,

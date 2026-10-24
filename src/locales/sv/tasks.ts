@@ -9,7 +9,6 @@ export const tasks: Messages['tasks'] = {
     showCompleted: 'Visa gjorda',
     show: 'Visa',
     who: 'Tagen av',
-    everyone: 'Alla',
     you: 'Du',
     search: 'Sök uppgifter',
     noMatches: (search) => `Inga uppgifter matchar ”${search}”.`,

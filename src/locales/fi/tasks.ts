@@ -8,7 +8,6 @@ export const tasks: Messages['tasks'] = {
     showCompleted: 'Näytä tehdyt',
     show: 'Näytä',
     who: 'Varaaja',
-    everyone: 'Kaikki',
     you: 'Sinä',
     search: 'Hae tehtäviä',
     noMatches: (search) => `Hakua ”${search}” vastaavia tehtäviä ei löytynyt.`,
