@@ -21,6 +21,8 @@ export interface TaskAdded {
   isPrivate: boolean;
   /** Children see only tasks available for them, so they aren't told about the others. */
   forChildren: boolean;
+  /** The one child an adult gave it to, if any; the other children don't see it, so they aren't told. */
+  assignedTo: string | null;
 }
 
 export interface HouseholdMember {
@@ -55,10 +57,16 @@ function messageFor(creatorName: string | null, taskTitle: string): PushMessage 
   return { title: 'HomeFlow', body: `${creatorName ?? 'Someone'} added ${taskTitle}`, url: '/' };
 }
 
+/** Whether the member sees the task, like `private.can_see_task()` for a shared task in their household. */
+function canSee({ userId, isChild }: HouseholdMember, task: TaskAdded): boolean {
+  return !isChild || (task.forChildren && (task.assignedTo === null || task.assignedTo === userId));
+}
+
 /**
  * Notifies every household member who can see the task except whoever added it, and forgets dead
  * devices. The next occurrence of a repeating task isn't news and a private task isn't the family's,
- * so neither notifies anyone; an adults-only task doesn't notify children.
+ * so neither notifies anyone; an adults-only task doesn't notify children, nor one child's chore the
+ * others.
  */
 export async function notifyHousehold(
   taskId: string,
@@ -68,7 +76,7 @@ export async function notifyHousehold(
   if (!task || task.isRepeat || task.isPrivate) return nothingSent;
   const members = await deps.membersOf(task.householdId);
   const recipients = members
-    .filter(({ userId, isChild }) => userId !== task.createdBy && (task.forChildren || !isChild))
+    .filter((member) => member.userId !== task.createdBy && canSee(member, task))
     .map(({ userId }) => userId);
   if (recipients.length === 0) return nothingSent;
 

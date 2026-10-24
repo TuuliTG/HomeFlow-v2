@@ -69,8 +69,8 @@ next one back rather than follow a fixed calendar.
   picks it up for the child, also from whoever had it, so it is on their Me page with no new list, and puts it
   back for any child when an adult clears it; the triggers on picking up then settle requests and schedules. It is
   the child's alone: they can't put it back (`put_back_task()`), nobody can be asked to do it (`request_task()`),
-  and other children don't see it (`private.can_see_task()` and the select policy), so neither can they act on
-  it. Adults see it on the board as "Only for Ben", can still mark it done like any task, and change or clear the
+  and other children don't see it (`private.can_see_task()` and the select policy) nor are told it was added
+  (`notify-household`), so neither can they act on it. Adults see it on the board as "Only for Ben", can still mark it done like any task, and change or clear the
   child by editing it (`update_task(task_assigned_to)`; a child's edit keeps it). Only adults give tasks, and only
   to a child in their household (`private.is_child_in_household()`, insert policy). The next occurrence goes to the
   same child while they are still one; a child who becomes an adult keeps their chores picked up, no longer given
