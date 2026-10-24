@@ -19,7 +19,7 @@ import {
 /**
  * In-memory stand-in for `@/features/tasks/api`, installed for every unit test in `setup.ts`.
  * Like the database, it shows the logged-in user only their own household's open tasks, private
- * tasks only to whoever added them, and children only tasks for children.
+ * tasks only to whoever added them, and children only tasks for children, not other children's chores.
  */
 
 /** Like `order by due_on asc nulls last`; a stable sort keeps newest first within a date. */
