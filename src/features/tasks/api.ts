@@ -28,6 +28,7 @@ const taskRowsSchema = z.array(
     is_private: z.boolean(),
     for_children: z.boolean(),
     icon: taskIconSchema,
+    assigned_to: z.string().nullable(),
     task_images: z.array(z.object({ path: z.string(), position: z.number() })),
     /** The occurrence this one repeats; it is done, since completing it added this one. */
     previous: z
@@ -58,7 +59,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, assigned_to, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -85,12 +86,14 @@ export async function fetchTasks(): Promise<Task[]> {
       picked_up_by,
       is_private,
       for_children,
+      assigned_to,
       task_images,
       previous,
       request,
       ...task
     }) => ({
       ...task,
+      assignedTo: assigned_to,
       images: task_images.toSorted((a, b) => a.position - b.position).map((image) => image.path),
       isPrivate: is_private,
       forChildren: for_children,
@@ -190,6 +193,7 @@ export async function addTask({
   dueOn,
   isPrivate,
   forChildren,
+  assignedTo,
   ...task
 }: NewTask): Promise<string> {
   const { data, error } = await getSupabaseClient()
@@ -200,6 +204,7 @@ export async function addTask({
       due_on: dueOn,
       is_private: isPrivate,
       for_children: forChildren,
+      assigned_to: assignedTo,
     })
     .select('id')
     .single();
@@ -225,7 +230,7 @@ export async function pickUpTask(taskId: string): Promise<void> {
   if (error) throw error;
 }
 
-/** Gives back a task the user picked up, so anyone can pick it up. */
+/** Gives back a task the user picked up, so anyone can pick it up; not one given to them. */
 export async function putBackTask(taskId: string): Promise<void> {
   const { error } = await getSupabaseClient().rpc('put_back_task', { task_id: taskId });
   if (error) throw error;
@@ -233,11 +238,22 @@ export async function putBackTask(taskId: string): Promise<void> {
 
 /**
  * Replaces an open task's details. Any member of the household can edit a shared task they see; whether
- * it is private stays as it was when it was added. Only adults can make a task adults-only.
+ * it is private stays as it was when it was added. Only adults can make a task adults-only or give it to a
+ * child; a child's edit keeps whose chore it is.
  */
 export async function updateTask(
   taskId: string,
-  { title, description, type, points, dueOn, repeatEveryDays, forChildren, icon }: NewTask,
+  {
+    title,
+    description,
+    type,
+    points,
+    dueOn,
+    repeatEveryDays,
+    forChildren,
+    icon,
+    assignedTo,
+  }: NewTask,
 ): Promise<void> {
   const { error } = await getSupabaseClient().rpc('update_task', {
     task_id: taskId,
@@ -249,6 +265,9 @@ export async function updateTask(
     task_repeat_every_days: repeatEveryDays,
     task_for_children: forChildren,
     task_icon: icon,
+    task_assigned_to: assignedTo,
+    // Says whose chore it is; the database ignores it from a child (`update_task()`).
+    task_change_assignee: true,
   });
   if (error) throw error;
 }

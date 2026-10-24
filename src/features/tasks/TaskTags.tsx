@@ -20,7 +20,10 @@ function tagsOf(task: Task, t: Messages): Tag[] {
     task.isPrivate && { label: t.tasks.card.private, className: 'bg-notice-100 text-notice-900' },
     shared &&
       task.forChildren && {
-        label: t.tasks.card.forChildren,
+        label:
+          task.assignedTo === null
+            ? t.tasks.card.forChildren
+            : t.tasks.card.onlyFor(task.pickerName ?? t.common.someone),
         className: 'bg-done-100 text-done-800',
       },
     shared &&

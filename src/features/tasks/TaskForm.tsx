@@ -79,6 +79,7 @@ export function TaskForm({
   const [isPrivate, setIsPrivate] = useState(initialValues.isPrivate);
   const [forChildren, setForChildren] = useState(initialValues.forChildren);
   const [icon, setIcon] = useState<TaskIconName | null>(initialValues.icon);
+  const [assignedTo, setAssignedTo] = useState(initialValues.assignedTo);
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
@@ -111,6 +112,7 @@ export function TaskForm({
     setIsPrivate(values.isPrivate);
     setForChildren(values.forChildren);
     setIcon(values.icon);
+    setAssignedTo(values.assignedTo);
     setError(null);
   }
 
@@ -118,7 +120,7 @@ export function TaskForm({
     event.preventDefault();
     const values = { title, description, type, points, repeat: repeatEveryDays, dueOn };
     const parsed = newTaskSchema(t).safeParse(
-      taskInput({ ...values, isPrivate, forChildren, icon }, isChild),
+      taskInput({ ...values, isPrivate, forChildren, icon, assignedTo }, isChild),
     );
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
@@ -189,6 +191,9 @@ export function TaskForm({
         onPrivateChange={setIsPrivate}
         forChildren={forChildren}
         onForChildrenChange={setForChildren}
+        assignedTo={assignedTo}
+        onAssignedToChange={setAssignedTo}
+        currentUserId={currentUserId}
       />
 
       {!isPrivate && (

@@ -3,17 +3,21 @@ import { SearchIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
+import { FilterChoice } from '@/features/tasks/FilterChoice';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
+import type { HouseholdMember } from '@/features/tasks/helpersApi';
+import { PickerChoice } from '@/features/tasks/PickerChoice';
+import { nothingPickedUpMessage, usePickerFilter } from '@/features/tasks/pickerFilter';
 import { PointsToAward } from '@/features/tasks/PointsToAward';
 import { ChildBoard } from '@/features/tasks/ChildBoard';
 import { useIsChild, useTasks } from '@/features/tasks/useTasks';
 import { today } from '@/lib/dates';
 import {
   type DueFilter,
-  dueFilters,
   filterTasks,
   parseDueFilter,
+  pickedUpBy,
   searchTasks,
   type TaskFilter,
 } from '@/features/tasks/taskFilter';
@@ -34,14 +38,15 @@ export function SharedTasksPage() {
 }
 
 /**
- * The board for adults: every shared task by due date, with a search, filters and the household's completed
- * tasks.
+ * The board for adults: every shared task by due date, with a search, filters (also by who has picked tasks up)
+ * and the household's completed tasks.
  */
 function Board() {
   const user = useLoggedInUser();
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
   const [due, setDue] = useDueFilterParam(user.id);
   const [availableOnly, setAvailableOnly] = useSwitchParam(AVAILABLE_PARAM, user.id);
+  const { picker, members, setPickerId } = usePickerFilter(user.id);
   const [search, setSearch] = useSearchTextParam();
   const t = useMessages().tasks;
 
@@ -60,9 +65,15 @@ function Board() {
           availableOnly={availableOnly}
           onAvailableOnlyChange={setAvailableOnly}
         />
+        <PickerChoice
+          currentUserId={user.id}
+          members={members}
+          picker={picker}
+          onChange={setPickerId}
+        />
         <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       </div>
-      <TaskList filter={{ due, availableOnly }} search={search} />
+      <TaskList filter={{ due, availableOnly }} picker={picker} search={search} />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
   );
@@ -141,64 +152,6 @@ function SearchField({ search, onChange }: SearchFieldProps) {
   );
 }
 
-interface FilterChoiceProps {
-  due: DueFilter;
-  onDueChange: (due: DueFilter) => void;
-  availableOnly: boolean;
-  onAvailableOnlyChange: (availableOnly: boolean) => void;
-}
-
-const chipClassName =
-  'has-checked:bg-brand-900 has-focus-visible:outline-brand-600 bg-surface text-brand-900 shadow-card hover:bg-brand-50 flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold has-checked:font-bold has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2';
-
-/**
- * One tap to pick which due dates the board shows, and another to show only the tasks nobody has picked up;
- * the two combine, e.g. what is due today and still available.
- */
-function FilterChoice({
-  due,
-  onDueChange,
-  availableOnly,
-  onAvailableOnlyChange,
-}: FilterChoiceProps) {
-  const t = useMessages().tasks.board;
-  return (
-    <fieldset className="flex flex-wrap items-center gap-2">
-      <legend className="sr-only">{t.show}</legend>
-      <span aria-hidden="true" className="text-ink-muted text-sm font-semibold">
-        {t.show}:
-      </span>
-      {dueFilters.map((option) => (
-        <label key={option} className={chipClassName}>
-          <input
-            type="radio"
-            name="task-filter"
-            value={option}
-            checked={due === option}
-            onChange={() => {
-              onDueChange(option);
-            }}
-            className="sr-only"
-          />
-          {t.filters[option]}
-        </label>
-      ))}
-      <span aria-hidden="true" className="bg-line-strong h-6 w-px" />
-      <label className={chipClassName}>
-        <input
-          type="checkbox"
-          checked={availableOnly}
-          onChange={(event) => {
-            onAvailableOnlyChange(event.target.checked);
-          }}
-          className="sr-only"
-        />
-        {t.available}
-      </label>
-    </fieldset>
-  );
-}
-
 interface SwitchProps {
   label: string;
   checked: boolean;
@@ -224,13 +177,16 @@ function Switch({ label, checked, onChange }: SwitchProps) {
 
 interface TaskListProps {
   filter: TaskFilter;
+  /** Only the tasks this member has picked up; null for everyone's. */
+  picker: HouseholdMember | null;
   search: string;
 }
 
-function TaskList({ filter, search }: TaskListProps) {
+function TaskList({ filter, picker, search }: TaskListProps) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
-  const t = useMessages().tasks.board;
+  const messages = useMessages();
+  const t = messages.tasks.board;
 
   // A failed refresh keeps showing the tasks already loaded.
   if (tasks.data === undefined) {
@@ -246,8 +202,16 @@ function TaskList({ filter, search }: TaskListProps) {
   if (shared.length === 0) {
     return <EmptyMessage>{t.empty.all}</EmptyMessage>;
   }
-  const shown = searchTasks(filterTasks(shared, filter, today()), search);
+  const shown = searchTasks(
+    pickedUpBy(filterTasks(shared, filter, today()), picker?.id ?? null),
+    search,
+  );
   const searched = search.trim();
+  function emptyMessage(): string {
+    if (searched !== '') return t.noMatches(searched);
+    if (picker !== null) return nothingPickedUpMessage(picker, user.id, messages);
+    return (filter.availableOnly ? t.emptyAvailable : t.empty)[filter.due];
+  }
   return (
     <>
       {/* Mounted while the tasks show, so screen readers hear how many match as the search is typed. */}
@@ -255,11 +219,7 @@ function TaskList({ filter, search }: TaskListProps) {
         {searched === '' ? '' : t.matches(shown.length)}
       </p>
       {shown.length === 0 ? (
-        <EmptyMessage>
-          {searched !== ''
-            ? t.noMatches(searched)
-            : (filter.availableOnly ? t.emptyAvailable : t.empty)[filter.due]}
-        </EmptyMessage>
+        <EmptyMessage>{emptyMessage()}</EmptyMessage>
       ) : (
         <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />
       )}

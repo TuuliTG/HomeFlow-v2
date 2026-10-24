@@ -101,11 +101,11 @@ function failedAction(failed: Record<Action, boolean>): Action | undefined {
 }
 
 /**
- * Whether the user can pick the task up or put it back. A private task is already the user's own, so
- * neither applies.
+ * Whether the user can pick the task up or put it back. A private task is already the user's own, and
+ * a task given to a child is theirs alone, so neither applies.
  */
 function pickUpAction(task: Task, currentUserId: string): 'pickUp' | 'putBack' | null {
-  if (task.isPrivate) return null;
+  if (task.isPrivate || task.assignedTo !== null) return null;
   if (task.pickedUpBy === currentUserId) return 'putBack';
   return task.pickedUpBy === null ? 'pickUp' : null;
 }

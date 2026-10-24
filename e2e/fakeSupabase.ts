@@ -40,6 +40,8 @@ interface TaskRow {
   picked_up_by: string | null;
   is_private: boolean;
   for_children: boolean;
+  /** The child an adult gave the task to, who has it picked up. */
+  assigned_to: string | null;
   created_at: string;
   completed_at: string | null;
   completed_by: string | null;
@@ -123,6 +125,7 @@ export async function fakeSupabase(page: Page) {
       picked_up_by: null,
       is_private: false,
       for_children: false,
+      assigned_to: null,
       created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
@@ -331,6 +334,7 @@ export async function fakeSupabase(page: Page) {
         | 'due_on'
         | 'is_private'
         | 'for_children'
+        | 'assigned_to'
       >;
       const id = `e2e-task-${String(tasks.length)}`;
       tasks.unshift({
@@ -338,7 +342,8 @@ export async function fakeSupabase(page: Page) {
         id,
         household_id: ownHousehold.id,
         created_by: user.id,
-        picked_up_by: null,
+        // Like the trigger on tasks: a task given to a child is picked up for them.
+        picked_up_by: task.assigned_to,
         created_at: new Date().toISOString(),
         completed_at: null,
         completed_by: null,
@@ -441,7 +446,8 @@ export async function fakeSupabase(page: Page) {
       ...task,
       id: `e2e-task-${String(tasks.length)}`,
       due_on: due.toISOString().slice(0, 10),
-      picked_up_by: null,
+      // Like complete_task(): the next occurrence is given to the same child.
+      picked_up_by: task.assigned_to,
       created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
@@ -533,6 +539,7 @@ export async function fakeSupabase(page: Page) {
       task_due_on: string | null;
       task_repeat_every_days: number | null;
       task_for_children: boolean;
+      task_assigned_to: string | null;
     };
     const task = ownOpenTask(body.task_id);
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
@@ -544,6 +551,8 @@ export async function fakeSupabase(page: Page) {
       due_on: body.task_due_on,
       repeat_every_days: body.task_repeat_every_days,
       for_children: body.task_for_children,
+      assigned_to: body.task_assigned_to,
+      ...(body.task_assigned_to !== task.assigned_to && { picked_up_by: body.task_assigned_to }),
     });
     return reply(route, 204);
   }

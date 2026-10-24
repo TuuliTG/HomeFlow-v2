@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-20 (task icons as emojis, no hints for children)
+- **Updated:** 2026-10-24 (chores given to one child, filtering the board by who picked tasks up)
 
 ## Context
 
@@ -52,16 +52,34 @@ next one back rather than follow a fixed calendar.
   open task. A task someone has picked up can't be taken by another member (55006); only they can put it back. Anyone
   can still mark any task done (credited to whoever does), so a task left picked up never blocks the family, but
   the app asks first ("Ben has picked this up. Mark it done anyway?").
-- **Asking someone**: a member can ask another to do an open shared task that is free or that they picked up
-  (handing it over). `task_requests` (one per task; asking again replaces it) is written only through
-  `request_task()`, `answer_task_request()` and `cancel_task_request()` and is visible with its task; only members
-  who may do the task can be asked (a child only a task for children). The member asked is notified (ADR 0005) and
-  accepts, which picks the task up for them, or declines; nobody gets a task without saying yes, keeping the
-  product's "self-assignment" principle. The card shows the request: Accept/Decline to the member asked (also under
-  _Asked of you_ on the Me page), Cancel to whoever asked, and a decline only to whoever asked until dismissed. A
-  trigger (`private.settle_task_requests()`) removes a request once the task is done or someone other than the
-  member asked picks it up, and an accepted one once they give it back; the member asked picking the task up
-  accepts it. Answering and cancelling lock the task before the request, like picking up, so they can't deadlock. Each function touches the task row, so live updates carry requests too.
+- **Asking someone**: a member can ask another to do an open shared task that is free or that they picked up (handing
+  it over). `task_requests` (one per task; asking again replaces it) is written only through `request_task()`,
+  `answer_task_request()` and `cancel_task_request()` and is visible with its task; only members who may do the task
+  can be asked (a child only a task for children). The member asked is notified (ADR 0005) and accepts, which picks
+  the task up for them, or declines; nobody gets a task without saying yes, keeping the product's "self-assignment"
+  principle (the one exception is a chore an adult gives a child, below). The card shows the request: Accept/Decline
+  to the member asked (also under _Asked of you_ on the Me page), Cancel to whoever asked, and a decline only to
+  whoever asked until dismissed. A trigger (`private.settle_task_requests()`) removes a request once the task is done
+  or someone other than the member asked picks it up, and an accepted one once they give it back; the member asked
+  picking the task up accepts it. Answering and cancelling lock the task before the request, like picking up, so they
+  can't deadlock. Each function touches the task row, so live updates carry requests too.
+- **Chores for one child**: an adult can give a task for children to one child in the household ("Whose chore is it?"
+  on the task form, shown once "Children can do it" is checked and the household has children; `assigned_to`, only for
+  a shared task for children, `tasks_assigned_only_for_children`). Parents asked for this: some chores are one child's
+  job, so asking and waiting for a yes doesn't fit. A trigger (`private.pick_up_for_assignee()`) picks it up for the
+  child, also from whoever had it, so it is on their Me page with no new list, and puts it back for any child when an
+  adult clears it. Requests and schedules are settled as for any change of hands; those triggers also fire on
+  `assigned_to`, as an `UPDATE OF` trigger doesn't see columns a BEFORE trigger changes, and giving a task to a child
+  settles its request even when the child already had it. It is the child's alone: they can't put it back
+  (`put_back_task()`), nobody can be asked to do it (`request_task()`), and other children don't see it
+  (`private.can_see_task()` and the select policy) nor are told it was added (`notify-household`), so neither can they
+  act on it. Adults see it on the board as "Only for Ben", can still mark it done like any task, and change or clear
+  the child by editing it (`update_task(task_assigned_to, task_change_assignee)`; a child's edit, or one from an app
+  that doesn't send it yet, keeps it). Only adults give tasks, and only to a child in their household
+  (`private.is_child_in_household()`, insert policy). The next occurrence goes to the same child while they are still
+  one; a child who becomes an adult keeps their chores picked up, no longer given to them, done ones included so
+  undoing one can't reopen it given to an adult (a trigger on `household_members`). Adding a task again from earlier
+  tasks doesn't copy the child.
 - **Fixing mistakes**: any adult, and a child for their own tasks, can edit (`update_task()`) or delete
   (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
@@ -126,7 +144,11 @@ next one back rather than follow a fixed calendar.
   **This week** (the next seven days, so it ends where "Later" begins; both include overdue tasks, which still need
   doing), or with **No due date**; **All** is the default. **Available** (`?available=1`, nobody has picked them up)
   is a separate toggle that combines with it, e.g. what is due today and still free. The due dates stay one choice
-  because two of them together would show nothing or the same as one. These choices
+  because two of them together would show nothing or the same as one. A
+  **Picked up by** row (`?who=<user id>`, `pickerFilter.ts`; not shown to someone alone in their household) narrows
+  it further to the tasks one member has picked up: **Everyone** (the default), **You**, then the others in the
+  order they joined; a member not in the household (any more) shows everyone's. It leaves "Show completed" as it
+  is, like the search. These choices
   ("Show completed" on a child's board too), like the Me page's view (`?view=`), are remembered on the device (ADR
   0002), so the nav link brings them back.
   A **search** above the filter (`?q=`, `searchTasks()`) narrows the board further to tasks whose title or

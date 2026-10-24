@@ -88,6 +88,11 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
       forChildren: z.boolean(),
       /** What the task's tile shows instead of its type's icon; null for none. */
       icon: z.enum(taskIconNames).nullable(),
+      /**
+       * The one child whose chore it is, given by an adult to a task for children; null for anyone who may
+       * do it. It is picked up for them, and the other children don't see it.
+       */
+      assignedTo: z.string().nullable(),
     })
     .refine((task) => !task.isPrivate || task.points === null, {
       path: ['points'],
@@ -104,6 +109,7 @@ export const NEW_TASK_DEFAULTS = {
   isPrivate: false,
   forChildren: false,
   icon: null,
+  assignedTo: null,
 } as const satisfies Partial<NewTask>;
 
 export interface Task extends NewTask {
@@ -144,10 +150,14 @@ export interface TaskRequest {
 
 /**
  * Whether the user can ask someone to do the task: an open shared task that is free or theirs, which
- * they can hand over this way (`request_task()`).
+ * they can hand over this way, unless it was given to a child (`request_task()`).
  */
 export function canRequest(task: Task, userId: string): boolean {
-  return !task.isPrivate && (task.pickedUpBy === null || task.pickedUpBy === userId);
+  return (
+    !task.isPrivate &&
+    task.assignedTo === null &&
+    (task.pickedUpBy === null || task.pickedUpBy === userId)
+  );
 }
 
 /**
@@ -185,7 +195,7 @@ export function canChange(task: Task, userId: string, isChild: boolean): boolean
 }
 
 /** A task the household has added before, to add again with the same details (`task_suggestions()`). */
-export interface TaskSuggestion extends Omit<NewTask, 'dueOn'> {
+export interface TaskSuggestion extends Omit<NewTask, 'dueOn' | 'assignedTo'> {
   /** How many times members have added it; repeats a task adds itself don't count. */
   timesAdded: number;
   /** Whether it is on the board now, not yet done. */

@@ -44,13 +44,22 @@ export const listeners = new Set<Parameters<typeof liveApi.subscribeToTaskChange
 
 /**
  * Whether `userId` can see the task, like `private.can_see_task()`: in their household, shared or their own, and
- * for children if they are a child.
+ * for children if they are a child, and then not one given to another child.
  */
 export function canSee(userId: string, task: StoredTask): boolean {
   return (
     task.householdId === fakeHouseholdBackend.householdIdOf(userId) &&
     (!task.isPrivate || task.createdBy === userId) &&
-    (task.forChildren || !fakeHouseholdBackend.isChild(userId))
+    ((task.forChildren && (task.assignedTo === null || task.assignedTo === userId)) ||
+      !fakeHouseholdBackend.isChild(userId))
+  );
+}
+
+/** Whether `userId` is a child in the household, who can be given a task (`private.is_child_in_household()`). */
+export function isChildIn(userId: string, householdId: string): boolean {
+  return (
+    fakeHouseholdBackend.householdIdOf(userId) === householdId &&
+    fakeHouseholdBackend.isChild(userId)
   );
 }
 
@@ -152,11 +161,13 @@ export const fakeTasksBackend = {
         isPrivate: false,
         forChildren: false,
         icon: null,
+        assignedTo: null,
         ...task,
         id,
         householdId,
         createdBy: userId,
-        pickedUpBy: null,
+        // Like the trigger on tasks: a task given to a child is picked up for them.
+        pickedUpBy: task.assignedTo ?? null,
         previousTaskId: null,
         createdAt: new Date().toISOString(),
         completed: null,
@@ -190,6 +201,11 @@ export const fakeTasksBackend = {
     fakeRequestsBackend.forget(taskId);
     deliver(task, { kind: 'changed' });
     if (task.repeatEveryDays === null) return;
+    // Like complete_task(): it is given to the same child, as long as they are still one.
+    const nextAssignee =
+      task.assignedTo !== null && isChildIn(task.assignedTo, task.householdId)
+        ? task.assignedTo
+        : null;
     store(
       {
         ...task,
@@ -197,7 +213,8 @@ export const fakeTasksBackend = {
         dueOn: addDays(completedOn, task.repeatEveryDays),
         // Like complete_task(): a child's task waits for points again.
         points: fakeHouseholdBackend.isChild(task.createdBy) ? null : task.points,
-        pickedUpBy: null,
+        assignedTo: nextAssignee,
+        pickedUpBy: nextAssignee,
         previousTaskId: task.id,
         createdAt: new Date().toISOString(),
         completed: null,

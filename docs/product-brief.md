@@ -21,12 +21,12 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 
 ## Screens (mid-fi prototype, mobile, bottom tab bar: Me · Tasks · News · Rewards · Statistics)
 
-- **Shared tasks** (formerly Available tasks) — search and filter; task cards with points, tags
+- **Shared tasks** (formerly Available tasks) — search and filter, also by who has picked tasks up; task cards with points, tags
   (frequency, type physical/meta), bonus points (e.g. "new for you", fairness boost; later iteration), "last done by …";
   **Pick up task** button; **Ask** someone else to do a task (they're notified and accept or decline); **+** to
   create a task.
 - **Create / edit task** — reuse a previous task or type a new one; points, type, assignees (adults default, children
-  opt-in); up to three pictures to clarify details; an optional icon (e.g. a bed) shown on the task's tile; a **private** check mark keeps a task to yourself, without points. Creating a task gets positive
+  opt-in, and an adult can make it one child's chore, which goes straight onto that child's Me page); up to three pictures to clarify details; an optional icon (e.g. a bed) shown on the task's tile; a **private** check mark keeps a task to yourself, without points. Creating a task gets positive
   feedback and counts towards _tasks created_ (no points).
 - **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
   On a done task, _Who helped?_ (also asked right after marking it done) gives helpers (a child who helped, an adult
@@ -47,7 +47,7 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 ## Design principles from evaluation
 
 - Self-assignment, never one person assigning to others: a member can ask another to do a task, but it is theirs
-  only once they accept.
+  only once they accept. The one exception: an adult can give a child a chore of their own.
 - Clearly separate **tasks done** from **tasks created** everywhere points appear.
 - Encourage rotation: bonus for unfamiliar tasks, diminishing points for repeating the same task (later iteration).
 - Avoid pure competition; praise each other with a thumbs up or a comment (News). Open question: reward reset period.
