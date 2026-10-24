@@ -2,6 +2,7 @@ import { inputClassName } from '@/components/ui/formStyles';
 import { SearchIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ChoiceChips } from '@/features/tasks/ChoiceChips';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
@@ -142,30 +143,13 @@ interface FilterChoiceProps {
 function FilterChoice({ filter, onChange }: FilterChoiceProps) {
   const t = useMessages().tasks.board;
   return (
-    <fieldset className="flex flex-wrap items-center gap-2">
-      <legend className="sr-only">{t.show}</legend>
-      <span aria-hidden="true" className="text-ink-muted text-sm font-semibold">
-        {t.show}:
-      </span>
-      {taskFilters.map((option) => (
-        <label
-          key={option}
-          className="has-checked:bg-brand-900 has-focus-visible:outline-brand-600 bg-surface text-brand-900 shadow-card hover:bg-brand-50 flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold has-checked:font-bold has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2"
-        >
-          <input
-            type="radio"
-            name="task-filter"
-            value={option}
-            checked={filter === option}
-            onChange={() => {
-              onChange(option);
-            }}
-            className="sr-only"
-          />
-          {t.filters[option]}
-        </label>
-      ))}
-    </fieldset>
+    <ChoiceChips
+      legend={t.show}
+      name="task-filter"
+      options={taskFilters.map((option) => ({ value: option, label: t.filters[option] }))}
+      value={filter}
+      onChange={onChange}
+    />
   );
 }
 
