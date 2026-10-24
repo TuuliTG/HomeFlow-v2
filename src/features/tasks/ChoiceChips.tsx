@@ -1,3 +1,5 @@
+import { chipClassName } from '@/features/tasks/chipStyles';
+
 interface ChoiceChipsProps<T extends string> {
   /** What is being chosen, shown before the chips. */
   legend: string;
@@ -23,10 +25,7 @@ export function ChoiceChips<T extends string>({
         {legend}:
       </span>
       {options.map((option) => (
-        <label
-          key={option.value}
-          className="has-checked:bg-brand-900 has-focus-visible:outline-brand-600 bg-surface text-brand-900 shadow-card hover:bg-brand-50 flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold has-checked:font-bold has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2"
-        >
+        <label key={option.value} className={chipClassName}>
           <input
             type="radio"
             name={name}

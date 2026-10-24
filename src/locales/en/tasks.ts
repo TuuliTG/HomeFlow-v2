@@ -20,7 +20,6 @@ export const tasks = {
       today: 'Today',
       week: 'This week',
       undated: 'No due date',
-      available: 'Available',
     },
     /** What the board says when the filter leaves nothing to show. */
     empty: {
@@ -28,7 +27,15 @@ export const tasks = {
       today: 'Nothing is due today.',
       week: 'Nothing is due this week.',
       undated: 'Every task has a due date.',
-      available: 'Every task has been picked up.',
+    },
+    /** Only the tasks nobody has picked up; combines with the filters above. */
+    available: 'Available',
+    /** What the board says when nothing is left to pick up within the filter. */
+    emptyAvailable: {
+      all: 'Every task has been picked up.',
+      today: 'Everything due today has been picked up.',
+      week: 'Everything due this week has been picked up.',
+      undated: 'Every task without a due date has been picked up.',
     },
     /** When nothing shown is picked up by the member chosen. */
     noneFor: (name: string) => `${name} has no tasks picked up here.`,

@@ -2,8 +2,8 @@ import { inputClassName } from '@/components/ui/formStyles';
 import { SearchIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { ChoiceChips } from '@/features/tasks/ChoiceChips';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
+import { FilterChoice } from '@/features/tasks/FilterChoice';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import type { HouseholdMember } from '@/features/tasks/helpersApi';
@@ -14,12 +14,12 @@ import { ChildBoard } from '@/features/tasks/ChildBoard';
 import { useIsChild, useTasks } from '@/features/tasks/useTasks';
 import { today } from '@/lib/dates';
 import {
+  type DueFilter,
   filterTasks,
-  parseTaskFilter,
+  parseDueFilter,
   pickedUpBy,
   searchTasks,
   type TaskFilter,
-  taskFilters,
 } from '@/features/tasks/taskFilter';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -27,6 +27,7 @@ import { useSearchParam } from '@/lib/useSearchParam';
 
 const SHOW_COMPLETED_PARAM = 'completed';
 const FILTER_PARAM = 'show';
+const AVAILABLE_PARAM = 'available';
 const SEARCH_PARAM = 'q';
 
 export function SharedTasksPage() {
@@ -43,7 +44,8 @@ export function SharedTasksPage() {
 function Board() {
   const user = useLoggedInUser();
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
-  const [filter, setFilter] = useFilterParam(user.id);
+  const [due, setDue] = useDueFilterParam(user.id);
+  const [availableOnly, setAvailableOnly] = useSwitchParam(AVAILABLE_PARAM, user.id);
   const { picker, members, setPickerId } = usePickerFilter(user.id);
   const [search, setSearch] = useSearchTextParam();
   const t = useMessages().tasks;
@@ -57,7 +59,12 @@ function Board() {
       <PointsToAward />
       <div className="flex flex-col gap-3">
         <SearchField search={search} onChange={setSearch} />
-        <FilterChoice filter={filter} onChange={setFilter} />
+        <FilterChoice
+          due={due}
+          onDueChange={setDue}
+          availableOnly={availableOnly}
+          onAvailableOnlyChange={setAvailableOnly}
+        />
         <PickerChoice
           currentUserId={user.id}
           members={members}
@@ -66,7 +73,7 @@ function Board() {
         />
         <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       </div>
-      <TaskList filter={filter} picker={picker} search={search} />
+      <TaskList filter={{ due, availableOnly }} picker={picker} search={search} />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
   );
@@ -96,13 +103,13 @@ function useSwitchParam(name: string, userId: string) {
 }
 
 /**
- * Which tasks to show, kept in the address as `?show=<filter>` and remembered on this device; all tasks by
+ * Which due dates to show, kept in the address as `?show=<filter>` and remembered on this device; all tasks by
  * default.
  */
-function useFilterParam(userId: string) {
-  return useSearchParam<TaskFilter>({
+function useDueFilterParam(userId: string) {
+  return useSearchParam<DueFilter>({
     name: FILTER_PARAM,
-    parse: parseTaskFilter,
+    parse: parseDueFilter,
     serialise: (filter) => (filter === 'all' ? null : filter),
     rememberAs: `board.${FILTER_PARAM}:${userId}`,
   });
@@ -142,25 +149,6 @@ function SearchField({ search, onChange }: SearchFieldProps) {
         className={`${inputClassName} min-h-11 w-full pl-10`}
       />
     </div>
-  );
-}
-
-interface FilterChoiceProps {
-  filter: TaskFilter;
-  onChange: (filter: TaskFilter) => void;
-}
-
-/** One tap to pick which tasks the board shows. */
-function FilterChoice({ filter, onChange }: FilterChoiceProps) {
-  const t = useMessages().tasks.board;
-  return (
-    <ChoiceChips
-      legend={t.show}
-      name="task-filter"
-      options={taskFilters.map((option) => ({ value: option, label: t.filters[option] }))}
-      value={filter}
-      onChange={onChange}
-    />
   );
 }
 
@@ -221,7 +209,8 @@ function TaskList({ filter, picker, search }: TaskListProps) {
   const searched = search.trim();
   function emptyMessage(): string {
     if (searched !== '') return t.noMatches(searched);
-    return picker === null ? t.empty[filter] : nothingPickedUpMessage(picker, user.id, messages);
+    if (picker !== null) return nothingPickedUpMessage(picker, user.id, messages);
+    return (filter.availableOnly ? t.emptyAvailable : t.empty)[filter.due];
   }
   return (
     <>
