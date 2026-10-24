@@ -18,14 +18,19 @@ export const tasks: Messages['tasks'] = {
       today: 'I dag',
       week: 'Den här veckan',
       undated: 'Ingen förfallodag',
-      available: 'Lediga',
     },
     empty: {
       all: 'Inga uppgifter än. Skapa den första!',
       today: 'Inget ska göras i dag.',
       week: 'Inget ska göras den här veckan.',
       undated: 'Alla uppgifter har en förfallodag.',
-      available: 'Alla uppgifter har redan tagits.',
+    },
+    available: 'Lediga',
+    emptyAvailable: {
+      all: 'Alla uppgifter har redan tagits.',
+      today: 'Allt som ska göras i dag har redan tagits.',
+      week: 'Allt som ska göras den här veckan har redan tagits.',
+      undated: 'Alla uppgifter utan förfallodag har redan tagits.',
     },
   },
   due: {

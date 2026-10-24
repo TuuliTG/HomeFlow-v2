@@ -86,9 +86,46 @@ describe('filtering the board', () => {
     renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Vacuum' });
 
-    await user.click(screen.getByRole('radio', { name: 'Available' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Available' }));
 
     expectShown(['Water plants'], ['Vacuum', 'Book dentist', 'Buy a present']);
+  });
+
+  it('combines a due date with the tasks available to pick up', async () => {
+    const anna = logInAsFamilyMember();
+    addTask(anna.id, 'Vacuum', '2026-10-08');
+    addTask(anna.id, 'Cook', '2026-10-08');
+    addTask(anna.id, 'Mop', '2026-10-14');
+    addTask(anna.id, 'Dust');
+    fakeTasksBackend.pickUpTaskAs(anna.id, 'task:0');
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/');
+    await screen.findByRole('listitem', { name: 'Vacuum' });
+
+    await user.click(screen.getByRole('radio', { name: 'Today' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Available' }));
+    expectShown(['Cook'], ['Vacuum', 'Mop', 'Dust']);
+    expect(screen.getByRole('radio', { name: 'Today' })).toBeChecked();
+    expect(router.state.location.search).toBe('?show=today&available=1');
+
+    await user.click(screen.getByRole('radio', { name: 'This week' }));
+    expectShown(['Cook', 'Mop'], ['Vacuum', 'Dust']);
+
+    await user.click(screen.getByRole('checkbox', { name: 'Available' }));
+    expectShown(['Vacuum', 'Cook', 'Mop'], ['Dust']);
+    expect(router.state.location.search).toBe('?show=week');
+  });
+
+  it('says when everything within the filter has been picked up, read from the address', async () => {
+    const anna = logInAsFamilyMember();
+    addTask(anna.id, 'Vacuum', '2026-10-08');
+    addTask(anna.id, 'Dust');
+    fakeTasksBackend.pickUpTaskAs(anna.id, 'task:0');
+    renderAppAt('/?show=today&available=1');
+
+    expect(await screen.findByText('Everything due today has been picked up.')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Available' })).toBeChecked();
+    expectShown([], ['Vacuum', 'Dust']);
   });
 
   it('keeps the choice in the address, and remembers it after leaving the page', async () => {
