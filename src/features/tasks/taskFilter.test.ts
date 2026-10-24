@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { Task } from '@/features/tasks/task';
 import {
+  type DueFilter,
   filterTasks,
-  parseTaskFilter,
+  parseDueFilter,
   searchTasks,
-  type TaskFilter,
 } from '@/features/tasks/taskFilter';
 
 /** Wednesday 7 October 2026. */
@@ -42,8 +42,8 @@ const tasks = [
   task('Undated', null),
 ];
 
-function shown(filter: TaskFilter) {
-  return filterTasks(tasks, filter, TODAY).map(({ title }) => title);
+function shown(due: DueFilter, availableOnly = false) {
+  return filterTasks(tasks, { due, availableOnly }, TODAY).map(({ title }) => title);
 }
 
 describe('filterTasks', () => {
@@ -64,18 +64,24 @@ describe('filterTasks', () => {
   });
 
   it('shows tasks nobody has picked up', () => {
-    expect(shown('available')).toEqual(['Overdue', 'Today', 'In six days', 'In a week', 'Undated']);
+    expect(shown('all', true)).toEqual(['Overdue', 'Today', 'In six days', 'In a week', 'Undated']);
+  });
+
+  it('combines a due date with tasks nobody has picked up', () => {
+    expect(shown('today', true)).toEqual(['Overdue', 'Today']);
+    expect(shown('undated', true)).toEqual(['Undated']);
   });
 });
 
-describe('parseTaskFilter', () => {
+describe('parseDueFilter', () => {
   it('reads a filter from the address', () => {
-    expect(parseTaskFilter('week')).toBe('week');
+    expect(parseDueFilter('week')).toBe('week');
   });
 
   it('falls back to all for anything else', () => {
-    expect(parseTaskFilter(null)).toBe('all');
-    expect(parseTaskFilter('tomorrow')).toBe('all');
+    expect(parseDueFilter(null)).toBe('all');
+    expect(parseDueFilter('tomorrow')).toBe('all');
+    expect(parseDueFilter('available')).toBe('all');
   });
 });
 

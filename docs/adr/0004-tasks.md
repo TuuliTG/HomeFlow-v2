@@ -122,9 +122,11 @@ next one back rather than follow a fixed calendar.
   from the same sorted list, with the user's local date; the board has no calendar grid, which needs far more room
   on a phone (the Me page offers one as an optional view, below).
   "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done shared tasks.
-  A **Show** filter (`?show=`, one choice at a time, `taskFilter.ts`) narrows the board to tasks due **Today** or
+  A **Show** filter (`?show=`, one due date at a time, `taskFilter.ts`) narrows the board to tasks due **Today** or
   **This week** (the next seven days, so it ends where "Later" begins; both include overdue tasks, which still need
-  doing), with **No due date**, or **Available** (nobody has picked them up); **All** is the default. Both choices
+  doing), or with **No due date**; **All** is the default. **Available** (`?available=1`, nobody has picked them up)
+  is a separate toggle that combines with it, e.g. what is due today and still free. The due dates stay one choice
+  because two of them together would show nothing or the same as one. These choices
   ("Show completed" on a child's board too), like the Me page's view (`?view=`), are remembered on the device (ADR
   0002), so the nav link brings them back.
   A **search** above the filter (`?q=`, `searchTasks()`) narrows the board further to tasks whose title or

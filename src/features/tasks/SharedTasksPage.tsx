@@ -10,11 +10,12 @@ import { ChildBoard } from '@/features/tasks/ChildBoard';
 import { useIsChild, useTasks } from '@/features/tasks/useTasks';
 import { today } from '@/lib/dates';
 import {
+  type DueFilter,
+  dueFilters,
   filterTasks,
-  parseTaskFilter,
+  parseDueFilter,
   searchTasks,
   type TaskFilter,
-  taskFilters,
 } from '@/features/tasks/taskFilter';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -22,6 +23,7 @@ import { useSearchParam } from '@/lib/useSearchParam';
 
 const SHOW_COMPLETED_PARAM = 'completed';
 const FILTER_PARAM = 'show';
+const AVAILABLE_PARAM = 'available';
 const SEARCH_PARAM = 'q';
 
 export function SharedTasksPage() {
@@ -38,7 +40,8 @@ export function SharedTasksPage() {
 function Board() {
   const user = useLoggedInUser();
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
-  const [filter, setFilter] = useFilterParam(user.id);
+  const [due, setDue] = useDueFilterParam(user.id);
+  const [availableOnly, setAvailableOnly] = useSwitchParam(AVAILABLE_PARAM, user.id);
   const [search, setSearch] = useSearchTextParam();
   const t = useMessages().tasks;
 
@@ -51,10 +54,15 @@ function Board() {
       <PointsToAward />
       <div className="flex flex-col gap-3">
         <SearchField search={search} onChange={setSearch} />
-        <FilterChoice filter={filter} onChange={setFilter} />
+        <FilterChoice
+          due={due}
+          onDueChange={setDue}
+          availableOnly={availableOnly}
+          onAvailableOnlyChange={setAvailableOnly}
+        />
         <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       </div>
-      <TaskList filter={filter} search={search} />
+      <TaskList filter={{ due, availableOnly }} search={search} />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
   );
@@ -84,13 +92,13 @@ function useSwitchParam(name: string, userId: string) {
 }
 
 /**
- * Which tasks to show, kept in the address as `?show=<filter>` and remembered on this device; all tasks by
+ * Which due dates to show, kept in the address as `?show=<filter>` and remembered on this device; all tasks by
  * default.
  */
-function useFilterParam(userId: string) {
-  return useSearchParam<TaskFilter>({
+function useDueFilterParam(userId: string) {
+  return useSearchParam<DueFilter>({
     name: FILTER_PARAM,
-    parse: parseTaskFilter,
+    parse: parseDueFilter,
     serialise: (filter) => (filter === 'all' ? null : filter),
     rememberAs: `board.${FILTER_PARAM}:${userId}`,
   });
@@ -134,12 +142,25 @@ function SearchField({ search, onChange }: SearchFieldProps) {
 }
 
 interface FilterChoiceProps {
-  filter: TaskFilter;
-  onChange: (filter: TaskFilter) => void;
+  due: DueFilter;
+  onDueChange: (due: DueFilter) => void;
+  availableOnly: boolean;
+  onAvailableOnlyChange: (availableOnly: boolean) => void;
 }
 
-/** One tap to pick which tasks the board shows. */
-function FilterChoice({ filter, onChange }: FilterChoiceProps) {
+const chipClassName =
+  'has-checked:bg-brand-900 has-focus-visible:outline-brand-600 bg-surface text-brand-900 shadow-card hover:bg-brand-50 flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold has-checked:font-bold has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2';
+
+/**
+ * One tap to pick which due dates the board shows, and another to show only the tasks nobody has picked up;
+ * the two combine, e.g. what is due today and still available.
+ */
+function FilterChoice({
+  due,
+  onDueChange,
+  availableOnly,
+  onAvailableOnlyChange,
+}: FilterChoiceProps) {
   const t = useMessages().tasks.board;
   return (
     <fieldset className="flex flex-wrap items-center gap-2">
@@ -147,24 +168,33 @@ function FilterChoice({ filter, onChange }: FilterChoiceProps) {
       <span aria-hidden="true" className="text-ink-muted text-sm font-semibold">
         {t.show}:
       </span>
-      {taskFilters.map((option) => (
-        <label
-          key={option}
-          className="has-checked:bg-brand-900 has-focus-visible:outline-brand-600 bg-surface text-brand-900 shadow-card hover:bg-brand-50 flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold has-checked:font-bold has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2"
-        >
+      {dueFilters.map((option) => (
+        <label key={option} className={chipClassName}>
           <input
             type="radio"
             name="task-filter"
             value={option}
-            checked={filter === option}
+            checked={due === option}
             onChange={() => {
-              onChange(option);
+              onDueChange(option);
             }}
             className="sr-only"
           />
           {t.filters[option]}
         </label>
       ))}
+      <span aria-hidden="true" className="bg-line-strong h-6 w-px" />
+      <label className={chipClassName}>
+        <input
+          type="checkbox"
+          checked={availableOnly}
+          onChange={(event) => {
+            onAvailableOnlyChange(event.target.checked);
+          }}
+          className="sr-only"
+        />
+        {t.available}
+      </label>
     </fieldset>
   );
 }
@@ -225,7 +255,11 @@ function TaskList({ filter, search }: TaskListProps) {
         {searched === '' ? '' : t.matches(shown.length)}
       </p>
       {shown.length === 0 ? (
-        <EmptyMessage>{searched === '' ? t.empty[filter] : t.noMatches(searched)}</EmptyMessage>
+        <EmptyMessage>
+          {searched !== ''
+            ? t.noMatches(searched)
+            : (filter.availableOnly ? t.emptyAvailable : t.empty)[filter.due]}
+        </EmptyMessage>
       ) : (
         <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />
       )}
