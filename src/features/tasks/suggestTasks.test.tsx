@@ -175,12 +175,13 @@ describe('adding a task again', () => {
     await user.click(remove);
 
     await screen.findByText("Tap the star by a task's name to keep it here for next time.");
+    expect(screen.getByRole('heading', { name: 'Favourites' })).toHaveFocus();
     await waitFor(() => {
       expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual([]);
     });
   });
 
-  it('offers to remove a favourite on a right-click, and keeps it on Escape', async () => {
+  it('offers to remove a favourite on a right-click, keeps it on Escape, and picks it on Enter', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, TRASH);
     favourite(anna.id, TRASH.title);
@@ -197,6 +198,9 @@ describe('adding a task again', () => {
     ).not.toBeInTheDocument();
     expect(chip).toHaveFocus();
     expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
+    await user.keyboard('{Enter}');
+
+    expect(screen.getByLabelText('Task')).toHaveValue('Take out trash');
   });
 
   it('lists earlier tasks that match the name being typed', async () => {

@@ -22,7 +22,7 @@ export const taskForm: Messages['taskForm'] = {
   noFavourites: 'Napauta tähteä tehtävän nimen vieressä, niin se on tässä ensi kerralla.',
   holdToRemoveFavourite: 'Pidä suosikkia painettuna poistaaksesi sen.',
   removeFavourite: 'Poista suosikeista',
-  removeFavouriteLabel: (title: string) => `Poista suosikeista: ${title}`,
+  removeFavouriteLabel: (title) => `Poista suosikeista: ${title}`,
   earlierTasks: 'Aiemmat tehtävät',
   onTheBoard: 'Listalla · ',
   private: 'Yksityinen',

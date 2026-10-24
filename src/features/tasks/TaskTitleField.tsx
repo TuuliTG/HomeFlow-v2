@@ -87,8 +87,9 @@ export function TaskTitleField({
           suggestions={favouriteSuggestions(suggestions, favourites.keys)}
           onPick={pick}
           onRemove={(title) => {
-            if (!favourites.isSaving) favourites.onChange(title, false);
+            favourites.onChange(title, false);
           }}
+          isSaving={favourites.isSaving}
         />
       )}
       <div className="relative flex items-end gap-2">

@@ -23,7 +23,7 @@ export const taskForm: Messages['taskForm'] = {
   noFavourites: 'Tryck på stjärnan vid en uppgifts namn så finns den här nästa gång.',
   holdToRemoveFavourite: 'Håll in en favorit för att ta bort den.',
   removeFavourite: 'Ta bort från favoriter',
-  removeFavouriteLabel: (title: string) => `Ta bort från favoriter: ${title}`,
+  removeFavouriteLabel: (title) => `Ta bort från favoriter: ${title}`,
   earlierTasks: 'Tidigare uppgifter',
   onTheBoard: 'På listan · ',
   private: 'Privat',
