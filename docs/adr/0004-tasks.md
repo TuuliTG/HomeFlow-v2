@@ -185,7 +185,8 @@ next one back rather than follow a fixed calendar.
   most often added ones, which changed under the user and weren't what they wanted. A star by the name field stars
   or unstars the task being named, also a new one, saved straight away; so does a star on each open task card and
   on each done task in the board's and the Me page's Completed lists. Favourites are shared by the household:
-  any member's star shows for everyone, and any member can remove it. `favourite_tasks` stores only the name
+  any member's star shows for everyone, and any member can remove it, also by pressing and holding (or
+  right-clicking) a favourite on the form, which shows a Remove from favourites button. `favourite_tasks` stores only the name
   ignoring case (`title_key`), one row per member who starred it, so a star never reveals a private task: a member
   sees a star they set or one on a task they can see (`private.can_see_favourite()`, which leans on the tasks'
   RLS). The details come from `task_suggestions()`, which returns the 50 most often added tasks plus every

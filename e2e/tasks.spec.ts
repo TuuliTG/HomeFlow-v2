@@ -108,6 +108,19 @@ test('family member can add a task again from earlier tasks and favourites', asy
   await expect(
     page.getByText('Take out trash is already on the board.', { exact: false }),
   ).toBeVisible();
+
+  await page.getByLabel('Task', { exact: true }).fill('');
+  await page
+    .getByRole('region', { name: 'Favourites' })
+    .getByRole('button', { name: /Take out trash/ })
+    .click({ delay: 700 });
+  const remove = page.getByRole('button', { name: 'Remove from favourites: Take out trash' });
+  await expect(remove).toBeFocused();
+  const withRemove = await new AxeBuilder({ page }).analyze();
+  expect(withRemove.violations, 'a11y violations removing a favourite').toEqual([]);
+  await remove.click();
+  await expect(page.getByText("Tap the star by a task's name to keep it here")).toBeVisible();
+  await expect(page.getByLabel('Task', { exact: true })).toHaveValue('');
 });
 
 test('family member can mark a repeating task done and see it come back', async ({ page }) => {
