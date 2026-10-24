@@ -29,6 +29,11 @@ export function filterTasks(tasks: Task[], filter: TaskFilter, todayDate: string
   return tasks.filter((task) => matchers[filter](task, todayDate));
 }
 
+/** The tasks the member has picked up; every task for no one in particular (null). */
+export function pickedUpBy(tasks: Task[], memberId: string | null): Task[] {
+  return memberId === null ? tasks : tasks.filter((task) => task.pickedUpBy === memberId);
+}
+
 /**
  * Text ready to compare: lower-cased, and with ä as one character however the device typed it (it can also be
  * a followed by a combining mark).

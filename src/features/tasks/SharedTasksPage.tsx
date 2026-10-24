@@ -6,6 +6,9 @@ import { ChoiceChips } from '@/features/tasks/ChoiceChips';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
+import type { HouseholdMember } from '@/features/tasks/helpersApi';
+import { PickerChoice } from '@/features/tasks/PickerChoice';
+import { nothingPickedUpMessage, usePickerFilter } from '@/features/tasks/pickerFilter';
 import { PointsToAward } from '@/features/tasks/PointsToAward';
 import { ChildBoard } from '@/features/tasks/ChildBoard';
 import { useIsChild, useTasks } from '@/features/tasks/useTasks';
@@ -13,6 +16,7 @@ import { today } from '@/lib/dates';
 import {
   filterTasks,
   parseTaskFilter,
+  pickedUpBy,
   searchTasks,
   type TaskFilter,
   taskFilters,
@@ -33,13 +37,14 @@ export function SharedTasksPage() {
 }
 
 /**
- * The board for adults: every shared task by due date, with a search, filters and the household's completed
- * tasks.
+ * The board for adults: every shared task by due date, with a search, filters (also by who has picked tasks up)
+ * and the household's completed tasks.
  */
 function Board() {
   const user = useLoggedInUser();
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
   const [filter, setFilter] = useFilterParam(user.id);
+  const { picker, members, setPickerId } = usePickerFilter(user.id);
   const [search, setSearch] = useSearchTextParam();
   const t = useMessages().tasks;
 
@@ -53,9 +58,15 @@ function Board() {
       <div className="flex flex-col gap-3">
         <SearchField search={search} onChange={setSearch} />
         <FilterChoice filter={filter} onChange={setFilter} />
+        <PickerChoice
+          currentUserId={user.id}
+          members={members}
+          picker={picker}
+          onChange={setPickerId}
+        />
         <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       </div>
-      <TaskList filter={filter} search={search} />
+      <TaskList filter={filter} picker={picker} search={search} />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
   );
@@ -178,13 +189,16 @@ function Switch({ label, checked, onChange }: SwitchProps) {
 
 interface TaskListProps {
   filter: TaskFilter;
+  /** Only the tasks this member has picked up; null for everyone's. */
+  picker: HouseholdMember | null;
   search: string;
 }
 
-function TaskList({ filter, search }: TaskListProps) {
+function TaskList({ filter, picker, search }: TaskListProps) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
-  const t = useMessages().tasks.board;
+  const messages = useMessages();
+  const t = messages.tasks.board;
 
   // A failed refresh keeps showing the tasks already loaded.
   if (tasks.data === undefined) {
@@ -200,8 +214,15 @@ function TaskList({ filter, search }: TaskListProps) {
   if (shared.length === 0) {
     return <EmptyMessage>{t.empty.all}</EmptyMessage>;
   }
-  const shown = searchTasks(filterTasks(shared, filter, today()), search);
+  const shown = searchTasks(
+    pickedUpBy(filterTasks(shared, filter, today()), picker?.id ?? null),
+    search,
+  );
   const searched = search.trim();
+  function emptyMessage(): string {
+    if (searched !== '') return t.noMatches(searched);
+    return picker === null ? t.empty[filter] : nothingPickedUpMessage(picker, user.id, messages);
+  }
   return (
     <>
       {/* Mounted while the tasks show, so screen readers hear how many match as the search is typed. */}
@@ -209,7 +230,7 @@ function TaskList({ filter, search }: TaskListProps) {
         {searched === '' ? '' : t.matches(shown.length)}
       </p>
       {shown.length === 0 ? (
-        <EmptyMessage>{searched === '' ? t.empty[filter] : t.noMatches(searched)}</EmptyMessage>
+        <EmptyMessage>{emptyMessage()}</EmptyMessage>
       ) : (
         <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />
       )}

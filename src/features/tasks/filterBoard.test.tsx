@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -187,5 +187,76 @@ describe('filtering the board', () => {
     await screen.findByRole('listitem', { name: 'Vacuum' });
     expect(screen.getByRole('searchbox', { name: 'Search tasks' })).toHaveValue('vacuum');
     expectShown(['Vacuum'], ['Wash the dishes']);
+  });
+});
+
+describe('filtering the board by who has picked tasks up', () => {
+  /** Anna (logged in), Ben and Mia, each with a task picked up, and one task nobody has. */
+  function familyWithTasks() {
+    const anna = logInAsFamilyMember();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    const mia = fakeAuthBackend.addProfile('mia@example.com', 'Mia');
+    for (const member of [ben, mia]) fakeHouseholdBackend.addMember(member.id, 'The Virtanens');
+    for (const [member, title] of [
+      [anna, 'Cook'],
+      [ben, 'Vacuum'],
+      [mia, 'Mop'],
+    ] as const) {
+      const id = fakeTasksBackend.addTaskAs(anna.id, { title, type: 'physical', points: 3 });
+      fakeTasksBackend.pickUpTaskAs(member.id, id);
+    }
+    addTask(anna.id, 'Dust');
+    return { anna, ben, mia };
+  }
+
+  it("shows everyone's tasks until a family member is chosen, then only theirs", async () => {
+    familyWithTasks();
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/');
+    await screen.findByRole('listitem', { name: 'Dust' });
+
+    const who = screen.getByRole('group', { name: 'Picked up by' });
+    expect(within(who).getByRole('radio', { name: 'Everyone' })).toBeChecked();
+    expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
+
+    await user.click(within(who).getByRole('radio', { name: 'Ben' }));
+    expectShown(['Vacuum'], ['Cook', 'Mop', 'Dust']);
+    expect(router.state.location.search).toMatch(/^\?who=/);
+
+    await user.click(within(who).getByRole('radio', { name: 'You' }));
+    expectShown(['Cook'], ['Vacuum', 'Mop', 'Dust']);
+
+    await user.click(within(who).getByRole('radio', { name: 'Everyone' }));
+    expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
+    expect(router.state.location.search).toBe('');
+  });
+
+  it('works together with the other filters and says when someone has nothing', async () => {
+    const { mia } = familyWithTasks();
+    const user = userEvent.setup();
+    renderAppAt(`/?who=${mia.id}`);
+
+    await screen.findByRole('listitem', { name: 'Mop' });
+    expectShown(['Mop'], ['Cook', 'Vacuum', 'Dust']);
+    await user.click(screen.getByRole('radio', { name: 'Available' }));
+    expect(screen.getByText('Mia has no tasks picked up here.')).toBeInTheDocument();
+  });
+
+  it("shows everyone's tasks for someone who isn't in the household", async () => {
+    familyWithTasks();
+    renderAppAt('/?who=someone-else');
+
+    await screen.findByRole('listitem', { name: 'Dust' });
+    expect(screen.getByRole('radio', { name: 'Everyone' })).toBeChecked();
+    expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
+  });
+
+  it("isn't offered to someone alone in their household", async () => {
+    const anna = logInAsFamilyMember();
+    addTask(anna.id, 'Dust');
+    renderAppAt('/');
+
+    await screen.findByRole('listitem', { name: 'Dust' });
+    expect(screen.queryByRole('group', { name: 'Picked up by' })).not.toBeInTheDocument();
   });
 });
