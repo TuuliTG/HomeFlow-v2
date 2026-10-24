@@ -147,8 +147,9 @@ next one back rather than follow a fixed calendar.
   because two of them together would show nothing or the same as one. A
   **Picked up by** row (`?who=<user id>`, `pickerFilter.ts`; not shown to someone alone in their household) narrows
   it further to the tasks one member has picked up: **Everyone** (the default), **You**, then the others in the
-  order they joined; a member not in the household (any more) shows everyone's. It leaves "Show completed" as it
-  is, like the search. These choices
+  order they joined; a member not in the household (any more) shows everyone's. It and **Available** exclude each
+  other, as together they would always show nothing: choosing one clears the other. It leaves "Show completed" as
+  it is, like the search. These choices
   ("Show completed" on a child's board too), like the Me page's view (`?view=`), are remembered on the device (ADR
   0002), so the nav link brings them back.
   A **search** above the filter (`?q=`, `searchTasks()`) narrows the board further to tasks whose title or

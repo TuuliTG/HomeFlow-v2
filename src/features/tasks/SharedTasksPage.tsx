@@ -50,6 +50,17 @@ function Board() {
   const [search, setSearch] = useSearchTextParam();
   const t = useMessages().tasks;
 
+  // Tasks nobody has picked up and the tasks one member has picked up never overlap, so choosing one clears the
+  // other rather than leaving the board empty.
+  function showAvailableOnly(on: boolean) {
+    setAvailableOnly(on);
+    if (on) setPickerId(null);
+  }
+  function showPickedUpBy(pickerId: string | null) {
+    setPickerId(pickerId);
+    if (pickerId !== null) setAvailableOnly(false);
+  }
+
   return (
     <>
       <div className="flex items-start justify-between gap-4">
@@ -63,13 +74,13 @@ function Board() {
           due={due}
           onDueChange={setDue}
           availableOnly={availableOnly}
-          onAvailableOnlyChange={setAvailableOnly}
+          onAvailableOnlyChange={showAvailableOnly}
         />
         <PickerChoice
           currentUserId={user.id}
           members={members}
           picker={picker}
-          onChange={setPickerId}
+          onChange={showPickedUpBy}
         />
         <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       </div>
