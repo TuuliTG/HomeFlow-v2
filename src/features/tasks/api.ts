@@ -266,6 +266,8 @@ export async function updateTask(
     task_for_children: forChildren,
     task_icon: icon,
     task_assigned_to: assignedTo,
+    // Says whose chore it is; the database ignores it from a child (`update_task()`).
+    task_change_assignee: true,
   });
   if (error) throw error;
 }

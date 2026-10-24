@@ -253,6 +253,7 @@ describe('tasks api', () => {
       task_for_children: true,
       task_icon: 'vacuum',
       task_assigned_to: 'ben',
+      task_change_assignee: true,
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);

@@ -202,7 +202,7 @@ export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
     // Like update_task(): a child's edit sends their task back to waiting for points, and keeps whose chore
     // it is.
     const assignedTo = isChild ? task.assignedTo : details.assignedTo;
-    checkAssignee(userId, { ...details, assignedTo });
+    if (!isChild) checkAssignee(userId, { ...details, assignedTo });
     // Like the trigger on tasks: a child the task is given to picks it up, and gives it back once it isn't.
     const pickedUpBy = assignedTo !== task.assignedTo ? assignedTo : task.pickedUpBy;
     if (pickedUpBy !== task.pickedUpBy) {

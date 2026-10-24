@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
@@ -96,6 +96,49 @@ describe('giving a task to one child', () => {
     expect(
       within(task).getByRole('button', { name: 'Pick up: Make your bed' }),
     ).toBeInTheDocument();
+  });
+
+  it('is no longer given to a child who becomes an adult, who keeps it to do', async () => {
+    const { anna, ben } = family();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Make your bed',
+      type: 'physical',
+      points: 1,
+      forChildren: true,
+      assignedTo: ben.id,
+    });
+    fakeHouseholdBackend.setChild(ben.id, false);
+    renderAppAt('/');
+
+    const task = await screen.findByRole('listitem', { name: 'Make your bed' });
+    expect(within(task).getByText('For children')).toBeInTheDocument();
+    expect(within(task).getByText('Picked up by Ben')).toBeInTheDocument();
+  });
+
+  it('stays given to the child when they edit a task they added', async () => {
+    const { ben } = family();
+    fakeHouseholdBackend.setCanAddTasks(ben.id, true);
+    const id = fakeTasksBackend.addTaskAs(ben.id, {
+      title: 'Tidy my room',
+      type: 'physical',
+      points: null,
+      forChildren: true,
+    });
+    // As if Anna had given it to him since.
+    Object.assign(tasks.find((task) => task.id === id) ?? {}, {
+      assignedTo: ben.id,
+      pickedUpBy: ben.id,
+    });
+    logInAs('ben@example.com', 'Ben');
+    const user = userEvent.setup();
+    renderAppAt(`/tasks/${id}/edit`);
+
+    await user.type(await screen.findByLabelText('Task'), ' and desk');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await waitFor(() => {
+      expect(tasks[0]).toMatchObject({ title: 'Tidy my room and desk', assignedTo: ben.id });
+    });
   });
 
   it("isn't offered without children in the household", async () => {

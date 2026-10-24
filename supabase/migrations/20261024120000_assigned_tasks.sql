@@ -26,8 +26,8 @@ revoke execute on function private.is_child_in_household(uuid, uuid) from public
 grant execute on function private.is_child_in_household(uuid, uuid) to authenticated;
 
 -- A task given to a child is picked up for them, also taking it from whoever had it. A child it is no longer given
--- to gives it back; a child who has become an adult keeps it picked up. The tasks' other triggers then settle
--- requests and schedules as for any change of hands.
+-- to gives it back; a child who has become an adult keeps it picked up. The triggers below then settle requests and
+-- schedules as for any change of hands.
 create function private.pick_up_for_assignee()
 returns trigger
 language plpgsql
@@ -40,7 +40,7 @@ begin
   if new.assigned_to is not null then
     new.picked_up_by := new.assigned_to;
     new.picked_up_at := now();
-  elsif new.picked_up_by = old.assigned_to
+  elsif tg_op = 'UPDATE' and new.picked_up_by = old.assigned_to
     and private.is_child_in_household(old.assigned_to, new.household_id) then
     new.picked_up_by := null;
     new.picked_up_at := null;
@@ -55,7 +55,51 @@ create trigger tasks_pick_up_for_assignee
   for each row
   execute function private.pick_up_for_assignee();
 
+-- As before (20261018120000_task_requests.sql), and giving a task to a child also settles its request, even when
+-- the child already had it: nobody else can be asked to do it any more.
+create or replace function private.settle_task_requests()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  delete from public.task_requests r
+    where r.task_id = new.id
+      and (
+        new.completed_at is not null
+        or new.assigned_to is not null
+        or (new.picked_up_by is not null and r.requested_for <> new.picked_up_by)
+        or (r.answer = 'accepted' and r.requested_for is distinct from new.picked_up_by)
+      );
+  update public.task_requests r set answer = 'accepted', answered_at = now()
+    where r.task_id = new.id and r.requested_for = new.picked_up_by and r.answer is null;
+  return null;
+end;
+$$;
+
+-- An UPDATE OF trigger fires only for the columns the statement sets, not those a BEFORE trigger changes, so the
+-- triggers that follow a change of hands also fire on assigned_to, which is how the task changes hands then.
+drop trigger tasks_settle_task_requests on public.tasks;
+create trigger tasks_settle_task_requests
+  after update of picked_up_by, completed_at, assigned_to on public.tasks
+  for each row
+  when (
+    (old.completed_at is null and new.completed_at is not null)
+    or old.picked_up_by is distinct from new.picked_up_by
+    or (new.assigned_to is not null and old.assigned_to is distinct from new.assigned_to)
+  )
+  execute function private.settle_task_requests();
+
+drop trigger tasks_clear_schedule_of_previous_picker on public.tasks;
+create trigger tasks_clear_schedule_of_previous_picker
+  after update of picked_up_by, assigned_to on public.tasks
+  for each row
+  when (old.picked_up_by is not null and old.picked_up_by is distinct from new.picked_up_by)
+  execute function private.clear_schedule_of_previous_picker();
+
 -- Only children are given tasks, so a child who becomes an adult no longer is; they keep the open ones picked up.
+-- Done ones are cleared too, so undoing one can't reopen a task given to an adult.
 create function private.clear_assignments_of_new_adult()
 returns trigger
 language plpgsql
@@ -63,8 +107,7 @@ security definer
 set search_path = ''
 as $$
 begin
-  update public.tasks t set assigned_to = null
-    where t.assigned_to = new.user_id and t.completed_at is null;
+  update public.tasks t set assigned_to = null where t.assigned_to = new.user_id;
   return null;
 end;
 $$;
@@ -186,10 +229,11 @@ begin
 end;
 $$;
 
--- update_task() gains who the task is given to, so it is replaced rather than overloaded. An adult's edit sets it
--- (null: no one in particular); a child's keeps it. Raises no_data_found (P0002) if it isn't a child in the
--- household, and check_violation (23514) for a task given to a child that isn't for children or is private.
--- Otherwise as before (20261020120000_task_icons.sql).
+-- update_task() gains who the task is given to, so it is replaced rather than overloaded. An adult's edit with
+-- task_change_assignee sets it (null: no one in particular); otherwise, as for a child or an app that doesn't send
+-- it yet, it stays. Raises no_data_found (P0002) if it isn't a child in the household, and check_violation (23514)
+-- for a task given to a child that isn't for children or is private. Otherwise as before
+-- (20261020120000_task_icons.sql).
 drop function public.update_task(uuid, text, text, text, smallint, date, smallint, boolean, text);
 create function public.update_task(
   task_id uuid,
@@ -201,7 +245,8 @@ create function public.update_task(
   task_repeat_every_days smallint,
   task_for_children boolean default null,
   task_icon text default null,
-  task_assigned_to uuid default null
+  task_assigned_to uuid default null,
+  task_change_assignee boolean default false
 )
 returns void
 language plpgsql
@@ -210,12 +255,13 @@ set search_path = ''
 as $$
 declare
   is_child boolean := private.is_child(auth.uid());
+  changes_assignee boolean := coalesce(task_change_assignee, false) and not is_child;
   picker uuid;
 begin
   if task_for_children is false and is_child then
     raise exception 'Only adults can make a task adults-only' using errcode = '42501';
   end if;
-  if not is_child and task_assigned_to is not null
+  if changes_assignee and task_assigned_to is not null
     and not private.is_child_in_household(task_assigned_to, private.current_household_id()) then
     raise exception 'No child with this id in your household' using errcode = 'P0002';
   end if;
@@ -225,7 +271,7 @@ begin
         due_on = task_due_on, repeat_every_days = task_repeat_every_days,
         for_children = coalesce(task_for_children, t.for_children),
         icon = task_icon,
-        assigned_to = case when is_child then t.assigned_to else task_assigned_to end
+        assigned_to = case when changes_assignee then task_assigned_to else t.assigned_to end
     where t.id = update_task.task_id
       and private.can_change_task(t)
       and t.completed_at is null
@@ -240,9 +286,9 @@ begin
 end;
 $$;
 
-revoke execute on function public.update_task(uuid, text, text, text, smallint, date, smallint, boolean, text, uuid)
+revoke execute on function public.update_task(uuid, text, text, text, smallint, date, smallint, boolean, text, uuid, boolean)
   from public, anon;
-grant execute on function public.update_task(uuid, text, text, text, smallint, date, smallint, boolean, text, uuid)
+grant execute on function public.update_task(uuid, text, text, text, smallint, date, smallint, boolean, text, uuid, boolean)
   to authenticated;
 
 -- complete_task() as before (20261020120000_task_icons.sql), now giving the next occurrence to the same child, as

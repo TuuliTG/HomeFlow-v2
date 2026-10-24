@@ -2,7 +2,7 @@
 -- (children) share a household; Carol has her own.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(21);
+select plan(26);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -135,7 +135,7 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select lives_ok(
   $$ select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
-       1::smallint, null, 1::smallint, true, null, '44444444-4444-4444-4444-444444444444') $$,
+       1::smallint, null, 1::smallint, true, null, '44444444-4444-4444-4444-444444444444', true) $$,
   'an adult can give the task to another child'
 );
 select is(
@@ -145,13 +145,13 @@ select is(
 );
 select throws_ok(
   $$ select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
-       1::smallint, null, 1::smallint, true, null, '33333333-3333-3333-3333-333333333333') $$,
+       1::smallint, null, 1::smallint, true, null, '33333333-3333-3333-3333-333333333333', true) $$,
   'P0002', null,
   'an edit cannot give a task to someone outside the household'
 );
 select lives_ok(
   $$ select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
-       1::smallint, null, 1::smallint, true, null, null) $$,
+       1::smallint, null, 1::smallint, true, null, null, true) $$,
   'an adult can give the task to no one in particular'
 );
 select is(
@@ -162,12 +162,77 @@ select is(
 
 -- A child who becomes an adult keeps their chores picked up, but no longer given to them.
 select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
-  1::smallint, null, 1::smallint, true, null, '44444444-4444-4444-4444-444444444444');
+  1::smallint, null, 1::smallint, true, null, '44444444-4444-4444-4444-444444444444', true);
 select public.set_member_is_child('44444444-4444-4444-4444-444444444444', false);
 select is(
   (select array[assigned_to, picked_up_by] from public.tasks where id = current_setting('test.next_bed')::uuid),
   array[null, '44444444-4444-4444-4444-444444444444']::uuid[],
   'a new adult keeps the task picked up, no longer given to them'
+);
+
+-- An app that doesn't say whose chore it is yet keeps the child.
+select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
+  1::smallint, null, 1::smallint, true, null, '22222222-2222-2222-2222-222222222222', true);
+select public.update_task(current_setting('test.next_bed')::uuid, 'Make the bed', null, 'physical',
+  1::smallint, null, 1::smallint, true, null);
+select is(
+  (select assigned_to from public.tasks where id = current_setting('test.next_bed')::uuid),
+  '22222222-2222-2222-2222-222222222222'::uuid,
+  'an edit that does not say whose chore it is keeps the child'
+);
+
+-- Giving a task to a child settles what others planned for it, also when the child already had it.
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select public.pick_up_task(current_setting('test.cat')::uuid);
+select public.set_task_schedule(current_setting('test.cat')::uuid, now() + interval '1 day', 30);
+select public.request_task(current_setting('test.cat')::uuid, '11111111-1111-1111-1111-111111111111');
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select public.update_task(current_setting('test.cat')::uuid, 'Feed the cat', null, 'physical',
+  2::smallint, null, null, true, null, '22222222-2222-2222-2222-222222222222', true);
+select throws_ok(
+  $$ select public.answer_task_request(current_setting('test.cat')::uuid, true) $$,
+  'P0002', null,
+  'a request for a task given to a child is settled, even if the child already had it'
+);
+select public.update_task(current_setting('test.cat')::uuid, 'Feed the cat', null, 'physical',
+  2::smallint, null, null, true, null, null, true);
+reset role;
+select is(
+  (select count(*)::integer from public.task_schedules where task_id = current_setting('test.cat')::uuid),
+  0,
+  'a child no longer given a task no longer plans to do it'
+);
+set local role authenticated;
+
+-- Dora is a child again. Ben picks the cat up and plans when to feed it; Anna gives it to Dora instead.
+reset role;
+update public.household_members set is_child = true where user_id = '44444444-4444-4444-4444-444444444444';
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select public.pick_up_task(current_setting('test.cat')::uuid);
+select public.set_task_schedule(current_setting('test.cat')::uuid, now() + interval '1 day', 30);
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select public.update_task(current_setting('test.cat')::uuid, 'Feed the cat', null, 'physical',
+  2::smallint, null, null, true, null, '44444444-4444-4444-4444-444444444444', true);
+reset role;
+select is(
+  (select count(*)::integer from public.task_schedules where task_id = current_setting('test.cat')::uuid),
+  0,
+  'whoever a task is taken from to give it to a child no longer plans to do it'
+);
+
+-- A done chore of a child who becomes an adult is no longer given to them either, so undoing it reopens it free.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "44444444-4444-4444-4444-444444444444", "role": "authenticated"}';
+select public.complete_task(current_setting('test.cat')::uuid, current_date);
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select public.set_member_is_child('44444444-4444-4444-4444-444444444444', false);
+set local request.jwt.claims = '{"sub": "44444444-4444-4444-4444-444444444444", "role": "authenticated"}';
+select public.undo_complete_task(current_setting('test.cat')::uuid);
+select is(
+  (select assigned_to from public.tasks where id = current_setting('test.cat')::uuid),
+  null::uuid,
+  'a reopened chore is not given to a member who has become an adult'
 );
 
 -- Carol, in another household, can't give a task to Ben.
