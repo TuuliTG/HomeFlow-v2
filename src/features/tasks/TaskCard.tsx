@@ -2,6 +2,7 @@ import { type ReactNode, useCallback, useId, useState } from 'react';
 
 import { StarIcon } from '@/components/ui/icons';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
+import { descriptionParts } from '@/features/tasks/descriptionLinks';
 import { isToDoBy, type Task } from '@/features/tasks/task';
 import { AskLink, EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
@@ -84,12 +85,33 @@ function TaskDetails({
       <Title id={titleId} className="text-ink text-[1.0625rem] leading-snug font-bold">
         {task.title}
       </Title>
-      {task.description !== null && (
-        <p className="text-ink-muted text-sm whitespace-pre-line">{task.description}</p>
-      )}
+      {task.description !== null && <TaskDescription description={task.description} />}
       <TaskTags task={task} />
       <TaskPeople task={task} currentUserId={currentUserId} />
     </div>
+  );
+}
+
+/** The description, with its web links tappable and long ones wrapped to fit, so they can be opened or copied. */
+function TaskDescription({ description }: { description: string }) {
+  return (
+    <p className="text-ink-muted text-sm wrap-anywhere whitespace-pre-line">
+      {descriptionParts(description).map(({ text, href }, index) =>
+        href === undefined ? (
+          text
+        ) : (
+          <a
+            key={index}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="text-brand-700 font-medium underline"
+          >
+            {text}
+          </a>
+        ),
+      )}
+    </p>
   );
 }
 
