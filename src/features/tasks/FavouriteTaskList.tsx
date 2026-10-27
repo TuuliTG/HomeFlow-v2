@@ -1,4 +1,12 @@
-import { type FocusEvent, type PointerEvent, useEffect, useId, useRef, useState } from 'react';
+import {
+  type FocusEvent,
+  type PointerEvent,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react';
 
 import { suggestionPointsLabel } from '@/features/tasks/suggestions';
 import type { TaskSuggestion } from '@/features/tasks/task';
@@ -83,6 +91,7 @@ function FavouriteTask({ suggestion, hintId, isSaving, onPick, onRemove }: Favou
   const [isRemoving, setIsRemoving] = useState(false);
   const chipRef = useRef<HTMLButtonElement>(null);
   const removeRef = useRef<HTMLButtonElement>(null);
+  const itemRef = useRef<HTMLLIElement>(null);
   const t = useMessages();
 
   function offerRemove() {
@@ -91,24 +100,36 @@ function FavouriteTask({ suggestion, hintId, isSaving, onPick, onRemove }: Favou
     removeRef.current?.focus();
   }
   const hold = useLongPress(offerRemove);
-
-  useEffect(() => {
-    if (isRemoving) removeRef.current?.focus();
-  }, [isRemoving]);
-
-  function close() {
+  const { forget } = hold;
+  const close = useCallback(() => {
     setIsRemoving(false);
     // A right-click or an Android long press isn't followed by a click that would forget it.
-    hold.forget();
-  }
+    forget();
+  }, [forget]);
 
-  function closeUnlessOnChip(event: FocusEvent) {
-    // Lifting the finger after a long press focuses the chip before its click hands the focus back.
-    if (event.relatedTarget !== chipRef.current) close();
+  useEffect(() => {
+    if (!isRemoving) return;
+    removeRef.current?.focus();
+    // A tap elsewhere closes it. Not a blur: Safari takes the focus off Remove when it is tapped.
+    function closeOnTapOutside(event: globalThis.PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node && itemRef.current?.contains(target))) close();
+    }
+    document.addEventListener('pointerdown', closeOnTapOutside);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnTapOutside);
+    };
+  }, [isRemoving, close]);
+
+  function closeOnTabbingAway(event: FocusEvent) {
+    // Only when the focus moves to another element: on Safari a tap leaves it nowhere (null), and lifting the
+    // finger after a long press focuses the chip before its click hands the focus back.
+    const next = event.relatedTarget;
+    if (next && !itemRef.current?.contains(next)) close();
   }
 
   return (
-    <li className="flex items-center gap-2">
+    <li ref={itemRef} className="flex items-center gap-2">
       <button
         ref={chipRef}
         type="button"
@@ -142,7 +163,7 @@ function FavouriteTask({ suggestion, hintId, isSaving, onPick, onRemove }: Favou
           onClick={() => {
             if (!isSaving) onRemove(suggestion.title);
           }}
-          onBlur={closeUnlessOnChip}
+          onBlur={closeOnTabbingAway}
           onKeyDown={(event) => {
             if (event.key !== 'Escape') return;
             close();
@@ -203,8 +224,8 @@ function useLongPress(onLongPress: () => void) {
     /** Whether the click that follows ends a long press. */
     wasLongPress: () => longPressed.current,
     /** Forgets the long press once handled, so the next click (e.g. Enter) picks. */
-    forget: () => {
+    forget: useCallback(() => {
       longPressed.current = false;
-    },
+    }, []),
   };
 }
