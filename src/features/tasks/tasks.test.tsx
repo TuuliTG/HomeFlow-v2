@@ -262,6 +262,29 @@ describe('creating a task', () => {
     expect(within(task).getByText('The bins are behind the garage.')).toBeInTheDocument();
   });
 
+  it('makes the links in a description tappable', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.type(await screen.findByLabelText('Task'), "Fetch Lumi's gift");
+    await user.type(
+      screen.getByLabelText('Description (optional)'),
+      'Order here: https://shop.example.com/products/very-long-product-name?variant=123456',
+    );
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    const task = await screen.findByRole('listitem', { name: "Fetch Lumi's gift" });
+    const link = within(task).getByRole('link', {
+      name: 'https://shop.example.com/products/very-long-product-name?variant=123456',
+    });
+    expect(link).toHaveAttribute(
+      'href',
+      'https://shop.example.com/products/very-long-product-name?variant=123456',
+    );
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(within(task).getByText(/^Order here:/)).toBeInTheDocument();
+  });
+
   it("doesn't repeat or have a due date unless asked", async () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');

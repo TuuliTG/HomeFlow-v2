@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-24 (chores given to one child, filtering the board by who picked tasks up)
+- **Updated:** 2026-10-26 (tappable links in task descriptions)
 
 ## Context
 
@@ -13,6 +13,9 @@ next one back rather than follow a fixed calendar.
 - `tasks` belong to a household: title, optional description (≤ 500 characters), type (`physical`/`meta`),
   points (1–10), `created_by` (from the default, never the client), optional `due_on`, `repeat_every_days`
   (1–365), `completed_at`/`completed_by` and `previous_task_id`. New tasks default to the creator's household.
+- **Links in descriptions**: the card turns `http(s)://` and `www.` addresses in a description into links that
+  open in a new tab (`descriptionParts()` in `descriptionLinks.ts`) and wraps long ones so they fit and can be
+  copied. Other schemes (`javascript:`, `mailto:`) stay plain text; the description is never rendered as HTML.
 - **Private tasks**: `is_private` (chosen when adding, never changed; the next occurrence keeps it). The select
   policy shows a private task only to its creator, so the board, "Show completed" and live updates hide it from
   the others, and every security definer function that acts on any open task skips other members' private ones.
