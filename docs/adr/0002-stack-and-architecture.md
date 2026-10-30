@@ -1,6 +1,6 @@
 # 0002. Stack and architecture
 
-- **Updated:** 2026-10-20 (few explanatory texts)
+- **Updated:** 2026-10-30 (the page never scrolls, only the app shell's content)
 
 ## Context
 
@@ -24,6 +24,9 @@ maintained by agents, so strict types and a predictable structure matter more th
   control, and checks for a new version whenever the app returns to the foreground and hourly
   (`src/lib/appUpdate.ts`), because iOS resumes Home Screen apps instead of reloading them. An automatic reload
   could lose what someone is typing.
+- **App shell layout**: `AppShell` fills the screen (`h-dvh`) and only its content area scrolls, never the page;
+  the tab bar is laid out below it, not `position: fixed`. iOS can leave a scrolled page's fixed elements floating
+  mid-screen after the keyboard closes.
 - **Visual design ("Calm Indigo")**: colours, shadows and the font are Tailwind theme tokens in `src/index.css`;
   components use their names (`bg-page`, `bg-surface shadow-card`, `text-ink`, `text-ink-muted`, `brand-*`,
   `meta-*` for meta work, `overdue-*`/`due-today-*` from `dueStatus()`, `points-*`, `done-*`, `danger-*` for errors

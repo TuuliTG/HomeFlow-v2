@@ -41,3 +41,23 @@ test('app is installable as a PWA', async ({ page }) => {
   const manifest = (await response.json()) as { name: string; display: string };
   expect(manifest).toMatchObject({ name: 'HomeFlow', display: 'standalone' });
 });
+
+test('the tab bar stays at the bottom while the content scrolls', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'Wider screens show a side rail instead of a tab bar.');
+  // A short screen, so that the content is taller than it.
+  await page.setViewportSize({ width: 390, height: 400 });
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Statistics' })
+    .click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Fairness & progress' })).toBeVisible();
+
+  await page.getByRole('main').evaluate((main) => main.lastElementChild?.scrollIntoView());
+
+  // Only the content scrolls, never the page: iOS can leave a scrolled page's fixed elements floating mid-screen.
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  const nav = await page.getByRole('navigation', { name: 'Main' }).boundingBox();
+  expect((nav?.y ?? 0) + (nav?.height ?? 0)).toBe(400);
+});
