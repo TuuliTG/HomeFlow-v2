@@ -21,7 +21,7 @@ export function AppShell() {
   return (
     <div className="flex h-dvh flex-col md:h-auto md:min-h-dvh md:flex-row">
       <MainNav />
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain md:overflow-visible">
+      <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain md:overflow-visible">
         <main className="mx-auto w-full max-w-2xl px-4 pt-6 pb-10">
           <div className="mb-4 flex items-center justify-end gap-3">
             <HouseholdLink />
