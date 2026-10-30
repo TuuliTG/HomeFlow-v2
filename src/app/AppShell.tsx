@@ -13,15 +13,15 @@ import { useMessages } from '@/lib/i18n/i18n';
 /**
  * Mobile-first layout: content plus a bottom tab bar on phones,
  * a side rail on wider screens. Toasts stack above the tab bar; a done task's celebration plays on top.
- * The shell fills the screen and only the content scrolls, never the page: iOS can leave a scrolled page's
- * fixed elements floating mid-screen (after the keyboard closes), so the tab bar is laid out, not fixed.
+ * On phones the shell fills the screen and only the content scrolls, never the page: iOS can leave a scrolled
+ * page's fixed elements floating mid-screen (after the keyboard closes), so the tab bar is laid out, not fixed.
  */
 export function AppShell() {
   const t = useMessages().app;
   return (
-    <div className="flex h-dvh flex-col md:flex-row">
+    <div className="flex h-dvh flex-col md:h-auto md:min-h-dvh md:flex-row">
       <MainNav />
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain md:overflow-visible">
         <main className="mx-auto w-full max-w-2xl px-4 pt-6 pb-10">
           <div className="mb-4 flex items-center justify-end gap-3">
             <HouseholdLink />

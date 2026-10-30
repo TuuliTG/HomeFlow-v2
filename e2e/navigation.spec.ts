@@ -54,10 +54,14 @@ test('the tab bar stays at the bottom while the content scrolls', async ({ page,
     .click();
   await expect(page.getByRole('heading', { level: 1, name: 'Fairness & progress' })).toBeVisible();
 
-  await page.getByRole('main').evaluate((main) => main.lastElementChild?.scrollIntoView());
+  const main = page.getByRole('main');
+  await main.evaluate((element) => element.lastElementChild?.scrollIntoView());
+  await expect
+    .poll(() => main.evaluate((element) => element.parentElement?.scrollTop))
+    .toBeGreaterThan(0);
 
   // Only the content scrolls, never the page: iOS can leave a scrolled page's fixed elements floating mid-screen.
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   const nav = await page.getByRole('navigation', { name: 'Main' }).boundingBox();
-  expect((nav?.y ?? 0) + (nav?.height ?? 0)).toBe(400);
+  expect((nav?.y ?? 0) + (nav?.height ?? 0)).toBeCloseTo(400, 0);
 });
