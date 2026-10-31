@@ -32,32 +32,33 @@ describe('toggleCustomLabel', () => {
 
 describe('addTypedLabel', () => {
   it('adds a new own label without spaces around it, cut to the longest allowed', () => {
-    expect(addTypedLabel(none, '  Sauna ', { known: [], t: en }).customLabels).toEqual(['Sauna']);
-    const long = addTypedLabel(none, 'a'.repeat(40), { known: [], t: en }).customLabels[0];
+    expect(addTypedLabel(none, '  Sauna ', []).customLabels).toEqual(['Sauna']);
+    const long = addTypedLabel(none, 'a'.repeat(40), []).customLabels[0];
     expect(long).toHaveLength(CUSTOM_LABEL_MAX_LENGTH);
   });
 
-  it("picks the ready-made label with that name in the user's language", () => {
-    expect(addTypedLabel(none, 'kitchen', { known: [], t: en })).toEqual({
+  it("picks the ready-made label with that name in any of the app's languages", () => {
+    expect(addTypedLabel(none, 'kitchen', [])).toEqual({
       labels: ['kitchen'],
       customLabels: [],
     });
-    expect(addTypedLabel(none, 'keittiö', { known: [], t: fi }).labels).toEqual(['kitchen']);
+    expect(addTypedLabel(none, 'keittiö', []).labels).toEqual(['kitchen']);
+    expect(addTypedLabel(none, 'Kök', []).labels).toEqual(['kitchen']);
   });
 
   it("spells a known own label as the household does, and doesn't add one twice", () => {
-    const chosen = addTypedLabel(none, 'SAUNA', { known: ['Sauna'], t: en });
+    const chosen = addTypedLabel(none, 'SAUNA', ['Sauna']);
     expect(chosen.customLabels).toEqual(['Sauna']);
-    expect(addTypedLabel(chosen, 'sauna', { known: ['Sauna'], t: en })).toBe(chosen);
+    expect(addTypedLabel(chosen, 'sauna', ['Sauna'])).toBe(chosen);
   });
 
   it('changes nothing for an empty name or when the task has as many labels as it can', () => {
-    expect(addTypedLabel(none, '   ', { known: [], t: en })).toBe(none);
+    expect(addTypedLabel(none, '   ', [])).toBe(none);
     const full: TaskLabels = {
       labels: ['kitchen', 'cooking', 'cleaning', 'laundry', 'tidying'],
       customLabels: ['A', 'B', 'C', 'D', 'E'],
     };
-    expect(addTypedLabel(full, 'Sauna', { known: [], t: en })).toBe(full);
+    expect(addTypedLabel(full, 'Sauna', [])).toBe(full);
   });
 });
 

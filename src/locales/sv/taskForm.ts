@@ -81,7 +81,6 @@ export const taskForm: Messages['taskForm'] = {
     label: 'Etiketter (valfritt)',
     chosen: (names) => `Etiketter: ${names}`,
     choose: 'Välj etiketter',
-    done: 'Klar',
     own: 'Egen etikett',
     ownPlaceholder: 't.ex. Diskmaskin',
     add: 'Lägg till',
@@ -107,7 +106,6 @@ export const taskForm: Messages['taskForm'] = {
   doesNotRepeat: 'Upprepas inte',
   dueDate: 'Förfallodag',
   errors: {
-    tooManyLabels: (max) => `En uppgift kan ha högst ${String(max)} etiketter.`,
     titleRequired: 'Ge uppgiften ett namn.',
     titleTooLong: (max) => `Namnet får ha högst ${String(max)} tecken.`,
     descriptionTooLong: (max) => `Beskrivningen får ha högst ${String(max)} tecken.`,

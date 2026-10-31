@@ -80,7 +80,6 @@ export const taskForm: Messages['taskForm'] = {
     label: 'Tunnisteet (valinnainen)',
     chosen: (names) => `Tunnisteet: ${names}`,
     choose: 'Valitse tunnisteet',
-    done: 'Valmis',
     own: 'Oma tunniste',
     ownPlaceholder: 'esim. Astianpesukone',
     add: 'Lisää',
@@ -106,7 +105,6 @@ export const taskForm: Messages['taskForm'] = {
   doesNotRepeat: 'Ei toistu',
   dueDate: 'Määräpäivä',
   errors: {
-    tooManyLabels: (max) => `Tehtävällä voi olla enintään ${String(max)} tunnistetta.`,
     titleRequired: 'Anna tehtävälle nimi.',
     titleTooLong: (max) => `Nimessä saa olla enintään ${String(max)} merkkiä.`,
     descriptionTooLong: (max) => `Kuvauksessa saa olla enintään ${String(max)} merkkiä.`,

@@ -1,7 +1,7 @@
 -- Task labels. Run with `npm run db:test` (needs Docker).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(14);
+select plan(17);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -57,6 +57,17 @@ select throws_ok(
   '23514', null,
   'a task has at most ten labels'
 );
+select throws_ok(
+  $$ insert into public.tasks (title, type, points, labels, custom_labels)
+     values ('Dust', 'physical', 1, '{a,b,c,d,e}', '{F,G,H,I,J,K}') $$,
+  '23514', null,
+  'the ten include ready-made and own labels together'
+);
+select throws_ok(
+  $$ insert into public.tasks (title, type, points, custom_labels) values ('Dust', 'physical', 1, array[E'Sau\tna']) $$,
+  '23514', null,
+  'an own label has no control characters'
+);
 
 reset role;
 do $$
@@ -73,6 +84,15 @@ select lives_ok(
     current_setting('test.dishes')
   ),
   'the labels can be changed'
+);
+select throws_ok(
+  format(
+    $$ select public.update_task(%L, 'Empty the dishwasher', null, 'physical', 2::smallint, null, 1::smallint,
+         task_labels => '{kitchen,kitchen}') $$,
+    current_setting('test.dishes')
+  ),
+  '23514', null,
+  'an edit can''t give a task invalid labels'
 );
 select public.update_task(
   current_setting('test.dishes')::uuid, 'Empty the dishwasher', null, 'physical', 2::smallint, null, 1::smallint
@@ -96,7 +116,7 @@ select results_eq(
 
 -- Ben joins; Anna's private task's own label stays hidden from him.
 insert into public.tasks (title, type, is_private, custom_labels) values ('Book a dentist', 'meta', true, '{Health}');
-insert into public.tasks (title, type, points, custom_labels) values ('Wipe the table', 'physical', 1, '{Dishwasher}');
+insert into public.tasks (title, type, points, custom_labels) values ('Wipe the table', 'physical', 1, '{Evenings}');
 reset role;
 insert into public.household_members (household_id, user_id)
   select household_id, '22222222-2222-2222-2222-222222222222' from public.household_members
@@ -106,7 +126,7 @@ set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", 
 
 select results_eq(
   $$ select label from public.custom_task_labels() $$,
-  $$ values ('Dishwasher'), ('Evenings') $$,
+  $$ values ('Evenings'), ('Dishwasher') $$,
   'own labels are offered once each, most used first, without other members'' private ones'
 );
 

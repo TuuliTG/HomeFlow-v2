@@ -111,11 +111,12 @@ next one back rather than follow a fixed calendar.
   to tell apart.
 - **Labels** say what kind of chore a task is, so statistics can show how each kind of work is shared. A task has
   any number up to ten, ticked behind a "Choose labels" button: the app's ready-made ones (`taskLabelNames` in
-  `src/lib/taskLabels.ts`, stored by name in `tasks.labels` like icons, read in each member's language, unknown
-  names dropped) and the household's own (`tasks.custom_labels`, as typed, ≤ 30 characters). A label typed with a
-  ready-made one's name in the user's language picks that one, and one the household has used picks its spelling,
+  `src/lib/taskLabels.ts`, stored by name in `tasks.labels` like icons, read in each member's language; an older
+  app drops names it doesn't know, also when it saves an edit, which we accept as apps update themselves) and the
+  household's own (`tasks.custom_labels`, as typed, ≤ 30 characters). A label typed with a ready-made one's name
+  in any of the app's languages picks that one, and one the household has used picks its spelling,
   so the same kind of chore isn't split. Own labels need no table: `custom_task_labels()` (security invoker, so RLS
-  hides labels only on other members' private tasks) offers those used on tasks, most used first, like
+  hides labels only on other members' private tasks) offers the 30 used most on tasks, like
   suggestions. `private.are_valid_task_labels()` checks the format and that each label appears once (own ones
   ignoring case). Insert, `update_task()` (`task_labels`, `task_custom_labels`; null keeps them), the next
   occurrence and `task_suggestions()` carry them; the card shows them after its other tags.

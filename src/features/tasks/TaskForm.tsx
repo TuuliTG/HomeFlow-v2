@@ -131,9 +131,10 @@ export function TaskForm({
     );
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
-      const field = fieldOf(issue?.path[0]);
+      // Too many labels can only come from elsewhere (the field stops at the limit), so it names no field.
+      const field = issue?.path[0] === 'labels' ? null : fieldOf(issue?.path[0]);
       setError({ field, message: issue?.message ?? t.taskForm.errors.checkDetails });
-      fieldRefs[field].current?.focus();
+      if (field) fieldRefs[field].current?.focus();
       return;
     }
     onSave(parsed.data, images).catch(() => {

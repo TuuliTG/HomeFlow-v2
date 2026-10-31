@@ -129,6 +129,26 @@ describe('task labels', () => {
     ).toBeInTheDocument();
   });
 
+  it('says so, without blaming the name, when a task saved elsewhere has too many labels', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Spring cleaning',
+      type: 'physical',
+      points: 5,
+      labels: ['kitchen', 'cooking', 'cleaning', 'laundry', 'tidying', 'shopping'],
+      customLabels: ['One', 'Two', 'Three', 'Four', 'Five'],
+    });
+    const user = userEvent.setup();
+    renderAppAt('/tasks/task:0/edit');
+
+    await user.click(await screen.findByRole('button', { name: 'Save changes' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      `A task can have up to ${String(MAX_TASK_LABELS)} labels.`,
+    );
+    expect(screen.getByLabelText('Task')).not.toHaveAttribute('aria-invalid', 'true');
+  });
+
   it('keeps the labels when a repeating task comes back and when it is added again', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, {

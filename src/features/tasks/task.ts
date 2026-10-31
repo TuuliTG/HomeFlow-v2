@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { Messages } from '@/lib/i18n/i18n';
 import { taskIconNames } from '@/lib/taskIcons';
-import { CUSTOM_LABEL_MAX_LENGTH, MAX_TASK_LABELS, taskLabelNames } from '@/lib/taskLabels';
+import { MAX_TASK_LABELS, taskLabelNames } from '@/lib/taskLabels';
 
 export const taskTypes = ['physical', 'meta'] as const;
 
@@ -47,7 +47,7 @@ export const HELPERS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 export const repeatChoices = [1, 2, 3, 7, 14, 30] as const;
 
 /** Checks a task's details, explaining what to fix in the user's language. */
-export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
+export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
   z
     .object({
       title: z
@@ -96,8 +96,8 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
       assignedTo: z.string().nullable(),
       /** What kinds of chore it is, from the app's ready-made labels (ADR 0004). */
       labels: z.array(z.enum(taskLabelNames)),
-      /** The household's own labels, as typed. */
-      customLabels: z.array(z.string().trim().min(1).max(CUSTOM_LABEL_MAX_LENGTH)),
+      /** The household's own labels, as typed; the field keeps them short and the database checks them. */
+      customLabels: z.array(z.string()),
     })
     .refine((task) => !task.isPrivate || task.points === null, {
       path: ['points'],
@@ -105,7 +105,7 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
     })
     .refine((task) => task.labels.length + task.customLabels.length <= MAX_TASK_LABELS, {
       path: ['labels'],
-      message: errors.tooManyLabels(MAX_TASK_LABELS),
+      message: labels.tooMany(MAX_TASK_LABELS),
     });
 
 export type NewTask = z.infer<ReturnType<typeof newTaskSchema>>;

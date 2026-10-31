@@ -49,7 +49,7 @@ export function TaskLabelsField({ value, onChange, currentUserId }: TaskLabelsFi
   const customKeys = new Set(value.customLabels.map(labelKey));
 
   function addTyped() {
-    onChange(addTypedLabel(value, typed, { known, t }));
+    onChange(addTypedLabel(value, typed, known));
     setTyped('');
     typedRef.current?.focus();
   }
@@ -76,82 +76,77 @@ export function TaskLabelsField({ value, onChange, currentUserId }: TaskLabelsFi
         }}
         className={`${buttonClassName} w-fit`}
       >
-        {isOpen ? labels.done : labels.choose}
+        {labels.choose}
       </button>
       <div id={choicesId} hidden={!isOpen} className="flex flex-col gap-3">
-        {isOpen && (
-          <>
-            <div className="flex flex-wrap gap-2">
-              {taskLabelNames.map((name) => {
-                const isChosen = value.labels.includes(name);
-                return (
-                  <label key={name} className={`${chipClassName} ${disabledChipClassName}`}>
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={isChosen}
-                      disabled={!isChosen && !canAddMore}
-                      onChange={() => {
-                        onChange(toggleLabel(value, name));
-                      }}
-                    />
-                    {t.common.taskLabels[name]}
-                  </label>
-                );
-              })}
-              {customLabelChoices(known, value).map((label) => {
-                const isChosen = customKeys.has(labelKey(label));
-                return (
-                  <label
-                    key={labelKey(label)}
-                    className={`${chipClassName} ${disabledChipClassName}`}
-                  >
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={isChosen}
-                      disabled={!isChosen && !canAddMore}
-                      onChange={() => {
-                        onChange(toggleCustomLabel(value, label));
-                      }}
-                    />
-                    {label}
-                  </label>
-                );
-              })}
-            </div>
-            <div className="flex items-end gap-2">
-              <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
-                {labels.own}
+        <div className="flex flex-wrap gap-2">
+          {taskLabelNames.map((name) => {
+            const isChosen = value.labels.includes(name);
+            return (
+              <label key={name} className={`${chipClassName} ${disabledChipClassName}`}>
                 <input
-                  ref={typedRef}
-                  value={typed}
-                  maxLength={CUSTOM_LABEL_MAX_LENGTH}
-                  disabled={!canAddMore}
+                  type="checkbox"
+                  className="sr-only"
+                  checked={isChosen}
+                  disabled={!isChosen && !canAddMore}
                   aria-describedby={canAddMore ? undefined : hintId}
-                  placeholder={labels.ownPlaceholder}
-                  onChange={(event) => {
-                    setTyped(event.target.value);
+                  onChange={() => {
+                    onChange(toggleLabel(value, name));
                   }}
-                  onKeyDown={addOnEnter}
-                  className={`${inputClassName} min-w-0`}
                 />
+                {t.common.taskLabels[name]}
               </label>
-              <button
-                type="button"
-                disabled={!canAddMore || typed.trim() === ''}
-                onClick={addTyped}
-                className={buttonClassName}
-              >
-                {labels.add}
-              </button>
-            </div>
-            {!canAddMore && (
-              <p id={hintId} className="text-ink-muted text-sm">
-                {labels.tooMany(MAX_TASK_LABELS)}
-              </p>
-            )}
-          </>
+            );
+          })}
+          {customLabelChoices(known, value).map((label) => {
+            const isChosen = customKeys.has(labelKey(label));
+            return (
+              <label key={labelKey(label)} className={`${chipClassName} ${disabledChipClassName}`}>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={isChosen}
+                  disabled={!isChosen && !canAddMore}
+                  aria-describedby={canAddMore ? undefined : hintId}
+                  onChange={() => {
+                    onChange(toggleCustomLabel(value, label));
+                  }}
+                />
+                {label}
+              </label>
+            );
+          })}
+        </div>
+        <div className="flex items-end gap-2">
+          <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
+            {labels.own}
+            <input
+              ref={typedRef}
+              value={typed}
+              maxLength={CUSTOM_LABEL_MAX_LENGTH}
+              disabled={!canAddMore}
+              aria-describedby={canAddMore ? undefined : hintId}
+              placeholder={labels.ownPlaceholder}
+              onChange={(event) => {
+                setTyped(event.target.value);
+              }}
+              onKeyDown={addOnEnter}
+              className={`${inputClassName} min-w-0`}
+            />
+          </label>
+          <button
+            type="button"
+            disabled={!canAddMore || typed.trim() === ''}
+            onClick={addTyped}
+            className={buttonClassName}
+          >
+            {labels.add}
+          </button>
+        </div>
+        {!canAddMore && (
+          <p id={hintId} className="text-ink-muted text-sm">
+            {labels.tooMany(MAX_TASK_LABELS)}
+          </p>
         )}
       </div>
     </fieldset>

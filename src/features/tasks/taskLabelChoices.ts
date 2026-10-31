@@ -1,5 +1,6 @@
 import type { NewTask } from '@/features/tasks/task';
 import type { Messages } from '@/lib/i18n/i18n';
+import { languages } from '@/lib/i18n/languages';
 import {
   CUSTOM_LABEL_MAX_LENGTH,
   labelKey,
@@ -34,20 +35,16 @@ export function toggleCustomLabel(chosen: TaskLabels, label: string): TaskLabels
 }
 
 /**
- * The task's labels with the one the user typed added: a ready-made label if it has that name in the user's
- * language, else one of the household's own (`known`) as it is spelled there, else a new one. Spaces around it
+ * The task's labels with the one the user typed added: a ready-made label if it has that name in any of the app's
+ * languages, else one of the household's own (`known`) as it is spelled there, else a new one. Spaces around it
  * are dropped and it is cut to `CUSTOM_LABEL_MAX_LENGTH`; nothing changes for an empty name, a label the task
  * already has, or when it has as many as it can.
  */
-export function addTypedLabel(
-  chosen: TaskLabels,
-  typed: string,
-  { known, t }: { known: string[]; t: Messages },
-): TaskLabels {
+export function addTypedLabel(chosen: TaskLabels, typed: string, known: string[]): TaskLabels {
   const label = typed.trim().slice(0, CUSTOM_LABEL_MAX_LENGTH).trimEnd();
   const key = labelKey(label);
   if (key === '' || !canAddLabel(chosen)) return chosen;
-  const readyMade = taskLabelNames.find((name) => labelKey(t.common.taskLabels[name]) === key);
+  const readyMade = readyMadeLabelNamed(key);
   if (readyMade) {
     return chosen.labels.includes(readyMade) ? chosen : toggleLabel(chosen, readyMade);
   }
@@ -63,6 +60,18 @@ export function addTypedLabel(
 export function customLabelChoices(known: string[], chosen: TaskLabels): string[] {
   const knownKeys = new Set(known.map(labelKey));
   return [...known, ...chosen.customLabels.filter((label) => !knownKeys.has(labelKey(label)))];
+}
+
+/**
+ * The ready-made label with this name (`labelKey`) in any of the app's languages, so a family speaking several
+ * doesn't get an own label beside a ready-made one.
+ */
+function readyMadeLabelNamed(key: string): TaskLabelName | undefined {
+  return taskLabelNames.find((name) =>
+    Object.values(languages).some(
+      ({ messages }) => labelKey(messages.common.taskLabels[name]) === key,
+    ),
+  );
 }
 
 /** The names of the task's labels in the user's language, ready-made ones first. */

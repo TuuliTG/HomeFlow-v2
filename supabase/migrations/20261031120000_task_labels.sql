@@ -14,7 +14,7 @@ as $$
     and (select bool_and(l ~ '^[a-z][a-z0-9-]{0,39}$') and count(distinct l) = count(*) from unnest(labels) l)
       is not false
     and (
-      select bool_and(c = btrim(c) and char_length(c) between 1 and 30)
+      select bool_and(c = btrim(c) and char_length(c) between 1 and 30 and c !~ '[[:cntrl:]]')
         and count(distinct lower(c)) = count(*)
       from unnest(custom_labels) c
     ) is not false;
@@ -200,7 +200,7 @@ revoke execute on function public.task_suggestions() from public, anon;
 grant execute on function public.task_suggestions() to authenticated;
 
 -- The household's own labels, offered on the task form: one per label ignoring case, as most recently spelled,
--- most used first. Security invoker, so RLS leaves out labels only other members' private tasks have.
+-- most used first, at most 30 so they fit on a phone. Security invoker, so RLS leaves out labels only other members' private tasks have.
 create function public.custom_task_labels()
 returns table (label text)
 language sql
@@ -220,7 +220,7 @@ as $$
   counted as (
     select u.label_key, count(*) as uses from used u group by u.label_key
   )
-  select s.label from spelled s join counted c using (label_key) order by c.uses desc, s.label limit 100;
+  select s.label from spelled s join counted c using (label_key) order by c.uses desc, s.label limit 30;
 $$;
 
 revoke execute on function public.custom_task_labels() from public, anon;
