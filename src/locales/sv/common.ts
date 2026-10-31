@@ -38,6 +38,20 @@ export const common: Messages['common'] = {
   someone: 'Någon',
   newMember: 'Ny medlem (inget namn än)',
   taskTypes: { physical: 'Fysiskt', meta: 'Metaarbete' },
+  taskLabels: {
+    kitchen: 'Kök',
+    cooking: 'Matlagning',
+    cleaning: 'Städning',
+    laundry: 'Tvätt',
+    tidying: 'Plocka undan',
+    shopping: 'Inköp',
+    children: 'Barn',
+    pets: 'Husdjur',
+    garden: 'Trädgård och gård',
+    repairs: 'Reparationer',
+    paperwork: 'Räkningar och papper',
+    car: 'Bil',
+  },
   points: (count) => (count === 1 ? '1 poäng' : `${String(count)} poäng`),
   joinNames: (names) =>
     names.length <= 1

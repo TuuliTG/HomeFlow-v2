@@ -16,6 +16,8 @@ import { fieldValues, taskInput } from '@/features/tasks/taskFormValues';
 import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
 import { TaskIconField } from '@/features/tasks/TaskIconField';
 import { TaskImagesField } from '@/features/tasks/TaskImagesField';
+import type { TaskLabels } from '@/features/tasks/taskLabelChoices';
+import { TaskLabelsField } from '@/features/tasks/TaskLabelsField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
 import { TaskPointsField } from '@/features/tasks/TaskPointsField';
@@ -80,6 +82,10 @@ export function TaskForm({
   const [forChildren, setForChildren] = useState(initialValues.forChildren);
   const [icon, setIcon] = useState<TaskIconName | null>(initialValues.icon);
   const [assignedTo, setAssignedTo] = useState(initialValues.assignedTo);
+  const [labels, setLabels] = useState<TaskLabels>({
+    labels: initialValues.labels,
+    customLabels: initialValues.customLabels,
+  });
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
@@ -113,6 +119,7 @@ export function TaskForm({
     setForChildren(values.forChildren);
     setIcon(values.icon);
     setAssignedTo(values.assignedTo);
+    setLabels({ labels: values.labels, customLabels: values.customLabels });
     setError(null);
   }
 
@@ -120,7 +127,7 @@ export function TaskForm({
     event.preventDefault();
     const values = { title, description, type, points, repeat: repeatEveryDays, dueOn };
     const parsed = newTaskSchema(t).safeParse(
-      taskInput({ ...values, isPrivate, forChildren, icon, assignedTo }, isChild),
+      taskInput({ ...values, ...labels, isPrivate, forChildren, icon, assignedTo }, isChild),
     );
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
@@ -183,6 +190,15 @@ export function TaskForm({
       <TaskTypeField value={type} onChange={setType} />
 
       <TaskIconField value={icon} onChange={setIcon} />
+
+      <TaskLabelsField
+        value={labels}
+        onChange={(changed) => {
+          setLabels(changed);
+          setError(null);
+        }}
+        currentUserId={currentUserId}
+      />
 
       <TaskAudienceFields
         canBePrivate={!initial}

@@ -20,6 +20,8 @@ function suggestion(title: string, details: Partial<TaskSuggestion> = {}): TaskS
     isPrivate: false,
     forChildren: false,
     icon: null,
+    labels: [],
+    customLabels: [],
     timesAdded: 1,
     isOpen: false,
     ...details,
@@ -69,7 +71,11 @@ describe('suggestionAsTask', () => {
       timesAdded: 4,
       isOpen: true,
     } as const;
-    expect(suggestionAsTask(suggestion('Take out trash', details))).toEqual({
+    const labels = {
+      labels: ['kitchen'],
+      customLabels: ['Bins'],
+    } satisfies Partial<TaskSuggestion>;
+    expect(suggestionAsTask(suggestion('Take out trash', { ...details, ...labels }))).toEqual({
       title: 'Take out trash',
       description: 'The bins are behind the garage',
       type: 'meta',
@@ -78,6 +84,8 @@ describe('suggestionAsTask', () => {
       isPrivate: false,
       forChildren: true,
       icon: 'trash',
+      labels: ['kitchen'],
+      customLabels: ['Bins'],
       dueOn: null,
       assignedTo: null,
     });

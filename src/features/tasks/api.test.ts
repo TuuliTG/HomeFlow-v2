@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as tasksApi from '@/features/tasks/api';
+import type { NewTask } from '@/features/tasks/task';
 
 const supabase = vi.hoisted(() => {
   const query = {
@@ -30,7 +31,7 @@ vi.mock('@/lib/supabase', () => ({ getSupabaseClient }));
 const api = await vi.importActual<typeof tasksApi>('@/features/tasks/api');
 const { client, query } = supabase;
 const failure = { message: 'boom' };
-const newTask = {
+const newTask: NewTask = {
   title: 'Vacuum',
   description: null,
   type: 'physical',
@@ -41,7 +42,9 @@ const newTask = {
   forChildren: false,
   icon: null,
   assignedTo: null,
-} as const;
+  labels: [],
+  customLabels: [],
+};
 const row = {
   id: 't1',
   title: 'Vacuum',
@@ -56,6 +59,8 @@ const row = {
   for_children: false,
   icon: null,
   assigned_to: null,
+  labels: [],
+  custom_labels: [],
   task_images: [],
   previous: null,
   request: null,
@@ -149,6 +154,8 @@ describe('tasks api', () => {
       forChildren: true,
       icon: 'vacuum',
       assignedTo: 'ben',
+      labels: ['cleaning'],
+      customLabels: ['Upstairs'],
     });
 
     expect(client.rpc).toHaveBeenCalledWith('update_task', {
@@ -163,6 +170,8 @@ describe('tasks api', () => {
       task_icon: 'vacuum',
       task_assigned_to: 'ben',
       task_change_assignee: true,
+      task_labels: ['cleaning'],
+      task_custom_labels: ['Upstairs'],
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
@@ -310,6 +319,19 @@ describe('tasks api', () => {
     expect(tasks.map((task) => task.icon)).toEqual(['vacuum', null]);
   });
 
+  it("reads a task's labels, leaving out ready-made ones this version doesn't know", async () => {
+    respondWithTasks({
+      data: [{ ...row, labels: ['cleaning', 'rocketry'], custom_labels: ['Upstairs'] }],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const [task] = await api.fetchTasks();
+
+    expect(task?.labels).toEqual(['cleaning']);
+    expect(task?.customLabels).toEqual(['Upstairs']);
+  });
+
   it('skips the name lookup when there are no tasks', async () => {
     respondWithTasks({ data: [], error: null });
 
@@ -343,6 +365,8 @@ describe('tasks api', () => {
       forChildren: true,
       icon: 'vacuum',
       assignedTo: 'ben',
+      labels: ['cleaning'],
+      customLabels: ['Upstairs'],
     });
 
     expect(client.from).toHaveBeenCalledWith('tasks');
@@ -357,6 +381,8 @@ describe('tasks api', () => {
       for_children: true,
       icon: 'vacuum',
       assigned_to: 'ben',
+      labels: ['cleaning'],
+      custom_labels: ['Upstairs'],
     });
     expect(query.select).toHaveBeenCalledWith('id');
     expect(id).toBe('t9');

@@ -5,6 +5,7 @@ import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
 import { requestRowSchema, taskRequestOf } from '@/features/tasks/requestRow';
 import { getSupabaseClient } from '@/lib/supabase';
 import { taskIconSchema } from '@/lib/taskIcons';
+import { taskLabelsSchema } from '@/lib/taskLabels';
 
 const taskRowsSchema = z.array(
   z.object({
@@ -21,6 +22,8 @@ const taskRowsSchema = z.array(
     for_children: z.boolean(),
     icon: taskIconSchema,
     assigned_to: z.string().nullable(),
+    labels: taskLabelsSchema,
+    custom_labels: z.array(z.string()),
     task_images: z.array(z.object({ path: z.string(), position: z.number() })),
     /** The occurrence this one repeats; it is done, since completing it added this one. */
     previous: z
@@ -38,7 +41,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, assigned_to, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, assigned_to, labels, custom_labels, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -66,6 +69,7 @@ export async function fetchTasks(): Promise<Task[]> {
       is_private,
       for_children,
       assigned_to,
+      custom_labels,
       task_images,
       previous,
       request,
@@ -73,6 +77,7 @@ export async function fetchTasks(): Promise<Task[]> {
     }) => ({
       ...task,
       assignedTo: assigned_to,
+      customLabels: custom_labels,
       images: task_images.toSorted((a, b) => a.position - b.position).map((image) => image.path),
       isPrivate: is_private,
       forChildren: for_children,
@@ -106,6 +111,7 @@ export async function addTask({
   isPrivate,
   forChildren,
   assignedTo,
+  customLabels,
   ...task
 }: NewTask): Promise<string> {
   const { data, error } = await getSupabaseClient()
@@ -117,6 +123,7 @@ export async function addTask({
       is_private: isPrivate,
       for_children: forChildren,
       assigned_to: assignedTo,
+      custom_labels: customLabels,
     })
     .select('id')
     .single();
@@ -165,6 +172,8 @@ export async function updateTask(
     forChildren,
     icon,
     assignedTo,
+    labels,
+    customLabels,
   }: NewTask,
 ): Promise<void> {
   const { error } = await getSupabaseClient().rpc('update_task', {
@@ -180,6 +189,8 @@ export async function updateTask(
     task_assigned_to: assignedTo,
     // Says whose chore it is; the database ignores it from a child (`update_task()`).
     task_change_assignee: true,
+    task_labels: labels,
+    task_custom_labels: customLabels,
   });
   if (error) throw error;
 }

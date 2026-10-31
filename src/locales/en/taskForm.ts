@@ -77,6 +77,17 @@ export const taskForm = {
       bills: 'Bills',
     },
   },
+  labels: {
+    label: 'Labels (optional)',
+    /** "Labels: Kitchen and Dishwasher". */
+    chosen: (names: string) => `Labels: ${names}`,
+    choose: 'Choose labels',
+    done: 'Done',
+    own: 'Your own label',
+    ownPlaceholder: 'e.g. Dishwasher',
+    add: 'Add',
+    tooMany: (max: number) => `A task can have up to ${String(max)} labels.`,
+  },
   keepPrivate: 'Keep it private',
   forChildren: 'Children can do it',
   assignedTo: 'Whose chore is it?',
@@ -97,6 +108,7 @@ export const taskForm = {
   doesNotRepeat: "Doesn't repeat",
   dueDate: 'Due date',
   errors: {
+    tooManyLabels: (max: number) => `A task can have up to ${String(max)} labels.`,
     titleRequired: 'Give the task a name.',
     titleTooLong: (max: number) => `Keep the name to ${String(max)} characters or fewer.`,
     descriptionTooLong: (max: number) =>

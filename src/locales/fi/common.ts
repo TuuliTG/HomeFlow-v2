@@ -14,6 +14,20 @@ export const common: Messages['common'] = {
   someone: 'Joku',
   newMember: 'Uusi jäsen (ei vielä nimeä)',
   taskTypes: { physical: 'Fyysinen', meta: 'Metatyö' },
+  taskLabels: {
+    kitchen: 'Keittiö',
+    cooking: 'Ruoanlaitto',
+    cleaning: 'Siivous',
+    laundry: 'Pyykit',
+    tidying: 'Järjestely',
+    shopping: 'Ostokset',
+    children: 'Lapset',
+    pets: 'Lemmikit',
+    garden: 'Piha ja puutarha',
+    repairs: 'Korjaukset',
+    paperwork: 'Laskut ja paperit',
+    car: 'Auto',
+  },
   points: (count) => (count === 1 ? '1 piste' : `${String(count)} pistettä`),
   joinNames: (names) =>
     names.length <= 1

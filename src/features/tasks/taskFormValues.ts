@@ -24,6 +24,8 @@ export function fieldValues(
     forChildren: task.forChildren,
     icon: task.icon,
     assignedTo: task.assignedTo,
+    labels: task.labels,
+    customLabels: task.customLabels,
   };
 }
 
@@ -40,6 +42,8 @@ export function taskInput(values: FieldValues, isChild: boolean) {
     dueOn: values.dueOn === '' ? null : values.dueOn,
     description: values.description.trim() === '' ? null : values.description,
     icon: values.icon,
+    labels: values.labels,
+    customLabels: values.customLabels,
     ...audience(values, isChild),
   };
 }

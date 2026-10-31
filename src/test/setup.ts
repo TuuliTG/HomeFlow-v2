@@ -23,6 +23,7 @@ vi.mock('@/features/tasks/completedTasksApi', () => import('@/test/fakeCompleted
 vi.mock('@/features/tasks/favouritesApi', () => import('@/test/fakeFavouritesApi'));
 vi.mock('@/features/tasks/helpersApi', () => import('@/test/fakeHelpersApi'));
 vi.mock('@/features/tasks/imagesApi', () => import('@/test/fakeImagesApi'));
+vi.mock('@/features/tasks/labelsApi', () => import('@/test/fakeLabelsApi'));
 vi.mock('@/features/tasks/liveApi', () => import('@/test/fakeLiveApi'));
 vi.mock('@/features/tasks/membershipApi', () => import('@/test/fakeMembershipApi'));
 vi.mock('@/features/tasks/pointsApi', () => import('@/test/fakePointsApi'));

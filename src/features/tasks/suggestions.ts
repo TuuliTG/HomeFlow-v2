@@ -48,6 +48,8 @@ export function suggestionAsTask({
   isPrivate,
   forChildren,
   icon,
+  labels,
+  customLabels,
 }: TaskSuggestion): NewTask {
   return {
     title,
@@ -58,6 +60,8 @@ export function suggestionAsTask({
     isPrivate,
     forChildren,
     icon,
+    labels,
+    customLabels,
     dueOn: null,
     assignedTo: null,
   };

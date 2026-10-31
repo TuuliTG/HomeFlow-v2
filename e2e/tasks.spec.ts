@@ -27,6 +27,14 @@ test('family member can create a task and see it on the shared task board', asyn
   await page.getByRole('radio', { name: 'Meta work' }).check();
   await page.getByLabel('Points').fill('5');
   await page.getByRole('checkbox', { name: 'Children can do it' }).check();
+  await page.getByRole('button', { name: 'Choose labels' }).click();
+  await page.getByText('Garden and yard', { exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: 'Garden and yard' })).toBeChecked();
+  await page.getByLabel('Your own label').fill('Weekends');
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(page.getByText('Labels: Garden and yard and Weekends')).toBeVisible();
+  const withLabels = await new AxeBuilder({ page }).analyze();
+  expect(withLabels.violations, 'a11y violations on the task labels').toEqual([]);
   await page.getByRole('button', { name: 'Create task' }).click();
 
   const task = page.getByRole('listitem', { name: 'Water plants' });
@@ -34,6 +42,8 @@ test('family member can create a task and see it on the shared task board', asyn
   await expect(task.getByText('5 points')).toBeVisible();
   await expect(task.getByText('For children')).toBeVisible();
   await expect(task.getByText('Added by you')).toBeVisible();
+  await expect(task.getByText('Garden and yard')).toBeVisible();
+  await expect(task.getByText('Weekends')).toBeVisible();
 
   await page.reload();
   await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
