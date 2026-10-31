@@ -6,7 +6,6 @@ import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
 import { fakeSchedulesBackend } from '@/test/fakeSchedulesApi';
 import {
   deliver,
-  helpersOf,
   fakeTasksBackend,
   openTaskOf,
   isChildIn,
@@ -85,19 +84,6 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
   );
 };
 
-export const fetchCompletedTasks: typeof tasksApi.fetchCompletedTasks = (userId) => {
-  if (requestsFailing()) return Promise.reject(new Error('Network error'));
-  return Promise.resolve(
-    tasks
-      .flatMap((task) => {
-        const { id, title, type, points, completed } = task;
-        if (completed?.by !== userId) return [];
-        return [{ id, title, type, points, completedAt: completed.at, helpers: helpersOf(task) }];
-      })
-      .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
-  );
-};
-
 export const addTask: typeof tasksApi.addTask = (task) =>
   asCurrentUser((userId) => {
     // Like the insert policy: a child adds tasks only when allowed, for children and without points.
@@ -115,31 +101,6 @@ export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) 
   asCurrentUser((userId) => {
     fakeTasksBackend.completeTaskAs(userId, taskId, completedOn);
   });
-
-export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdCompletedTasks = () => {
-  if (requestsFailing()) return Promise.reject(new Error('Network error'));
-  return Promise.resolve(
-    tasks
-      .flatMap((task) => {
-        const { id, title, type, points, completed } = task;
-        return completed && isVisible(task) && !task.isPrivate
-          ? [
-              {
-                id,
-                title,
-                type,
-                points,
-                completedAt: completed.at,
-                completedBy: completed.by,
-                completerName: fakeAuthBackend.displayNameOf(completed.by),
-                helpers: helpersOf(task),
-              },
-            ]
-          : [];
-      })
-      .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
-  );
-};
 
 /** An open task `userId` may edit or delete, like `private.can_change_task()`: a child's own only. */
 export function changeableTaskOf(userId: string, taskId: string): StoredTask {

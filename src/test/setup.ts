@@ -19,6 +19,7 @@ vi.mock('@/features/news/api', () => import('@/test/fakeNewsApi'));
 vi.mock('@/features/rewards/api', () => import('@/test/fakeGoalsApi'));
 vi.mock('@/features/statistics/api', () => import('@/test/fakeStatisticsApi'));
 vi.mock('@/features/tasks/api', () => import('@/test/fakeTasksApi'));
+vi.mock('@/features/tasks/completedTasksApi', () => import('@/test/fakeCompletedTasksApi'));
 vi.mock('@/features/tasks/favouritesApi', () => import('@/test/fakeFavouritesApi'));
 vi.mock('@/features/tasks/helpersApi', () => import('@/test/fakeHelpersApi'));
 vi.mock('@/features/tasks/imagesApi', () => import('@/test/fakeImagesApi'));
