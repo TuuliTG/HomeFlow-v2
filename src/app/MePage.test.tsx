@@ -46,6 +46,8 @@ describe('the Me page for children', () => {
     const jar = await screen.findByRole('progressbar', { name: 'Progress towards Cinema trip' });
     expect(jar).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByText('10 more points to go')).toBeInTheDocument();
+    // Only a shared goal keeps room for their own share.
+    expect(screen.queryByText(/Your share/)).not.toBeInTheDocument();
 
     const myTasks = screen.getByRole('list', { name: 'My tasks' });
     const bed = within(myTasks).getByRole('listitem', { name: 'Make your bed' });
