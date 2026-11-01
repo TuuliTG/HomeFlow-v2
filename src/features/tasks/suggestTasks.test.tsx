@@ -404,7 +404,7 @@ describe('adding a task again', () => {
     const user = userEvent.setup();
     renderAppAt('/?completed=1');
 
-    await user.click(await screen.findByRole('link', { name: 'Add Take out trash again' }));
+    await user.click(await screen.findByRole('link', { name: 'Add again: Take out trash' }));
 
     expect(await screen.findByLabelText('Task')).toHaveValue('Take out trash');
     expect(screen.getByLabelText('Description (optional)')).toHaveValue(

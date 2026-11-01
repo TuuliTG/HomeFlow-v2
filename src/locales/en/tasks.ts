@@ -126,7 +126,7 @@ export const tasks = {
       named: (name: string) => `Done by ${name}`,
     },
     addAgain: 'Add again',
-    addAgainLabel: (title: string) => `Add ${title} again`,
+    addAgainLabel: (title: string) => `Add again: ${title}`,
   },
   me: {
     eyebrow: 'Me',
