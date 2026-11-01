@@ -15,7 +15,9 @@ import { TaskForm } from '@/features/tasks/TaskForm';
 import { taskFromLink } from '@/features/tasks/taskLink';
 import { usePlanNewTask } from '@/features/tasks/useSchedules';
 import {
+  type DoneTask,
   useAddTask,
+  useCompleteTask,
   useFavouriteTasks,
   useMembership,
   useSetFavouriteTask,
@@ -95,6 +97,8 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
         currentUserId={userId}
         submitLabel={t.taskForm.create.submit}
         isSaving={saveTask.isSaving}
+        // A task done already isn't planned in the timetable.
+        canBeDoneAlready={startsAt === null}
         onSave={saveTask.save}
       />
     </>
@@ -102,15 +106,28 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
 }
 
 /**
- * Adds a new task, then plans it in the user's timetable if they are adding it from there
- * (`paths.newTaskAt`), and opens where it shows.
+ * Adds a new task, then marks it done if the user said it is already, or plans it in their timetable if
+ * they are adding it from there (`paths.newTaskAt`), and opens where it shows.
  */
 function useSaveNewTask(userId: string, householdId: string | null) {
   const addTask = useAddTask(userId);
   const planNewTask = usePlanNewTask(userId);
+  const completeTask = useCompleteTask(userId);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const startsAt = startFromLink(searchParams);
+
+  async function markDone(task: DoneTask) {
+    try {
+      await completeTask.mutateAsync(task);
+    } catch (error) {
+      // The task was added, so saving it again would add it twice: the user marks it done from its card.
+      void reportError(error);
+      await navigate(paths.taskList(task.isPrivate));
+      return;
+    }
+    await navigate(paths.me);
+  }
 
   async function plan(taskId: string, task: NewTask, at: string) {
     try {
@@ -123,7 +140,7 @@ function useSaveNewTask(userId: string, householdId: string | null) {
     await navigate(paths.meAs(parseToDoView(searchParams.get('view'))));
   }
 
-  async function save(task: NewTask, images: DraftImage[]) {
+  async function save(task: NewTask, images: DraftImage[], isDone: boolean) {
     let taskId: string;
     try {
       taskId = await addTask.mutateAsync({ task, images, householdId: householdId ?? '' });
@@ -133,12 +150,13 @@ function useSaveNewTask(userId: string, householdId: string | null) {
       await navigate(paths.editTask(error.taskId), { state: imagesNotSavedState });
       return;
     }
-    if (startsAt === null) await navigate(paths.taskList(task.isPrivate));
+    if (isDone) await markDone({ id: taskId, ...task });
+    else if (startsAt === null) await navigate(paths.taskList(task.isPrivate));
     else await plan(taskId, task, startsAt);
   }
 
   return {
-    isSaving: addTask.isPending || planNewTask.isPending,
+    isSaving: addTask.isPending || planNewTask.isPending || completeTask.isPending,
     save,
   };
 }

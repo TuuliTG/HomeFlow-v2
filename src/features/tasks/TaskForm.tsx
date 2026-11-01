@@ -51,8 +51,13 @@ interface TaskFormProps {
   currentUserId: string;
   submitLabel: string;
   isSaving: boolean;
-  /** Saves the task and its pictures; a rejection shows "We couldn't save the task." */
-  onSave: (task: NewTask, images: DraftImage[]) => Promise<void>;
+  /** Offers to add the task as already done, which then has no due date. */
+  canBeDoneAlready?: boolean;
+  /**
+   * Saves the task and its pictures, and says whether the user checked "Already done"; a rejection shows
+   * "We couldn't save the task."
+   */
+  onSave: (task: NewTask, images: DraftImage[], isDone: boolean) => Promise<void>;
 }
 
 /** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
@@ -66,6 +71,7 @@ export function TaskForm({
   currentUserId,
   submitLabel,
   isSaving,
+  canBeDoneAlready = false,
   onSave,
 }: TaskFormProps) {
   const [initialValues] = useState(() => fieldValues(initial ?? prefill));
@@ -80,6 +86,7 @@ export function TaskForm({
   const [forChildren, setForChildren] = useState(initialValues.forChildren);
   const [icon, setIcon] = useState<TaskIconName | null>(initialValues.icon);
   const [assignedTo, setAssignedTo] = useState(initialValues.assignedTo);
+  const [isDone, setIsDone] = useState(false);
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
@@ -116,6 +123,12 @@ export function TaskForm({
     setError(null);
   }
 
+  /** A task done already has no due date. */
+  function checkAlreadyDone(checked: boolean) {
+    setIsDone(checked);
+    if (checked) setDueOn('');
+  }
+
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     const values = { title, description, type, points, repeat: repeatEveryDays, dueOn };
@@ -129,7 +142,7 @@ export function TaskForm({
       fieldRefs[field].current?.focus();
       return;
     }
-    onSave(parsed.data, images).catch(() => {
+    onSave(parsed.data, images, isDone).catch(() => {
       setError({ field: null, message: t.taskForm.errors.saveFailed });
     });
   }
@@ -213,6 +226,7 @@ export function TaskForm({
         onDueOnChange={setDueOn}
         dueOnRef={dueOnRef}
         dueOnErrorProps={errorPropsFor('dueOn')}
+        alreadyDone={canBeDoneAlready ? { checked: isDone, onChange: checkAlreadyDone } : undefined}
       />
 
       {error && (

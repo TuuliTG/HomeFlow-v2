@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-26 (tappable links in task descriptions)
+- **Updated:** 2026-11-01 (adding a task that is already done)
 
 ## Context
 
@@ -179,6 +179,13 @@ next one back rather than follow a fixed calendar.
   with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Typing a
   name lists the matching ones; picking one fills in the form without a due date. There is no templates table:
   deleted tasks drop out on their own, and categories can later filter the same list.
+- **Adding a task done already**: an "Already done" check mark on the New task form (not when adding from the
+  timetable, which plans a task to do) adds the task and then marks it done with `complete_task()` as the user,
+  so it is credited, celebrated and repeats exactly like one marked done from its card; it then has no due date
+  (the field hides) and the Me page opens, where it is under Completed. Two requests rather than an insert with
+  `completed_at`, so marking done keeps one path and the insert policy stays as it is. If marking done fails,
+  the task stays open and its list opens to mark it done there (saving the form again would add it twice); if
+  its pictures fail, its edit page opens as usual and it is marked done later.
 - **Tasks from other apps**: a link to `/tasks/new?title=…&description=…&due=YYYY-MM-DD` fills in the New task
   form (`taskFromLink()`), so another app, such as the owner's email assistant, can hand over a task it found
   without any access to HomeFlow. The link only fills in the form: the user chooses the type, points and who it's

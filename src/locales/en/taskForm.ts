@@ -96,6 +96,7 @@ export const taskForm = {
   repeats: 'Repeats',
   doesNotRepeat: "Doesn't repeat",
   dueDate: 'Due date',
+  alreadyDone: 'Already done',
   errors: {
     titleRequired: 'Give the task a name.',
     titleTooLong: (max: number) => `Keep the name to ${String(max)} characters or fewer.`,

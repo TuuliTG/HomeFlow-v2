@@ -95,6 +95,7 @@ export const taskForm: Messages['taskForm'] = {
   repeats: 'Toistuu',
   doesNotRepeat: 'Ei toistu',
   dueDate: 'Määräpäivä',
+  alreadyDone: 'Jo tehty',
   errors: {
     titleRequired: 'Anna tehtävälle nimi.',
     titleTooLong: (max) => `Nimessä saa olla enintään ${String(max)} merkkiä.`,

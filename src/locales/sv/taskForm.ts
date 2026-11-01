@@ -96,6 +96,7 @@ export const taskForm: Messages['taskForm'] = {
   repeats: 'Upprepas',
   doesNotRepeat: 'Upprepas inte',
   dueDate: 'Förfallodag',
+  alreadyDone: 'Redan gjort',
   errors: {
     titleRequired: 'Ge uppgiften ett namn.',
     titleTooLong: (max) => `Namnet får ha högst ${String(max)} tecken.`,
