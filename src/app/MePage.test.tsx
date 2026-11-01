@@ -87,7 +87,7 @@ describe('the Me page for children', () => {
     ).toBeInTheDocument();
   });
 
-  it('tells them how many points they still need to earn themselves towards a shared goal', async () => {
+  it("keeps the top of a shared goal's jar for their own share until they earn it", async () => {
     const { anna, ben } = logInAsChild({ withGoal: false });
     fakeGoalsBackend.addGoalAs(anna.id, {
       title: 'Sushi dinner',
@@ -108,13 +108,18 @@ describe('the Me page for children', () => {
     renderAppAt('/me');
 
     const jar = await screen.findByRole('region', { name: 'Sushi dinner' });
-    expect(jar).toHaveTextContent('2 more points to go');
+    // Anna's 4 points fill the jar only up to the 5 points kept for Ben's share.
+    const progress = within(jar).getByRole('progressbar');
+    expect(progress).toHaveAttribute('aria-valuenow', '1');
+    expect(jar).not.toHaveTextContent('more points to go');
     expect(jar).toHaveTextContent('You still need to earn 5 more points yourself.');
+    expect(jar).toHaveTextContent('Your share 0 / 5');
 
     const myTasks = screen.getByRole('list', { name: 'My tasks' });
     await user.click(within(myTasks).getByRole('button', { name: 'Mark done: Make your bed' }));
 
-    expect(await within(jar).findByText('Enough points together!')).toBeInTheDocument();
+    expect(await within(jar).findByText('Your share 2 / 5')).toBeInTheDocument();
+    expect(progress).toHaveAttribute('aria-valuenow', '3');
     expect(jar).toHaveTextContent('You still need to earn 3 more points yourself.');
     expect(within(jar).queryByRole('button', { name: /Claim reward/ })).not.toBeInTheDocument();
   });

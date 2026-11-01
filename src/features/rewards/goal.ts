@@ -122,10 +122,26 @@ export function participantsShortOfMinimum(goal: Goal): GoalParticipant[] {
   );
 }
 
-/** The points `userId` must still earn towards their minimum for a shared goal; 0 once earned or with none. */
-export function ownPointsToGo(goal: Goal, userId: string): number {
-  const own = goal.participants.find(({ id }) => id === userId);
-  return own ? Math.max((own.minPoints ?? 0) - own.points, 0) : 0;
+/** How a star jar fills for one member, in points: the room for their own minimum is kept for them. */
+export interface JarFill {
+  /** The points of the goal kept for the member's minimum of a shared goal; 0 without one. */
+  ownRoom: number;
+  /** The member's points that fill their own room. */
+  own: number;
+  /** The other points that count: everyone's, up to the target less the member's room. */
+  others: number;
+}
+
+/**
+ * How a goal's jar fills for `userId`, so a shared goal doesn't look full while they are short of their
+ * minimum (ADR 0007): others' points fill the jar up to the room kept for theirs.
+ */
+export function jarFill(goal: Goal, userId: string): JarFill {
+  const participant = goal.participants.find(({ id }) => id === userId);
+  const ownRoom = Math.min(participant?.minPoints ?? 0, goal.targetPoints);
+  const own = Math.min(participant?.points ?? 0, ownRoom);
+  const others = Math.min(goal.points - own, goal.targetPoints - ownRoom);
+  return { ownRoom, own, others };
 }
 
 /** A member of the household for setting goals: only adults set them, also for a child (ADR 0007). */
