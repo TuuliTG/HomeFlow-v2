@@ -47,7 +47,7 @@ describe('notification settings', () => {
 
   it('asks permission in the tap, then subscribes and saves this device', async () => {
     const user = userEvent.setup();
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     const button = await toggle('Turn on notifications');
     await user.click(button);
@@ -62,7 +62,7 @@ describe('notification settings', () => {
   it('turns notifications off: forgets this device, then unsubscribes it', async () => {
     const user = userEvent.setup();
     browser.getDeviceSubscription.mockResolvedValue(device);
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     await user.click(await toggle('Turn off notifications'));
 
@@ -73,7 +73,7 @@ describe('notification settings', () => {
 
   it('re-saves an existing subscription on load, so it belongs to the current user', async () => {
     browser.getDeviceSubscription.mockResolvedValue(device);
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     expect(await toggle('Turn off notifications')).toBeInTheDocument();
     expect(browser.getDeviceSubscription).toHaveBeenCalledWith(VAPID_KEY);
@@ -83,7 +83,7 @@ describe('notification settings', () => {
   it('keeps offering to turn on when the user dismisses the prompt', async () => {
     const user = userEvent.setup();
     browser.requestPermission.mockResolvedValue('default');
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     await user.click(await toggle('Turn on notifications'));
 
@@ -97,7 +97,7 @@ describe('notification settings', () => {
       browser.permission.mockReturnValue('denied');
       return Promise.resolve('denied');
     });
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     await user.click(await toggle('Turn on notifications'));
 
@@ -110,7 +110,7 @@ describe('notification settings', () => {
   it('unsubscribes again when the device cannot be saved', async () => {
     const user = userEvent.setup();
     api.saveSubscription.mockRejectedValue(new Error('Network error'));
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     await user.click(await toggle('Turn on notifications'));
 
@@ -123,7 +123,7 @@ describe('notification settings', () => {
     const user = userEvent.setup();
     browser.getDeviceSubscription.mockResolvedValue(device);
     api.deleteSubscription.mockRejectedValueOnce(new Error('Network error'));
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     await user.click(await toggle('Turn off notifications'));
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't change notifications.");
@@ -142,7 +142,7 @@ describe('notification settings', () => {
         finishSaving = resolve;
       }),
     );
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     const button = await toggle('Turn on notifications');
     await user.click(button);
@@ -158,7 +158,7 @@ describe('notification settings', () => {
 
   it('tells iPhone users to add HomeFlow to the Home Screen first', async () => {
     browser.pushSupport.mockReturnValue('needs-home-screen');
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     expect(await settings()).toHaveTextContent('Add to Home Screen');
     expect(screen.queryByRole('button', { name: /notifications/ })).not.toBeInTheDocument();
@@ -166,22 +166,22 @@ describe('notification settings', () => {
 
   it('says so when the browser has no push support', async () => {
     browser.pushSupport.mockReturnValue('unsupported');
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     expect(await settings()).toHaveTextContent("This browser can't show notifications");
   });
 
   it('is hidden until push notifications are set up for the app', async () => {
     vi.stubEnv('VITE_VAPID_PUBLIC_KEY', '');
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
-    await screen.findByRole('heading', { level: 1, name: 'My tasks' });
+    await screen.findByRole('heading', { level: 1, name: 'Settings' });
     expect(screen.queryByRole('region', { name: 'Notifications' })).not.toBeInTheDocument();
   });
 
   it('stops notifications on this device when the user logs out', async () => {
     const user = userEvent.setup();
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     await user.click(await screen.findByRole('button', { name: 'Log out' }));
 
@@ -193,7 +193,7 @@ describe('notification settings', () => {
   it('still unsubscribes and logs out when forgetting the device fails', async () => {
     const user = userEvent.setup();
     api.deleteSubscription.mockRejectedValue(new Error('Network error'));
-    renderAppAt('/me');
+    renderAppAt('/settings');
 
     await user.click(await screen.findByRole('button', { name: 'Log out' }));
 

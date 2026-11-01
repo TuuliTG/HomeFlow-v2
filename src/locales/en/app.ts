@@ -1,4 +1,4 @@
-/** The app shell: navigation, install hint, settings and the page-not-found screen. */
+/** The app shell: navigation, install hint, update banner, settings, and the page-not-found and error screens. */
 export const app = {
   nav: {
     label: 'Main',
@@ -19,14 +19,26 @@ export const app = {
     benefit: '. HomeFlow then opens like an app and can send you notifications.',
     gotIt: 'Got it',
   },
+  update: {
+    available: 'A new version of HomeFlow is available.',
+    reload: 'Reload',
+    later: 'Not now',
+  },
   notFound: {
     title: 'Page not found',
     description: "This page doesn't exist.",
     backToTasks: 'Back to tasks',
   },
+  error: {
+    title: 'Something went wrong',
+    description: 'HomeFlow ran into a problem. Reload the page to try again.',
+    reload: 'Reload',
+  },
+  settings: {
+    title: 'Settings',
+  },
   language: {
     heading: 'Language',
     label: 'Language of HomeFlow',
-    hint: 'Changes the language on this device.',
   },
 };

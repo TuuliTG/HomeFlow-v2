@@ -19,14 +19,26 @@ export const app: Messages['app'] = {
     benefit: '. Sen jälkeen HomeFlow aukeaa kuin sovellus ja voi lähettää sinulle ilmoituksia.',
     gotIt: 'Selvä',
   },
+  update: {
+    available: 'HomeFlow’sta on uusi versio.',
+    reload: 'Lataa uudelleen',
+    later: 'Ei nyt',
+  },
   notFound: {
     title: 'Sivua ei löytynyt',
     description: 'Tätä sivua ei ole olemassa.',
     backToTasks: 'Takaisin tehtäviin',
   },
+  error: {
+    title: 'Jotain meni pieleen',
+    description: 'HomeFlow kohtasi ongelman. Lataa sivu uudelleen ja yritä uudestaan.',
+    reload: 'Lataa uudelleen',
+  },
+  settings: {
+    title: 'Asetukset',
+  },
   language: {
     heading: 'Kieli',
     label: 'HomeFlow’n kieli',
-    hint: 'Vaihtaa kielen tällä laitteella.',
   },
 };

@@ -35,7 +35,10 @@ export function favouriteSuggestions(
     .sort((a, b) => a.title.localeCompare(b.title));
 }
 
-/** A new task with an earlier task's details. Its due date had passed, so the new one has none. */
+/**
+ * A new task with an earlier task's details. Its due date had passed, so the new one has none, and it isn't given
+ * to a child.
+ */
 export function suggestionAsTask({
   title,
   description,
@@ -44,6 +47,7 @@ export function suggestionAsTask({
   repeatEveryDays,
   isPrivate,
   forChildren,
+  icon,
 }: TaskSuggestion): NewTask {
   return {
     title,
@@ -53,7 +57,9 @@ export function suggestionAsTask({
     repeatEveryDays,
     isPrivate,
     forChildren,
+    icon,
     dueOn: null,
+    assignedTo: null,
   };
 }
 

@@ -1,50 +1,63 @@
-import { useId, useState } from 'react';
-import { Link } from 'react-router';
+import { type ReactNode, useCallback, useId, useState } from 'react';
 
-import { paths } from '@/app/paths';
-
-import { describeDueDate } from '@/features/tasks/dueDate';
-import { today } from '@/lib/dates';
+import { StarIcon } from '@/components/ui/icons';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
-import { canChange, isToDoBy, type Task } from '@/features/tasks/task';
+import { descriptionParts } from '@/features/tasks/descriptionLinks';
+import { isToDoBy, type Task } from '@/features/tasks/task';
+import { AskLink, EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskImages } from '@/features/tasks/TaskImages';
 import { TaskPeople } from '@/features/tasks/TaskPeople';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
+import { TaskRequestPanel } from '@/features/tasks/TaskRequestPanel';
 import { TaskTags } from '@/features/tasks/TaskTags';
-import {
-  useCompleteTask,
-  useMembership,
-  usePickUpTask,
-  usePutBackTask,
-} from '@/features/tasks/useTasks';
+import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
+import { useCompleteTask, usePickUpTask, usePutBackTask } from '@/features/tasks/useTasks';
 
 interface TaskCardProps {
   task: Task;
   currentUserId: string;
   /** Heading level of the task's title, one below the heading of the list it is in. */
   titleLevel: 3 | 4;
+  /** An item in a list of tasks, or a panel on its own, which takes focus when it opens. */
+  as?: 'li' | 'section';
+  /** More about the task, below its actions. */
+  children?: ReactNode;
 }
 
-export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
+export function TaskCard({
+  task,
+  currentUserId,
+  titleLevel,
+  as: Root = 'li',
+  children,
+}: TaskCardProps) {
   const titleId = useId();
   const t = useMessages();
+  const isPanel = Root === 'section';
+  const focusWhenOpened = useCallback((element: HTMLElement | null) => {
+    element?.focus();
+  }, []);
 
   return (
-    <li
+    <Root
+      ref={isPanel ? focusWhenOpened : undefined}
       aria-labelledby={titleId}
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+      tabIndex={isPanel ? -1 : undefined}
+      className="bg-surface shadow-card flex flex-col gap-3 rounded-2xl p-4"
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start gap-3">
+        <TaskTypeIcon type={task.type} icon={task.icon} />
         <TaskDetails
           task={task}
           currentUserId={currentUserId}
           titleId={titleId}
           titleLevel={titleLevel}
         />
-        <div className="-mt-2 -mr-2 flex shrink-0 items-center gap-1">
+        <div className="-mt-2 -mr-2 ml-auto flex shrink-0 items-center gap-1">
           {task.points !== null && (
-            <span className="text-brand-900 text-sm font-semibold">
+            <span className="bg-points-100 text-points-800 flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-extrabold whitespace-nowrap">
+              <StarIcon className="size-4 fill-current" />
               {t.common.points(task.points)}
             </span>
           )}
@@ -53,8 +66,10 @@ export function TaskCard({ task, currentUserId, titleLevel }: TaskCardProps) {
       </div>
       <TaskImages paths={task.images} title={task.title} currentUserId={currentUserId} />
       {isToDoBy(task, currentUserId) && <TaskReminder task={task} currentUserId={currentUserId} />}
+      <TaskRequestPanel task={task} currentUserId={currentUserId} />
       <TaskActions task={task} currentUserId={currentUserId} />
-    </li>
+      {children}
+    </Root>
   );
 }
 
@@ -63,25 +78,40 @@ function TaskDetails({
   currentUserId,
   titleId,
   titleLevel,
-}: TaskCardProps & { titleId: string }) {
-  const t = useMessages();
+}: Pick<TaskCardProps, 'task' | 'currentUserId' | 'titleLevel'> & { titleId: string }) {
   const Title = titleLevel === 3 ? 'h3' : 'h4';
   return (
-    <div className="flex flex-col gap-1">
-      <Title id={titleId} className="font-semibold text-slate-900">
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <Title id={titleId} className="text-ink text-[1.0625rem] leading-snug font-bold">
         {task.title}
       </Title>
-      {task.description !== null && (
-        <p className="text-sm whitespace-pre-line text-slate-600">{task.description}</p>
-      )}
+      {task.description !== null && <TaskDescription description={task.description} />}
       <TaskTags task={task} />
-      {task.dueOn !== null && (
-        <span className="text-xs font-medium text-slate-700">
-          {describeDueDate(task.dueOn, today(), t)}
-        </span>
-      )}
       <TaskPeople task={task} currentUserId={currentUserId} />
     </div>
+  );
+}
+
+/** The description, with its web links tappable and long ones wrapped to fit, so they can be opened or copied. */
+function TaskDescription({ description }: { description: string }) {
+  return (
+    <p className="text-ink-muted text-sm wrap-anywhere whitespace-pre-line">
+      {descriptionParts(description).map(({ text, href }, index) =>
+        href === undefined ? (
+          text
+        ) : (
+          <a
+            key={index}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="text-brand-700 font-medium underline"
+          >
+            {text}
+          </a>
+        ),
+      )}
+    </p>
   );
 }
 
@@ -93,11 +123,11 @@ function failedAction(failed: Record<Action, boolean>): Action | undefined {
 }
 
 /**
- * Whether the user can pick the task up or put it back. A private task is already the user's own, so
- * neither applies.
+ * Whether the user can pick the task up or put it back. A private task is already the user's own, and
+ * a task given to a child is theirs alone, so neither applies.
  */
 function pickUpAction(task: Task, currentUserId: string): 'pickUp' | 'putBack' | null {
-  if (task.isPrivate) return null;
+  if (task.isPrivate || task.assignedTo !== null) return null;
   if (task.pickedUpBy === currentUserId) return 'putBack';
   return task.pickedUpBy === null ? 'pickUp' : null;
 }
@@ -126,7 +156,7 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
         aria-label={`${label}: ${task.title}`}
         disabled={isBusy}
         onClick={onClick}
-        className={`rounded-lg border px-3 py-1.5 text-sm font-semibold disabled:opacity-60 ${className}`}
+        className={`min-h-11 flex-1 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-60 md:flex-none ${className}`}
       >
         {label}
       </button>
@@ -141,7 +171,7 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
   return (
     <>
       {failure && (
-        <p role="alert" className="text-xs text-red-700">
+        <p role="alert" className="text-danger-700 text-xs">
           {t.failures[failure]}
         </p>
       )}
@@ -155,14 +185,17 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
         />
       ) : (
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <EditLink task={task} currentUserId={currentUserId} />
+          <div className="mr-auto flex gap-1">
+            <EditLink task={task} currentUserId={currentUserId} />
+            <AskLink task={task} currentUserId={currentUserId} />
+          </div>
           {pickUp === 'putBack' &&
             button(
               t.putBack,
               () => {
                 putBackTask.mutate(task.id);
               },
-              'border-slate-300 text-slate-700 hover:bg-slate-100',
+              'bg-page text-ink hover:bg-line',
             )}
           {pickUp === 'pickUp' &&
             button(
@@ -170,7 +203,7 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
               () => {
                 pickUpTask.mutate(task.id);
               },
-              'border-brand-600 text-brand-900 hover:bg-brand-50',
+              'bg-brand-50 text-brand-900 hover:bg-brand-100',
             )}
           {button(
             t.markDone,
@@ -179,28 +212,11 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
               if (isSomeoneElses) setIsConfirming(true);
               else markDone();
             },
-            'border-brand-600 bg-brand-600 hover:bg-brand-900 text-white',
+            'bg-brand-700 hover:bg-brand-900 text-white',
           )}
         </div>
       )}
     </>
-  );
-}
-
-/** Edit, for adults and for a child on a task they added (`private.can_change_task()`). */
-function EditLink({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'currentUserId'>) {
-  const membership = useMembership(currentUserId);
-  const t = useMessages().tasks.card;
-  // Hidden until it's known whether the user is a child.
-  if (!canChange(task, currentUserId, membership.data?.isChild ?? true)) return null;
-  return (
-    <Link
-      to={paths.editTask(task.id)}
-      aria-label={t.editLabel(task.title)}
-      className="text-brand-900 mr-auto rounded-lg px-1 py-1.5 text-sm font-semibold underline-offset-2 hover:underline"
-    >
-      {t.edit}
-    </Link>
   );
 }
 
@@ -217,21 +233,21 @@ function ConfirmTakeOver({ pickerName, onConfirm, onCancel }: ConfirmTakeOverPro
     <div
       role="group"
       aria-label={t.tasks.card.confirmTakeOverLabel(pickerName)}
-      className="flex flex-col gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900"
+      className="bg-notice-50 text-notice-900 flex flex-col gap-2 rounded-xl p-3 text-sm"
     >
       <p>{t.tasks.card.confirmTakeOver(pickerName)}</p>
       <div className="flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100"
+          className="bg-surface text-ink hover:bg-page min-h-11 rounded-xl px-4 font-bold"
         >
           {t.common.cancel}
         </button>
         <button
           type="button"
           onClick={onConfirm}
-          className="bg-brand-600 hover:bg-brand-900 rounded-lg px-3 py-1.5 font-semibold text-white"
+          className="bg-brand-700 hover:bg-brand-900 min-h-11 rounded-xl px-4 font-bold text-white"
         >
           {t.tasks.card.yesIDidIt}
         </button>

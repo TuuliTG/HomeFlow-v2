@@ -1,5 +1,6 @@
 import { addDays, fromIsoDate, toIsoDate } from '@/lib/dates';
 import type { Messages } from '@/lib/i18n/i18n';
+import type { TaskIconName } from '@/lib/taskIcons';
 
 /** How many days back the news goes, today included. */
 const NEWS_DAYS = 7;
@@ -32,6 +33,7 @@ export interface NewsItem {
   taskId: string;
   title: string;
   type: WorkType;
+  icon: TaskIconName | null;
   /** Null for a child's task until an adult awards its points. */
   points: number | null;
   /** ISO timestamp. */
@@ -45,7 +47,7 @@ export interface NewsItem {
 }
 
 /** The points one member earned in a day, physical and meta work apart. */
-interface DaySummary {
+export interface DaySummary {
   member: NewsPerson;
   physicalPoints: number;
   metaPoints: number;
@@ -77,6 +79,11 @@ function creditsOf({ doneBy, helpers, points }: NewsItem): NewsHelper[] {
   return [{ person: doneBy, points: (points ?? 0) - helped }, ...helpers];
 }
 
+/** All the points a member earned that day. */
+export function totalOf(summary: DaySummary): number {
+  return summary.physicalPoints + summary.metaPoints;
+}
+
 function summarise(items: NewsItem[]): DaySummary[] {
   const byMember = new Map<string | null, DaySummary>();
   for (const item of items) {
@@ -91,8 +98,7 @@ function summarise(items: NewsItem[]): DaySummary[] {
       byMember.set(person.userId, summary);
     }
   }
-  const total = (summary: DaySummary) => summary.physicalPoints + summary.metaPoints;
-  return [...byMember.values()].sort((a, b) => total(b) - total(a));
+  return [...byMember.values()].sort((a, b) => totalOf(b) - totalOf(a));
 }
 
 /** Splits news items, newest first, by the local day they were done, with each member's points that day. */

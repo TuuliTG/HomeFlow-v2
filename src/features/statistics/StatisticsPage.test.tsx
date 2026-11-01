@@ -35,6 +35,11 @@ function rows(name: 'Points earned' | 'Tasks created') {
     .map((item) => item.textContent);
 }
 
+/** The folded-away panel of who to compare and which work counts. */
+function filters() {
+  return screen.getByText('Filters', { selector: 'summary' });
+}
+
 describe('statistics page', () => {
   it('ranks points earned and tasks created separately, each with its own fairness score', async () => {
     const anna = logInAsFamilyMember();
@@ -69,6 +74,7 @@ describe('statistics page', () => {
     const { router } = renderAppAt('/statistics?period=month');
 
     await screen.findByRole('region', { name: 'Points earned' });
+    await user.click(filters());
     expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
     expect(rows('Points earned')).toEqual([
       'You7 points · 2 tasks done',
@@ -148,6 +154,7 @@ describe('statistics page', () => {
     const { router } = renderAppAt('/statistics');
 
     await screen.findByRole('region', { name: 'Points earned' });
+    await user.click(filters());
     expect(screen.getByRole('radio', { name: 'Everyone' })).toBeChecked();
     expect(rows('Points earned')).toEqual([
       'Ben5 points · 1 task done',
@@ -183,6 +190,39 @@ describe('statistics page', () => {
     expect(screen.getByRole('checkbox', { name: 'Cleo' })).toBeDisabled();
   });
 
+  it('keeps the filters folded away, naming the active ones', async () => {
+    logInAsFamilyMember();
+    const ben = addBen();
+    const cleo = fakeAuthBackend.addProfile('cleo@example.com', 'Cleo');
+    fakeHouseholdBackend.addMember(cleo.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(cleo.id, true);
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/statistics');
+
+    await screen.findByRole('region', { name: 'Points earned' });
+    const panel = filters().closest('details');
+    expect(panel).not.toHaveAttribute('open');
+    expect(filters()).toHaveTextContent(/^Filters$/);
+
+    await router.navigate('/statistics?compare=adults&work=physical');
+    await vi.waitFor(() => {
+      expect(filters()).toHaveTextContent('FiltersAdults · Physical');
+    });
+
+    await router.navigate(`/statistics?compare=${ben.id},${cleo.id}`);
+    await vi.waitFor(() => {
+      expect(filters()).toHaveTextContent('FiltersBen, Cleo');
+    });
+
+    await user.click(filters());
+    expect(panel).toHaveAttribute('open');
+
+    await user.click(screen.getByRole('radio', { name: 'All time' }));
+    await vi.waitFor(() => {
+      expect(filters().closest('details')).toHaveAttribute('open');
+    });
+  });
+
   it('compares whoever the address names, everyone when it names no one here', async () => {
     logInAsFamilyMember();
     const ben = addBen();
@@ -204,6 +244,30 @@ describe('statistics page', () => {
     await vi.waitFor(() => {
       expect(rows('Tasks created')).toEqual(['You0 tasks', 'Ben0 tasks', 'Cleo0 tasks']);
     });
+  });
+
+  it('remembers the period, work type and who is compared after leaving the page', async () => {
+    logInAsFamilyMember();
+    addBen();
+    const cleo = fakeAuthBackend.addProfile('cleo@example.com', 'Cleo');
+    fakeHouseholdBackend.addMember(cleo.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(cleo.id, true);
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/statistics');
+
+    await screen.findByRole('region', { name: 'Points earned' });
+    await user.click(screen.getByRole('radio', { name: 'This month' }));
+    await user.click(filters());
+    await user.click(screen.getByRole('radio', { name: 'Adults' }));
+    await user.click(screen.getByRole('radio', { name: 'Meta work' }));
+
+    await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
+    await user.click(await screen.findByRole('link', { name: 'Statistics' }));
+    expect(router.state.location.search).toBe('');
+    await screen.findByRole('region', { name: 'Tasks created' });
+    expect(screen.getByRole('radio', { name: 'This month' })).toBeChecked();
+    expect(filters()).toHaveTextContent('FiltersAdults · Meta work');
+    expect(rows('Tasks created')).toEqual(['You0 tasks', 'Ben0 tasks']);
   });
 
   it('has no members to choose between in a family of two, whatever the address says', async () => {

@@ -4,20 +4,16 @@ import { common } from '@/locales/fi/common';
 export const rewards: Messages['rewards'] = {
   eyebrow: 'Palkinnot',
   title: 'Palkinnot ja tavoitteet',
-  description:
-    'Yhteisistä tehtävistä saa pisteitä. Tavoitteen asettamisen jälkeen ansaitut pisteet lasketaan siihen: yhteisiin tavoitteisiin kaikkien mukana olevien pisteet, omiin tavoitteisiisi vain sinun. Kullakin on kerrallaan yksi yhteinen ja yksi oma tavoite.',
   newGoal: 'Uusi tavoite',
   loadFailed: 'Tavoitteita ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
   sections: {
     shared: {
       heading: 'Yhteiset tavoitteet',
-      empty:
-        'Yhteisiä tavoitteita ei ole vielä. Aikuinen voi asettaa koko perheelle tai muutamalle teistä tavoitteen, jota kohti tehdään töitä yhdessä, vaikkapa retki.',
+      empty: 'Yhteisiä tavoitteita ei ole vielä.',
     },
     yours: {
       heading: 'Omat tavoitteesi',
-      empty:
-        'Sinulla ei ole vielä omia tavoitteita, vaikkapa herkkua. Aikuinen asettaa ne; niihin lasketaan vain sinun pisteesi, ja perhe voi kannustaa sinua.',
+      empty: 'Sinulla ei ole vielä omia tavoitteita.',
     },
     members: { heading: 'Perheenjäsenten tavoitteet', empty: null },
   },
@@ -25,6 +21,18 @@ export const rewards: Messages['rewards'] = {
   owner: { shared: 'Yhteinen', yours: 'Sinun', named: (name) => name },
   claimedOn: (date) => `Lunastettu ${date}`,
   aFamilyMember: 'Perheenjäsen',
+  celebration: {
+    claimed: (title) => `Palkinto lunastettu: ${title}!`,
+    badge: 'Palkinto lunastettu!',
+  },
+  jar: {
+    savingFor: 'Säästät tähän:',
+    ofTarget: (target) => `/ ${String(target)}`,
+    everyonesPoints: 'Kaikkien pisteet',
+    yourShare: (points, minimum) => `Sinun osuutesi ${String(points)} / ${String(minimum)}`,
+    noGoal: 'Ei vielä tavoitetta',
+    loadFailed: 'Tavoitettasi ei voitu ladata.',
+  },
   goal: {
     othersGoal: (name) => `Tavoitteen asettaja: ${name}`,
     progress: (points, target) => `${String(points)} / ${String(target)} pistettä`,
@@ -33,6 +41,7 @@ export const rewards: Messages['rewards'] = {
     pointsToGo: (missing) => `Vielä ${common.points(missing)}`,
     participantsShort: (count) =>
       `Pisteitä on tarpeeksi! ${count === 1 ? 'Yhden' : String(count)} mukana olevan pitää vielä ansaita osuutensa.`,
+    yourShareToGo: (missing) => `Sinun pitää vielä ansaita itse ${common.points(missing)}.`,
     othersReached: (name) => `${name} saavutti tämän tavoitteen!`,
     participantsReached: 'Tavoite saavutettu! Joku mukana olevista lunastaa palkinnon.',
     participantsLabel: (title) => `Mukana olevien pisteet tavoitteeseen ${title}`,
@@ -50,24 +59,19 @@ export const rewards: Messages['rewards'] = {
     deleteFailed: 'Tavoitetta ei voitu poistaa. Yritä uudelleen.',
   },
   form: {
-    description: 'Valitse palkinto ja montako pistettä siihen tarvitaan.',
     reward: 'Palkinto',
     rewardPlaceholder: 'esim. Pizzailta',
     pointsNeeded: 'Tarvittavat pisteet',
     whoFor: 'Kenelle',
     scopes: { shared: 'Yhdessä', personal: 'Yhdelle' },
     scopeHints: {
-      shared:
-        'Siihen lasketaan kaikkien mukana olevien pisteet, ja koko perhe näkee sen. Kukin on mukana yhdessä yhteisessä tavoitteessa kerrallaan.',
-      personal:
-        'Siihen lasketaan vain hänen pisteensä. Perhe näkee senkin ja voi kannustaa. Kullakin on yksi oma tavoite kerrallaan.',
+      shared: 'Kaikki mukana olevat keräävät siihen pisteitä.',
+      personal: 'Siihen lasketaan vain hänen pisteensä.',
     },
     whose: 'Kenen tavoite',
     me: 'Minä',
     onlyAdults: 'Vain aikuiset asettavat tavoitteita. Pyydä perheesi aikuiselta tavoitetta.',
     participants: 'Ketkä ovat mukana',
-    participantsHint:
-      'Voit pyytää jokaiselta vähimmäismäärän, esimerkiksi nuoremmalta lapselta vähemmän. Tavoite saavutetaan vasta, kun jokainen on ansainnut omansa, jottei kukaan tee kaikkea yksin.',
     minimum: 'Vähintään',
     minimumFor: (name) => `Vähintään (vapaaehtoinen): ${name}`,
     hasOpenGoal: (name) => `${name} – tavoite kesken`,
@@ -79,8 +83,6 @@ export const rewards: Messages['rewards'] = {
       'Jollakulla on jo kesken samanlainen tavoite. Lunasta tai poista se ennen seuraavan asettamista.',
     edit: {
       title: 'Muokkaa tavoitetta',
-      description:
-        'Muuta palkintoa, pisteitä tai sitä, kenelle tavoite on. Jo ansaitut pisteet lasketaan edelleen.',
       submit: 'Tallenna muutokset',
       notFound: 'Tätä tavoitetta ei voi muuttaa: se on ehkä lunastettu tai poistettu.',
       backToRewards: 'Takaisin palkintoihin',

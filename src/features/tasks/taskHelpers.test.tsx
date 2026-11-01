@@ -44,7 +44,7 @@ describe('helping with a task', () => {
     await user.click(await screen.findByRole('link', { name: 'Who helped with Laundry?' }));
 
     expect(await screen.findByRole('heading', { name: 'Who helped?' })).toBeInTheDocument();
-    expect(screen.getByText(/some of its 5 points/)).toBeInTheDocument();
+    expect(screen.getByText(/Share Laundry's 5 points/)).toBeInTheDocument();
     expect(screen.queryByRole('checkbox', { name: 'Anna helped' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: 'Ben helped' }));
     // An even split by default, which the user can change.
@@ -68,11 +68,20 @@ describe('helping with a task', () => {
       { userId: ben.id, points: 2 },
       { userId: dan.id, points: 2 },
     ]);
-    fakeAuthBackend.logInAs('ben@example.com');
-    renderAppAt('/me');
+    fakeAuthBackend.logInAs('dan@example.com');
+    const { unmount } = renderAppAt('/me');
 
     const points = await screen.findByRole('region', { name: 'Points earned' });
     expect(await within(points).findByText('2')).toBeInTheDocument();
+    unmount();
+
+    // A child's Me page shows their share under the tasks they have done.
+    fakeAuthBackend.logInAs('ben@example.com');
+    renderAppAt('/me');
+
+    const laundry = await findCompleted('Laundry');
+    expect(within(laundry).getByText('You helped Anna')).toBeInTheDocument();
+    expect(within(laundry).getByText(/2 points/)).toBeInTheDocument();
   });
 
   it('shares a task between adults evenly, and shows who helped on the board', async () => {

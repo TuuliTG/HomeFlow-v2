@@ -108,6 +108,19 @@ test('family member can add a task again from earlier tasks and favourites', asy
   await expect(
     page.getByText('Take out trash is already on the board.', { exact: false }),
   ).toBeVisible();
+
+  await page.getByLabel('Task', { exact: true }).fill('');
+  await page
+    .getByRole('region', { name: 'Favourites' })
+    .getByRole('button', { name: /Take out trash/ })
+    .click({ delay: 700 });
+  const remove = page.getByRole('button', { name: 'Remove from favourites: Take out trash' });
+  await expect(remove).toBeFocused();
+  const withRemove = await new AxeBuilder({ page }).analyze();
+  expect(withRemove.violations, 'a11y violations removing a favourite').toEqual([]);
+  await remove.click();
+  await expect(page.getByText("Tap the star by a task's name to keep it here")).toBeVisible();
+  await expect(page.getByLabel('Task', { exact: true })).toHaveValue('');
 });
 
 test('family member can mark a repeating task done and see it come back', async ({ page }) => {
@@ -157,7 +170,7 @@ test('family member can pick up a task, find it on the Me screen and mark it don
 
   await toDo.getByRole('button', { name: 'Mark done: Vacuum' }).click();
 
-  await expect(toDo.getByText('Nothing picked up yet. Pick a task on the board.')).toBeVisible();
+  await expect(toDo.getByText('Nothing picked up yet.')).toBeVisible();
   await expect(
     page.getByRole('list', { name: 'Completed tasks' }).getByText('Vacuum'),
   ).toBeVisible();
@@ -278,6 +291,31 @@ test('family member can say who helped with a task and share its points', async 
   const completed = page.getByRole('list', { name: 'Completed tasks' });
   await expect(completed.getByText('Helped by Ben (1 point)')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Points earned' })).toContainText('2');
+});
+
+test('family member can ask another to do a task, and call it off', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsNewUser(page);
+  await page.getByLabel('Invite code').fill(EXISTING_HOUSEHOLD.inviteCode);
+  await page.getByRole('button', { name: 'Join household' }).click();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('Laundry');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  await page.getByRole('link', { name: 'Ask someone to do Laundry' }).click();
+  await page.getByRole('radio', { name: 'Ben' }).check();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on the ask page').toEqual([]);
+  await page.getByRole('button', { name: 'Send request' }).click();
+
+  await expect(page).toHaveURL('/');
+  const task = page.getByRole('listitem', { name: 'Laundry' });
+  await expect(task.getByText('You asked Ben to do this.')).toBeVisible();
+  const board = await new AxeBuilder({ page }).analyze();
+  expect(board.violations, 'a11y violations with the request').toEqual([]);
+  await task.getByRole('button', { name: 'Cancel request: Laundry' }).click();
+  await expect(task.getByRole('link', { name: 'Ask someone to do Laundry' })).toBeVisible();
 });
 
 test('marking a task done celebrates without getting in the way', async ({ page }) => {

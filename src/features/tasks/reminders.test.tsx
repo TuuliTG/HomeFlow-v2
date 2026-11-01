@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { toDateTimeLocal } from '@/features/tasks/reminder';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
+import { fakeSchedulesBackend } from '@/test/fakeSchedulesApi';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
@@ -44,6 +45,26 @@ describe('task reminders', () => {
       within(task).getByRole('button', { name: 'Change reminder: Buy a present' }),
     ).toHaveFocus();
     expect(fakeTasksBackend.reminderOf(anna.id, 'task:0')).toBe(at.toISOString());
+  });
+
+  it('starts half an hour before the time the task is scheduled for', async () => {
+    const anna = logInAsFamilyMember();
+    addPrivateTask(anna.id, 'Buy a present');
+    const startsAt = inHours(5);
+    fakeSchedulesBackend.scheduleAs(anna.id, {
+      taskId: 'task:0',
+      startsAt: startsAt.toISOString(),
+      durationMinutes: 30,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    const task = await screen.findByRole('listitem', { name: 'Buy a present' });
+    await user.click(within(task).getByRole('button', { name: 'Remind me: Buy a present' }));
+
+    expect(within(task).getByLabelText('Remind me at')).toHaveValue(
+      toDateTimeLocal(new Date(startsAt.getTime() - HOUR_MS / 2)),
+    );
   });
 
   it('can be set for a task you picked up, and goes when you put it back', async () => {

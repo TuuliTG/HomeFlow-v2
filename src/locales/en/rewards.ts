@@ -4,20 +4,16 @@ import { common } from '@/locales/en/common';
 export const rewards = {
   eyebrow: 'Rewards',
   title: 'Rewards & goals',
-  description:
-    'Doing shared tasks earns points. Points earned after a goal is set count towards it: those of everyone taking part in a shared goal, yours for your own. Each of you has one shared goal and one of your own at a time.',
   newGoal: 'New goal',
   loadFailed: "We couldn't load the goals. Check your connection and reload the page.",
   sections: {
     shared: {
       heading: 'Shared goals',
-      empty:
-        'No shared goals yet. An adult can set one for the family, or a few of you, to work towards together, like a trip out.',
+      empty: 'No shared goals yet.',
     },
     yours: {
       heading: 'Your goals',
-      empty:
-        'No goals of your own yet, like a treat. An adult sets them; only your points count, and the family can cheer you on.',
+      empty: 'No goals of your own yet.',
     },
     // Shown only when other members have goals.
     members: { heading: "Family members' goals", empty: null },
@@ -27,6 +23,21 @@ export const rewards = {
   owner: { shared: 'Shared', yours: 'Yours', named: (name: string) => `${name}'s` },
   claimedOn: (date: string) => `Claimed ${date}`,
   aFamilyMember: 'A family member',
+  /** The short celebration when the user claims a reward. */
+  celebration: {
+    claimed: (title: string) => `Reward claimed: ${title}!`,
+    badge: 'Reward claimed!',
+  },
+  /** A child's goal on their Me page, as a jar that fills with points. */
+  jar: {
+    savingFor: 'Saving for',
+    ofTarget: (target: number) => `/ ${String(target)}`,
+    everyonesPoints: "Everyone's points",
+    yourShare: (points: number, minimum: number) =>
+      `Your share ${String(points)} / ${String(minimum)}`,
+    noGoal: 'No goal yet',
+    loadFailed: "We couldn't load your goal.",
+  },
   goal: {
     othersGoal: (name: string) => `${name}'s goal`,
     progress: (points: number, target: number) => `${String(points)} / ${String(target)} points`,
@@ -37,6 +48,8 @@ export const rewards = {
       `${missing === 1 ? '1 more point' : `${String(missing)} more points`} to go`,
     participantsShort: (count: number) =>
       `Enough points! ${count === 1 ? 'One person still needs' : `${String(count)} people still need`} to earn their share.`,
+    yourShareToGo: (missing: number) =>
+      `You still need to earn ${missing === 1 ? '1 more point' : `${String(missing)} more points`} yourself.`,
     othersReached: (name: string) => `${name} reached this goal!`,
     participantsReached: 'Goal reached! Someone taking part claims the reward.',
     participantsLabel: (title: string) => `Points from each person taking part in ${title}`,
@@ -54,24 +67,19 @@ export const rewards = {
     deleteFailed: "We couldn't delete the goal. Try again.",
   },
   form: {
-    description: 'Pick a reward and how many points reach it.',
     reward: 'Reward',
     rewardPlaceholder: 'e.g. Pizza night',
     pointsNeeded: 'Points needed',
     whoFor: "Who it's for",
     scopes: { shared: 'Together', personal: 'One person' },
     scopeHints: {
-      shared:
-        'The points of everyone taking part count towards it, and the whole family sees it. Each person takes part in one shared goal at a time.',
-      personal:
-        'Only their points count towards it. The family sees it too and can cheer them on. Each person has one goal of their own at a time.',
+      shared: 'Everyone taking part earns points towards it.',
+      personal: 'Only their points count towards it.',
     },
     whose: 'Whose goal',
     me: 'Me',
     onlyAdults: 'Only adults set goals. Ask an adult in your family for one.',
     participants: 'Who takes part',
-    participantsHint:
-      'You can ask each one for a minimum, e.g. less for a younger child. The goal is reached only once everyone has earned theirs, so nobody does it all alone.',
     minimum: 'Minimum',
     minimumFor: (name: string) => `Minimum points from ${name} (optional)`,
     hasOpenGoal: (name: string) => `${name} – goal in progress`,
@@ -84,8 +92,6 @@ export const rewards = {
       'Someone already has an open goal like this. Claim or delete it before setting the next one.',
     edit: {
       title: 'Edit goal',
-      description:
-        "Change the reward, the points or who it's for. Points already earned still count.",
       submit: 'Save changes',
       notFound: "This goal can't be changed: it may have been claimed or deleted.",
       backToRewards: 'Back to rewards',

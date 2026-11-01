@@ -3,10 +3,13 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
+import { fakeFavouritesBackend } from '@/test/fakeFavouritesApi';
 import { fakeGoalsBackend } from '@/test/fakeGoalsApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeImagesBackend } from '@/test/fakeImagesApi';
 import { fakeNewsBackend } from '@/test/fakeNewsApi';
+import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
+import { fakeSchedulesBackend } from '@/test/fakeSchedulesApi';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 
 // Unit tests never reach Supabase: the feature apis are replaced by in-memory fakes.
@@ -23,6 +26,17 @@ vi.mock('@/features/tasks/liveApi', () => import('@/test/fakeLiveApi'));
 vi.mock('@/features/tasks/membershipApi', () => import('@/test/fakeMembershipApi'));
 vi.mock('@/features/tasks/pointsApi', () => import('@/test/fakePointsApi'));
 vi.mock('@/features/tasks/remindersApi', () => import('@/test/fakeRemindersApi'));
+vi.mock('@/features/tasks/requestsApi', () => import('@/test/fakeRequestsApi'));
+vi.mock('@/features/tasks/schedulesApi', () => import('@/test/fakeSchedulesApi'));
+vi.mock('@/features/tasks/suggestionsApi', () => import('@/test/fakeSuggestionsApi'));
+// jsdom has no service worker; tests that need a new version waiting mock this hook themselves.
+vi.mock('virtual:pwa-register/react', () => ({
+  useRegisterSW: vi.fn(() => ({
+    needRefresh: [false, () => undefined],
+    offlineReady: [false, () => undefined],
+    updateServiceWorker: () => Promise.resolve(),
+  })),
+}));
 
 // jsdom has no matchMedia; behave like a browser tab where no media query matches.
 Object.defineProperty(window, 'matchMedia', {
@@ -39,6 +53,9 @@ afterEach(() => {
   fakeAuthBackend.reset();
   fakeHouseholdBackend.reset();
   fakeTasksBackend.reset();
+  fakeFavouritesBackend.reset();
+  fakeSchedulesBackend.reset();
+  fakeRequestsBackend.reset();
   fakeImagesBackend.reset();
   fakeGoalsBackend.reset();
   fakeNewsBackend.reset();

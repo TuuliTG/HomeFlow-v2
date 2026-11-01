@@ -33,12 +33,19 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node 22 (≥ 22.22
   Cross-feature composition (e.g. `OnboardingGate`) lives in `src/app`.
 - `src/sw.ts` is the service worker (ADR 0005): WebWorker types via `tsconfig.sw.json`, no React or DOM. It may
   import only `src/lib` modules that don't touch the DOM; put its logic there so it can be unit-tested.
+- Errors: a crashed screen is reported by `ErrorPage`; report other errors the app catches but can't handle with
+  `reportError()` from `@/lib/monitoring`. Edge Functions report through a `ReportError` dependency, not
+  `console.error` (ADR 0002).
 - Data access: components → hooks (TanStack Query) → feature `api.ts` → `getSupabaseClient()`. Never call Supabase
   from components (ESLint enforces the import ban). Validate external data with Zod.
 - Every Supabase table has Row Level Security enabled with explicit policies. Scope family data with
   `household_id = (select private.current_household_id())` ([ADR 0003](docs/adr/0003-accounts-and-households.md)).
-- User-facing text goes in `src/locales/en/` and every other language (`fi`), never inline: read it with
+- User-facing text goes in `src/locales/en/` and every other language (`fi`, `sv`), never inline: read it with
   `useMessages()` from `@/lib/i18n/i18n`, or pass `t: Messages` to helpers (ADR 0002).
+- Colours come from the theme tokens in `src/index.css` (`bg-page`, `bg-surface shadow-card`, `text-ink`,
+  `text-ink-muted`, `brand-*`, `meta-*`, `danger-*`, `notice-*`…, ADR 0002), never Tailwind's own palette
+  (`slate-*`, `red-*`, `bg-white`, `bg-[#…]`); `src/themeTokens.test.ts` fails on those. `text-white` on a filled
+  colour is fine. Need a new colour? Add a token.
 - Mobile first: design for ~390px wide, then enhance with `md:` breakpoints. Accessible by default (roles, labels, contrast).
 - Import with the `@/` alias. Add dependencies with `npm install <pkg>` (exact versions are saved automatically).
 

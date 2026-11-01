@@ -28,7 +28,7 @@ export function CompareMembers({
   const compared = comparedMembers(contributions, comparison);
   return (
     <fieldset className="flex flex-col gap-3">
-      <legend className="mb-2 text-sm font-medium text-slate-700">{t.compare}</legend>
+      <legend className="text-ink mb-2 text-sm font-medium">{t.compare}</legend>
       {hasMemberGroups(contributions) && (
         <SegmentedChoice
           legend={t.compareGroup}
@@ -46,7 +46,7 @@ export function CompareMembers({
             return (
               <label
                 key={member.userId}
-                className="has-checked:border-brand-600 has-checked:bg-brand-50 has-checked:text-brand-900 flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 has-disabled:cursor-default has-disabled:opacity-60"
+                className="has-checked:border-brand-600 has-checked:bg-brand-50 has-checked:text-brand-900 border-line-strong bg-surface text-ink flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm font-medium has-disabled:cursor-default has-disabled:opacity-60"
               >
                 <input
                   type="checkbox"

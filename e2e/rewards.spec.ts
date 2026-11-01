@@ -59,6 +59,7 @@ test("family member sets a shared goal and a personal one, follows others' goals
   expect(results.violations, 'a11y violations on Rewards').toEqual([]);
 
   await pizza.getByRole('button', { name: 'Claim reward: Pizza night' }).click();
+  await expect(page.getByText('Reward claimed!')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Rewards claimed' })).toContainText('Pizza night');
   await expect(pizza).toBeHidden();
 

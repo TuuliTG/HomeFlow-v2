@@ -24,10 +24,10 @@ test('family member can switch HomeFlow to Finnish, and it stays Finnish', async
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
 
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Me' }).click();
+  await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByRole('combobox', { name: 'Language of HomeFlow' }).selectOption('Suomi');
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Omat tehtävät' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Asetukset' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'fi');
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations in Finnish').toEqual([]);

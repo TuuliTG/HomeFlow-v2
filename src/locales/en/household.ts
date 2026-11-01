@@ -5,18 +5,15 @@ export const household = {
   loadFailed: "We couldn't load your household. Check your connection and reload the page.",
   setUp: {
     title: 'Set up your household',
-    description: 'Tasks are shared with everyone in your household.',
     checkFailed:
       "We couldn't check whether you already have a household. Check your connection and reload the page.",
     startHeading: 'Start a new household',
     joinHeading: 'Join your family',
-    joinIntro: "Has someone already set up HomeFlow? Ask them for your household's invite code.",
   },
   create: {
     label: 'Household name',
     submit: 'Create household',
     placeholder: 'e.g. The Virtanens',
-    hint: "You'll get an invite code to share with your family.",
     nameRequired: 'Give your household a name.',
     failed: "We couldn't create the household. Try again.",
   },
@@ -29,8 +26,6 @@ export const household = {
   },
   invite: {
     heading: 'Invite your family',
-    intro:
-      'Share this code with your family. They enter it after logging in to join your household.',
     copy: 'Copy code',
     copied: 'Copied',
     copyFailed: "Couldn't copy. Select the code instead.",
@@ -41,8 +36,6 @@ export const household = {
     you: ' (you)',
     child: 'Child',
     isChild: (name: string) => `${name} is a child`,
-    childrenHint:
-      'Children see only the tasks marked “Children can do it”. Adults decide who is a child and which children can add tasks; an adult awards the points of a child’s task.',
     setChildFailed: "We couldn't save that change. Try again.",
     canAddTasks: 'Can add tasks',
     canAddTasksFor: (name: string) => `${name} can add tasks`,
@@ -53,14 +46,10 @@ export const household = {
   },
   family: {
     heading: 'Your family',
-    adultHint:
-      'Invite family members, choose who is a child, or add a child without email who signs in with a code.',
-    childHint: "See who's in your family.",
     link: (name: string) => `Open ${name}`,
   },
   addChild: {
     heading: 'Add a child without email',
-    hint: 'They sign in on their own device with a one-time code you give them.',
     label: "Child's name",
     submit: 'Add child',
     nameRequired: "Enter the child's name.",

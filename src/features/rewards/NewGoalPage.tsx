@@ -20,7 +20,7 @@ export function NewGoalPage() {
 
   return (
     <>
-      <PageHeader eyebrow={t.eyebrow} title={t.newGoal} description={t.form.description} />
+      <PageHeader eyebrow={t.eyebrow} title={t.newGoal} />
       <ForAdults userId={user.id}>
         {(members) => <NewGoal userId={user.id} members={members} />}
       </ForAdults>

@@ -6,7 +6,7 @@ export function TaskHelpersLine({ helpers }: { helpers: TaskHelper[] }) {
   const { common } = useMessages();
   if (helpers.length === 0) return null;
   return (
-    <span className="text-slate-500">
+    <span className="text-ink-muted">
       {common.helpedBy(
         helpers.map((helper) => common.share(helper.name ?? common.someone, helper.points)),
       )}

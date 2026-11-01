@@ -46,16 +46,6 @@ describe('signing in with a child code', () => {
     );
   });
 
-  it('says where a code comes from before asking for one', () => {
-    renderAppAt('/login');
-
-    expect(
-      screen.getByRole('button', { name: 'Sign in with a child code' }),
-    ).toHaveAccessibleDescription(
-      'No email? An adult in your family adds you in HomeFlow and gives you a code.',
-    );
-  });
-
   it('asks for the whole code before trying it', async () => {
     const user = userEvent.setup();
     renderAppAt('/login');

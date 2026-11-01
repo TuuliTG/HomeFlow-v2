@@ -1,5 +1,6 @@
 // add-child Edge Function (ADR 0003): an adult adds a child without email to their household. It creates the child's
 // login and answers with a one-time sign-in code. The logic lives in addChild.ts.
+import { reportError } from '../_shared/deno/monitoring.ts';
 import { serveJson, supabase } from '../_shared/deno/supabaseAdmin.ts';
 import { addChild, NotAnAdultError, type SignInCode } from './addChild.ts';
 
@@ -56,5 +57,6 @@ serveJson('add-child', async (request) =>
     createChildLogin,
     deleteLogin,
     addChild: addChildToHousehold,
+    reportError,
   }),
 );

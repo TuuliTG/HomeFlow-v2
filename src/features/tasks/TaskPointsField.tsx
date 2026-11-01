@@ -13,7 +13,7 @@ interface TaskPointsFieldProps {
   errorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
 }
 
-/** The points a shared task earns, or for a child, who chooses them. */
+/** The points a shared task earns; none for a child, whose task an adult awards points to. */
 export function TaskPointsField({
   isChild,
   value,
@@ -22,9 +22,9 @@ export function TaskPointsField({
   errorProps,
 }: TaskPointsFieldProps) {
   const t = useMessages().taskForm;
-  if (isChild) return <p className="text-sm text-slate-600">{t.adultAwardsPoints}</p>;
+  if (isChild) return null;
   return (
-    <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+    <label className="text-ink flex flex-col gap-1 text-sm font-medium">
       {t.points}
       <input
         type="number"

@@ -35,14 +35,14 @@ export function GoalCard({ goal, userId, isAdult }: GoalCardProps) {
   return (
     <li
       aria-label={goal.title}
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+      className="bg-surface shadow-card flex flex-col gap-3 rounded-2xl p-4"
     >
       <div className="flex items-baseline justify-between gap-4">
         <div>
-          <h3 className="font-semibold text-slate-900">{goal.title}</h3>
-          {othersName && <p className="text-sm text-slate-600">{t.othersGoal(othersName)}</p>}
+          <h3 className="text-ink font-semibold">{goal.title}</h3>
+          {othersName && <p className="text-ink-muted text-sm">{t.othersGoal(othersName)}</p>}
         </div>
-        <span className="shrink-0 text-sm text-slate-600">
+        <span className="text-ink-muted shrink-0 text-sm">
           {t.progress(shownPoints, goal.targetPoints)}
         </span>
       </div>
@@ -53,22 +53,22 @@ export function GoalCard({ goal, userId, isAdult }: GoalCardProps) {
         aria-valuemax={goal.targetPoints}
         aria-valuenow={shownPoints}
         aria-valuetext={t.progressValue(shownPoints, goal.targetPoints)}
-        className="h-3 overflow-hidden rounded-full bg-slate-200"
+        className="bg-line h-3 overflow-hidden rounded-full"
       >
         <div
-          className={`h-full rounded-full ${goal.reached ? 'bg-emerald-600' : 'bg-brand-600'}`}
+          className={`h-full rounded-full ${goal.reached ? 'bg-done-600' : 'bg-brand-600'}`}
           style={{ width: `${String(percent)}%` }}
         />
       </div>
       {goal.owner === null && <Participants goal={goal} userId={userId} />}
       {!goal.reached ? (
-        <p className="text-sm text-slate-600">{progressMessage(goal, messages)}</p>
+        <p className="text-ink-muted text-sm">{progressMessage(goal, messages)}</p>
       ) : othersName ? (
-        <p className="text-sm font-medium text-emerald-800">{t.othersReached(othersName)}</p>
+        <p className="text-done-800 text-sm font-medium">{t.othersReached(othersName)}</p>
       ) : isClaimableBy(goal, userId) ? (
         <ClaimReward goal={goal} userId={userId} />
       ) : (
-        <p className="text-sm font-medium text-emerald-800">{t.participantsReached}</p>
+        <p className="text-done-800 text-sm font-medium">{t.participantsReached}</p>
       )}
       {isAdult && (
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -95,18 +95,21 @@ function progressMessage(goal: Goal, t: Messages): string {
 
 /**
  * Who takes part in a shared goal and what each has earned towards it, against their minimum if they
- * have one, so the family sees who still has to help.
+ * have one, so the family sees who still has to help and how much each one has done.
  */
 function Participants({ goal, userId }: { goal: Goal; userId: string }) {
   const t = useMessages();
   return (
-    <ul aria-label={t.rewards.goal.participantsLabel(goal.title)} className="flex flex-col gap-1">
+    <ul aria-label={t.rewards.goal.participantsLabel(goal.title)} className="flex flex-col gap-3">
       {goal.participants.map((participant) => (
-        <li key={participant.id} className="flex items-center justify-between gap-4 text-sm">
-          <span className="text-slate-700">
-            {participant.id === userId ? t.common.you : nameOf(participant, t)}
-          </span>
-          <ParticipantPoints participant={participant} />
+        <li key={participant.id} className="flex flex-col gap-1.5 text-sm">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-ink">
+              {participant.id === userId ? t.common.you : nameOf(participant, t)}
+            </span>
+            <ParticipantPoints participant={participant} />
+          </div>
+          <ContributionBar participant={participant} targetPoints={goal.targetPoints} />
         </li>
       ))}
     </ul>
@@ -117,12 +120,12 @@ function ParticipantPoints({ participant }: { participant: GoalParticipant }) {
   const t = useMessages().rewards.goal;
   const { points, minPoints } = participant;
   if (minPoints === null) {
-    return <span className="text-slate-600">{t.participantPoints(points)}</span>;
+    return <span className="text-ink-muted">{t.participantPoints(points)}</span>;
   }
   const hasShare = points >= minPoints;
   return (
-    <span className={hasShare ? 'font-medium text-emerald-800' : 'text-slate-600'}>
-      {Math.min(points, minPoints)} / {minPoints}
+    <span className={hasShare ? 'text-done-800 font-medium' : 'text-ink-muted'}>
+      {points} / {minPoints}
       {hasShare && (
         <>
           <span aria-hidden="true"> ✓</span>
@@ -133,27 +136,57 @@ function ParticipantPoints({ participant }: { participant: GoalParticipant }) {
   );
 }
 
+/**
+ * A participant's points on the scale of the whole goal, with a mark at their minimum, so points past it
+ * show too. Decorative: the points next to the name say the same.
+ */
+function ContributionBar({
+  participant,
+  targetPoints,
+}: {
+  participant: GoalParticipant;
+  targetPoints: number;
+}) {
+  const { points, minPoints } = participant;
+  const widthOf = (value: number) => `${String(Math.min(value / targetPoints, 1) * 100)}%`;
+  const hasShare = minPoints !== null && points >= minPoints;
+  return (
+    <div aria-hidden="true" className="bg-line relative h-2 rounded-full">
+      <div
+        className={`absolute inset-y-0 left-0 rounded-full ${hasShare ? 'bg-done-600' : 'bg-brand-600'}`}
+        style={{ width: widthOf(points) }}
+      />
+      {minPoints !== null && (
+        <div
+          className="bg-ink absolute -inset-y-1 w-0.5 -translate-x-1/2 rounded-full"
+          style={{ left: widthOf(minPoints) }}
+        />
+      )}
+    </div>
+  );
+}
+
 function ClaimReward({ goal, userId }: { goal: Goal; userId: string }) {
   const claim = useClaimGoalReward(userId);
   const t = useMessages().rewards.goal;
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm font-medium text-emerald-800">{t.reached}</p>
+        <p className="text-done-800 text-sm font-medium">{t.reached}</p>
         <button
           type="button"
           aria-label={t.claimLabel(goal.title)}
           disabled={claim.isPending}
           onClick={() => {
-            claim.mutate(goal.id);
+            claim.mutate(goal);
           }}
-          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-60"
+          className="bg-done-700 hover:bg-done-900 rounded-xl px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
         >
           {t.claim}
         </button>
       </div>
       {claim.isError && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {t.claimFailed}
         </p>
       )}
@@ -176,17 +209,17 @@ function DeleteGoal({ goal, userId }: { goal: Goal; userId: string }) {
         onClick={() => {
           setIsConfirming(true);
         }}
-        className="-my-2 min-h-11 w-fit text-sm font-semibold text-red-700 hover:underline"
+        className="text-danger-700 -my-2 min-h-11 w-fit text-sm font-semibold hover:underline"
       >
         {common.delete}
       </button>
     );
   }
   return (
-    <div className="flex w-full flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
-      <p className="text-sm text-red-900">{t.confirmDelete(goal.title, goal.owner === null)}</p>
+    <div className="border-danger-200 bg-danger-50 flex w-full flex-col gap-3 rounded-xl border p-3">
+      <p className="text-danger-900 text-sm">{t.confirmDelete(goal.title, goal.owner === null)}</p>
       {deleteGoal.isError && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {t.deleteFailed}
         </p>
       )}
@@ -197,7 +230,7 @@ function DeleteGoal({ goal, userId }: { goal: Goal; userId: string }) {
           onClick={() => {
             deleteGoal.mutate(goal.id);
           }}
-          className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-900 disabled:opacity-60"
+          className="bg-danger-700 hover:bg-danger-900 rounded-xl px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
         >
           {common.yesDelete}
         </button>
@@ -206,7 +239,7 @@ function DeleteGoal({ goal, userId }: { goal: Goal; userId: string }) {
           onClick={() => {
             setIsConfirming(false);
           }}
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+          className="border-line-strong bg-surface text-ink hover:bg-page rounded-xl border px-4 py-2 text-sm font-semibold"
         >
           {common.keepIt}
         </button>

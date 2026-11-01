@@ -4,16 +4,21 @@ export const tasks = {
   newTask: 'New task',
   board: {
     title: 'Shared tasks',
-    description: 'Pick any task. Your private tasks are on your Me page.',
     showCompleted: 'Show completed',
     show: 'Show',
+    /** The filter by who has picked tasks up. */
+    who: 'Picked up by',
+    you: 'You',
+    search: 'Search tasks',
+    noMatches: (search: string) => `No tasks match “${search}”.`,
+    /** Read out by screen readers while searching. */
+    matches: (count: number) => (count === 1 ? '1 task found' : `${String(count)} tasks found`),
     loadFailed: "We couldn't load the tasks. Check your connection and reload the page.",
     filters: {
       all: 'All',
       today: 'Today',
       week: 'This week',
       undated: 'No due date',
-      available: 'Available',
     },
     /** What the board says when the filter leaves nothing to show. */
     empty: {
@@ -21,8 +26,19 @@ export const tasks = {
       today: 'Nothing is due today.',
       week: 'Nothing is due this week.',
       undated: 'Every task has a due date.',
-      available: 'Every task has been picked up.',
     },
+    /** Only the tasks nobody has picked up; combines with the filters above. */
+    available: 'Available',
+    /** What the board says when nothing is left to pick up within the filter. */
+    emptyAvailable: {
+      all: 'Every task has been picked up.',
+      today: 'Everything due today has been picked up.',
+      week: 'Everything due this week has been picked up.',
+      undated: 'Every task without a due date has been picked up.',
+    },
+    /** When nothing shown is picked up by the member chosen. */
+    noneFor: (name: string) => `${name} has no tasks picked up here.`,
+    noneForYou: 'You have no tasks picked up here.',
   },
   due: {
     today: 'Due today',
@@ -44,7 +60,6 @@ export const tasks = {
   },
   award: {
     heading: 'Waiting for points',
-    hint: 'Children added these tasks. Choose what each one was worth; the points go to whoever did it.',
     notDoneYet: 'Not done yet',
     doneBy: (name: string) => `Done by ${name}`,
     pointsFor: (title: string) => `Points for ${title}`,
@@ -55,6 +70,8 @@ export const tasks = {
   card: {
     private: 'Private',
     forChildren: 'For children',
+    /** A task an adult gave to one child. */
+    onlyFor: (name: string) => `Only for ${name}`,
     waitingForPoints: 'Waiting for points',
     addedBy: {
       you: 'Added by you',
@@ -114,17 +131,16 @@ export const tasks = {
   me: {
     eyebrow: 'Me',
     title: 'My tasks',
-    description: "Things you've picked up, your private tasks and what you've completed.",
     pointsEarned: 'Points earned',
     pointsLoadFailed: "We couldn't load your points.",
     toDo: 'To do',
     loadFailed: "We couldn't load your tasks. Check your connection and reload the page.",
-    nothingPickedUp: 'Nothing picked up yet. Pick a task on the board.',
+    nothingPickedUp: 'Nothing picked up yet.',
     completed: 'Completed',
     completedTasks: 'Completed tasks',
     completedLoadFailed:
       "We couldn't load your completed tasks. Check your connection and reload the page.",
-    completedEmpty: 'Tasks you mark done will show up here.',
+    completedEmpty: 'Nothing done yet.',
     doneOn: (date: string) => `Done ${date}`,
     undo: 'Undo',
     undoLabel: (title: string) => `Undo: ${title}`,
@@ -133,12 +149,29 @@ export const tasks = {
     /** Under a task the user helped someone else with. */
     youHelped: (name: string) => `You helped ${name}`,
   },
+  /** The Me page for children: their tasks as big tiles, and tasks to pick. */
+  child: {
+    eyebrow: 'Me',
+    title: 'My stars',
+    myTasks: 'My tasks',
+    nothingToDo: 'Nothing to do yet.',
+    pickOnBoard: 'Pick a task on Shared tasks',
+  },
+  /** The Shared tasks screen for children: the tasks for children as big tiles. */
+  childBoard: {
+    title: 'Tasks for you',
+    free: 'Free to pick',
+    nothingFree: 'No free tasks right now.',
+    yours: 'Picked by you',
+    othersDoing: 'Others are doing',
+    doingIt: (name: string) => `${name} is doing it`,
+  },
   /** Saying who helped with a task the user did, and sharing its points with them. */
   helpers: {
     eyebrow: 'Completed',
     title: 'Who helped?',
     description: (title: string, points: string) =>
-      `Give whoever helped with ${title} some of its ${points}. What you give comes out of your points, so the task is worth the same.`,
+      `Share ${title}'s ${points} with whoever helped. What you give comes out of your points.`,
     whoHelped: 'Who helped?',
     whoHelpedLabel: (title: string) => `Who helped with ${title}?`,
     helped: (name: string) => `${name} helped`,
@@ -152,6 +185,37 @@ export const tasks = {
     saveFailed: "We couldn't save who helped. Try again.",
     /** The prompt that appears after marking a task done. */
     askAfterDone: (title: string) => `${title} done! Did someone help?`,
+  },
+  /** Asking another member to do a task, and answering when asked. */
+  requests: {
+    ask: 'Ask',
+    askLabel: (title: string) => `Ask someone to do ${title}`,
+    eyebrow: 'Tasks',
+    title: 'Ask someone',
+    whoToAsk: 'Who to ask',
+    send: 'Send request',
+    noOne: 'Nobody else in your household can do this task.',
+    unavailable:
+      'This task can no longer be asked of anyone: it may be done, or someone else has picked it up.',
+    loadFailed:
+      "We couldn't load the task and your household. Check your connection and reload the page.",
+    sendFailed: "We couldn't send the request. Try again.",
+    /** The Me page's list of tasks waiting for the user's answer. */
+    askedOfYou: 'Asked of you',
+    askedYou: (name: string) => `${name} asked you to do this.`,
+    youAsked: (name: string) => `You asked ${name} to do this.`,
+    asked: (requester: string, asked: string) => `${requester} asked ${asked} to do this.`,
+    declined: (name: string) => `${name} can't do this.`,
+    accept: 'Accept',
+    acceptLabel: (title: string) => `Accept: ${title}`,
+    decline: 'Decline',
+    declineLabel: (title: string) => `Decline: ${title}`,
+    cancel: 'Cancel request',
+    cancelLabel: (title: string) => `Cancel request: ${title}`,
+    dismiss: 'OK',
+    dismissLabel: (title: string) => `OK, dismiss: ${title}`,
+    answerFailed: "We couldn't save your answer. The task may be done or taken already.",
+    cancelFailed: "We couldn't cancel the request. Try again.",
   },
   /** The short celebration when the user marks a task done. */
   celebration: {

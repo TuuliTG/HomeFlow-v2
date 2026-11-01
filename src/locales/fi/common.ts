@@ -27,6 +27,8 @@ export const common: Messages['common'] = {
   /** "to 8.10." */
   shortDate: (date) =>
     `${weekdays[date.getDay()] ?? ''} ${String(date.getDate())}.${String(date.getMonth() + 1)}.`,
+  /** "to" */
+  weekday: (date) => weekdays[date.getDay()] ?? '',
   /** "8.10." */
   dayAndMonth: (date) => `${String(date.getDate())}.${String(date.getMonth() + 1)}.`,
   /** "9.05", "18.00". */

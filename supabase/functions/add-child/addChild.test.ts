@@ -13,6 +13,7 @@ function fakeDeps(overrides: Partial<AddChildDependencies> = {}) {
     createChildLogin: vi.fn(() => Promise.resolve('ben')),
     deleteLogin: vi.fn(() => Promise.resolve()),
     addChild: vi.fn(() => Promise.resolve(code)),
+    reportError: vi.fn(() => Promise.resolve()),
     ...overrides,
   } satisfies AddChildDependencies;
 }
@@ -86,13 +87,17 @@ describe('add child', () => {
 
   it('reports why adding failed even when removing the login fails too', async () => {
     const failure = new Error('Database down');
-    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const deleteFailure = new Error('Auth down');
     const deps = fakeDeps({
       addChild: () => Promise.reject(failure),
-      deleteLogin: () => Promise.reject(new Error('Auth down')),
+      deleteLogin: () => Promise.reject(deleteFailure),
     });
 
     await expect(addChild('Bearer anna-token', { displayName: 'Ben' }, deps)).rejects.toBe(failure);
-    expect(error).toHaveBeenCalledOnce();
+    expect(deps.reportError).toHaveBeenCalledExactlyOnceWith(
+      'add-child: could not remove the unused login',
+      deleteFailure,
+      { childId: 'ben' },
+    );
   });
 });

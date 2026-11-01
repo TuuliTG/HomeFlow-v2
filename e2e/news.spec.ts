@@ -26,7 +26,8 @@ test('family member sees done tasks in the news and comments on them', async ({ 
     'You earned 5 points of meta work',
   );
   const news = today.getByRole('listitem', { name: `You completed ${EXISTING_HOUSEHOLD.task}` });
-  await expect(news).toContainText('5 points · Meta work');
+  await expect(news).toContainText('5 points');
+  await expect(news).toContainText('Meta work');
 
   await news.getByRole('button', { name: `Comment on ${EXISTING_HOUSEHOLD.task}` }).click();
   await news

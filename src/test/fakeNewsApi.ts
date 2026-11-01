@@ -73,6 +73,7 @@ export const fetchNews: typeof newsApi.fetchNews = (since) => {
         taskId: task.id,
         title: task.title,
         type: task.type,
+        icon: task.icon,
         points: task.points,
         completedAt: task.completed.at,
         doneBy: person(task.completed.by),

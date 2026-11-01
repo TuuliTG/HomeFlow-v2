@@ -183,7 +183,7 @@ describe('undoing "Mark done"', () => {
     const completed = await screen.findByRole('list', { name: 'Completed tasks' });
     await user.click(within(completed).getByRole('button', { name: 'Undo: Water plants' }));
 
-    expect(await screen.findByText('Tasks you mark done will show up here.')).toBeInTheDocument();
+    expect(await screen.findByText('Nothing done yet.')).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
     expect(await screen.findAllByRole('listitem', { name: 'Water plants' })).toHaveLength(1);
     expect(screen.queryByText('Due Fri 4 Jan')).not.toBeInTheDocument();

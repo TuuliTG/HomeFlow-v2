@@ -54,7 +54,13 @@ export const fetchHouseholdMembers: typeof helpersApi.fetchHouseholdMembers = ()
   if (requestsFailing() || !user) return Promise.reject(new Error('Network error'));
   const householdId = fakeHouseholdBackend.householdIdOf(user.id);
   const ids = householdId ? fakeHouseholdBackend.memberIdsOf(householdId) : [];
-  return Promise.resolve(ids.map((id) => ({ id, name: fakeAuthBackend.displayNameOf(id) })));
+  return Promise.resolve(
+    ids.map((id) => ({
+      id,
+      name: fakeAuthBackend.displayNameOf(id),
+      isChild: fakeHouseholdBackend.isChild(id),
+    })),
+  );
 };
 
 export const setTaskHelpers: typeof helpersApi.setTaskHelpers = (taskId, helpers) =>

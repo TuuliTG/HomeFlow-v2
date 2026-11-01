@@ -2,6 +2,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
 
 import { corsHeaders, type JsonAnswer } from '../http.ts';
+import { reportError } from './monitoring.ts';
 
 const env = (name: string) => Deno.env.get(name) ?? '';
 
@@ -16,7 +17,7 @@ export function serveJson(name: string, answer: (request: Request) => Promise<Js
       const { status, body } = await answer(request);
       return Response.json(body, { status, headers: corsHeaders });
     } catch (error) {
-      console.error(`${name} failed`, error);
+      await reportError(`${name} failed`, error);
       return Response.json({ error: 'failed' }, { status: 500, headers: corsHeaders });
     }
   });

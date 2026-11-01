@@ -20,7 +20,7 @@ export function TaskFavouriteStar({ title, currentUserId }: TaskFavouriteStarPro
   return (
     <span className="flex items-center">
       {setFavourite.isError && (
-        <span role="alert" className="text-xs text-red-700">
+        <span role="alert" className="text-danger-700 text-xs">
           {t.tasks.notSaved}
         </span>
       )}

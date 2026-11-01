@@ -1,11 +1,15 @@
 import type * as tasksApi from '@/features/tasks/api';
+import type { NewTask } from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
+import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
+import { fakeSchedulesBackend } from '@/test/fakeSchedulesApi';
 import {
   deliver,
   helpersOf,
   fakeTasksBackend,
   openTaskOf,
+  isChildIn,
   isVisible,
   requestsFailing,
   type StoredTask,
@@ -15,7 +19,7 @@ import {
 /**
  * In-memory stand-in for `@/features/tasks/api`, installed for every unit test in `setup.ts`.
  * Like the database, it shows the logged-in user only their own household's open tasks, private
- * tasks only to whoever added them, and children only tasks for children.
+ * tasks only to whoever added them, and children only tasks for children, not other children's chores.
  */
 
 /** Like `order by due_on asc nulls last`; a stable sort keeps newest first within a date. */
@@ -51,6 +55,8 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           dueOn,
           isPrivate,
           forChildren,
+          icon,
+          assignedTo,
           createdBy,
           pickedUpBy,
           previousTaskId,
@@ -65,12 +71,15 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           dueOn,
           isPrivate,
           forChildren,
+          icon,
+          assignedTo,
           createdBy,
           creatorName: fakeAuthBackend.displayNameOf(createdBy),
           pickedUpBy,
           pickerName: pickedUpBy ? fakeAuthBackend.displayNameOf(pickedUpBy) : null,
           images: [...images],
           lastDone: isPrivate ? null : lastDoneOf(previousTaskId),
+          request: fakeRequestsBackend.requestOf(id),
         }),
       ),
   );
@@ -89,41 +98,6 @@ export const fetchCompletedTasks: typeof tasksApi.fetchCompletedTasks = (userId)
   );
 };
 
-/** Like `task_suggestions()`: one per title with its newest details, most often added by members first. */
-export const fetchTaskSuggestions: typeof tasksApi.fetchTaskSuggestions = () => {
-  if (requestsFailing()) return Promise.reject(new Error('Network error'));
-  const byTitle = new Map<string, StoredTask[]>();
-  for (const task of tasks.filter(isVisible)) {
-    const key = task.title.toLowerCase();
-    byTitle.set(key, [...(byTitle.get(key) ?? []), task]);
-  }
-  const suggestions = [...byTitle.values()].map((occurrences) => {
-    const added = occurrences.filter((task) => task.previousTaskId === null);
-    const newest = occurrences.reduce((a, b) => (b.createdAt >= a.createdAt ? b : a));
-    const { title, description, type, points, repeatEveryDays, isPrivate, forChildren } = newest;
-    return {
-      suggestion: { title, description, type, points, repeatEveryDays, isPrivate, forChildren },
-      timesAdded: added.length,
-      isOpen: occurrences.some((task) => !task.completed),
-      lastAddedAt:
-        added
-          .map((task) => task.createdAt)
-          .sort()
-          .at(-1) ?? '',
-    };
-  });
-  return Promise.resolve(
-    suggestions
-      .sort(
-        (a, b) =>
-          b.timesAdded - a.timesAdded ||
-          b.lastAddedAt.localeCompare(a.lastAddedAt) ||
-          a.suggestion.title.localeCompare(b.suggestion.title),
-      )
-      .map(({ suggestion, timesAdded, isOpen }) => ({ ...suggestion, timesAdded, isOpen })),
-  );
-};
-
 export const addTask: typeof tasksApi.addTask = (task) =>
   asCurrentUser((userId) => {
     // Like the insert policy: a child adds tasks only when allowed, for children and without points.
@@ -133,6 +107,7 @@ export const addTask: typeof tasksApi.addTask = (task) =>
     ) {
       throw new Error('A child adds tasks only when allowed, without points');
     }
+    checkAssignee(userId, task);
     return fakeTasksBackend.addTaskAs(userId, task);
   });
 
@@ -175,6 +150,24 @@ export function changeableTaskOf(userId: string, taskId: string): StoredTask {
   return task;
 }
 
+/**
+ * Like the insert policy and `update_task()`: only an adult gives a task, one for children, to a child in their
+ * household.
+ */
+function checkAssignee(userId: string, task: NewTask) {
+  if (task.assignedTo === null) return;
+  const householdId = fakeHouseholdBackend.householdIdOf(userId);
+  if (
+    fakeHouseholdBackend.isChild(userId) ||
+    householdId === null ||
+    !isChildIn(task.assignedTo, householdId) ||
+    !task.forChildren ||
+    task.isPrivate
+  ) {
+    throw new Error('Only an adult gives a task for children to a child in their household');
+  }
+}
+
 /** Runs `change` as the logged-in user; rejects, like the database, if it throws. */
 export function asCurrentUser<T>(change: (userId: string) => T): Promise<T> {
   const user = fakeAuthBackend.currentUser();
@@ -190,9 +183,14 @@ export const pickUpTask: typeof tasksApi.pickUpTask = (taskId) =>
 export const putBackTask: typeof tasksApi.putBackTask = (taskId) =>
   asCurrentUser((userId) => {
     const task = openTaskOf(userId, taskId);
-    if (task.pickedUpBy !== userId) throw new Error('You have not picked up this task');
+    if (task.pickedUpBy !== userId || task.assignedTo !== null) {
+      throw new Error('You have not picked up this task');
+    }
     task.pickedUpBy = null;
+    fakeRequestsBackend.settle(taskId, null);
     fakeTasksBackend.clearReminderAs(userId, taskId);
+    // Like the trigger on tasks: whoever gives a task back no longer plans to do it.
+    fakeSchedulesBackend.clearScheduleAs(userId, taskId);
     deliver(task, { kind: 'changed' });
   });
 
@@ -201,8 +199,22 @@ export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
     const task = changeableTaskOf(userId, taskId);
     const isChild = fakeHouseholdBackend.isChild(userId);
     if (!details.forChildren && isChild) throw new Error('Only adults can make a task adults-only');
-    // Like update_task(): a child's edit sends their task back to waiting for points.
-    Object.assign(task, { ...details, points: isChild ? null : details.points });
+    // Like update_task(): a child's edit sends their task back to waiting for points, and keeps whose chore
+    // it is.
+    const assignedTo = isChild ? task.assignedTo : details.assignedTo;
+    if (!isChild) checkAssignee(userId, { ...details, assignedTo });
+    // Like the trigger on tasks: a child the task is given to picks it up, and gives it back once it isn't.
+    const pickedUpBy = assignedTo !== task.assignedTo ? assignedTo : task.pickedUpBy;
+    if (pickedUpBy !== task.pickedUpBy) {
+      fakeRequestsBackend.settle(taskId, pickedUpBy);
+      if (task.pickedUpBy) fakeSchedulesBackend.clearScheduleAs(task.pickedUpBy, taskId);
+    }
+    Object.assign(task, {
+      ...details,
+      points: isChild ? null : details.points,
+      assignedTo,
+      pickedUpBy,
+    });
     deliver(task, { kind: 'changed' });
   });
 

@@ -1,5 +1,6 @@
 import { en, type Messages } from '@/locales/en';
 import { fi } from '@/locales/fi';
+import { sv } from '@/locales/sv';
 
 /**
  * The languages HomeFlow speaks (ADR 0002). To add one, copy `src/locales/en` to `src/locales/<code>`,
@@ -8,6 +9,7 @@ import { fi } from '@/locales/fi';
 export const languages = {
   en: { name: 'English', messages: en },
   fi: { name: 'Suomi', messages: fi },
+  sv: { name: 'Svenska', messages: sv },
 } as const satisfies Record<string, { name: string; messages: Messages }>;
 
 export type Language = keyof typeof languages;

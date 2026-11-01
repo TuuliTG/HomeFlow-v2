@@ -11,8 +11,18 @@ export function toDateTimeLocal(date: Date): string {
 /** How far ahead a reminder can be; `set_task_reminder()` enforces it. */
 export const MAX_REMINDER_AHEAD_MS = 365 * 24 * 60 * 60 * 1000;
 
-/** The next full hour, as a starting point for a new reminder. */
-export function suggestedReminderTime(now: Date): string {
+/** How long before the time a task is scheduled for a new reminder suggests going off. */
+const REMIND_BEFORE_SCHEDULE_MS = 30 * 60 * 1000;
+
+/**
+ * A starting point for a new reminder: half an hour before the time the task is scheduled for (ISO
+ * timestamp), if that is still ahead, else the next full hour.
+ */
+export function suggestedReminderTime(now: Date, scheduledAt?: string): string {
+  if (scheduledAt !== undefined) {
+    const beforeSchedule = new Date(new Date(scheduledAt).getTime() - REMIND_BEFORE_SCHEDULE_MS);
+    if (beforeSchedule > now) return toDateTimeLocal(beforeSchedule);
+  }
   const nextHour = new Date(now);
   nextHour.setHours(now.getHours() + 1, 0, 0, 0);
   return toDateTimeLocal(nextHour);

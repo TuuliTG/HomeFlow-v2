@@ -18,11 +18,7 @@ export function HouseholdSetupPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center px-4 py-10">
-      <PageHeader
-        eyebrow="HomeFlow"
-        title={t.household.setUp.title}
-        description={t.household.setUp.description}
-      />
+      <PageHeader eyebrow="HomeFlow" title={t.household.setUp.title} />
       <SetupForms userId={user.id} />
       <button
         type="button"
@@ -44,7 +40,7 @@ function SetupForms({ userId }: { userId: string }) {
   if (household.isError) {
     // Offering the forms here would fail for someone who already has a household.
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.checkFailed}
       </p>
     );
@@ -53,16 +49,15 @@ function SetupForms({ userId }: { userId: string }) {
   return (
     <div className="flex flex-col gap-8">
       <section aria-labelledby="create-household" className="flex flex-col gap-3">
-        <h2 id="create-household" className="font-semibold text-slate-900">
+        <h2 id="create-household" className="text-ink font-semibold">
           {t.startHeading}
         </h2>
         <CreateHouseholdForm userId={userId} />
       </section>
       <section aria-labelledby="join-household" className="flex flex-col gap-3">
-        <h2 id="join-household" className="font-semibold text-slate-900">
+        <h2 id="join-household" className="text-ink font-semibold">
           {t.joinHeading}
         </h2>
-        <p className="text-sm text-slate-600">{t.joinIntro}</p>
         <JoinHouseholdForm userId={userId} />
       </section>
     </div>

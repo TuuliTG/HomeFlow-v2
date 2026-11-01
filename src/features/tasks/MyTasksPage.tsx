@@ -1,52 +1,53 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
-
-import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
+import { AskedOfYou } from '@/features/tasks/AskedOfYou';
+import { CompletedList } from '@/features/tasks/CompletedList';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
+import { emptyClassName, sectionHeadingClassName } from '@/features/tasks/meStyles';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
-import {
-  canChooseHelpers,
-  type CompletedTask,
-  doersShare,
-  type HelpedTask,
-  isToDoBy,
-  UNDO_WINDOW_MS,
-} from '@/features/tasks/task';
-import { TaskHelpersLine } from '@/features/tasks/TaskHelpersLine';
-import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
-import { useHelpedTasks } from '@/features/tasks/useHelpers';
-import {
-  useCompletedTasks,
-  useTasks,
-  useTotalPoints,
-  useUndoCompleteTask,
-} from '@/features/tasks/useTasks';
+import { parseToDoView, type ToDoView, toDoViews } from '@/features/tasks/schedule';
+import { ScheduleView } from '@/features/tasks/ScheduleView';
+import { isToDoBy } from '@/features/tasks/task';
+import { useTasks, useTotalPoints } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
-
-const emptyClassName =
-  'rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600';
+import { useSearchParam } from '@/lib/useSearchParam';
 
 export function MyTasksPage() {
-  const t = useMessages().tasks.me;
+  const { tasks, schedule } = useMessages();
+  const t = tasks.me;
+  const user = useLoggedInUser();
+  const [view, setView] = useSearchParam<ToDoView>({
+    name: 'view',
+    parse: parseToDoView,
+    serialise: (chosen) => (chosen === 'list' ? null : chosen),
+    rememberAs: `me.view:${user.id}`,
+  });
   return (
     <>
       <div className="flex items-start justify-between gap-4">
-        <PageHeader eyebrow={t.eyebrow} title={t.title} description={t.description} />
+        <PageHeader eyebrow={t.eyebrow} title={t.title} />
         <NewTaskLink />
       </div>
       <div className="flex flex-col gap-8">
         <PointsTotal />
+        <AskedOfYou headingClassName={sectionHeadingClassName} />
         <section aria-labelledby="to-do-heading" className="flex flex-col gap-3">
-          <h2 id="to-do-heading" className="text-lg font-semibold text-slate-900">
+          <h2 id="to-do-heading" className={sectionHeadingClassName}>
             {t.toDo}
           </h2>
-          <ToDoList />
+          <SegmentedChoice
+            legend={schedule.viewLegend}
+            options={toDoViews}
+            labels={schedule.views}
+            value={view}
+            onChange={setView}
+          />
+          <ToDoList view={view} />
         </section>
         <section aria-labelledby="completed-heading" className="flex flex-col gap-3">
-          <h2 id="completed-heading" className="text-lg font-semibold text-slate-900">
+          <h2 id="completed-heading" className={sectionHeadingClassName}>
             {t.completed}
           </h2>
           <CompletedList />
@@ -64,25 +65,25 @@ function PointsTotal() {
   return (
     <section
       aria-labelledby="points-heading"
-      className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4"
+      className="bg-brand-900 shadow-hero flex flex-col gap-1 rounded-3xl p-5 text-white"
     >
-      <h2 id="points-heading" className="text-sm font-medium text-slate-600">
+      <h2 id="points-heading" className="text-brand-100 text-sm font-semibold">
         {t.pointsEarned}
       </h2>
       {points.data !== undefined ? (
-        <span className="text-brand-900 text-3xl font-bold">{points.data}</span>
+        <span className="text-5xl leading-none font-extrabold tracking-tight">{points.data}</span>
       ) : points.isError ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm font-semibold">
           {t.pointsLoadFailed}
         </p>
       ) : (
-        <LoadingMessage />
+        <LoadingMessage className="text-brand-100" />
       )}
     </section>
   );
 }
 
-function ToDoList() {
+function ToDoList({ view }: { view: ToDoView }) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
   const t = useMessages().tasks.me;
@@ -91,129 +92,16 @@ function ToDoList() {
   if (tasks.data === undefined) {
     if (!tasks.isError) return <LoadingMessage />;
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.loadFailed}
       </p>
     );
   }
   const mine = tasks.data.filter((task) => isToDoBy(task, user.id));
+  // The timetable shows even without tasks: a new one can be added from it.
+  if (view !== 'list') return <ScheduleView view={view} tasks={mine} currentUserId={user.id} />;
   if (mine.length === 0) {
     return <p className={emptyClassName}>{t.nothingPickedUp}</p>;
   }
   return <DueTaskGroups tasks={mine} currentUserId={user.id} headingLevel={3} />;
-}
-
-/** A task the user did, or helped someone else with. */
-type CompletedEntry = { kind: 'done'; task: CompletedTask } | { kind: 'helped'; task: HelpedTask };
-
-function newestFirst(done: CompletedTask[], helped: HelpedTask[]): CompletedEntry[] {
-  return [
-    ...done.map((task) => ({ kind: 'done' as const, task })),
-    ...helped.map((task) => ({ kind: 'helped' as const, task })),
-  ].sort((a, b) => b.task.completedAt.localeCompare(a.task.completedAt));
-}
-
-/** The tasks the user did and those they helped with, so a helper sees their share of the work too. */
-function CompletedList() {
-  const user = useLoggedInUser();
-  const completed = useCompletedTasks(user.id);
-  const helped = useHelpedTasks(user.id);
-  const t = useMessages().tasks.me;
-
-  if (completed.isPending || helped.isPending) return <LoadingMessage />;
-  if (completed.isError || helped.isError) {
-    return (
-      <p role="alert" className="text-sm text-red-700">
-        {t.completedLoadFailed}
-      </p>
-    );
-  }
-  const entries = newestFirst(completed.data, helped.data);
-  if (entries.length === 0) {
-    return <p className={emptyClassName}>{t.completedEmpty}</p>;
-  }
-  return (
-    <ul
-      aria-label={t.completedTasks}
-      className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white"
-    >
-      {entries.map((entry) =>
-        entry.kind === 'done' ? (
-          <CompletedItem key={`done:${entry.task.id}`} task={entry.task} userId={user.id} />
-        ) : (
-          <HelpedItem key={`helped:${entry.task.id}`} task={entry.task} />
-        ),
-      )}
-    </ul>
-  );
-}
-
-/** A task the user helped with: who did it and the user's share of its points. */
-function HelpedItem({ task }: { task: HelpedTask }) {
-  const { common, tasks } = useMessages();
-  const t = tasks.me;
-  return (
-    <li className="flex min-w-0 flex-col gap-0.5 px-4 py-3 text-sm break-words">
-      <span className="font-medium text-slate-900">{task.title}</span>
-      <span className="text-slate-500">
-        {t.doneOn(common.shortDate(new Date(task.completedAt)))} · {common.points(task.points)}
-      </span>
-      <span className="text-brand-900">{t.youHelped(task.doerName ?? common.someone)}</span>
-    </li>
-  );
-}
-
-function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }) {
-  const undo = useUndoCompleteTask(userId);
-  const { common, tasks } = useMessages();
-  const t = tasks.me;
-  // Checked when the item appears; the database has the final say.
-  const [now] = useState(Date.now);
-  const canUndo = now - new Date(task.completedAt).getTime() < UNDO_WINDOW_MS;
-  const ownPoints = doersShare(task);
-
-  return (
-    <li className="flex flex-col gap-1 px-4 py-3 text-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-0.5 break-words">
-          <span className="font-medium text-slate-900">{task.title}</span>
-          <span className="text-slate-500">
-            {t.doneOn(common.shortDate(new Date(task.completedAt)))}
-            {ownPoints !== null && ` · ${common.points(ownPoints)}`}
-          </span>
-          <TaskHelpersLine helpers={task.helpers} />
-          {canChooseHelpers(task, now) && (
-            <Link
-              to={paths.taskHelpers(task.id)}
-              aria-label={tasks.helpers.whoHelpedLabel(task.title)}
-              className="text-brand-900 flex min-h-11 w-fit items-center font-semibold hover:underline"
-            >
-              {tasks.helpers.whoHelped}
-            </Link>
-          )}
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          {canUndo && (
-            <button
-              type="button"
-              aria-label={t.undoLabel(task.title)}
-              disabled={undo.isPending}
-              onClick={() => {
-                undo.mutate(task.id);
-              }}
-              className="text-brand-900 flex min-h-11 items-center px-1 font-semibold hover:underline disabled:opacity-60"
-            >
-              {t.undo}
-            </button>
-          )}
-          <TaskFavouriteStar title={task.title} currentUserId={userId} />
-        </div>
-      </div>
-      {undo.isError && (
-        <p role="alert" className="text-xs text-red-700">
-          {t.undoFailed}
-        </p>
-      )}
-    </li>
-  );
 }

@@ -20,6 +20,7 @@ function fakeDeps(overrides: Partial<RemindDependencies> = {}) {
     subscriptionsOf: vi.fn((userIds: string[]) => Promise.resolve(userIds.map(device))),
     send: vi.fn(() => Promise.resolve(201)),
     forget: vi.fn(() => Promise.resolve()),
+    reportError: vi.fn(() => Promise.resolve()),
     ...overrides,
   } satisfies RemindDependencies;
 }
@@ -72,17 +73,16 @@ describe('send due reminders', () => {
     await expect(sendDueReminders(deps)).resolves.toEqual({ sent: 0, removed: 1, failed: 1 });
   });
 
-  it('still sends the other reminders when one fails', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  it('still sends the other reminders when one fails, and reports the failure', async () => {
+    const failure = new Error('permission denied');
     const deps = fakeDeps({
       subscriptionsOf: vi.fn((userIds: string[]) =>
-        userIds.includes('anna')
-          ? Promise.reject(new Error('permission denied'))
-          : Promise.resolve(userIds.map(device)),
+        userIds.includes('anna') ? Promise.reject(failure) : Promise.resolve(userIds.map(device)),
       ),
     });
 
     await expect(sendDueReminders(deps)).resolves.toEqual({ sent: 1, removed: 0, failed: 1 });
     expect(deps.send).toHaveBeenCalledWith(device('ben'), expect.anything());
+    expect(deps.reportError).toHaveBeenCalledWith('send-reminders: a reminder failed', failure);
   });
 });

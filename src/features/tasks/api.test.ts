@@ -39,6 +39,8 @@ const newTask = {
   dueOn: null,
   isPrivate: false,
   forChildren: false,
+  icon: null,
+  assignedTo: null,
 } as const;
 const row = {
   id: 't1',
@@ -52,8 +54,11 @@ const row = {
   picked_up_by: null,
   is_private: false,
   for_children: false,
+  icon: null,
+  assigned_to: null,
   task_images: [],
   previous: null,
+  request: null,
 };
 
 /** The tasks query's result: it is ordered twice (due date, then newest), then awaited. */
@@ -233,6 +238,8 @@ describe('tasks api', () => {
       repeatEveryDays: 7,
       dueOn: '2026-10-10',
       forChildren: true,
+      icon: 'vacuum',
+      assignedTo: 'ben',
     });
 
     expect(client.rpc).toHaveBeenCalledWith('update_task', {
@@ -244,6 +251,9 @@ describe('tasks api', () => {
       task_due_on: '2026-10-10',
       task_repeat_every_days: 7,
       task_for_children: true,
+      task_icon: 'vacuum',
+      task_assigned_to: 'ben',
+      task_change_assignee: true,
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
@@ -286,6 +296,43 @@ describe('tasks api', () => {
     ]);
   });
 
+  it('reads who asked whom to do a task, with their names', async () => {
+    const request = { requested_by: 'u1', requested_for: 'u2', answer: null };
+    respondWithTasks({
+      data: [
+        { ...row, request },
+        { ...row, id: 't2', request: { ...request, answer: 'declined' } },
+        { ...row, id: 't3' },
+      ],
+      error: null,
+    });
+    query.in.mockResolvedValue({
+      data: [
+        { id: 'u1', display_name: 'Anna' },
+        { id: 'u2', display_name: 'Ben' },
+      ],
+      error: null,
+    });
+
+    const tasks = await api.fetchTasks();
+
+    expect(query.select).toHaveBeenCalledWith(
+      expect.stringContaining('request:task_requests(requested_by, requested_for, answer)'),
+    );
+    expect(query.in).toHaveBeenCalledWith('id', ['u1', 'u2']);
+    const asked = {
+      requestedBy: 'u1',
+      requesterName: 'Anna',
+      requestedFor: 'u2',
+      askedName: 'Ben',
+    };
+    expect(tasks.map((task) => task.request)).toEqual([
+      { ...asked, answer: null },
+      { ...asked, answer: 'declined' },
+      null,
+    ]);
+  });
+
   it('reads whether a task is private', async () => {
     respondWithTasks({ data: [{ ...row, is_private: true }], error: null });
     query.in.mockResolvedValue({ data: [], error: null });
@@ -302,6 +349,18 @@ describe('tasks api', () => {
     const [task] = await api.fetchTasks();
 
     expect(task).toMatchObject({ forChildren: true });
+  });
+
+  it('reads which child a task was given to', async () => {
+    respondWithTasks({
+      data: [{ ...row, for_children: true, assigned_to: 'ben', picked_up_by: 'ben' }],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const [task] = await api.fetchTasks();
+
+    expect(task).toMatchObject({ assignedTo: 'ben', pickedUpBy: 'ben' });
   });
 
   it("reads a task's pictures in order", async () => {
@@ -325,6 +384,21 @@ describe('tasks api', () => {
       expect.stringContaining('task_images(path, position)'),
     );
     expect(task?.images).toEqual(['h1/a.jpg', 'h1/b.jpg']);
+  });
+
+  it("reads a task's icon, and one this version doesn't know as none", async () => {
+    respondWithTasks({
+      data: [
+        { ...row, icon: 'vacuum' },
+        { ...row, id: 't2', icon: 'rocket' },
+      ],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const tasks = await api.fetchTasks();
+
+    expect(tasks.map((task) => task.icon)).toEqual(['vacuum', null]);
   });
 
   it('skips the name lookup when there are no tasks', async () => {
@@ -357,8 +431,9 @@ describe('tasks api', () => {
       ...newTask,
       repeatEveryDays: 7,
       dueOn: '2026-10-10',
-      isPrivate: true,
       forChildren: true,
+      icon: 'vacuum',
+      assignedTo: 'ben',
     });
 
     expect(client.from).toHaveBeenCalledWith('tasks');
@@ -369,8 +444,10 @@ describe('tasks api', () => {
       points: 3,
       repeat_every_days: 7,
       due_on: '2026-10-10',
-      is_private: true,
+      is_private: false,
       for_children: true,
+      icon: 'vacuum',
+      assigned_to: 'ben',
     });
     expect(query.select).toHaveBeenCalledWith('id');
     expect(id).toBe('t9');
