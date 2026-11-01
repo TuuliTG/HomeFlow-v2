@@ -7,7 +7,6 @@ import {
   DESCRIPTION_MAX_LENGTH,
   type NewTask,
   newTaskSchema,
-  repeatChoices,
   type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
@@ -22,6 +21,7 @@ import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
 import { TaskPointsField } from '@/features/tasks/TaskPointsField';
 import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
+import { TaskTimingFields } from '@/features/tasks/TaskTimingFields';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -53,8 +53,13 @@ interface TaskFormProps {
   currentUserId: string;
   submitLabel: string;
   isSaving: boolean;
-  /** Saves the task and its pictures; a rejection shows "We couldn't save the task." */
-  onSave: (task: NewTask, images: DraftImage[]) => Promise<void>;
+  /** Offers to add the task as already done, which then has no due date. */
+  canBeDoneAlready?: boolean;
+  /**
+   * Saves the task and its pictures, and says whether the user checked "Already done"; a rejection shows
+   * "We couldn't save the task."
+   */
+  onSave: (task: NewTask, images: DraftImage[], isDone: boolean) => Promise<void>;
 }
 
 /** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
@@ -68,6 +73,7 @@ export function TaskForm({
   currentUserId,
   submitLabel,
   isSaving,
+  canBeDoneAlready = false,
   onSave,
 }: TaskFormProps) {
   const [initialValues] = useState(() => fieldValues(initial ?? prefill));
@@ -86,6 +92,7 @@ export function TaskForm({
     labels: initialValues.labels,
     customLabels: initialValues.customLabels,
   });
+  const [isDone, setIsDone] = useState(false);
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
@@ -95,6 +102,7 @@ export function TaskForm({
   const pointsRef = useRef<HTMLInputElement>(null);
   const dueOnRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const assigneeRef = useRef<HTMLSelectElement>(null);
   const fieldRefs = {
     title: titleRef,
     description: descriptionRef,
@@ -123,6 +131,20 @@ export function TaskForm({
     setError(null);
   }
 
+  /** A task done already has no due date. */
+  function checkAlreadyDone(checked: boolean) {
+    setIsDone(checked);
+    if (checked) setDueOn('');
+  }
+
+  /** Says what to fix, focusing the field to fix it in. */
+  function showInvalid(path: PropertyKey | undefined, message = t.taskForm.errors.checkDetails) {
+    // Too many labels can only come from elsewhere (the field stops at the limit), so it names no field.
+    const field = path === 'labels' ? null : fieldOf(path);
+    setError({ field, message });
+    if (field) fieldRefs[field].current?.focus();
+  }
+
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     const values = { title, description, type, points, repeat: repeatEveryDays, dueOn };
@@ -131,13 +153,15 @@ export function TaskForm({
     );
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
-      // Too many labels can only come from elsewhere (the field stops at the limit), so it names no field.
-      const field = issue?.path[0] === 'labels' ? null : fieldOf(issue?.path[0]);
-      setError({ field, message: issue?.message ?? t.taskForm.errors.checkDetails });
-      if (field) fieldRefs[field].current?.focus();
+      showInvalid(issue?.path[0], issue?.message);
       return;
     }
-    onSave(parsed.data, images).catch(() => {
+    if (isDone && parsed.data.assignedTo !== null) {
+      // Its field already warns: whoever adds a task as done is credited, so it can't be a child's chore.
+      assigneeRef.current?.focus();
+      return;
+    }
+    onSave(parsed.data, images, isDone).catch(() => {
       setError({ field: null, message: t.taskForm.errors.saveFailed });
     });
   }
@@ -208,8 +232,10 @@ export function TaskForm({
         onPrivateChange={setIsPrivate}
         forChildren={forChildren}
         onForChildrenChange={setForChildren}
+        isDone={isDone}
         assignedTo={assignedTo}
         onAssignedToChange={setAssignedTo}
+        assigneeRef={assigneeRef}
         currentUserId={currentUserId}
       />
 
@@ -223,40 +249,15 @@ export function TaskForm({
         />
       )}
 
-      <div className="flex gap-3">
-        <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
-          {t.taskForm.repeats}
-          <select
-            name="repeatEveryDays"
-            value={repeatEveryDays}
-            onChange={(event) => {
-              setRepeatEveryDays(event.target.value);
-            }}
-            className={inputClassName}
-          >
-            <option value="">{t.taskForm.doesNotRepeat}</option>
-            {repeatChoices.map((days) => (
-              <option key={days} value={days}>
-                {t.tasks.repeat(days)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
-          {t.taskForm.dueDate}
-          <input
-            type="date"
-            name="dueOn"
-            ref={dueOnRef}
-            {...errorPropsFor('dueOn')}
-            value={dueOn}
-            onChange={(event) => {
-              setDueOn(event.target.value);
-            }}
-            className={`${inputClassName} min-w-0`}
-          />
-        </label>
-      </div>
+      <TaskTimingFields
+        repeat={repeatEveryDays}
+        onRepeatChange={setRepeatEveryDays}
+        dueOn={dueOn}
+        onDueOnChange={setDueOn}
+        dueOnRef={dueOnRef}
+        dueOnErrorProps={errorPropsFor('dueOn')}
+        alreadyDone={canBeDoneAlready ? { checked: isDone, onChange: checkAlreadyDone } : undefined}
+      />
 
       {error && (
         <p id={errorId} role="alert" className="text-danger-700 text-sm">

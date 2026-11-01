@@ -1,3 +1,5 @@
+import type { Ref } from 'react';
+
 import { CheckboxField } from '@/features/tasks/CheckboxField';
 import { TaskAssigneeField } from '@/features/tasks/TaskAssigneeField';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -11,8 +13,11 @@ interface TaskAudienceFieldsProps {
   onPrivateChange: (isPrivate: boolean) => void;
   forChildren: boolean;
   onForChildrenChange: (forChildren: boolean) => void;
+  /** Whether the task is being added as already done, which only the user's own task can be. */
+  isDone: boolean;
   assignedTo: string | null;
   onAssignedToChange: (assignedTo: string | null) => void;
+  assigneeRef: Ref<HTMLSelectElement>;
   currentUserId: string;
 }
 
@@ -27,8 +32,10 @@ export function TaskAudienceFields({
   onPrivateChange,
   forChildren,
   onForChildrenChange,
+  isDone,
   assignedTo,
   onAssignedToChange,
+  assigneeRef,
   currentUserId,
 }: TaskAudienceFieldsProps) {
   const t = useMessages().taskForm;
@@ -55,6 +62,8 @@ export function TaskAudienceFields({
           currentUserId={currentUserId}
           value={assignedTo}
           onChange={onAssignedToChange}
+          isDone={isDone}
+          selectRef={assigneeRef}
         />
       )}
     </>

@@ -4,6 +4,8 @@ export const taskForm: Messages['taskForm'] = {
   create: {
     submit: 'Luo tehtävä',
     askAnAdult: 'Pyydä perheesi aikuista sallimaan, että lisäät tehtäviä.',
+    notMarkedDone:
+      'Tehtävä lisättiin, mutta sitä ei voitu merkitä tehdyksi. Merkitse se tehdyksi tässä.',
   },
   edit: {
     title: 'Muokkaa tehtävää',
@@ -104,6 +106,7 @@ export const taskForm: Messages['taskForm'] = {
   repeats: 'Toistuu',
   doesNotRepeat: 'Ei toistu',
   dueDate: 'Määräpäivä',
+  alreadyDone: 'Jo tehty',
   errors: {
     titleRequired: 'Anna tehtävälle nimi.',
     titleTooLong: (max) => `Nimessä saa olla enintään ${String(max)} merkkiä.`,
@@ -113,6 +116,8 @@ export const taskForm: Messages['taskForm'] = {
     onlySharedHavePoints: 'Vain yhteisillä tehtävillä on pisteitä.',
     checkDetails: 'Tarkista tehtävän tiedot.',
     saveFailed: 'Tehtävää ei voitu tallentaa. Yritä uudelleen.',
+    doneChoreForChild: (name: string) =>
+      `Lisätessäsi tehtävää voit merkitä tehdyksi vain omasi. Valitse ”Kenen tahansa lapsen” tai jätä ”Jo tehty” valitsematta, niin ${name} merkitsee sen tehdyksi.`,
   },
   reminder: {
     at: (day, time) => `Muistutus ${day} klo ${time}`,
