@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { type TaskSuggestion, taskTypes } from '@/features/tasks/task';
 import { getSupabaseClient } from '@/lib/supabase';
 import { taskIconSchema } from '@/lib/taskIcons';
+import { taskLabelsSchema } from '@/lib/taskLabels';
 
 const suggestionRowsSchema = z.array(
   z.object({
@@ -14,6 +15,8 @@ const suggestionRowsSchema = z.array(
     is_private: z.boolean(),
     for_children: z.boolean(),
     icon: taskIconSchema,
+    labels: taskLabelsSchema,
+    custom_labels: z.array(z.string()),
     times_added: z.number(),
     is_open: z.boolean(),
   }),
@@ -28,12 +31,23 @@ export async function fetchTaskSuggestions(): Promise<TaskSuggestion[]> {
   if (result.error) throw result.error;
   return suggestionRowsSchema
     .parse(result.data)
-    .map(({ repeat_every_days, is_private, for_children, times_added, is_open, ...task }) => ({
-      ...task,
-      repeatEveryDays: repeat_every_days,
-      isPrivate: is_private,
-      forChildren: for_children,
-      timesAdded: times_added,
-      isOpen: is_open,
-    }));
+    .map(
+      ({
+        repeat_every_days,
+        is_private,
+        for_children,
+        custom_labels,
+        times_added,
+        is_open,
+        ...task
+      }) => ({
+        ...task,
+        customLabels: custom_labels,
+        repeatEveryDays: repeat_every_days,
+        isPrivate: is_private,
+        forChildren: for_children,
+        timesAdded: times_added,
+        isOpen: is_open,
+      }),
+    );
 }

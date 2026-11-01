@@ -4,14 +4,16 @@ import {
   addTask,
   completeTask,
   deleteTask,
-  fetchCompletedTasks,
-  fetchHouseholdCompletedTasks,
   fetchTasks,
   pickUpTask,
   putBackTask,
   undoCompleteTask,
   updateTask,
 } from '@/features/tasks/api';
+import {
+  fetchCompletedTasks,
+  fetchHouseholdCompletedTasks,
+} from '@/features/tasks/completedTasksApi';
 import { fetchFavouriteTasks, setFavouriteTask } from '@/features/tasks/favouritesApi';
 import { fetchImageUrls } from '@/features/tasks/imagesApi';
 import { fetchMembership } from '@/features/tasks/membershipApi';

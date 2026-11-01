@@ -14,8 +14,18 @@ export const fetchTaskSuggestions: typeof suggestionsApi.fetchTaskSuggestions = 
   const suggestions = [...byTitle.values()].map((occurrences) => {
     const added = occurrences.filter((task) => task.previousTaskId === null);
     const newest = occurrences.reduce((a, b) => (b.createdAt >= a.createdAt ? b : a));
-    const { title, description, type, points, repeatEveryDays, isPrivate, forChildren, icon } =
-      newest;
+    const {
+      title,
+      description,
+      type,
+      points,
+      repeatEveryDays,
+      isPrivate,
+      forChildren,
+      icon,
+      labels,
+      customLabels,
+    } = newest;
     return {
       suggestion: {
         title,
@@ -26,6 +36,8 @@ export const fetchTaskSuggestions: typeof suggestionsApi.fetchTaskSuggestions = 
         isPrivate,
         forChildren,
         icon,
+        labels,
+        customLabels,
       },
       timesAdded: added.length,
       isOpen: occurrences.some((task) => !task.completed),

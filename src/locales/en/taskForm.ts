@@ -78,6 +78,16 @@ export const taskForm = {
       bills: 'Bills',
     },
   },
+  labels: {
+    label: 'Labels (optional)',
+    /** "Labels: Kitchen and Dishwasher". */
+    chosen: (names: string) => `Labels: ${names}`,
+    choose: 'Choose labels',
+    own: 'Your own label',
+    ownPlaceholder: 'e.g. Dishwasher',
+    add: 'Add',
+    tooMany: (max: number) => `A task can have up to ${String(max)} labels.`,
+  },
   keepPrivate: 'Keep it private',
   forChildren: 'Children can do it',
   assignedTo: 'Whose chore is it?',

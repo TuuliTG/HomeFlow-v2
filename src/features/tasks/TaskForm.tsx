@@ -15,6 +15,8 @@ import { fieldValues, taskInput } from '@/features/tasks/taskFormValues';
 import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
 import { TaskIconField } from '@/features/tasks/TaskIconField';
 import { TaskImagesField } from '@/features/tasks/TaskImagesField';
+import type { TaskLabels } from '@/features/tasks/taskLabelChoices';
+import { TaskLabelsField } from '@/features/tasks/TaskLabelsField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
 import { TaskPointsField } from '@/features/tasks/TaskPointsField';
@@ -86,6 +88,10 @@ export function TaskForm({
   const [forChildren, setForChildren] = useState(initialValues.forChildren);
   const [icon, setIcon] = useState<TaskIconName | null>(initialValues.icon);
   const [assignedTo, setAssignedTo] = useState(initialValues.assignedTo);
+  const [labels, setLabels] = useState<TaskLabels>({
+    labels: initialValues.labels,
+    customLabels: initialValues.customLabels,
+  });
   const [isDone, setIsDone] = useState(false);
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
@@ -121,6 +127,7 @@ export function TaskForm({
     setForChildren(values.forChildren);
     setIcon(values.icon);
     setAssignedTo(values.assignedTo);
+    setLabels({ labels: values.labels, customLabels: values.customLabels });
     setError(null);
   }
 
@@ -130,17 +137,23 @@ export function TaskForm({
     if (checked) setDueOn('');
   }
 
+  /** Says what to fix, focusing the field to fix it in. */
+  function showInvalid(path: PropertyKey | undefined, message = t.taskForm.errors.checkDetails) {
+    // Too many labels can only come from elsewhere (the field stops at the limit), so it names no field.
+    const field = path === 'labels' ? null : fieldOf(path);
+    setError({ field, message });
+    if (field) fieldRefs[field].current?.focus();
+  }
+
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     const values = { title, description, type, points, repeat: repeatEveryDays, dueOn };
     const parsed = newTaskSchema(t).safeParse(
-      taskInput({ ...values, isPrivate, forChildren, icon, assignedTo }, isChild),
+      taskInput({ ...values, ...labels, isPrivate, forChildren, icon, assignedTo }, isChild),
     );
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
-      const field = fieldOf(issue?.path[0]);
-      setError({ field, message: issue?.message ?? t.taskForm.errors.checkDetails });
-      fieldRefs[field].current?.focus();
+      showInvalid(issue?.path[0], issue?.message);
       return;
     }
     if (isDone && parsed.data.assignedTo !== null) {
@@ -202,6 +215,15 @@ export function TaskForm({
       <TaskTypeField value={type} onChange={setType} />
 
       <TaskIconField value={icon} onChange={setIcon} />
+
+      <TaskLabelsField
+        value={labels}
+        onChange={(changed) => {
+          setLabels(changed);
+          setError(null);
+        }}
+        currentUserId={currentUserId}
+      />
 
       <TaskAudienceFields
         canBePrivate={!initial}

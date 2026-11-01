@@ -1,18 +1,11 @@
 import { z } from 'zod';
 
-import {
-  type CompletedTask,
-  HOUSEHOLD_COMPLETED_LIMIT,
-  type HouseholdCompletedTask,
-  type NewTask,
-  type Task,
-  type TaskHelper,
-  taskTypes,
-} from '@/features/tasks/task';
+import { type NewTask, type Task, taskTypes } from '@/features/tasks/task';
 import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
 import { requestRowSchema, taskRequestOf } from '@/features/tasks/requestRow';
 import { getSupabaseClient } from '@/lib/supabase';
 import { taskIconSchema } from '@/lib/taskIcons';
+import { taskLabelsSchema } from '@/lib/taskLabels';
 
 const taskRowsSchema = z.array(
   z.object({
@@ -29,6 +22,8 @@ const taskRowsSchema = z.array(
     for_children: z.boolean(),
     icon: taskIconSchema,
     assigned_to: z.string().nullable(),
+    labels: taskLabelsSchema,
+    custom_labels: z.array(z.string()),
     task_images: z.array(z.object({ path: z.string(), position: z.number() })),
     /** The occurrence this one repeats; it is done, since completing it added this one. */
     previous: z
@@ -37,19 +32,6 @@ const taskRowsSchema = z.array(
     request: requestRowSchema.nullable(),
   }),
 );
-const helperRowsSchema = z.array(z.object({ user_id: z.string(), points: z.number() }));
-const completedTaskRowsSchema = z.array(
-  z.object({
-    id: z.string(),
-    title: z.string(),
-    type: z.enum(taskTypes),
-    points: z.number().nullable(),
-    completed_at: z.string(),
-    task_helpers: helperRowsSchema,
-  }),
-);
-/** How many of the user's completed tasks the Me screen shows. */
-const COMPLETED_TASKS_LIMIT = 20;
 /**
  * The household's open tasks (not yet done): soonest due first, then those without a due date, each
  * newest first. Row Level Security limits them to the user's household, private tasks to whoever
@@ -59,7 +41,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, assigned_to, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, assigned_to, labels, custom_labels, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -87,6 +69,7 @@ export async function fetchTasks(): Promise<Task[]> {
       is_private,
       for_children,
       assigned_to,
+      custom_labels,
       task_images,
       previous,
       request,
@@ -94,6 +77,7 @@ export async function fetchTasks(): Promise<Task[]> {
     }) => ({
       ...task,
       assignedTo: assigned_to,
+      customLabels: custom_labels,
       images: task_images.toSorted((a, b) => a.position - b.position).map((image) => image.path),
       isPrivate: is_private,
       forChildren: for_children,
@@ -117,73 +101,6 @@ export async function fetchTasks(): Promise<Task[]> {
   );
 }
 
-type HelperRows = z.infer<typeof helperRowsSchema>;
-
-function helpersOf(rows: HelperRows, names: Map<string, string>): TaskHelper[] {
-  return rows.map(({ user_id, points }) => ({
-    userId: user_id,
-    name: names.get(user_id) ?? null,
-    points,
-  }));
-}
-
-/** The tasks `userId` has marked done most recently, newest first, with who helped. */
-export async function fetchCompletedTasks(userId: string): Promise<CompletedTask[]> {
-  const { data, error } = await getSupabaseClient()
-    .from('tasks')
-    .select('id, title, type, points, completed_at, task_helpers(user_id, points)')
-    .eq('completed_by', userId)
-    .order('completed_at', { ascending: false })
-    .limit(COMPLETED_TASKS_LIMIT);
-  if (error) throw error;
-  const rows = completedTaskRowsSchema.parse(data);
-  const names = await fetchDisplayNames([
-    ...new Set(rows.flatMap((row) => row.task_helpers.map((helper) => helper.user_id))),
-  ]);
-  return rows.map(({ completed_at, task_helpers, ...task }) => ({
-    ...task,
-    completedAt: completed_at,
-    helpers: helpersOf(task_helpers, names),
-  }));
-}
-
-const householdCompletedRowsSchema = z.array(
-  z.object({
-    id: z.string(),
-    title: z.string(),
-    type: z.enum(taskTypes),
-    points: z.number().nullable(),
-    completed_at: z.string(),
-    completed_by: z.string().nullable(),
-    task_helpers: helperRowsSchema,
-  }),
-);
-
-/** The household's most recently done shared tasks, newest first, with who did them and who helped. */
-export async function fetchHouseholdCompletedTasks(): Promise<HouseholdCompletedTask[]> {
-  const { data, error } = await getSupabaseClient()
-    .from('tasks')
-    .select('id, title, type, points, completed_at, completed_by, task_helpers(user_id, points)')
-    .not('completed_at', 'is', null)
-    .eq('is_private', false)
-    .order('completed_at', { ascending: false })
-    .limit(HOUSEHOLD_COMPLETED_LIMIT);
-  if (error) throw error;
-  const rows = householdCompletedRowsSchema.parse(data);
-  const peopleIds = rows.flatMap((row) => [
-    ...(row.completed_by ? [row.completed_by] : []),
-    ...row.task_helpers.map((helper) => helper.user_id),
-  ]);
-  const names = await fetchDisplayNames([...new Set(peopleIds)]);
-  return rows.map(({ completed_at, completed_by, task_helpers, ...task }) => ({
-    ...task,
-    completedAt: completed_at,
-    helpers: helpersOf(task_helpers, names),
-    completedBy: completed_by,
-    completerName: completed_by ? (names.get(completed_by) ?? null) : null,
-  }));
-}
-
 /**
  * Adds a task to the user's household and returns its id; the database fills in the household and the
  * creator.
@@ -194,6 +111,7 @@ export async function addTask({
   isPrivate,
   forChildren,
   assignedTo,
+  customLabels,
   ...task
 }: NewTask): Promise<string> {
   const { data, error } = await getSupabaseClient()
@@ -205,6 +123,7 @@ export async function addTask({
       is_private: isPrivate,
       for_children: forChildren,
       assigned_to: assignedTo,
+      custom_labels: customLabels,
     })
     .select('id')
     .single();
@@ -253,6 +172,8 @@ export async function updateTask(
     forChildren,
     icon,
     assignedTo,
+    labels,
+    customLabels,
   }: NewTask,
 ): Promise<void> {
   const { error } = await getSupabaseClient().rpc('update_task', {
@@ -268,6 +189,8 @@ export async function updateTask(
     task_assigned_to: assignedTo,
     // Says whose chore it is; the database ignores it from a child (`update_task()`).
     task_change_assignee: true,
+    task_labels: labels,
+    task_custom_labels: customLabels,
   });
   if (error) throw error;
 }

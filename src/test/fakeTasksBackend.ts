@@ -162,6 +162,8 @@ export const fakeTasksBackend = {
         forChildren: false,
         icon: null,
         assignedTo: null,
+        labels: [],
+        customLabels: [],
         ...task,
         id,
         householdId,

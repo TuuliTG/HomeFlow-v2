@@ -6,7 +6,6 @@ import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
 import { fakeSchedulesBackend } from '@/test/fakeSchedulesApi';
 import {
   deliver,
-  helpersOf,
   fakeTasksBackend,
   openTaskOf,
   isChildIn,
@@ -57,6 +56,8 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           forChildren,
           icon,
           assignedTo,
+          labels,
+          customLabels,
           createdBy,
           pickedUpBy,
           previousTaskId,
@@ -73,6 +74,8 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           forChildren,
           icon,
           assignedTo,
+          labels: [...labels],
+          customLabels: [...customLabels],
           createdBy,
           creatorName: fakeAuthBackend.displayNameOf(createdBy),
           pickedUpBy,
@@ -82,19 +85,6 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           request: fakeRequestsBackend.requestOf(id),
         }),
       ),
-  );
-};
-
-export const fetchCompletedTasks: typeof tasksApi.fetchCompletedTasks = (userId) => {
-  if (requestsFailing()) return Promise.reject(new Error('Network error'));
-  return Promise.resolve(
-    tasks
-      .flatMap((task) => {
-        const { id, title, type, points, completed } = task;
-        if (completed?.by !== userId) return [];
-        return [{ id, title, type, points, completedAt: completed.at, helpers: helpersOf(task) }];
-      })
-      .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
   );
 };
 
@@ -115,31 +105,6 @@ export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) 
   asCurrentUser((userId) => {
     fakeTasksBackend.completeTaskAs(userId, taskId, completedOn);
   });
-
-export const fetchHouseholdCompletedTasks: typeof tasksApi.fetchHouseholdCompletedTasks = () => {
-  if (requestsFailing()) return Promise.reject(new Error('Network error'));
-  return Promise.resolve(
-    tasks
-      .flatMap((task) => {
-        const { id, title, type, points, completed } = task;
-        return completed && isVisible(task) && !task.isPrivate
-          ? [
-              {
-                id,
-                title,
-                type,
-                points,
-                completedAt: completed.at,
-                completedBy: completed.by,
-                completerName: fakeAuthBackend.displayNameOf(completed.by),
-                helpers: helpersOf(task),
-              },
-            ]
-          : [];
-      })
-      .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
-  );
-};
 
 /** An open task `userId` may edit or delete, like `private.can_change_task()`: a child's own only. */
 export function changeableTaskOf(userId: string, taskId: string): StoredTask {

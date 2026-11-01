@@ -1,5 +1,6 @@
 import type { Task } from '@/features/tasks/task';
 import { TaskDueDate } from '@/features/tasks/TaskDueDate';
+import { labelNames } from '@/features/tasks/taskLabelChoices';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
 
 const tagClassName = 'w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold';
@@ -9,7 +10,7 @@ interface Tag {
   className: string;
 }
 
-/** The tags a task's card shows: its type, then whatever else applies to it. */
+/** The tags a task's card shows: its type, then whatever else applies to it, then its labels. */
 function tagsOf(task: Task, t: Messages): Tag[] {
   const shared = !task.isPrivate;
   const tags: (Tag | false)[] = [
@@ -36,7 +37,11 @@ function tagsOf(task: Task, t: Messages): Tag[] {
       className: 'bg-info-100 text-info-800',
     },
   ];
-  return tags.filter((tag): tag is Tag => tag !== false);
+  const labels = labelNames(task, t).map((label) => ({
+    label,
+    className: 'border-line-strong text-ink-muted border',
+  }));
+  return [...tags.filter((tag): tag is Tag => tag !== false), ...labels];
 }
 
 /** When the task is due, then its tags. */

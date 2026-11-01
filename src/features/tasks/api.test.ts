@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as tasksApi from '@/features/tasks/api';
+import type { NewTask } from '@/features/tasks/task';
 
 const supabase = vi.hoisted(() => {
   const query = {
@@ -30,7 +31,7 @@ vi.mock('@/lib/supabase', () => ({ getSupabaseClient }));
 const api = await vi.importActual<typeof tasksApi>('@/features/tasks/api');
 const { client, query } = supabase;
 const failure = { message: 'boom' };
-const newTask = {
+const newTask: NewTask = {
   title: 'Vacuum',
   description: null,
   type: 'physical',
@@ -41,7 +42,9 @@ const newTask = {
   forChildren: false,
   icon: null,
   assignedTo: null,
-} as const;
+  labels: [],
+  customLabels: [],
+};
 const row = {
   id: 't1',
   title: 'Vacuum',
@@ -56,6 +59,8 @@ const row = {
   for_children: false,
   icon: null,
   assigned_to: null,
+  labels: [],
+  custom_labels: [],
   task_images: [],
   previous: null,
   request: null,
@@ -124,97 +129,6 @@ describe('tasks api', () => {
     ]);
   });
 
-  it("reads the user's completed tasks, newest first, with who helped", async () => {
-    query.order.mockReturnValueOnce(query);
-    query.limit.mockResolvedValueOnce({
-      data: [
-        {
-          id: 't1',
-          title: 'Vacuum',
-          type: 'physical',
-          points: 3,
-          completed_at: '2026-10-08T12:00:00Z',
-          task_helpers: [{ user_id: 'u2', points: 1 }],
-        },
-      ],
-      error: null,
-    });
-    query.in.mockResolvedValueOnce({ data: [{ id: 'u2', display_name: 'Ben' }], error: null });
-
-    const tasks = await api.fetchCompletedTasks('u1');
-
-    expect(query.select).toHaveBeenCalledWith(
-      'id, title, type, points, completed_at, task_helpers(user_id, points)',
-    );
-    expect(query.eq).toHaveBeenCalledWith('completed_by', 'u1');
-    expect(query.order).toHaveBeenCalledWith('completed_at', { ascending: false });
-    expect(query.limit).toHaveBeenCalledWith(20);
-    expect(tasks).toEqual([
-      {
-        id: 't1',
-        title: 'Vacuum',
-        type: 'physical',
-        points: 3,
-        completedAt: '2026-10-08T12:00:00Z',
-        helpers: [{ userId: 'u2', name: 'Ben', points: 1 }],
-      },
-    ]);
-  });
-
-  it("reads the household's recently done tasks with who did them and who helped", async () => {
-    query.order.mockReturnValueOnce(query);
-    query.limit.mockResolvedValueOnce({
-      data: [
-        {
-          id: 't1',
-          title: 'Vacuum',
-          type: 'physical',
-          points: 3,
-          completed_at: '2026-10-08T12:00:00Z',
-          completed_by: 'u2',
-          task_helpers: [{ user_id: 'u3', points: 2 }],
-        },
-      ],
-      error: null,
-    });
-    query.in.mockResolvedValueOnce({
-      data: [
-        { id: 'u2', display_name: 'Ben' },
-        { id: 'u3', display_name: 'Carl' },
-      ],
-      error: null,
-    });
-
-    const tasks = await api.fetchHouseholdCompletedTasks();
-
-    expect(query.not).toHaveBeenCalledWith('completed_at', 'is', null);
-    expect(query.order).toHaveBeenCalledWith('completed_at', { ascending: false });
-    expect(query.limit).toHaveBeenCalledWith(30);
-    expect(tasks).toEqual([
-      {
-        id: 't1',
-        title: 'Vacuum',
-        type: 'physical',
-        points: 3,
-        completedAt: '2026-10-08T12:00:00Z',
-        completedBy: 'u2',
-        completerName: 'Ben',
-        helpers: [{ userId: 'u3', name: 'Carl', points: 2 }],
-      },
-    ]);
-
-    query.order.mockReturnValueOnce(query);
-    query.limit.mockResolvedValueOnce({ data: null, error: failure });
-    await expect(api.fetchHouseholdCompletedTasks()).rejects.toBe(failure);
-  });
-
-  it('passes errors on when completed tasks cannot be read', async () => {
-    query.order.mockReturnValueOnce(query);
-    query.limit.mockResolvedValueOnce({ data: null, error: failure });
-
-    await expect(api.fetchCompletedTasks('u1')).rejects.toBe(failure);
-  });
-
   it.each([
     ['pickUpTask', 'pick_up_task'],
     ['putBackTask', 'put_back_task'],
@@ -240,6 +154,8 @@ describe('tasks api', () => {
       forChildren: true,
       icon: 'vacuum',
       assignedTo: 'ben',
+      labels: ['cleaning'],
+      customLabels: ['Upstairs'],
     });
 
     expect(client.rpc).toHaveBeenCalledWith('update_task', {
@@ -254,6 +170,8 @@ describe('tasks api', () => {
       task_icon: 'vacuum',
       task_assigned_to: 'ben',
       task_change_assignee: true,
+      task_labels: ['cleaning'],
+      task_custom_labels: ['Upstairs'],
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
@@ -401,6 +319,19 @@ describe('tasks api', () => {
     expect(tasks.map((task) => task.icon)).toEqual(['vacuum', null]);
   });
 
+  it("reads a task's labels, leaving out ready-made ones this version doesn't know", async () => {
+    respondWithTasks({
+      data: [{ ...row, labels: ['cleaning', 'rocketry'], custom_labels: ['Upstairs'] }],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const [task] = await api.fetchTasks();
+
+    expect(task?.labels).toEqual(['cleaning']);
+    expect(task?.customLabels).toEqual(['Upstairs']);
+  });
+
   it('skips the name lookup when there are no tasks', async () => {
     respondWithTasks({ data: [], error: null });
 
@@ -434,6 +365,8 @@ describe('tasks api', () => {
       forChildren: true,
       icon: 'vacuum',
       assignedTo: 'ben',
+      labels: ['cleaning'],
+      customLabels: ['Upstairs'],
     });
 
     expect(client.from).toHaveBeenCalledWith('tasks');
@@ -448,6 +381,8 @@ describe('tasks api', () => {
       for_children: true,
       icon: 'vacuum',
       assigned_to: 'ben',
+      labels: ['cleaning'],
+      custom_labels: ['Upstairs'],
     });
     expect(query.select).toHaveBeenCalledWith('id');
     expect(id).toBe('t9');

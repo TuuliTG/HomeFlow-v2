@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-01 (adding a task that is already done)
+- **Updated:** 2026-11-01 (task labels; adding a task that is already done)
 
 ## Context
 
@@ -109,6 +109,17 @@ next one back rather than follow a fixed calendar.
   migration; the app reads a name it doesn't know as no icon. Insert, `update_task()` (`task_icon`), the next
   occurrence (`complete_task()`) and `task_suggestions()` carry it. Line icons were tried first and were too hard
   to tell apart.
+- **Labels** say what kind of chore a task is, so statistics can show how each kind of work is shared. A task has
+  any number up to ten, ticked behind a "Choose labels" button: the app's ready-made ones (`taskLabelNames` in
+  `src/lib/taskLabels.ts`, stored by name in `tasks.labels` like icons, read in each member's language; an older
+  app drops names it doesn't know, also when it saves an edit, which we accept as apps update themselves) and the
+  household's own (`tasks.custom_labels`, as typed, ≤ 30 characters). A label typed with a ready-made one's name
+  in any of the app's languages picks that one, and one the household has used picks its spelling,
+  so the same kind of chore isn't split. Own labels need no table: `custom_task_labels()` (security invoker, so RLS
+  hides labels only on other members' private tasks) offers the 30 used most on tasks, like
+  suggestions. `private.are_valid_task_labels()` checks the format and that each label appears once (own ones
+  ignoring case). Insert, `update_task()` (`task_labels`, `task_custom_labels`; null keeps them), the next
+  occurrence and `task_suggestions()` carry them; the card shows them after its other tags.
 - **Screens for children** (`useIsChild()`; until known, a loading message, and if it can't be told, the adults'
   screens, which show a child only what they may see): the Me page (`src/app/MePage`) shows their open goals as
   star jars (ADR 0007), their own tasks as big tiles (`ChildTaskTiles`: icon, name, one star per point, a round
@@ -178,7 +189,7 @@ next one back rather than follow a fixed calendar.
   `task_suggestions()` (security invoker, so RLS hides other members' private tasks): one per title ignoring case,
   with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Typing a
   name lists the matching ones; picking one fills in the form without a due date. There is no templates table:
-  deleted tasks drop out on their own, and categories can later filter the same list.
+  deleted tasks drop out on their own, and labels can later filter the same list.
 - **Adding a task done already**: an "Already done" check mark on the New task form (not when adding from the
   timetable, which plans a task to do) adds the task and then marks it done with `complete_task()` as the user,
   so it is credited, celebrated and repeats exactly like one marked done from its card; it then has no due date
@@ -244,6 +255,9 @@ next one back rather than follow a fixed calendar.
 
 ## Alternatives considered
 
+- Labels: one per task (a chore is often two kinds, e.g. Kitchen and Cleaning); a household labels table (renaming
+  or removing an own label would be easier, but it's more to manage, and a label nobody uses any more drops out
+  on its own); only free text (ready-made labels in each member's language keep statistics comparable).
 - Scheduling: a column on `tasks` (others would see your plans), native HTML drag and drop (doesn't work with
   touch), a timetable on the board (too little room on a phone).
 - A calendar recurrence rule (doesn't move with late tasks), reopening the same row (loses who did each

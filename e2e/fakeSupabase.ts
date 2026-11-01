@@ -42,6 +42,9 @@ interface TaskRow {
   for_children: boolean;
   /** The child an adult gave the task to, who has it picked up. */
   assigned_to: string | null;
+  /** Ready-made label names, and the household's own labels as typed. */
+  labels: string[];
+  custom_labels: string[];
   created_at: string;
   completed_at: string | null;
   completed_by: string | null;
@@ -126,6 +129,8 @@ export async function fakeSupabase(page: Page) {
       is_private: false,
       for_children: false,
       assigned_to: null,
+      labels: [],
+      custom_labels: [],
       created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
@@ -335,6 +340,8 @@ export async function fakeSupabase(page: Page) {
         | 'is_private'
         | 'for_children'
         | 'assigned_to'
+        | 'labels'
+        | 'custom_labels'
       >;
       const id = `e2e-task-${String(tasks.length)}`;
       tasks.unshift({
@@ -540,6 +547,8 @@ export async function fakeSupabase(page: Page) {
       task_repeat_every_days: number | null;
       task_for_children: boolean;
       task_assigned_to: string | null;
+      task_labels: string[];
+      task_custom_labels: string[];
     };
     const task = ownOpenTask(body.task_id);
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
@@ -552,6 +561,8 @@ export async function fakeSupabase(page: Page) {
       repeat_every_days: body.task_repeat_every_days,
       for_children: body.task_for_children,
       assigned_to: body.task_assigned_to,
+      labels: body.task_labels,
+      custom_labels: body.task_custom_labels,
       ...(body.task_assigned_to !== task.assigned_to && { picked_up_by: body.task_assigned_to }),
     });
     return reply(route, 204);
@@ -743,6 +754,8 @@ export async function fakeSupabase(page: Page) {
         repeat_every_days: newest.repeat_every_days,
         is_private: newest.is_private,
         for_children: newest.for_children,
+        labels: newest.labels,
+        custom_labels: newest.custom_labels,
         times_added: occurrences.length,
         is_open: occurrences.some((task) => task.completed_at === null),
       };
@@ -751,6 +764,23 @@ export async function fakeSupabase(page: Page) {
       route,
       200,
       suggestions.sort((a, b) => b.times_added - a.times_added),
+    );
+  }
+
+  /** Like custom_task_labels(): the household's own labels, each once ignoring case (simplified: in use order). */
+  async function customTaskLabels(route: Route) {
+    const labels = new Map<string, string>();
+    for (const task of tasks) {
+      if (
+        task.household_id !== ownHousehold?.id ||
+        (task.is_private && task.created_by !== user.id)
+      )
+        continue;
+      for (const label of task.custom_labels) labels.set(label.toLowerCase(), label);
+    }
+    return replyWithRows(
+      route,
+      [...labels.values()].map((label) => ({ label })),
     );
   }
 
@@ -957,6 +987,7 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/set_task_images': setTaskImages,
     '/rest/v1/rpc/household_statistics': householdStatistics,
     '/rest/v1/rpc/task_suggestions': taskSuggestions,
+    '/rest/v1/rpc/custom_task_labels': customTaskLabels,
     '/rest/v1/rpc/set_task_reminder': setTaskReminder,
     '/rest/v1/rpc/clear_task_reminder': clearTaskReminder,
     '/rest/v1/task_reminders': (route) =>

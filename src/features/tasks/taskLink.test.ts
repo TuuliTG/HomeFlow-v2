@@ -22,6 +22,8 @@ describe('taskFromLink', () => {
       forChildren: false,
       icon: null,
       assignedTo: null,
+      labels: [],
+      customLabels: [],
     });
   });
 
