@@ -36,6 +36,9 @@
   --color-points-500: #f59e0b;
   --color-points-600: #d97706;
   --color-points-800: #92400e;
+  /* A child's own share of a shared goal in their star jar, next to everyone's points. */
+  --color-share-300: #f9a8d4;
+  --color-share-400: #f472b6;
   --color-done-100: #d1fae5;
   --color-done-600: #059669;
   --color-done-700: #047857;

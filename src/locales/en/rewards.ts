@@ -32,6 +32,9 @@ export const rewards = {
   jar: {
     savingFor: 'Saving for',
     ofTarget: (target: number) => `/ ${String(target)}`,
+    everyonesPoints: "Everyone's points",
+    yourShare: (points: number, minimum: number) =>
+      `Your share ${String(points)} / ${String(minimum)}`,
     noGoal: 'No goal yet',
     loadFailed: "We couldn't load your goal.",
   },
@@ -45,6 +48,8 @@ export const rewards = {
       `${missing === 1 ? '1 more point' : `${String(missing)} more points`} to go`,
     participantsShort: (count: number) =>
       `Enough points! ${count === 1 ? 'One person still needs' : `${String(count)} people still need`} to earn their share.`,
+    yourShareToGo: (missing: number) =>
+      `You still need to earn ${missing === 1 ? '1 more point' : `${String(missing)} more points`} yourself.`,
     othersReached: (name: string) => `${name} reached this goal!`,
     participantsReached: 'Goal reached! Someone taking part claims the reward.',
     participantsLabel: (title: string) => `Points from each person taking part in ${title}`,

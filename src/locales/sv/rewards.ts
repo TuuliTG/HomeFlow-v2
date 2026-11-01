@@ -28,6 +28,8 @@ export const rewards: Messages['rewards'] = {
   jar: {
     savingFor: 'Sparar till',
     ofTarget: (target) => `/ ${String(target)}`,
+    everyonesPoints: 'Allas poäng',
+    yourShare: (points, minimum) => `Din del ${String(points)} / ${String(minimum)}`,
     noGoal: 'Inget mål än',
     loadFailed: 'Det gick inte att ladda ditt mål.',
   },
@@ -39,6 +41,7 @@ export const rewards: Messages['rewards'] = {
     pointsToGo: (missing) => `${common.points(missing)} kvar`,
     participantsShort: (count) =>
       `Tillräckligt med poäng! ${count === 1 ? 'En person' : `${String(count)} personer`} behöver fortfarande tjäna ihop sin del.`,
+    yourShareToGo: (missing) => `Du behöver själv tjäna ${common.points(missing)} till.`,
     othersReached: (name) => `${name} nådde det här målet!`,
     participantsReached: 'Målet är nått! Någon som är med löser in belöningen.',
     participantsLabel: (title) => `Poäng från var och en som är med i ${title}`,
