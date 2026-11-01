@@ -4,6 +4,8 @@ export const taskForm: Messages['taskForm'] = {
   create: {
     submit: 'Luo tehtävä',
     askAnAdult: 'Pyydä perheesi aikuista sallimaan, että lisäät tehtäviä.',
+    notMarkedDone:
+      'Tehtävä lisättiin, mutta sitä ei voitu merkitä tehdyksi. Merkitse se tehdyksi tässä.',
   },
   edit: {
     title: 'Muokkaa tehtävää',

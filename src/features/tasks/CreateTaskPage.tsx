@@ -11,6 +11,7 @@ import {
   ImagesNotSavedError,
   imagesNotSavedState,
 } from '@/features/tasks/taskImages';
+import { notMarkedDoneState } from '@/features/tasks/notMarkedDone';
 import { TaskForm } from '@/features/tasks/TaskForm';
 import { taskFromLink } from '@/features/tasks/taskLink';
 import { usePlanNewTask } from '@/features/tasks/useSchedules';
@@ -97,8 +98,7 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
         currentUserId={userId}
         submitLabel={t.taskForm.create.submit}
         isSaving={saveTask.isSaving}
-        // A task done already isn't planned in the timetable.
-        canBeDoneAlready={startsAt === null}
+        canBeDoneAlready={saveTask.canBeDoneAlready}
         onSave={saveTask.save}
       />
     </>
@@ -123,7 +123,7 @@ function useSaveNewTask(userId: string, householdId: string | null) {
     } catch (error) {
       // The task was added, so saving it again would add it twice: the user marks it done from its card.
       void reportError(error);
-      await navigate(paths.taskList(task.isPrivate));
+      await navigate(paths.taskList(task.isPrivate), { state: notMarkedDoneState });
       return;
     }
     await navigate(paths.me);
@@ -150,13 +150,21 @@ function useSaveNewTask(userId: string, householdId: string | null) {
       await navigate(paths.editTask(error.taskId), { state: imagesNotSavedState });
       return;
     }
-    if (isDone) await markDone({ id: taskId, ...task });
+    if (isDone)
+      await markDone({
+        id: taskId,
+        title: task.title,
+        points: task.points,
+        isPrivate: task.isPrivate,
+      });
     else if (startsAt === null) await navigate(paths.taskList(task.isPrivate));
     else await plan(taskId, task, startsAt);
   }
 
   return {
     isSaving: addTask.isPending || planNewTask.isPending || completeTask.isPending,
+    // A task done already isn't planned in the timetable.
+    canBeDoneAlready: startsAt === null,
     save,
   };
 }

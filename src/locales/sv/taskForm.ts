@@ -4,6 +4,8 @@ export const taskForm: Messages['taskForm'] = {
   create: {
     submit: 'Skapa uppgift',
     askAnAdult: 'Be en vuxen i familjen att låta dig lägga till uppgifter.',
+    notMarkedDone:
+      'Uppgiften lades till, men vi kunde inte markera den som gjord. Markera den som gjord här.',
   },
   edit: {
     title: 'Redigera uppgift',
@@ -96,7 +98,7 @@ export const taskForm: Messages['taskForm'] = {
   repeats: 'Upprepas',
   doesNotRepeat: 'Upprepas inte',
   dueDate: 'Förfallodag',
-  alreadyDone: 'Redan gjort',
+  alreadyDone: 'Redan gjord',
   errors: {
     titleRequired: 'Ge uppgiften ett namn.',
     titleTooLong: (max) => `Namnet får ha högst ${String(max)} tecken.`,

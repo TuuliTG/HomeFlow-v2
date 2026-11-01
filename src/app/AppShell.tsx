@@ -5,6 +5,7 @@ import { MainNav } from '@/app/MainNav';
 import { SettingsLink } from '@/app/SettingsLink';
 import { AccountStatus } from '@/features/auth/AccountStatus';
 import { HouseholdLink } from '@/features/household/HouseholdLink';
+import { NotMarkedDoneNotice } from '@/features/tasks/NotMarkedDoneNotice';
 import { TaskActivityToast } from '@/features/tasks/TaskActivityToast';
 import { TaskCelebration } from '@/features/tasks/TaskCelebration';
 import { WhoHelpedPrompt } from '@/features/tasks/WhoHelpedPrompt';
@@ -29,6 +30,7 @@ export function AppShell() {
             <SettingsLink />
           </div>
           <InstallHint />
+          <NotMarkedDoneNotice />
           <Outlet />
         </main>
       </div>

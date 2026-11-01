@@ -3,6 +3,7 @@ export const taskForm = {
   create: {
     submit: 'Create task',
     askAnAdult: 'Ask an adult in your family to let you add tasks.',
+    notMarkedDone: "The task was added, but we couldn't mark it done. Mark it done here.",
   },
   edit: {
     title: 'Edit task',

@@ -56,6 +56,8 @@ describe('adding a task that is already done', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Already done' }));
 
     expect(screen.queryByLabelText('Due date')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Already done' }));
+    expect(screen.getByLabelText('Due date')).toHaveValue('');
   });
 
   it('works for private tasks too', async () => {
@@ -82,6 +84,9 @@ describe('adding a task that is already done', () => {
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Shared tasks' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("The task was added, but we couldn't mark it done. Mark it done here."),
     ).toBeInTheDocument();
     const task = await screen.findByRole('listitem', { name: 'Fix the shelf' });
     expect(
