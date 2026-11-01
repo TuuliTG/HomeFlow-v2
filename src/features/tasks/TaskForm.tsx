@@ -96,6 +96,7 @@ export function TaskForm({
   const pointsRef = useRef<HTMLInputElement>(null);
   const dueOnRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const assigneeRef = useRef<HTMLSelectElement>(null);
   const fieldRefs = {
     title: titleRef,
     description: descriptionRef,
@@ -123,12 +124,10 @@ export function TaskForm({
     setError(null);
   }
 
-  /** A task done already has no due date, nor is it a child's chore: whoever adds it marks it done. */
+  /** A task done already has no due date. */
   function checkAlreadyDone(checked: boolean) {
     setIsDone(checked);
-    if (!checked) return;
-    setDueOn('');
-    setAssignedTo(null);
+    if (checked) setDueOn('');
   }
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
@@ -142,6 +141,11 @@ export function TaskForm({
       const field = fieldOf(issue?.path[0]);
       setError({ field, message: issue?.message ?? t.taskForm.errors.checkDetails });
       fieldRefs[field].current?.focus();
+      return;
+    }
+    if (isDone && parsed.data.assignedTo !== null) {
+      // Its field already warns: whoever adds a task as done is credited, so it can't be a child's chore.
+      assigneeRef.current?.focus();
       return;
     }
     onSave(parsed.data, images, isDone).catch(() => {
@@ -206,9 +210,10 @@ export function TaskForm({
         onPrivateChange={setIsPrivate}
         forChildren={forChildren}
         onForChildrenChange={setForChildren}
-        canBeAssigned={!isDone}
+        isDone={isDone}
         assignedTo={assignedTo}
         onAssignedToChange={setAssignedTo}
+        assigneeRef={assigneeRef}
         currentUserId={currentUserId}
       />
 

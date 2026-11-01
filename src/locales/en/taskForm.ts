@@ -108,6 +108,8 @@ export const taskForm = {
     onlySharedHavePoints: 'Only shared tasks have points.',
     checkDetails: 'Check the task details.',
     saveFailed: "We couldn't save the task. Try again.",
+    doneChoreForChild: (name: string) =>
+      `You can only mark your own tasks done when adding them. Choose “Any child”, or leave “Already done” unchecked for ${name} to mark it done.`,
   },
   reminder: {
     /** "Reminder today at 18:00", "Reminder Sat 17 Oct at 9:00". */

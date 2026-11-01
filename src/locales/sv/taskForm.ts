@@ -108,6 +108,8 @@ export const taskForm: Messages['taskForm'] = {
     onlySharedHavePoints: 'Bara gemensamma uppgifter har poäng.',
     checkDetails: 'Kontrollera uppgiftens detaljer.',
     saveFailed: 'Det gick inte att spara uppgiften. Försök igen.',
+    doneChoreForChild: (name: string) =>
+      `Du kan bara markera dina egna uppgifter som gjorda när du lägger till dem. Välj ”Vilket barn som helst”, eller lämna ”Redan gjord” omarkerad så att ${name} kan markera den som gjord.`,
   },
   reminder: {
     at: (day, time) => `Påminnelse ${day} kl. ${time}`,

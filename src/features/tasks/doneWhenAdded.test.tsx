@@ -62,7 +62,7 @@ describe('adding a task that is already done', () => {
     expect(screen.getByLabelText('Due date')).toHaveValue('');
   });
 
-  it("can't be one child's chore, so nobody is credited for a chore they didn't mark done", async () => {
+  it("warns that a child's chore can't be added as done, and saves it once it is any child's", async () => {
     const anna = logInAsFamilyMember();
     const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
     fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
@@ -72,14 +72,21 @@ describe('adding a task that is already done', () => {
 
     await user.type(await screen.findByLabelText('Task'), 'Make your bed');
     await user.click(screen.getByRole('checkbox', { name: 'Children can do it' }));
-    await user.selectOptions(await screen.findByLabelText('Whose chore is it?'), 'Ben');
+    const whose = await screen.findByLabelText('Whose chore is it?');
+    await user.selectOptions(whose, 'Ben');
     await user.click(screen.getByRole('checkbox', { name: 'Already done' }));
-    expect(screen.queryByLabelText('Whose chore is it?')).not.toBeInTheDocument();
+    const warning =
+      'You can only mark your own tasks done when adding them. Choose “Any child”, or leave “Already done” unchecked for Ben to mark it done.';
+    expect(whose).toHaveAccessibleDescription(warning);
+    expect(whose).toBeInvalid();
 
-    await user.click(screen.getByRole('checkbox', { name: 'Already done' }));
-    expect(screen.getByLabelText('Whose chore is it?')).toHaveDisplayValue('Any child');
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+    expect(whose).toHaveFocus();
+    expect(screen.getByRole('heading', { level: 1, name: 'New task' })).toBeInTheDocument();
+    expect(tasks).toHaveLength(0);
 
-    await user.click(screen.getByRole('checkbox', { name: 'Already done' }));
+    await user.selectOptions(whose, 'Any child');
+    expect(screen.queryByText(warning)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Create task' }));
     await screen.findByRole('heading', { level: 1, name: 'My tasks' });
     expect(tasks.at(-1)).toMatchObject({
