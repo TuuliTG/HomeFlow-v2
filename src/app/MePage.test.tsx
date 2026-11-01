@@ -34,7 +34,7 @@ function logInAsChild({ withGoal = true } = {}) {
     forChildren: true,
     icon: 'pet',
   });
-  return ben;
+  return { anna, ben };
 }
 
 describe('the Me page for children', () => {
@@ -46,6 +46,8 @@ describe('the Me page for children', () => {
     const jar = await screen.findByRole('progressbar', { name: 'Progress towards Cinema trip' });
     expect(jar).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByText('10 more points to go')).toBeInTheDocument();
+    // Only a shared goal keeps room for their own share.
+    expect(screen.queryByText(/Your share/)).not.toBeInTheDocument();
 
     const myTasks = screen.getByRole('list', { name: 'My tasks' });
     const bed = within(myTasks).getByRole('listitem', { name: 'Make your bed' });
@@ -75,7 +77,7 @@ describe('the Me page for children', () => {
   });
 
   it('shows their own goal and the shared goal they take part in', async () => {
-    const ben = logInAsChild();
+    const { ben } = logInAsChild();
     fakeGoalsBackend.addGoalAs(ben.id, { title: 'Zoo day', targetPoints: 50, isShared: true });
     renderAppAt('/me');
 
@@ -87,8 +89,45 @@ describe('the Me page for children', () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps the top of a shared goal's jar for their own share until they earn it", async () => {
+    const { anna, ben } = logInAsChild({ withGoal: false });
+    fakeGoalsBackend.addGoalAs(anna.id, {
+      title: 'Sushi dinner',
+      targetPoints: 6,
+      isShared: true,
+      participants: [
+        { userId: anna.id, minPoints: null },
+        { userId: ben.id, minPoints: 5 },
+      ],
+    });
+    const vacuum = fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Vacuum',
+      type: 'physical',
+      points: 4,
+    });
+    fakeTasksBackend.completeTaskAs(anna.id, vacuum, '2026-10-10');
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    const jar = await screen.findByRole('region', { name: 'Sushi dinner' });
+    // Anna's 4 points fill the jar only up to the 5 points kept for Ben's share.
+    const progress = within(jar).getByRole('progressbar');
+    expect(progress).toHaveAttribute('aria-valuenow', '1');
+    expect(jar).not.toHaveTextContent('more points to go');
+    expect(jar).toHaveTextContent('You still need to earn 5 more points yourself.');
+    expect(jar).toHaveTextContent('Your share 0 / 5');
+
+    const myTasks = screen.getByRole('list', { name: 'My tasks' });
+    await user.click(within(myTasks).getByRole('button', { name: 'Mark done: Make your bed' }));
+
+    expect(await within(jar).findByText('Your share 2 / 5')).toBeInTheDocument();
+    expect(progress).toHaveAttribute('aria-valuenow', '3');
+    expect(jar).toHaveTextContent('You still need to earn 3 more points yourself.');
+    expect(within(jar).queryByRole('button', { name: /Claim reward/ })).not.toBeInTheDocument();
+  });
+
   it('lets them claim a reached reward right from its jar', async () => {
-    const ben = logInAsChild({ withGoal: false });
+    const { ben } = logInAsChild({ withGoal: false });
     fakeGoalsBackend.addGoalAs(ben.id, { title: 'Ice cream', targetPoints: 2, isShared: false });
     const user = userEvent.setup();
     renderAppAt('/me');

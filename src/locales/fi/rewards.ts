@@ -28,6 +28,8 @@ export const rewards: Messages['rewards'] = {
   jar: {
     savingFor: 'Säästät tähän:',
     ofTarget: (target) => `/ ${String(target)}`,
+    everyonesPoints: 'Kaikkien pisteet',
+    yourShare: (points, minimum) => `Sinun osuutesi ${String(points)} / ${String(minimum)}`,
     noGoal: 'Ei vielä tavoitetta',
     loadFailed: 'Tavoitettasi ei voitu ladata.',
   },
@@ -39,6 +41,7 @@ export const rewards: Messages['rewards'] = {
     pointsToGo: (missing) => `Vielä ${common.points(missing)}`,
     participantsShort: (count) =>
       `Pisteitä on tarpeeksi! ${count === 1 ? 'Yhden' : String(count)} mukana olevan pitää vielä ansaita osuutensa.`,
+    yourShareToGo: (missing) => `Sinun pitää vielä ansaita itse ${common.points(missing)}.`,
     othersReached: (name) => `${name} saavutti tämän tavoitteen!`,
     participantsReached: 'Tavoite saavutettu! Joku mukana olevista lunastaa palkinnon.',
     participantsLabel: (title) => `Mukana olevien pisteet tavoitteeseen ${title}`,

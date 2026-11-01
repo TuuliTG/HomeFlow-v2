@@ -2,7 +2,13 @@ import { useEffect, useRef } from 'react';
 
 import { StarIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
-import { type Goal, isClaimableBy, participantsShortOfMinimum } from '@/features/rewards/goal';
+import {
+  type Goal,
+  isClaimableBy,
+  type JarFill,
+  jarFill,
+  participantsShortOfMinimum,
+} from '@/features/rewards/goal';
 import { RewardCelebration } from '@/features/rewards/RewardCelebration';
 import { useClaimGoalReward, useGoals } from '@/features/rewards/useGoals';
 import { useLoggedInUser } from '@/lib/auth';
@@ -69,11 +75,12 @@ function Jars({ pointsChangedAt }: StarJarsProps) {
 }
 
 function StarJar({ goal }: { goal: Goal }) {
+  const user = useLoggedInUser();
   const messages = useMessages();
   const t = messages.rewards.jar;
   const goalT = messages.rewards.goal;
-  const shownPoints = Math.min(goal.points, goal.targetPoints);
-  const percent = Math.round((shownPoints / goal.targetPoints) * 100);
+  const fill = jarFill(goal, user.id);
+  const counted = fill.others + fill.own;
   const headingId = `jar-${goal.id}`;
 
   return (
@@ -83,16 +90,14 @@ function StarJar({ goal }: { goal: Goal }) {
         aria-label={goalT.progressLabel(goal.title)}
         aria-valuemin={0}
         aria-valuemax={goal.targetPoints}
-        aria-valuenow={shownPoints}
-        aria-valuetext={goalT.progressValue(shownPoints, goal.targetPoints)}
+        aria-valuenow={counted}
+        aria-valuetext={goalT.progressValue(counted, goal.targetPoints)}
         className="relative h-32 w-24 shrink-0"
       >
         <span className="bg-brand-200 absolute inset-x-5 top-0 h-3 rounded-md" />
         <span className="border-brand-200 bg-brand-700 absolute inset-x-0 top-2 bottom-0 overflow-hidden rounded-t-[1.75rem] rounded-b-[2rem] border-[3px]">
-          <span
-            className="bg-points-400 absolute inset-x-0 bottom-0 motion-safe:transition-[height] motion-safe:duration-700"
-            style={{ height: `${String(percent)}%` }}
-          />
+          <JarLayer className="bg-points-400" from={0} points={fill.others} goal={goal} />
+          {fill.ownRoom > 0 && <OwnRoom goal={goal} fill={fill} />}
           <StarIcon className="text-points-100 absolute top-1/2 left-1/2 size-8 -translate-x-1/2 -translate-y-1/2 fill-current opacity-80" />
         </span>
       </div>
@@ -102,26 +107,95 @@ function StarJar({ goal }: { goal: Goal }) {
           {goal.title}
         </h2>
         <p className="flex items-baseline gap-1.5">
-          <span className="text-4xl leading-none font-extrabold tracking-tight">{shownPoints}</span>
+          <span className="text-4xl leading-none font-extrabold tracking-tight">{counted}</span>
           <span className="text-brand-100 font-semibold">{t.ofTarget(goal.targetPoints)}</span>
         </p>
-        <JarStatus goal={goal} shownPoints={shownPoints} />
+        <JarStatus goal={goal} fill={fill} />
+        {fill.ownRoom > 0 && <JarLegend fill={fill} />}
       </div>
     </section>
   );
 }
 
-/** What's left to do: points to go, others' minimums still to earn, or claiming the reward. */
-function JarStatus({ goal, shownPoints }: { goal: Goal; shownPoints: number }) {
+interface JarLayerProps {
+  goal: Goal;
+  /** Where the layer starts, in points from the bottom of the jar. */
+  from: number;
+  points: number;
+  className: string;
+}
+
+/** A layer of points in the jar, on the scale of the goal's target. */
+function JarLayer({ goal, from, points, className }: JarLayerProps) {
+  const percentOf = (value: number) => `${String((value / goal.targetPoints) * 100)}%`;
+  return (
+    <span
+      className={`absolute inset-x-0 motion-safe:transition-[height] motion-safe:duration-700 ${className}`}
+      style={{ bottom: percentOf(from), height: percentOf(points) }}
+    />
+  );
+}
+
+/**
+ * The user's own share of the jar: their points stacked on everyone else's, and at the top, striped, the
+ * points they still need, which others' points never fill.
+ */
+function OwnRoom({ goal, fill }: { goal: Goal; fill: JarFill }) {
+  const stillNeeded = fill.ownRoom - fill.own;
+  return (
+    <>
+      <JarLayer className="bg-share-400" from={fill.others} points={fill.own} goal={goal} />
+      <JarLayer
+        className="bg-[repeating-linear-gradient(135deg,var(--color-share-400)_0_5px,transparent_5px_11px)] opacity-60"
+        from={goal.targetPoints - stillNeeded}
+        points={stillNeeded}
+        goal={goal}
+      />
+    </>
+  );
+}
+
+/** Which colour in the jar is whose, when part of it is kept for the user. */
+function JarLegend({ fill }: { fill: JarFill }) {
+  const t = useMessages().rewards.jar;
+  return (
+    <ul className="text-brand-100 mt-1 flex flex-col gap-1 text-sm font-semibold">
+      <li className="flex items-center gap-2">
+        <span aria-hidden="true" className="bg-points-400 size-3 rounded-sm" />
+        {t.everyonesPoints}
+      </li>
+      <li className="flex items-center gap-2">
+        <span aria-hidden="true" className="bg-share-400 size-3 rounded-sm" />
+        {t.yourShare(fill.own, fill.ownRoom)}
+      </li>
+    </ul>
+  );
+}
+
+/**
+ * What's left to do: points to go, the user's own points to go, others' minimums still to earn, or
+ * claiming the reward.
+ */
+function JarStatus({ goal, fill }: { goal: Goal; fill: JarFill }) {
   const goalT = useMessages().rewards.goal;
   if (goal.reached) return <ClaimFromJar goal={goal} />;
-  const missing = goal.targetPoints - shownPoints;
+  const missing = goal.targetPoints - fill.others - fill.own;
+  const yourMissing = fill.ownRoom - fill.own;
+  const othersMissing = missing - yourMissing;
   return (
-    <p className="text-brand-100 font-semibold">
-      {missing > 0
-        ? goalT.pointsToGo(missing)
-        : goalT.participantsShort(participantsShortOfMinimum(goal).length)}
-    </p>
+    <>
+      {othersMissing > 0 && (
+        <p className="text-brand-100 font-semibold">{goalT.pointsToGo(missing)}</p>
+      )}
+      {yourMissing > 0 && (
+        <p className="text-share-300 font-extrabold">{goalT.yourShareToGo(yourMissing)}</p>
+      )}
+      {missing === 0 && (
+        <p className="text-brand-100 font-semibold">
+          {goalT.participantsShort(participantsShortOfMinimum(goal).length)}
+        </p>
+      )}
+    </>
   );
 }
 
