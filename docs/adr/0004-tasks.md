@@ -182,8 +182,8 @@ next one back rather than follow a fixed calendar.
 - **Adding a task done already**: an "Already done" check mark on the New task form (not when adding from the
   timetable, which plans a task to do) adds the task and then marks it done with `complete_task()` as the user,
   so it is credited, celebrated and repeats exactly like one marked done from its card; it then has no due date
-  (the field hides) and the Me page opens, where it is under Completed. Whoever adds it gets the credit, also for
-  a chore given to a child, as when an adult marks one done from its card. Two requests rather than an insert with
+  (the field hides) and the Me page opens, where it is under Completed. It can't also be one child's chore: whoever adds it is credited with
+  doing it, so "Whose chore is it?" hides and is cleared while the box is checked. Two requests rather than an insert with
   `completed_at`, so marking done keeps one path and the insert policy stays as it is. If marking done fails,
   the task stays open and its list opens with a notice to mark it done there (saving the form again would add it twice); if
   its pictures fail, its edit page opens as usual and it is marked done later.

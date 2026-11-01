@@ -11,6 +11,8 @@ interface TaskAudienceFieldsProps {
   onPrivateChange: (isPrivate: boolean) => void;
   forChildren: boolean;
   onForChildrenChange: (forChildren: boolean) => void;
+  /** A task added as already done can't be one child's chore: whoever adds it marks it done. */
+  canBeAssigned: boolean;
   assignedTo: string | null;
   onAssignedToChange: (assignedTo: string | null) => void;
   currentUserId: string;
@@ -27,6 +29,7 @@ export function TaskAudienceFields({
   onPrivateChange,
   forChildren,
   onForChildrenChange,
+  canBeAssigned,
   assignedTo,
   onAssignedToChange,
   currentUserId,
@@ -50,7 +53,7 @@ export function TaskAudienceFields({
           onChange={onForChildrenChange}
         />
       )}
-      {!isPrivate && !isChild && forChildren && (
+      {!isPrivate && !isChild && forChildren && canBeAssigned && (
         <TaskAssigneeField
           currentUserId={currentUserId}
           value={assignedTo}

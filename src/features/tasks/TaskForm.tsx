@@ -123,10 +123,12 @@ export function TaskForm({
     setError(null);
   }
 
-  /** A task done already has no due date. */
+  /** A task done already has no due date, nor is it a child's chore: whoever adds it marks it done. */
   function checkAlreadyDone(checked: boolean) {
     setIsDone(checked);
-    if (checked) setDueOn('');
+    if (!checked) return;
+    setDueOn('');
+    setAssignedTo(null);
   }
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
@@ -204,6 +206,7 @@ export function TaskForm({
         onPrivateChange={setIsPrivate}
         forChildren={forChildren}
         onForChildrenChange={setForChildren}
+        canBeAssigned={!isDone}
         assignedTo={assignedTo}
         onAssignedToChange={setAssignedTo}
         currentUserId={currentUserId}

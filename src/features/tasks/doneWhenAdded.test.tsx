@@ -2,7 +2,9 @@ import { screen, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fakeTasksBackend } from '@/test/fakeTasksBackend';
+import { fakeAuthBackend } from '@/test/fakeAuthApi';
+import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
+import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
@@ -58,6 +60,33 @@ describe('adding a task that is already done', () => {
     expect(screen.queryByLabelText('Due date')).not.toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: 'Already done' }));
     expect(screen.getByLabelText('Due date')).toHaveValue('');
+  });
+
+  it("can't be one child's chore, so nobody is credited for a chore they didn't mark done", async () => {
+    const anna = logInAsFamilyMember();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(ben.id, true);
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.type(await screen.findByLabelText('Task'), 'Make your bed');
+    await user.click(screen.getByRole('checkbox', { name: 'Children can do it' }));
+    await user.selectOptions(await screen.findByLabelText('Whose chore is it?'), 'Ben');
+    await user.click(screen.getByRole('checkbox', { name: 'Already done' }));
+    expect(screen.queryByLabelText('Whose chore is it?')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('checkbox', { name: 'Already done' }));
+    expect(screen.getByLabelText('Whose chore is it?')).toHaveDisplayValue('Any child');
+
+    await user.click(screen.getByRole('checkbox', { name: 'Already done' }));
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+    await screen.findByRole('heading', { level: 1, name: 'My tasks' });
+    expect(tasks.at(-1)).toMatchObject({
+      assignedTo: null,
+      forChildren: true,
+      completed: { by: anna.id },
+    });
   });
 
   it('works for private tasks too', async () => {
