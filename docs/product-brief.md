@@ -26,7 +26,7 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
   **Pick up task** button; **Ask** someone else to do a task (they're notified and accept or decline); **+** to
   create a task.
 - **Create / edit task** — reuse a previous task or type a new one; points, type, assignees (adults default, children
-  opt-in, and an adult can make it one child's chore, which goes straight onto that child's Me page); up to three pictures to clarify details; an optional icon (e.g. a bed) shown on the task's tile; a **private** check mark keeps a task to yourself, without points. Creating a task gets positive
+  opt-in, and an adult can make it one child's chore, which goes straight onto that child's Me page); up to three pictures to clarify details; an optional icon (e.g. a bed) shown on the task's tile; a **private** check mark keeps a task to yourself, without points. An **Already done** check mark adds a task you have just done and marks it done at once. Creating a task gets positive
   feedback and counts towards _tasks created_ (no points).
 - **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
   On a done task, _Who helped?_ (also asked right after marking it done) gives helpers (a child who helped, an adult
