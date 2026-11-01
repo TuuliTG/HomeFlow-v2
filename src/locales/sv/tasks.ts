@@ -121,7 +121,7 @@ export const tasks: Messages['tasks'] = {
       named: (name) => `Gjord av ${name}`,
     },
     addAgain: 'Lägg till igen',
-    addAgainLabel: (title) => `Lägg till ${title} igen`,
+    addAgainLabel: (title) => `Lägg till igen: ${title}`,
   },
   me: {
     eyebrow: 'Jag',
