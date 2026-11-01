@@ -7,7 +7,6 @@ import {
   DESCRIPTION_MAX_LENGTH,
   type NewTask,
   newTaskSchema,
-  repeatChoices,
   type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
@@ -20,6 +19,7 @@ import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
 import { TaskPointsField } from '@/features/tasks/TaskPointsField';
 import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
+import { TaskTimingFields } from '@/features/tasks/TaskTimingFields';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -206,40 +206,14 @@ export function TaskForm({
         />
       )}
 
-      <div className="flex gap-3">
-        <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
-          {t.taskForm.repeats}
-          <select
-            name="repeatEveryDays"
-            value={repeatEveryDays}
-            onChange={(event) => {
-              setRepeatEveryDays(event.target.value);
-            }}
-            className={inputClassName}
-          >
-            <option value="">{t.taskForm.doesNotRepeat}</option>
-            {repeatChoices.map((days) => (
-              <option key={days} value={days}>
-                {t.tasks.repeat(days)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
-          {t.taskForm.dueDate}
-          <input
-            type="date"
-            name="dueOn"
-            ref={dueOnRef}
-            {...errorPropsFor('dueOn')}
-            value={dueOn}
-            onChange={(event) => {
-              setDueOn(event.target.value);
-            }}
-            className={`${inputClassName} min-w-0`}
-          />
-        </label>
-      </div>
+      <TaskTimingFields
+        repeat={repeatEveryDays}
+        onRepeatChange={setRepeatEveryDays}
+        dueOn={dueOn}
+        onDueOnChange={setDueOn}
+        dueOnRef={dueOnRef}
+        dueOnErrorProps={errorPropsFor('dueOn')}
+      />
 
       {error && (
         <p id={errorId} role="alert" className="text-danger-700 text-sm">

@@ -5,7 +5,12 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { parseToDoView, startFromLink } from '@/features/tasks/schedule';
 import { findSuggestion, suggestionAsTask } from '@/features/tasks/suggestions';
-import { ImagesNotSavedError, imagesNotSavedState } from '@/features/tasks/taskImages';
+import type { NewTask } from '@/features/tasks/task';
+import {
+  type DraftImage,
+  ImagesNotSavedError,
+  imagesNotSavedState,
+} from '@/features/tasks/taskImages';
 import { TaskForm } from '@/features/tasks/TaskForm';
 import { taskFromLink } from '@/features/tasks/taskLink';
 import { usePlanNewTask } from '@/features/tasks/useSchedules';
@@ -52,12 +57,10 @@ interface NewTaskFormProps {
 }
 
 function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
-  const addTask = useAddTask(userId);
-  const planNewTask = usePlanNewTask(userId);
+  const saveTask = useSaveNewTask(userId, householdId);
   const suggestions = useTaskSuggestions(userId);
   const favourites = useFavouriteTasks(userId);
   const setFavourite = useSetFavouriteTask(userId);
-  const navigate = useNavigate();
   const t = useMessages();
   const [searchParams] = useSearchParams();
   /** The name of an earlier task to add again (`paths.addTaskAgain`). */
@@ -91,31 +94,51 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
         isChild={isChild}
         currentUserId={userId}
         submitLabel={t.taskForm.create.submit}
-        isSaving={addTask.isPending || planNewTask.isPending}
-        onSave={async (task, images) => {
-          let taskId: string;
-          try {
-            taskId = await addTask.mutateAsync({ task, images, householdId: householdId ?? '' });
-          } catch (error) {
-            if (!(error instanceof ImagesNotSavedError)) throw error;
-            // The task was added: adding its pictures again on the edit page doesn't add it twice.
-            await navigate(paths.editTask(error.taskId), { state: imagesNotSavedState });
-            return;
-          }
-          if (startsAt === null) {
-            await navigate(paths.taskList(task.isPrivate));
-            return;
-          }
-          try {
-            await planNewTask.mutateAsync({ taskId, isPrivate: task.isPrivate, startsAt });
-          } catch (error) {
-            // The task was added, so the form isn't the place to say so: the user finds it among their
-            // tasks (shared ones on the board) and can schedule it again.
-            void reportError(error);
-          }
-          await navigate(paths.meAs(parseToDoView(searchParams.get('view'))));
-        }}
+        isSaving={saveTask.isSaving}
+        onSave={saveTask.save}
       />
     </>
   );
+}
+
+/**
+ * Adds a new task, then plans it in the user's timetable if they are adding it from there
+ * (`paths.newTaskAt`), and opens where it shows.
+ */
+function useSaveNewTask(userId: string, householdId: string | null) {
+  const addTask = useAddTask(userId);
+  const planNewTask = usePlanNewTask(userId);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const startsAt = startFromLink(searchParams);
+
+  async function plan(taskId: string, task: NewTask, at: string) {
+    try {
+      await planNewTask.mutateAsync({ taskId, isPrivate: task.isPrivate, startsAt: at });
+    } catch (error) {
+      // The task was added, so the form isn't the place to say so: the user finds it among their
+      // tasks (shared ones on the board) and can schedule it again.
+      void reportError(error);
+    }
+    await navigate(paths.meAs(parseToDoView(searchParams.get('view'))));
+  }
+
+  async function save(task: NewTask, images: DraftImage[]) {
+    let taskId: string;
+    try {
+      taskId = await addTask.mutateAsync({ task, images, householdId: householdId ?? '' });
+    } catch (error) {
+      if (!(error instanceof ImagesNotSavedError)) throw error;
+      // The task was added: adding its pictures again on the edit page doesn't add it twice.
+      await navigate(paths.editTask(error.taskId), { state: imagesNotSavedState });
+      return;
+    }
+    if (startsAt === null) await navigate(paths.taskList(task.isPrivate));
+    else await plan(taskId, task, startsAt);
+  }
+
+  return {
+    isSaving: addTask.isPending || planNewTask.isPending,
+    save,
+  };
 }
