@@ -258,7 +258,7 @@ function ScheduledBlock({
           }}
           className={`flex h-full w-full cursor-grab touch-manipulation flex-col items-start overflow-hidden border-l-4 px-1 text-left text-[11px] leading-tight select-none ${typeColours[task.type]}`}
         >
-          <span className="w-full truncate font-semibold">{task.title}</span>
+          <span className="w-full truncate font-semibold">{task.title}</span>{' '}
           {bottom - top >= 30 && <span className="w-full truncate">{`${from}–${to}`}</span>}
         </button>
       </Block>
