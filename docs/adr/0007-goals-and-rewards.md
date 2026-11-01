@@ -61,9 +61,10 @@ together, and members want small personal goals of their own; both must make cle
   (`StarJars`, a `progressbar` like the goal card): their personal goal and the shared goal they take part in, or
   a "No goal yet" card asking a grown-up to set one. Children have no Rewards screen (ADR 0004), so a reached jar
   has its own Claim reward button and celebration. It refetches goals when the child's completed tasks change, so
-  the jar fills as they mark tasks done. A child's minimum in a shared goal gets its own room at the top of the jar
-  (`jarFill()`), which only their points fill, in the `share` colour, so the jar isn't full (`47 / 60`, not
-  `60 / 60`) until they have done their part; the card says how many points they still need themselves.
+  the jar fills as they mark tasks done. A child's minimum in a shared goal keeps room in the jar (`jarFill()`) that
+  others' points never fill: their own points stack on everyone's in the `share` colour, and what they still
+  need shows striped at the top, so the jar isn't full (`47 / 60`, not `60 / 60`) until they have done their
+  part; the card says how many points they still need themselves.
 - The Rewards screen refetches goals when it opens (TanStack Query default), so tasks done elsewhere show up; no
   live updates for goals.
 

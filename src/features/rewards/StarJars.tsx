@@ -136,18 +136,21 @@ function JarLayer({ goal, from, points, className }: JarLayerProps) {
   );
 }
 
-/** The top of the jar, kept for the user's own minimum: only their points fill it. */
+/**
+ * The user's own share of the jar: their points stacked on everyone else's, and at the top, striped, the
+ * points they still need, which others' points never fill.
+ */
 function OwnRoom({ goal, fill }: { goal: Goal; fill: JarFill }) {
-  const floor = goal.targetPoints - fill.ownRoom;
+  const stillNeeded = fill.ownRoom - fill.own;
   return (
     <>
+      <JarLayer className="bg-share-400" from={fill.others} points={fill.own} goal={goal} />
       <JarLayer
         className="bg-[repeating-linear-gradient(135deg,var(--color-share-400)_0_5px,transparent_5px_11px)] opacity-60"
-        from={floor}
-        points={fill.ownRoom}
+        from={goal.targetPoints - stillNeeded}
+        points={stillNeeded}
         goal={goal}
       />
-      <JarLayer className="bg-share-400" from={floor} points={fill.own} goal={goal} />
     </>
   );
 }
