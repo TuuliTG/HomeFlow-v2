@@ -122,6 +122,12 @@ export function participantsShortOfMinimum(goal: Goal): GoalParticipant[] {
   );
 }
 
+/** The points `userId` must still earn towards their minimum for a shared goal; 0 once earned or with none. */
+export function ownPointsToGo(goal: Goal, userId: string): number {
+  const own = goal.participants.find(({ id }) => id === userId);
+  return own ? Math.max((own.minPoints ?? 0) - own.points, 0) : 0;
+}
+
 /** A member of the household for setting goals: only adults set them, also for a child (ADR 0007). */
 export interface GoalSetter extends GoalMember {
   isChild: boolean;

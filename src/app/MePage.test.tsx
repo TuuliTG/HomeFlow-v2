@@ -34,7 +34,7 @@ function logInAsChild({ withGoal = true } = {}) {
     forChildren: true,
     icon: 'pet',
   });
-  return ben;
+  return { anna, ben };
 }
 
 describe('the Me page for children', () => {
@@ -75,7 +75,7 @@ describe('the Me page for children', () => {
   });
 
   it('shows their own goal and the shared goal they take part in', async () => {
-    const ben = logInAsChild();
+    const { ben } = logInAsChild();
     fakeGoalsBackend.addGoalAs(ben.id, { title: 'Zoo day', targetPoints: 50, isShared: true });
     renderAppAt('/me');
 
@@ -87,8 +87,40 @@ describe('the Me page for children', () => {
     ).toBeInTheDocument();
   });
 
+  it('tells them how many points they still need to earn themselves towards a shared goal', async () => {
+    const { anna, ben } = logInAsChild({ withGoal: false });
+    fakeGoalsBackend.addGoalAs(anna.id, {
+      title: 'Sushi dinner',
+      targetPoints: 6,
+      isShared: true,
+      participants: [
+        { userId: anna.id, minPoints: null },
+        { userId: ben.id, minPoints: 5 },
+      ],
+    });
+    const vacuum = fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Vacuum',
+      type: 'physical',
+      points: 4,
+    });
+    fakeTasksBackend.completeTaskAs(anna.id, vacuum, '2026-10-10');
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    const jar = await screen.findByRole('region', { name: 'Sushi dinner' });
+    expect(jar).toHaveTextContent('2 more points to go');
+    expect(jar).toHaveTextContent('You still need to earn 5 more points yourself.');
+
+    const myTasks = screen.getByRole('list', { name: 'My tasks' });
+    await user.click(within(myTasks).getByRole('button', { name: 'Mark done: Make your bed' }));
+
+    expect(await within(jar).findByText('Enough points together!')).toBeInTheDocument();
+    expect(jar).toHaveTextContent('You still need to earn 3 more points yourself.');
+    expect(within(jar).queryByRole('button', { name: /Claim reward/ })).not.toBeInTheDocument();
+  });
+
   it('lets them claim a reached reward right from its jar', async () => {
-    const ben = logInAsChild({ withGoal: false });
+    const { ben } = logInAsChild({ withGoal: false });
     fakeGoalsBackend.addGoalAs(ben.id, { title: 'Ice cream', targetPoints: 2, isShared: false });
     const user = userEvent.setup();
     renderAppAt('/me');

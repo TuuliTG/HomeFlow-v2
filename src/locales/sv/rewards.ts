@@ -39,6 +39,8 @@ export const rewards: Messages['rewards'] = {
     pointsToGo: (missing) => `${common.points(missing)} kvar`,
     participantsShort: (count) =>
       `Tillräckligt med poäng! ${count === 1 ? 'En person' : `${String(count)} personer`} behöver fortfarande tjäna ihop sin del.`,
+    enoughTogether: 'Tillräckligt med poäng tillsammans!',
+    yourShareToGo: (missing) => `Du behöver själv tjäna ${common.points(missing)} till.`,
     othersReached: (name) => `${name} nådde det här målet!`,
     participantsReached: 'Målet är nått! Någon som är med löser in belöningen.',
     participantsLabel: (title) => `Poäng från var och en som är med i ${title}`,

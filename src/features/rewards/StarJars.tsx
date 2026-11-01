@@ -2,7 +2,12 @@ import { useEffect, useRef } from 'react';
 
 import { StarIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
-import { type Goal, isClaimableBy, participantsShortOfMinimum } from '@/features/rewards/goal';
+import {
+  type Goal,
+  isClaimableBy,
+  ownPointsToGo,
+  participantsShortOfMinimum,
+} from '@/features/rewards/goal';
 import { RewardCelebration } from '@/features/rewards/RewardCelebration';
 import { useClaimGoalReward, useGoals } from '@/features/rewards/useGoals';
 import { useLoggedInUser } from '@/lib/auth';
@@ -106,23 +111,35 @@ function StarJar({ goal }: { goal: Goal }) {
           <span className="text-brand-100 font-semibold">{t.ofTarget(goal.targetPoints)}</span>
         </p>
         <JarStatus goal={goal} shownPoints={shownPoints} />
+        <YourShareToGo goal={goal} />
       </div>
     </section>
   );
 }
 
-/** What's left to do: points to go, others' minimums still to earn, or claiming the reward. */
+/**
+ * What's left to do: points to go, minimums still to earn, or claiming the reward. Once the points are
+ * enough but the user is still short of their own minimum, `YourShareToGo` says what is left for them.
+ */
 function JarStatus({ goal, shownPoints }: { goal: Goal; shownPoints: number }) {
+  const user = useLoggedInUser();
   const goalT = useMessages().rewards.goal;
   if (goal.reached) return <ClaimFromJar goal={goal} />;
   const missing = goal.targetPoints - shownPoints;
-  return (
-    <p className="text-brand-100 font-semibold">
-      {missing > 0
-        ? goalT.pointsToGo(missing)
-        : goalT.participantsShort(participantsShortOfMinimum(goal).length)}
-    </p>
-  );
+  const short = participantsShortOfMinimum(goal);
+  let status = goalT.participantsShort(short.length);
+  if (missing > 0) status = goalT.pointsToGo(missing);
+  else if (short.some(({ id }) => id === user.id)) status = goalT.enoughTogether;
+  return <p className="text-brand-100 font-semibold">{status}</p>;
+}
+
+/** The points the user must still earn themselves towards a shared goal, until they reach their minimum. */
+function YourShareToGo({ goal }: { goal: Goal }) {
+  const user = useLoggedInUser();
+  const goalT = useMessages().rewards.goal;
+  const yourMissing = ownPointsToGo(goal, user.id);
+  if (yourMissing === 0) return null;
+  return <p className="text-points-400 font-extrabold">{goalT.yourShareToGo(yourMissing)}</p>;
 }
 
 function ClaimFromJar({ goal }: { goal: Goal }) {
