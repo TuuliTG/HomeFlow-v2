@@ -30,7 +30,8 @@ history grows past what one API request returns.
   the _Children_ (offered when there are both), or tick members one by one; at least one stays ticked. Rankings and
   fairness scores cover only those compared (`comparedMembers()`), so e.g. the adults can see how they share the work
   between them. Kept in the address as `?compare=adults` or `?compare=<user id>,<user id>`; a choice matching no one
-  (e.g. members who left) compares everyone.
+  (e.g. members who left) compares everyone. The period, work type and who is compared are also remembered on the
+  device (ADR 0002), so they are still set when the user comes back to the page.
 - **Filters fold away**: only the period stays on screen; who is compared and the work type sit in a collapsed
   _Filters_ panel (`StatisticsFilters`) whose summary names the filters that differ from the defaults (e.g.
   "Adults · Physical"), so the statistics come first but a filtered view is never mistaken for the whole family.

@@ -14,6 +14,20 @@ export const common = {
   someone: 'Someone',
   newMember: 'New member (no name yet)',
   taskTypes: { physical: 'Physical', meta: 'Meta work' },
+  taskLabels: {
+    kitchen: 'Kitchen',
+    cooking: 'Cooking',
+    cleaning: 'Cleaning',
+    laundry: 'Laundry',
+    tidying: 'Tidying up',
+    shopping: 'Shopping',
+    children: 'Children',
+    pets: 'Pets',
+    garden: 'Garden and yard',
+    repairs: 'Repairs',
+    paperwork: 'Bills and paperwork',
+    car: 'Car',
+  },
   /** "1 point", "3 points". */
   points: (count: number) => (count === 1 ? '1 point' : `${String(count)} points`),
   /** "Anna", "Anna and Ben", "Anna, Ben and Carl". */

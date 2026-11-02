@@ -4,15 +4,16 @@ import {
   addTask,
   completeTask,
   deleteTask,
-  fetchCompletedTasks,
-  fetchHouseholdCompletedTasks,
   fetchTasks,
-  fetchTaskSuggestions,
   pickUpTask,
   putBackTask,
   undoCompleteTask,
   updateTask,
 } from '@/features/tasks/api';
+import {
+  fetchCompletedTasks,
+  fetchHouseholdCompletedTasks,
+} from '@/features/tasks/completedTasksApi';
 import { fetchFavouriteTasks, setFavouriteTask } from '@/features/tasks/favouritesApi';
 import { fetchImageUrls } from '@/features/tasks/imagesApi';
 import { fetchMembership } from '@/features/tasks/membershipApi';
@@ -22,6 +23,7 @@ import {
   fetchTotalPoints,
 } from '@/features/tasks/pointsApi';
 import { clearTaskReminder, fetchReminders, setTaskReminder } from '@/features/tasks/remindersApi';
+import { fetchTaskSuggestions } from '@/features/tasks/suggestionsApi';
 import {
   IMAGE_URL_LIFETIME_SECONDS,
   type NewTask,
@@ -68,6 +70,17 @@ export function useMembership(userId: string) {
     queryKey: [...tasksKey(userId), 'membership'],
     queryFn: () => fetchMembership(userId),
   });
+}
+
+/**
+ * Whether the user is a child, to show them the screens made for children; undefined until first known.
+ * If that fails it counts as no: the adults' screens still work for a child, showing only what they may
+ * see. Refetches after a failure don't make it unknown again, so a screen isn't swapped back and forth.
+ */
+export function useIsChild(userId: string): boolean | undefined {
+  const membership = useMembership(userId);
+  if (membership.isPending && membership.errorUpdateCount === 0) return undefined;
+  return membership.data?.isChild === true;
 }
 
 const favouritesKey = (userId: string) => [...tasksKey(userId), 'favourites'] as const;

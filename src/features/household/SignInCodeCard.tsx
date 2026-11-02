@@ -27,16 +27,16 @@ export function SignInCodeCard({ childName, signInCode }: SignInCodeCardProps) {
     <section
       ref={ref}
       aria-labelledby={headingId}
-      className="bg-brand-50 flex flex-col gap-2 rounded-2xl border border-indigo-200 p-4"
+      className="bg-brand-50 border-brand-200 flex flex-col gap-2 rounded-2xl border p-4"
     >
-      <h3 id={headingId} className="font-semibold text-slate-900">
+      <h3 id={headingId} className="text-ink font-semibold">
         {copy.heading(childName)}
       </h3>
       <p className="text-brand-900 font-mono text-2xl font-bold tracking-widest">
         {readable(signInCode.code)}
       </p>
-      <p className="text-sm text-slate-700">{copy.howTo(childName)}</p>
-      <p className="text-sm text-slate-700">
+      <p className="text-ink text-sm">{copy.howTo(childName)}</p>
+      <p className="text-ink text-sm">
         {copy.expires(t.common.time(new Date(signInCode.expiresAt)))}
       </p>
     </section>

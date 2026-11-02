@@ -23,17 +23,17 @@ export function SegmentedChoice<T extends string>({
   const name = useId();
   return (
     <fieldset>
-      <legend className={showLegend ? 'mb-2 text-sm font-medium text-slate-700' : 'sr-only'}>
+      <legend className={showLegend ? 'text-ink mb-2 text-sm font-medium' : 'sr-only'}>
         {legend}
       </legend>
       <div
-        className="grid gap-1 rounded-xl bg-slate-200 p-1 text-sm font-medium"
+        className="bg-line grid gap-1 rounded-xl p-1 text-sm font-medium"
         style={{ gridTemplateColumns: `repeat(${String(options.length)}, minmax(0, 1fr))` }}
       >
         {options.map((option) => (
           <label
             key={option}
-            className="has-checked:text-brand-900 has-focus-visible:outline-brand-600 flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-2 text-center text-slate-600 has-checked:bg-white has-checked:shadow-sm has-focus-visible:outline-2"
+            className="has-checked:text-brand-900 has-focus-visible:outline-brand-600 text-ink-muted has-checked:bg-surface flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-2 text-center has-checked:shadow-sm has-focus-visible:outline-2"
           >
             <input
               type="radio"

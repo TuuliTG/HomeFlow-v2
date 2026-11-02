@@ -21,7 +21,8 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       // The service worker reports nothing to Sentry, so its source map would only be published.
-      injectManifest: { sourcemap: false },
+      // Fonts are precached along with the app, so it keeps its look offline.
+      injectManifest: { sourcemap: false, globPatterns: ['**/*.{js,css,html,woff2}'] },
       // UpdateBanner registers the worker and asks before a new version takes over.
       registerType: 'prompt',
       injectRegister: false,
@@ -31,7 +32,7 @@ export default defineConfig({
         short_name: 'HomeFlow',
         description: 'Share household tasks fairly — and make meta work visible.',
         theme_color: '#312e81',
-        background_color: '#f8fafc',
+        background_color: '#f1f2f9',
         display: 'standalone',
         start_url: '/',
         icons: [

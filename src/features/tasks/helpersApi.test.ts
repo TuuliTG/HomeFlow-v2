@@ -20,14 +20,17 @@ const failure = { message: 'boom' };
 describe('helpers api', () => {
   it("reads the household's members in the order they joined, with their names", async () => {
     query.order.mockResolvedValueOnce({
-      data: [{ user_id: 'u1' }, { user_id: 'u2' }],
+      data: [
+        { user_id: 'u1', is_child: false },
+        { user_id: 'u2', is_child: true },
+      ],
       error: null,
     });
     fetchDisplayNames.mockResolvedValueOnce(new Map([['u1', 'Anna']]));
 
     await expect(api.fetchHouseholdMembers()).resolves.toEqual([
-      { id: 'u1', name: 'Anna' },
-      { id: 'u2', name: null },
+      { id: 'u1', name: 'Anna', isChild: false },
+      { id: 'u2', name: null, isChild: true },
     ]);
     expect(client.from).toHaveBeenCalledWith('household_members');
     expect(query.order).toHaveBeenCalledWith('joined_at');

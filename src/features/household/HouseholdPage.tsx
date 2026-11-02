@@ -28,7 +28,7 @@ export function HouseholdPage() {
     return (
       <>
         <PageHeader eyebrow={t.eyebrow} title={t.yourHousehold} />
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-danger-700 text-sm">
           {t.loadFailed}
         </p>
       </>

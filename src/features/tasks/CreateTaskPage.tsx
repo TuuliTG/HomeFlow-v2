@@ -5,12 +5,20 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { parseToDoView, startFromLink } from '@/features/tasks/schedule';
 import { findSuggestion, suggestionAsTask } from '@/features/tasks/suggestions';
-import { ImagesNotSavedError, imagesNotSavedState } from '@/features/tasks/taskImages';
+import type { NewTask } from '@/features/tasks/task';
+import {
+  type DraftImage,
+  ImagesNotSavedError,
+  imagesNotSavedState,
+} from '@/features/tasks/taskImages';
+import { notMarkedDoneState } from '@/features/tasks/notMarkedDone';
 import { TaskForm } from '@/features/tasks/TaskForm';
 import { taskFromLink } from '@/features/tasks/taskLink';
 import { usePlanNewTask } from '@/features/tasks/useSchedules';
 import {
+  type DoneTask,
   useAddTask,
+  useCompleteTask,
   useFavouriteTasks,
   useMembership,
   useSetFavouriteTask,
@@ -27,15 +35,11 @@ export function CreateTaskPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow={t.tasks.eyebrow}
-        title={t.tasks.newTask}
-        description={t.taskForm.create.description}
-      />
+      <PageHeader eyebrow={t.tasks.eyebrow} title={t.tasks.newTask} />
       {membership.isPending ? (
         <LoadingMessage />
       ) : membership.data?.canAddTasks === false ? (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+        <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
           {t.taskForm.create.askAnAdult}
         </p>
       ) : (
@@ -56,12 +60,10 @@ interface NewTaskFormProps {
 }
 
 function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
-  const addTask = useAddTask(userId);
-  const planNewTask = usePlanNewTask(userId);
+  const saveTask = useSaveNewTask(userId, householdId);
   const suggestions = useTaskSuggestions(userId);
   const favourites = useFavouriteTasks(userId);
   const setFavourite = useSetFavouriteTask(userId);
-  const navigate = useNavigate();
   const t = useMessages();
   const [searchParams] = useSearchParams();
   /** The name of an earlier task to add again (`paths.addTaskAgain`). */
@@ -95,31 +97,74 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
         isChild={isChild}
         currentUserId={userId}
         submitLabel={t.taskForm.create.submit}
-        isSaving={addTask.isPending || planNewTask.isPending}
-        onSave={async (task, images) => {
-          let taskId: string;
-          try {
-            taskId = await addTask.mutateAsync({ task, images, householdId: householdId ?? '' });
-          } catch (error) {
-            if (!(error instanceof ImagesNotSavedError)) throw error;
-            // The task was added: adding its pictures again on the edit page doesn't add it twice.
-            await navigate(paths.editTask(error.taskId), { state: imagesNotSavedState });
-            return;
-          }
-          if (startsAt === null) {
-            await navigate(paths.taskList(task.isPrivate));
-            return;
-          }
-          try {
-            await planNewTask.mutateAsync({ taskId, isPrivate: task.isPrivate, startsAt });
-          } catch (error) {
-            // The task was added, so the form isn't the place to say so: the user finds it among their
-            // tasks (shared ones on the board) and can schedule it again.
-            void reportError(error);
-          }
-          await navigate(paths.meAs(parseToDoView(searchParams.get('view'))));
-        }}
+        isSaving={saveTask.isSaving}
+        canBeDoneAlready={saveTask.canBeDoneAlready}
+        onSave={saveTask.save}
       />
     </>
   );
+}
+
+/**
+ * Adds a new task, then marks it done if the user said it is already, or plans it in their timetable if
+ * they are adding it from there (`paths.newTaskAt`), and opens where it shows.
+ */
+function useSaveNewTask(userId: string, householdId: string | null) {
+  const addTask = useAddTask(userId);
+  const planNewTask = usePlanNewTask(userId);
+  const completeTask = useCompleteTask(userId);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const startsAt = startFromLink(searchParams);
+
+  async function markDone(task: DoneTask) {
+    try {
+      await completeTask.mutateAsync(task);
+    } catch (error) {
+      // The task was added, so saving it again would add it twice: the user marks it done from its card.
+      void reportError(error);
+      await navigate(paths.taskList(task.isPrivate), { state: notMarkedDoneState });
+      return;
+    }
+    await navigate(paths.me);
+  }
+
+  async function plan(taskId: string, task: NewTask, at: string) {
+    try {
+      await planNewTask.mutateAsync({ taskId, isPrivate: task.isPrivate, startsAt: at });
+    } catch (error) {
+      // The task was added, so the form isn't the place to say so: the user finds it among their
+      // tasks (shared ones on the board) and can schedule it again.
+      void reportError(error);
+    }
+    await navigate(paths.meAs(parseToDoView(searchParams.get('view'))));
+  }
+
+  async function save(task: NewTask, images: DraftImage[], isDone: boolean) {
+    let taskId: string;
+    try {
+      taskId = await addTask.mutateAsync({ task, images, householdId: householdId ?? '' });
+    } catch (error) {
+      if (!(error instanceof ImagesNotSavedError)) throw error;
+      // The task was added: adding its pictures again on the edit page doesn't add it twice.
+      await navigate(paths.editTask(error.taskId), { state: imagesNotSavedState });
+      return;
+    }
+    if (isDone)
+      await markDone({
+        id: taskId,
+        title: task.title,
+        points: task.points,
+        isPrivate: task.isPrivate,
+      });
+    else if (startsAt === null) await navigate(paths.taskList(task.isPrivate));
+    else await plan(taskId, task, startsAt);
+  }
+
+  return {
+    isSaving: addTask.isPending || planNewTask.isPending || completeTask.isPending,
+    // A task done already isn't planned in the timetable.
+    canBeDoneAlready: startsAt === null,
+    save,
+  };
 }

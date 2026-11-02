@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import type { Messages } from '@/lib/i18n/i18n';
+import { taskIconNames } from '@/lib/taskIcons';
+import { MAX_TASK_LABELS, taskLabelNames } from '@/lib/taskLabels';
 
 export const taskTypes = ['physical', 'meta'] as const;
 
@@ -45,7 +47,7 @@ export const HELPERS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 export const repeatChoices = [1, 2, 3, 7, 14, 30] as const;
 
 /** Checks a task's details, explaining what to fix in the user's language. */
-export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
+export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
   z
     .object({
       title: z
@@ -85,22 +87,41 @@ export const newTaskSchema = ({ taskForm: { errors } }: Messages) =>
        * tasks are always for children.
        */
       forChildren: z.boolean(),
+      /** What the task's tile shows instead of its type's icon; null for none. */
+      icon: z.enum(taskIconNames).nullable(),
+      /**
+       * The one child whose chore it is, given by an adult to a task for children; null for anyone who may
+       * do it. It is picked up for them, and the other children don't see it.
+       */
+      assignedTo: z.string().nullable(),
+      /** What kinds of chore it is, from the app's ready-made labels (ADR 0004). */
+      labels: z.array(z.enum(taskLabelNames)),
+      /** The household's own labels, as typed; the field keeps them short and the database checks them. */
+      customLabels: z.array(z.string()),
     })
     .refine((task) => !task.isPrivate || task.points === null, {
       path: ['points'],
       message: errors.onlySharedHavePoints,
+    })
+    .refine((task) => task.labels.length + task.customLabels.length <= MAX_TASK_LABELS, {
+      path: ['labels'],
+      message: labels.tooMany(MAX_TASK_LABELS),
     });
 
 export type NewTask = z.infer<ReturnType<typeof newTaskSchema>>;
 
 /** What a new task starts with besides its name, description and due date. */
-export const NEW_TASK_DEFAULTS = {
+export const NEW_TASK_DEFAULTS: Readonly<Omit<NewTask, 'title' | 'description' | 'dueOn'>> = {
   type: 'physical',
   points: DEFAULT_POINTS,
   repeatEveryDays: null,
   isPrivate: false,
   forChildren: false,
-} as const satisfies Partial<NewTask>;
+  icon: null,
+  assignedTo: null,
+  labels: [],
+  customLabels: [],
+};
 
 export interface Task extends NewTask {
   id: string;
@@ -119,6 +140,47 @@ export interface Task extends NewTask {
    * occurrence and for private tasks.
    */
   lastDone: LastDone | null;
+  /** A member's request that another do it (`task_requests`), if any. */
+  request: TaskRequest | null;
+}
+
+/**
+ * One member asking another to do a task. Accepting picks the task up for them; a request goes once the
+ * task is done or someone else picks it up.
+ */
+export interface TaskRequest {
+  requestedBy: string;
+  /** Their display name, if they have chosen one. */
+  requesterName: string | null;
+  requestedFor: string;
+  /** Their display name, if they have chosen one. */
+  askedName: string | null;
+  /** Null while waiting for an answer. */
+  answer: 'accepted' | 'declined' | null;
+}
+
+/**
+ * Whether the user can ask someone to do the task: an open shared task that is free or theirs, which
+ * they can hand over this way, unless it was given to a child (`request_task()`).
+ */
+export function canRequest(task: Task, userId: string): boolean {
+  return (
+    !task.isPrivate &&
+    task.assignedTo === null &&
+    (task.pickedUpBy === null || task.pickedUpBy === userId)
+  );
+}
+
+/**
+ * The other members the user could ask to do the task: everyone else for a task for children, only
+ * adults for the others (`request_task()`).
+ */
+export function membersToAsk<M extends { id: string; isChild: boolean }>(
+  task: Task,
+  members: M[],
+  userId: string,
+): M[] {
+  return members.filter((member) => member.id !== userId && (task.forChildren || !member.isChild));
 }
 
 export interface LastDone {
@@ -144,7 +206,7 @@ export function canChange(task: Task, userId: string, isChild: boolean): boolean
 }
 
 /** A task the household has added before, to add again with the same details (`task_suggestions()`). */
-export interface TaskSuggestion extends Omit<NewTask, 'dueOn'> {
+export interface TaskSuggestion extends Omit<NewTask, 'dueOn' | 'assignedTo'> {
   /** How many times members have added it; repeats a task adds itself don't count. */
   timesAdded: number;
   /** Whether it is on the board now, not yet done. */

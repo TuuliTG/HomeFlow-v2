@@ -246,6 +246,30 @@ describe('statistics page', () => {
     });
   });
 
+  it('remembers the period, work type and who is compared after leaving the page', async () => {
+    logInAsFamilyMember();
+    addBen();
+    const cleo = fakeAuthBackend.addProfile('cleo@example.com', 'Cleo');
+    fakeHouseholdBackend.addMember(cleo.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(cleo.id, true);
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/statistics');
+
+    await screen.findByRole('region', { name: 'Points earned' });
+    await user.click(screen.getByRole('radio', { name: 'This month' }));
+    await user.click(filters());
+    await user.click(screen.getByRole('radio', { name: 'Adults' }));
+    await user.click(screen.getByRole('radio', { name: 'Meta work' }));
+
+    await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
+    await user.click(await screen.findByRole('link', { name: 'Statistics' }));
+    expect(router.state.location.search).toBe('');
+    await screen.findByRole('region', { name: 'Tasks created' });
+    expect(screen.getByRole('radio', { name: 'This month' })).toBeChecked();
+    expect(filters()).toHaveTextContent('FiltersAdults · Meta work');
+    expect(rows('Tasks created')).toEqual(['You0 tasks', 'Ben0 tasks']);
+  });
+
   it('has no members to choose between in a family of two, whatever the address says', async () => {
     logInAsFamilyMember();
     const ben = addBen();

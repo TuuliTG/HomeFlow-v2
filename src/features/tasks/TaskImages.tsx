@@ -14,7 +14,7 @@ export function TaskImages({ paths, title, currentUserId }: TaskImagesProps) {
   const t = useMessages().tasks.card;
 
   if (paths.length === 0) return null;
-  if (urls.isError) return <p className="text-xs text-red-700">{t.imagesFailed}</p>;
+  if (urls.isError) return <p className="text-danger-700 text-xs">{t.imagesFailed}</p>;
   return (
     <ul aria-label={t.images(title)} className="flex flex-wrap gap-2">
       {paths.map((path, index) => {
@@ -22,13 +22,13 @@ export function TaskImages({ paths, title, currentUserId }: TaskImagesProps) {
         return (
           <li key={path}>
             {url === undefined ? (
-              <div aria-hidden className="size-16 rounded-lg bg-slate-100" />
+              <div aria-hidden className="bg-page size-16 rounded-lg" />
             ) : (
               <a href={url} target="_blank" rel="noreferrer" className="block">
                 <img
                   src={url}
                   alt={t.image(index + 1, title)}
-                  className="size-16 rounded-lg border border-slate-200 object-cover"
+                  className="border-line size-16 rounded-lg border object-cover"
                 />
               </a>
             )}

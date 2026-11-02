@@ -40,6 +40,11 @@ interface TaskRow {
   picked_up_by: string | null;
   is_private: boolean;
   for_children: boolean;
+  /** The child an adult gave the task to, who has it picked up. */
+  assigned_to: string | null;
+  /** Ready-made label names, and the household's own labels as typed. */
+  labels: string[];
+  custom_labels: string[];
   created_at: string;
   completed_at: string | null;
   completed_by: string | null;
@@ -123,6 +128,9 @@ export async function fakeSupabase(page: Page) {
       picked_up_by: null,
       is_private: false,
       for_children: false,
+      assigned_to: null,
+      labels: [],
+      custom_labels: [],
       created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
@@ -187,6 +195,31 @@ export async function fakeSupabase(page: Page) {
       ...task,
       task_images: (taskImages.get(task.id) ?? []).map((path, position) => ({ path, position })),
     };
+  }
+
+  /** Who the user asked to do each task (task_requests), by task id; Ben never answers. */
+  const requests = new Map<string, { requested_by: string; requested_for: string; answer: null }>();
+
+  /** Like request_task(), without its checks. */
+  async function requestTask(route: Route) {
+    const { task_id, member_id } = route.request().postDataJSON() as {
+      task_id: string;
+      member_id: string;
+    };
+    requests.set(task_id, { requested_by: user.id, requested_for: member_id, answer: null });
+    return reply(route, 204);
+  }
+
+  /** Like cancel_task_request(), without its checks. */
+  async function cancelTaskRequest(route: Route) {
+    const { task_id } = route.request().postDataJSON() as { task_id: string };
+    requests.delete(task_id);
+    return reply(route, 204);
+  }
+
+  /** A task with who was asked to do it, like `request:task_requests(...)` embedded in the select. */
+  function withRequest<T extends TaskRow>(task: T) {
+    return { ...task, request: requests.get(task.id) ?? null };
   }
 
   /** A task with the occurrence it repeats, like `previous_occurrence(completed_by, completed_at)` embedded. */
@@ -306,6 +339,9 @@ export async function fakeSupabase(page: Page) {
         | 'due_on'
         | 'is_private'
         | 'for_children'
+        | 'assigned_to'
+        | 'labels'
+        | 'custom_labels'
       >;
       const id = `e2e-task-${String(tasks.length)}`;
       tasks.unshift({
@@ -313,7 +349,8 @@ export async function fakeSupabase(page: Page) {
         id,
         household_id: ownHousehold.id,
         created_by: user.id,
-        picked_up_by: null,
+        // Like the trigger on tasks: a task given to a child is picked up for them.
+        picked_up_by: task.assigned_to,
         created_at: new Date().toISOString(),
         completed_at: null,
         completed_by: null,
@@ -390,7 +427,7 @@ export async function fakeSupabase(page: Page) {
         .filter((task) => task.household_id === householdId && task.completed_at === null)
         // Stable sort, so tasks with the same due date (or none) stay newest first.
         .sort((a, b) => (a.due_on ?? '9999-12-31').localeCompare(b.due_on ?? '9999-12-31'))
-        .map((task) => withPrevious(withImages(task))),
+        .map((task) => withRequest(withPrevious(withImages(task)))),
     );
   }
 
@@ -416,7 +453,8 @@ export async function fakeSupabase(page: Page) {
       ...task,
       id: `e2e-task-${String(tasks.length)}`,
       due_on: due.toISOString().slice(0, 10),
-      picked_up_by: null,
+      // Like complete_task(): the next occurrence is given to the same child.
+      picked_up_by: task.assigned_to,
       created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
@@ -480,6 +518,8 @@ export async function fakeSupabase(page: Page) {
       );
       if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
       task.picked_up_by = pickedUpBy;
+      // Like the trigger on tasks: picking a task up settles a request for someone else.
+      if (pickedUpBy !== null) requests.delete(task_id);
       if (pickedUpBy === null) {
         reminders.delete(task_id);
         schedules.delete(task_id);
@@ -506,6 +546,9 @@ export async function fakeSupabase(page: Page) {
       task_due_on: string | null;
       task_repeat_every_days: number | null;
       task_for_children: boolean;
+      task_assigned_to: string | null;
+      task_labels: string[];
+      task_custom_labels: string[];
     };
     const task = ownOpenTask(body.task_id);
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
@@ -517,6 +560,10 @@ export async function fakeSupabase(page: Page) {
       due_on: body.task_due_on,
       repeat_every_days: body.task_repeat_every_days,
       for_children: body.task_for_children,
+      assigned_to: body.task_assigned_to,
+      labels: body.task_labels,
+      custom_labels: body.task_custom_labels,
+      ...(body.task_assigned_to !== task.assigned_to && { picked_up_by: body.task_assigned_to }),
     });
     return reply(route, 204);
   }
@@ -707,6 +754,8 @@ export async function fakeSupabase(page: Page) {
         repeat_every_days: newest.repeat_every_days,
         is_private: newest.is_private,
         for_children: newest.for_children,
+        labels: newest.labels,
+        custom_labels: newest.custom_labels,
         times_added: occurrences.length,
         is_open: occurrences.some((task) => task.completed_at === null),
       };
@@ -715,6 +764,23 @@ export async function fakeSupabase(page: Page) {
       route,
       200,
       suggestions.sort((a, b) => b.times_added - a.times_added),
+    );
+  }
+
+  /** Like custom_task_labels(): the household's own labels, each once ignoring case (simplified: in use order). */
+  async function customTaskLabels(route: Route) {
+    const labels = new Map<string, string>();
+    for (const task of tasks) {
+      if (
+        task.household_id !== ownHousehold?.id ||
+        (task.is_private && task.created_by !== user.id)
+      )
+        continue;
+      for (const label of task.custom_labels) labels.set(label.toLowerCase(), label);
+    }
+    return replyWithRows(
+      route,
+      [...labels.values()].map((label) => ({ label })),
     );
   }
 
@@ -913,12 +979,15 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/own_total_points': ownTotalPoints,
     '/rest/v1/rpc/own_helped_tasks': ownHelpedTasks,
     '/rest/v1/rpc/pick_up_task': setPickedUp(user.id),
+    '/rest/v1/rpc/request_task': requestTask,
+    '/rest/v1/rpc/cancel_task_request': cancelTaskRequest,
     '/rest/v1/rpc/put_back_task': setPickedUp(null),
     '/rest/v1/rpc/update_task': updateTask,
     '/rest/v1/rpc/delete_task': deleteTask,
     '/rest/v1/rpc/set_task_images': setTaskImages,
     '/rest/v1/rpc/household_statistics': householdStatistics,
     '/rest/v1/rpc/task_suggestions': taskSuggestions,
+    '/rest/v1/rpc/custom_task_labels': customTaskLabels,
     '/rest/v1/rpc/set_task_reminder': setTaskReminder,
     '/rest/v1/rpc/clear_task_reminder': clearTaskReminder,
     '/rest/v1/task_reminders': (route) =>

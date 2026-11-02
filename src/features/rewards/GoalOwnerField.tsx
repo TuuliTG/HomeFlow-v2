@@ -19,10 +19,10 @@ export function GoalOwnerField({ members, busy, userId, value, onChange }: GoalO
   const messages = useMessages();
   const t = messages.rewards.form;
   if (members.every(({ id }) => busy.has(id))) {
-    return <p className="text-sm text-slate-600">{t.everyoneHasOpenGoal}</p>;
+    return <p className="text-ink-muted text-sm">{t.everyoneHasOpenGoal}</p>;
   }
   return (
-    <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+    <label className="text-ink flex flex-col gap-1 text-sm font-medium">
       {t.whose}
       <select
         name="ownerId"

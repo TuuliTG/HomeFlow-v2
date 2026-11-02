@@ -21,7 +21,9 @@ declare const EdgeRuntime: { waitUntil: (promise: Promise<unknown>) => void };
 async function taskById(taskId: string): Promise<TaskAdded | null> {
   const { data, error } = await supabase
     .from('tasks')
-    .select('household_id, title, created_by, previous_task_id, is_private, for_children')
+    .select(
+      'household_id, title, created_by, previous_task_id, is_private, for_children, assigned_to',
+    )
     .eq('id', taskId)
     .maybeSingle();
   if (error) throw error;
@@ -32,6 +34,7 @@ async function taskById(taskId: string): Promise<TaskAdded | null> {
     previous_task_id: string | null;
     is_private: boolean;
     for_children: boolean;
+    assigned_to: string | null;
   } | null;
   return row
     ? {
@@ -41,6 +44,7 @@ async function taskById(taskId: string): Promise<TaskAdded | null> {
         isRepeat: row.previous_task_id !== null,
         isPrivate: row.is_private,
         forChildren: row.for_children,
+        assignedTo: row.assigned_to,
       }
     : null;
 }

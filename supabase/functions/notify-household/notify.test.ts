@@ -12,6 +12,7 @@ const task = {
   isRepeat: false,
   isPrivate: false,
   forChildren: false,
+  assignedTo: null,
 };
 
 const adult = (userId: string) => ({ userId, isChild: false });
@@ -106,6 +107,23 @@ describe('notify household', () => {
     await notifyHousehold('t1', deps);
 
     expect(deps.subscriptionsOf).toHaveBeenCalledWith(['ben', 'carol']);
+  });
+
+  it('tells only the child an adult gave a task to, of the children', async () => {
+    const deps = fakeDeps({
+      membersOf: () =>
+        Promise.resolve([
+          adult('anna'),
+          adult('ben'),
+          { userId: 'carol', isChild: true },
+          { userId: 'dora', isChild: true },
+        ]),
+    });
+    vi.mocked(deps.taskById).mockResolvedValue({ ...task, forChildren: true, assignedTo: 'dora' });
+
+    await notifyHousehold('t1', deps);
+
+    expect(deps.subscriptionsOf).toHaveBeenCalledWith(['ben', 'dora']);
   });
 
   it("doesn't notify anyone when the creator is alone in the household", async () => {

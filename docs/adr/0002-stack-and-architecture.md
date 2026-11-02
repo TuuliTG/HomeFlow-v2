@@ -1,6 +1,6 @@
 # 0002. Stack and architecture
 
-- **Updated:** 2026-10-18 (update banner for new versions)
+- **Updated:** 2026-10-30 (the page never scrolls, only the app shell's content)
 
 ## Context
 
@@ -24,14 +24,35 @@ maintained by agents, so strict types and a predictable structure matter more th
   control, and checks for a new version whenever the app returns to the foreground and hourly
   (`src/lib/appUpdate.ts`), because iOS resumes Home Screen apps instead of reloading them. An automatic reload
   could lose what someone is typing.
+- **App shell layout**: on phones `AppShell` fills the screen (`h-dvh`) and only its content area scrolls, never
+  the page; the tab bar is laid out below it, not `position: fixed`. iOS can leave a scrolled page's fixed elements
+  floating mid-screen after the keyboard closes. The cost: tapping the status bar no longer scrolls to the top.
+  Wider screens keep page scrolling, so the keyboard scrolls the page without first focusing the content.
+- **Visual design ("Calm Indigo")**: colours, shadows and the font are Tailwind theme tokens in `src/index.css`;
+  components use their names (`bg-page`, `bg-surface shadow-card`, `text-ink`, `text-ink-muted`, `brand-*`,
+  `meta-*` for meta work, `overdue-*`/`due-today-*` from `dueStatus()`, `points-*`, `done-*`, `danger-*` for errors
+  and deleting, `notice-*`, `info-*`, `now`, `confetti-*`), never Tailwind's palette colours, `bg-white` or
+  arbitrary colours, so a dark theme ("Night") can redefine them in one place; `src/themeTokens.test.ts` fails on
+  those. White text on filled colours and Tailwind's shadows for floating toasts stay. Cards are white with `shadow-card` on a
+  tinted page; text on the page uses `ink-muted` or darker for AA contrast. The **Figtree** font is self-hosted
+  with `@fontsource-variable/figtree` and precached by the service worker, so it works offline.
 - **Vercel** hosts the static build.
-- **Languages** (English and Finnish) without an i18n library: each language is a typed object in
+- **Languages** (English, Finnish and Swedish) without an i18n library: each language is a typed object in
   `src/locales/<code>/`, one file per area, with English (`src/locales/en`) as the source and its type
   `Messages`. Texts that take values are functions, so plurals, word order and date formats (`common.shortDate`,
   `common.time`) live with the language. Components read texts with `useMessages()` from `@/lib/i18n/i18n`;
   helpers that build text take `t: Messages` (e.g. `groupByDueDate`, `newTaskSchema(t)`). The language is the one
   chosen in the settings (stored per device in `localStorage`), else the browser's, else English; `<html lang>`
   follows it. Adding one: copy `src/locales/en`, translate, register it in `src/lib/i18n/languages.ts`.
+  Screens speak through headings, labels and buttons: no page descriptions or field hints unless a rule isn't
+  obvious from the screen (e.g. a password's length), and none on children's screens.
+- **View choices** (filters, periods, views) live in the address (`useSearchParam()` in `src/lib`), so they survive
+  a reload and can be shared. Those worth keeping are also remembered per device and user in `localStorage`
+  (`rememberAs`, keyed by user id since a family may share a tablet) and used when the address names none, so
+  leaving a page through the nav doesn't reset them. A remembered choice isn't written back into the address
+  (several hooks rewriting it at once would overwrite each other), so the address names a choice only once the user
+  changes it there. Blocked storage just falls back to the defaults. Remembered choices aren't cleared on sign-out:
+  they hold no secrets, and stale member ids in a comparison are ignored.
 
 - **Error monitoring with Sentry** (EU region, free plan), on only where a DSN is set. The app loads the SDK
   lazily from `startMonitoring()` (`src/lib/monitoring.ts`) and sends no user info, cookies, headers, bodies or

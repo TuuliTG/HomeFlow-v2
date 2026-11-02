@@ -2,6 +2,7 @@ import type * as householdApi from '@/features/household/api';
 import { type Household, UnknownInviteCodeError } from '@/features/household/household';
 import type { AuthUser } from '@/lib/auth';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
+import { tasks } from '@/test/fakeTasksBackend';
 
 /**
  * In-memory stand-in for `@/features/household/api`, installed for every unit test in `setup.ts`.
@@ -66,8 +67,13 @@ export const fakeHouseholdBackend = {
   householdIdOf: (userId: string) => memberships.get(userId) ?? null,
   /** Marks the member as a child or an adult, like `set_member_is_child()` without its checks. */
   setChild(userId: string, isChild: boolean) {
-    if (isChild) children.add(userId);
-    else children.delete(userId);
+    if (isChild) {
+      children.add(userId);
+      return;
+    }
+    children.delete(userId);
+    // Like the trigger on household_members: only children are given tasks; they keep them picked up.
+    for (const task of tasks) if (task.assignedTo === userId) task.assignedTo = null;
   },
   isChild: (userId: string) => children.has(userId),
   /** Lets a child add tasks or stops them, like `set_member_can_add_tasks()` without its checks. */

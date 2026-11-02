@@ -1,7 +1,9 @@
 import { Outlet, type RouteObject } from 'react-router';
 
+import { AdultsOnly } from '@/app/AdultsOnly';
 import { AppShell } from '@/app/AppShell';
 import { ErrorPage } from '@/app/ErrorPage';
+import { MePage } from '@/app/MePage';
 import { NotFoundPage } from '@/app/NotFoundPage';
 import { OnboardingGate } from '@/app/OnboardingGate';
 import { paths } from '@/app/paths';
@@ -20,7 +22,7 @@ import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { SharedTasksPage } from '@/features/tasks/SharedTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
 import { EditTaskPage } from '@/features/tasks/EditTaskPage';
-import { MyTasksPage } from '@/features/tasks/MyTasksPage';
+import { AskForTaskPage } from '@/features/tasks/AskForTaskPage';
 import { TaskHelpersPage } from '@/features/tasks/TaskHelpersPage';
 import { LanguageProvider } from '@/lib/i18n/LanguageProvider';
 
@@ -55,15 +57,18 @@ export const routes: RouteObject[] = [
               { path: paths.newTask, element: <CreateTaskPage /> },
               { path: paths.editTask(':taskId'), element: <EditTaskPage /> },
               { path: paths.taskHelpers(':taskId'), element: <TaskHelpersPage /> },
+              { path: paths.askForTask(':taskId'), element: <AskForTaskPage /> },
+              { path: paths.me, element: <MePage /> },
               {
-                path: paths.me,
-                element: <MyTasksPage />,
+                element: <AdultsOnly />,
+                children: [
+                  { path: paths.news, element: <NewsPage /> },
+                  { path: paths.rewards, element: <RewardsPage /> },
+                  { path: paths.newGoal, element: <NewGoalPage /> },
+                  { path: paths.editGoal(':goalId'), element: <EditGoalPage /> },
+                  { path: paths.statistics, element: <StatisticsPage /> },
+                ],
               },
-              { path: paths.news, element: <NewsPage /> },
-              { path: paths.rewards, element: <RewardsPage /> },
-              { path: paths.newGoal, element: <NewGoalPage /> },
-              { path: paths.editGoal(':goalId'), element: <EditGoalPage /> },
-              { path: paths.statistics, element: <StatisticsPage /> },
               { path: paths.household, element: <HouseholdPage /> },
               { path: paths.settings, element: <SettingsPage /> },
               { path: '*', element: <NotFoundPage /> },

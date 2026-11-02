@@ -20,7 +20,6 @@ export function ChildCodeForm({ onBack }: ChildCodeFormProps) {
   const [error, setError] = useState<string | null>(null);
   const t = useMessages();
   const headingId = useId();
-  const hintId = useId();
   const errorId = useId();
   const submit = useMutation({
     mutationFn: signInWithChildCode,
@@ -46,39 +45,34 @@ export function ChildCodeForm({ onBack }: ChildCodeFormProps) {
       className="flex flex-col gap-4"
       noValidate
     >
-      <h2 id={headingId} className="font-semibold text-slate-900">
+      <h2 id={headingId} className="text-ink font-semibold">
         {t.auth.childCode.heading}
       </h2>
-      <div className="flex flex-col gap-1">
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-          {t.auth.childCode.label}
-          <input
-            name="code"
-            autoComplete="one-time-code"
-            autoCapitalize="characters"
-            spellCheck={false}
-            value={code}
-            onChange={(event) => {
-              setCode(event.target.value);
-            }}
-            aria-invalid={error !== null}
-            aria-describedby={error === null ? hintId : `${hintId} ${errorId}`}
-            className={`${inputClassName} font-mono tracking-widest uppercase`}
-          />
-        </label>
-        <p id={hintId} className="text-xs text-slate-500">
-          {t.auth.childCode.hint}
-        </p>
-      </div>
+      <label className="text-ink flex flex-col gap-1 text-sm font-medium">
+        {t.auth.childCode.label}
+        <input
+          name="code"
+          autoComplete="one-time-code"
+          autoCapitalize="characters"
+          spellCheck={false}
+          value={code}
+          onChange={(event) => {
+            setCode(event.target.value);
+          }}
+          aria-invalid={error !== null}
+          aria-describedby={error === null ? undefined : errorId}
+          className={`${inputClassName} font-mono tracking-widest uppercase`}
+        />
+      </label>
       {error && (
-        <p id={errorId} role="alert" className="text-sm text-red-700">
+        <p id={errorId} role="alert" className="text-danger-700 text-sm">
           {error}
         </p>
       )}
       <button
         type="submit"
         disabled={submit.isPending}
-        className="bg-brand-600 hover:bg-brand-900 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+        className="bg-brand-700 hover:bg-brand-900 rounded-xl px-4 py-2.5 font-bold text-white disabled:opacity-60"
       >
         {t.auth.childCode.submit}
       </button>

@@ -36,11 +36,9 @@ export const app: Messages['app'] = {
   },
   settings: {
     title: 'Asetukset',
-    description: 'Perheesi, ilmoitukset ja kieli.',
   },
   language: {
     heading: 'Kieli',
     label: 'HomeFlow’n kieli',
-    hint: 'Vaihtaa kielen tällä laitteella.',
   },
 };

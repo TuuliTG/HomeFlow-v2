@@ -19,6 +19,9 @@ function suggestion(title: string, details: Partial<TaskSuggestion> = {}): TaskS
     repeatEveryDays: null,
     isPrivate: false,
     forChildren: false,
+    icon: null,
+    labels: [],
+    customLabels: [],
     timesAdded: 1,
     isOpen: false,
     ...details,
@@ -64,10 +67,15 @@ describe('suggestionAsTask', () => {
       points: 2,
       repeatEveryDays: 7,
       forChildren: true,
+      icon: 'trash',
       timesAdded: 4,
       isOpen: true,
     } as const;
-    expect(suggestionAsTask(suggestion('Take out trash', details))).toEqual({
+    const labels = {
+      labels: ['kitchen'],
+      customLabels: ['Bins'],
+    } satisfies Partial<TaskSuggestion>;
+    expect(suggestionAsTask(suggestion('Take out trash', { ...details, ...labels }))).toEqual({
       title: 'Take out trash',
       description: 'The bins are behind the garage',
       type: 'meta',
@@ -75,7 +83,11 @@ describe('suggestionAsTask', () => {
       repeatEveryDays: 7,
       isPrivate: false,
       forChildren: true,
+      icon: 'trash',
+      labels: ['kitchen'],
+      customLabels: ['Bins'],
       dueOn: null,
+      assignedTo: null,
     });
   });
 

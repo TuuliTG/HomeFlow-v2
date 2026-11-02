@@ -17,17 +17,14 @@ export function FamilySettings() {
   const t = useMessages().household.family;
 
   if (!household.data) return null;
-  // Only adults get the invite code (household_invite_code()), and only adults add children.
-  const isAdult = household.data.inviteCode !== null;
   return (
     <section
       aria-labelledby={headingId}
-      className="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+      className="bg-surface shadow-card mt-6 flex flex-col gap-3 rounded-2xl p-4"
     >
-      <h2 id={headingId} className="font-semibold text-slate-900">
+      <h2 id={headingId} className="text-ink font-semibold">
         {t.heading}
       </h2>
-      <p className="text-sm text-slate-600">{isAdult ? t.adultHint : t.childHint}</p>
       <Link to={paths.household} className="text-brand-600 w-fit text-sm font-semibold underline">
         {t.link(household.data.name)}
       </Link>

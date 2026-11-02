@@ -1,6 +1,6 @@
 # 0007. Goals and rewards
 
-- **Updated:** 2026-10-15 (celebrating a claimed reward)
+- **Updated:** 2026-11-01 (a star jar keeps room for a child's own minimum)
 
 ## Context
 
@@ -57,6 +57,14 @@ together, and members want small personal goals of their own; both must make cle
   for three seconds (`RewardCelebration`, found from the claim's mutation state so it outlives the goal card). Like
   the done-task celebration (ADR 0004) it is plain CSS, no dependency, decorative (`aria-hidden`, no pointer
   events) with a screen-reader status instead; with reduced motion only the badge shows, without moving.
+- **Star jars**: a child's Me page (ADR 0004) shows each open goal they can claim as a jar filling with points
+  (`StarJars`, a `progressbar` like the goal card): their personal goal and the shared goal they take part in, or
+  a "No goal yet" card asking a grown-up to set one. Children have no Rewards screen (ADR 0004), so a reached jar
+  has its own Claim reward button and celebration. It refetches goals when the child's completed tasks change, so
+  the jar fills as they mark tasks done. A child's minimum in a shared goal keeps room in the jar (`jarFill()`) that
+  others' points never fill: their own points stack on everyone's in the `share` colour, and what they still
+  need shows striped at the top, so the jar isn't full (`47 / 60`, not `60 / 60`) until they have done their
+  part; the card says how many points they still need themselves.
 - The Rewards screen refetches goals when it opens (TanStack Query default), so tasks done elsewhere show up; no
   live updates for goals.
 

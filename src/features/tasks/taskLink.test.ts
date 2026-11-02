@@ -20,6 +20,10 @@ describe('taskFromLink', () => {
       repeatEveryDays: null,
       isPrivate: false,
       forChildren: false,
+      icon: null,
+      assignedTo: null,
+      labels: [],
+      customLabels: [],
     });
   });
 

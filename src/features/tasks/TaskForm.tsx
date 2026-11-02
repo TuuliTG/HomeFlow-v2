@@ -7,17 +7,21 @@ import {
   DESCRIPTION_MAX_LENGTH,
   type NewTask,
   newTaskSchema,
-  repeatChoices,
   type TaskSuggestion,
   type TaskType,
 } from '@/features/tasks/task';
+import type { TaskIconName } from '@/lib/taskIcons';
 import { fieldValues, taskInput } from '@/features/tasks/taskFormValues';
 import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
+import { TaskIconField } from '@/features/tasks/TaskIconField';
 import { TaskImagesField } from '@/features/tasks/TaskImagesField';
+import type { TaskLabels } from '@/features/tasks/taskLabelChoices';
+import { TaskLabelsField } from '@/features/tasks/TaskLabelsField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
 import { TaskPointsField } from '@/features/tasks/TaskPointsField';
 import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
+import { TaskTimingFields } from '@/features/tasks/TaskTimingFields';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -49,8 +53,13 @@ interface TaskFormProps {
   currentUserId: string;
   submitLabel: string;
   isSaving: boolean;
-  /** Saves the task and its pictures; a rejection shows "We couldn't save the task." */
-  onSave: (task: NewTask, images: DraftImage[]) => Promise<void>;
+  /** Offers to add the task as already done, which then has no due date. */
+  canBeDoneAlready?: boolean;
+  /**
+   * Saves the task and its pictures, and says whether the user checked "Already done"; a rejection shows
+   * "We couldn't save the task."
+   */
+  onSave: (task: NewTask, images: DraftImage[], isDone: boolean) => Promise<void>;
 }
 
 /** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
@@ -64,6 +73,7 @@ export function TaskForm({
   currentUserId,
   submitLabel,
   isSaving,
+  canBeDoneAlready = false,
   onSave,
 }: TaskFormProps) {
   const [initialValues] = useState(() => fieldValues(initial ?? prefill));
@@ -76,16 +86,23 @@ export function TaskForm({
   const [dueOn, setDueOn] = useState(initialValues.dueOn);
   const [isPrivate, setIsPrivate] = useState(initialValues.isPrivate);
   const [forChildren, setForChildren] = useState(initialValues.forChildren);
+  const [icon, setIcon] = useState<TaskIconName | null>(initialValues.icon);
+  const [assignedTo, setAssignedTo] = useState(initialValues.assignedTo);
+  const [labels, setLabels] = useState<TaskLabels>({
+    labels: initialValues.labels,
+    customLabels: initialValues.customLabels,
+  });
+  const [isDone, setIsDone] = useState(false);
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
   const t = useMessages();
   const errorId = useId();
-  const repeatHintId = useId();
   const titleRef = useRef<HTMLInputElement>(null);
   const pointsRef = useRef<HTMLInputElement>(null);
   const dueOnRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const assigneeRef = useRef<HTMLSelectElement>(null);
   const fieldRefs = {
     title: titleRef,
     description: descriptionRef,
@@ -108,23 +125,43 @@ export function TaskForm({
     setDueOn(values.dueOn);
     setIsPrivate(values.isPrivate);
     setForChildren(values.forChildren);
+    setIcon(values.icon);
+    setAssignedTo(values.assignedTo);
+    setLabels({ labels: values.labels, customLabels: values.customLabels });
     setError(null);
+  }
+
+  /** A task done already has no due date. */
+  function checkAlreadyDone(checked: boolean) {
+    setIsDone(checked);
+    if (checked) setDueOn('');
+  }
+
+  /** Says what to fix, focusing the field to fix it in. */
+  function showInvalid(path: PropertyKey | undefined, message = t.taskForm.errors.checkDetails) {
+    // Too many labels can only come from elsewhere (the field stops at the limit), so it names no field.
+    const field = path === 'labels' ? null : fieldOf(path);
+    setError({ field, message });
+    if (field) fieldRefs[field].current?.focus();
   }
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     const values = { title, description, type, points, repeat: repeatEveryDays, dueOn };
     const parsed = newTaskSchema(t).safeParse(
-      taskInput({ ...values, isPrivate, forChildren }, isChild),
+      taskInput({ ...values, ...labels, isPrivate, forChildren, icon, assignedTo }, isChild),
     );
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
-      const field = fieldOf(issue?.path[0]);
-      setError({ field, message: issue?.message ?? t.taskForm.errors.checkDetails });
-      fieldRefs[field].current?.focus();
+      showInvalid(issue?.path[0], issue?.message);
       return;
     }
-    onSave(parsed.data, images).catch(() => {
+    if (isDone && parsed.data.assignedTo !== null) {
+      // Its field already warns: whoever adds a task as done is credited, so it can't be a child's chore.
+      assigneeRef.current?.focus();
+      return;
+    }
+    onSave(parsed.data, images, isDone).catch(() => {
       setError({ field: null, message: t.taskForm.errors.saveFailed });
     });
   }
@@ -148,7 +185,7 @@ export function TaskForm({
         errorProps={errorPropsFor('title')}
       />
 
-      <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+      <label className="text-ink flex flex-col gap-1 text-sm font-medium">
         {t.taskForm.description}
         <textarea
           name="description"
@@ -177,6 +214,17 @@ export function TaskForm({
 
       <TaskTypeField value={type} onChange={setType} />
 
+      <TaskIconField value={icon} onChange={setIcon} />
+
+      <TaskLabelsField
+        value={labels}
+        onChange={(changed) => {
+          setLabels(changed);
+          setError(null);
+        }}
+        currentUserId={currentUserId}
+      />
+
       <TaskAudienceFields
         canBePrivate={!initial}
         isChild={isChild}
@@ -184,6 +232,11 @@ export function TaskForm({
         onPrivateChange={setIsPrivate}
         forChildren={forChildren}
         onForChildrenChange={setForChildren}
+        isDone={isDone}
+        assignedTo={assignedTo}
+        onAssignedToChange={setAssignedTo}
+        assigneeRef={assigneeRef}
+        currentUserId={currentUserId}
       />
 
       {!isPrivate && (
@@ -196,49 +249,18 @@ export function TaskForm({
         />
       )}
 
-      <div className="flex gap-3">
-        <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
-          {t.taskForm.repeats}
-          <select
-            name="repeatEveryDays"
-            aria-describedby={repeatEveryDays === '' ? undefined : repeatHintId}
-            value={repeatEveryDays}
-            onChange={(event) => {
-              setRepeatEveryDays(event.target.value);
-            }}
-            className={inputClassName}
-          >
-            <option value="">{t.taskForm.doesNotRepeat}</option>
-            {repeatChoices.map((days) => (
-              <option key={days} value={days}>
-                {t.tasks.repeat(days)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-700">
-          {t.taskForm.dueDate}
-          <input
-            type="date"
-            name="dueOn"
-            ref={dueOnRef}
-            {...errorPropsFor('dueOn')}
-            value={dueOn}
-            onChange={(event) => {
-              setDueOn(event.target.value);
-            }}
-            className={`${inputClassName} min-w-0`}
-          />
-        </label>
-      </div>
-      {repeatEveryDays !== '' && (
-        <p id={repeatHintId} className="-mt-3 text-sm text-slate-600">
-          {t.taskForm.repeatHint(Number(repeatEveryDays))}
-        </p>
-      )}
+      <TaskTimingFields
+        repeat={repeatEveryDays}
+        onRepeatChange={setRepeatEveryDays}
+        dueOn={dueOn}
+        onDueOnChange={setDueOn}
+        dueOnRef={dueOnRef}
+        dueOnErrorProps={errorPropsFor('dueOn')}
+        alreadyDone={canBeDoneAlready ? { checked: isDone, onChange: checkAlreadyDone } : undefined}
+      />
 
       {error && (
-        <p id={errorId} role="alert" className="text-sm text-red-700">
+        <p id={errorId} role="alert" className="text-danger-700 text-sm">
           {error.message}
         </p>
       )}
@@ -247,7 +269,7 @@ export function TaskForm({
         <button
           type="submit"
           disabled={isSaving || isPreparingImages}
-          className="bg-brand-600 hover:bg-brand-900 flex-1 rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+          className="bg-brand-700 hover:bg-brand-900 flex-1 rounded-xl px-4 py-2.5 font-bold text-white disabled:opacity-60"
         >
           {submitLabel}
         </button>

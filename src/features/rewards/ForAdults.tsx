@@ -18,14 +18,14 @@ export function ForAdults({
   if (setters.isPending) return <LoadingMessage />;
   if (setters.isError) {
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-danger-700 text-sm">
         {t.loadFailed}
       </p>
     );
   }
   if (!setters.isAdult) {
     return (
-      <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+      <p className="border-line-strong bg-surface text-ink-muted rounded-2xl border border-dashed p-6 text-sm">
         {t.form.onlyAdults}
       </p>
     );

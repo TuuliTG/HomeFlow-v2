@@ -11,12 +11,12 @@ export function TaskTypeField({ value, onChange }: TaskTypeFieldProps) {
   const t = useMessages();
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-1 text-sm font-medium text-slate-700">{t.taskForm.type}</legend>
+      <legend className="text-ink mb-1 text-sm font-medium">{t.taskForm.type}</legend>
       <div className="flex gap-3">
         {taskTypes.map((option) => (
           <label
             key={option}
-            className="has-checked:border-brand-600 has-checked:bg-brand-50 flex flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800"
+            className="has-checked:border-brand-600 has-checked:bg-brand-50 border-line-strong bg-surface text-ink flex flex-1 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium"
           >
             <input
               type="radio"

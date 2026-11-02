@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { Navigate } from 'react-router';
 
 import { paths } from '@/app/paths';
@@ -32,7 +32,6 @@ export function LoginPage() {
 
 function LoginForms() {
   const [withChildCode, setWithChildCode] = useState(false);
-  const hintId = useId();
   const t = useMessages();
 
   if (withChildCode) {
@@ -47,20 +46,16 @@ function LoginForms() {
   return (
     <div className="flex flex-col gap-6">
       <PasswordForm />
-      <div className="flex flex-col gap-2 border-t border-slate-200 pt-6">
+      <div className="border-line flex flex-col gap-2 border-t pt-6">
         <button
           type="button"
-          aria-describedby={hintId}
           onClick={() => {
             setWithChildCode(true);
           }}
-          className="rounded-lg border border-slate-300 px-4 py-2.5 font-medium text-slate-700 hover:bg-slate-100"
+          className="border-line-strong text-ink hover:bg-surface rounded-xl border px-4 py-2.5 font-medium"
         >
           {t.auth.childCode.open}
         </button>
-        <p id={hintId} className="text-center text-sm text-slate-600">
-          {t.auth.childCode.openHint}
-        </p>
       </div>
     </div>
   );
@@ -70,7 +65,7 @@ function ProfileStep({ userId }: { userId: string }) {
   const profile = useOwnProfile(userId);
   const t = useMessages();
 
-  if (profile.isPending) return <p className="text-sm text-slate-600">{t.common.loading}</p>;
+  if (profile.isPending) return <p className="text-ink-muted text-sm">{t.common.loading}</p>;
   if (profile.data) return <Navigate to={paths.tasks} replace />;
   return <DisplayNameForm userId={userId} />;
 }

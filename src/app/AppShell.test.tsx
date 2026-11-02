@@ -1,7 +1,9 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { fakeAuthBackend } from '@/test/fakeAuthApi';
+import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
@@ -57,4 +59,33 @@ describe('AppShell', () => {
     await user.click(screen.getByRole('link', { name: 'Back to tasks' }));
     expect(await screen.findByRole('heading', { name: 'Shared tasks' })).toBeInTheDocument();
   });
+});
+
+describe('AppShell for children', () => {
+  beforeEach(() => {
+    const ben = fakeAuthBackend.logInAs('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(ben.id, true);
+  });
+
+  it('has only the Me and Shared tasks tabs', async () => {
+    renderAppAt('/me');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'My stars' })).toBeInTheDocument();
+    const nav = screen.getByRole('navigation', { name: 'Main' });
+    expect(within(nav).getAllByRole('link')).toHaveLength(2);
+    expect(within(nav).getByRole('link', { name: 'Me' })).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'Shared tasks' })).toBeInTheDocument();
+  });
+
+  it.each(['/news', '/rewards', '/rewards/new', '/statistics'])(
+    'sends them from %s to their Me page',
+    async (path) => {
+      renderAppAt(path);
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'My stars' }),
+      ).toBeInTheDocument();
+    },
+  );
 });

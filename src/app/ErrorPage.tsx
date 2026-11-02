@@ -22,7 +22,7 @@ export function ErrorPage() {
         onClick={() => {
           window.location.reload();
         }}
-        className="bg-brand-600 hover:bg-brand-900 rounded-lg px-4 py-2.5 font-semibold text-white"
+        className="bg-brand-700 hover:bg-brand-900 rounded-xl px-4 py-2.5 font-bold text-white"
       >
         {t.reload}
       </button>

@@ -2,12 +2,14 @@ import { z } from 'zod';
 
 import { type NewsItem, type NewsPerson, workTypes } from '@/features/news/news';
 import { getSupabaseClient } from '@/lib/supabase';
+import { taskIconSchema } from '@/lib/taskIcons';
 
 const newsRowsSchema = z.array(
   z.object({
     id: z.string(),
     title: z.string(),
     type: z.enum(workTypes),
+    icon: taskIconSchema,
     points: z.number().nullable(),
     completed_at: z.string(),
     completed_by: z.string().nullable(),
@@ -57,7 +59,7 @@ export async function fetchNews(since: Date): Promise<NewsItem[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, type, points, completed_at, completed_by, task_helpers(user_id, points), task_likes(user_id), task_comments(id, author_id, body, created_at)',
+      'id, title, type, icon, points, completed_at, completed_by, task_helpers(user_id, points), task_likes(user_id), task_comments(id, author_id, body, created_at)',
     )
     .eq('is_private', false)
     .gte('completed_at', since.toISOString())
@@ -74,6 +76,7 @@ export async function fetchNews(since: Date): Promise<NewsItem[]> {
     taskId: row.id,
     title: row.title,
     type: row.type,
+    icon: row.icon,
     points: row.points,
     completedAt: row.completed_at,
     doneBy: person(row.completed_by),

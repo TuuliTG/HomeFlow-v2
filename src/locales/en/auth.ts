@@ -20,8 +20,7 @@ export const auth = {
   },
   email: 'Email',
   password: 'Password',
-  passwordHint: (minLength: number) =>
-    `At least ${String(minLength)} characters. Your browser or phone can save it for you.`,
+  passwordHint: (minLength: number) => `At least ${String(minLength)} characters.`,
   invalidEmail: 'Enter a valid email address.',
   shortPassword: (minLength: number) =>
     `Use at least ${String(minLength)} characters for your password.`,
@@ -38,16 +37,13 @@ export const auth = {
   },
   childCode: {
     open: 'Sign in with a child code',
-    openHint: 'No email? An adult in your family adds you in HomeFlow and gives you a code.',
     heading: 'Sign in with a child code',
     label: 'Sign-in code',
-    hint: 'An adult in your family can make one for you on the household page.',
     invalid: 'Enter the 8-character code.',
     submit: 'Sign in',
     back: 'Log in with email instead',
   },
   yourName: 'Your name',
-  nameHint: 'This is how your family will see you in HomeFlow.',
   enterName: 'Enter your name.',
   nameNotSaved: "We couldn't save your name. Try again.",
 };

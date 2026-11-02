@@ -1,5 +1,3 @@
-import { useId } from 'react';
-
 import { inputClassName } from '@/components/ui/formStyles';
 import { type GoalSetter, nameOf } from '@/features/rewards/goal';
 import type { ParticipantChoice, ParticipantChoices } from '@/features/rewards/participantChoices';
@@ -33,7 +31,6 @@ export function ParticipantsField({
 }: ParticipantsFieldProps) {
   const messages = useMessages();
   const t = messages.rewards.form;
-  const hintId = useId();
 
   function update(memberId: string, change: Partial<ParticipantChoice>) {
     const choice = choices[memberId] ?? { takesPart: false, minPoints: '' };
@@ -41,12 +38,9 @@ export function ParticipantsField({
   }
 
   return (
-    <fieldset aria-describedby={hintId} className="flex flex-col gap-1">
-      <legend className="text-sm font-medium text-slate-700">{t.participants}</legend>
-      <p id={hintId} className="text-sm text-slate-600">
-        {t.participantsHint}
-      </p>
-      <ul className="flex flex-col divide-y divide-slate-200">
+    <fieldset className="flex flex-col gap-1">
+      <legend className="text-ink text-sm font-medium">{t.participants}</legend>
+      <ul className="divide-line flex flex-col divide-y">
         {members.map((member, index) => {
           const name = member.id === userId ? t.me : nameOf(member, messages);
           const choice = choices[member.id];
@@ -55,7 +49,7 @@ export function ParticipantsField({
           const minimumField = `minPoints:${member.id}` as const;
           return (
             <li key={member.id} className="flex min-h-14 items-center justify-between gap-3">
-              <label className="flex min-h-11 flex-1 items-center gap-3 text-base text-slate-900">
+              <label className="text-ink flex min-h-11 flex-1 items-center gap-3 text-base">
                 <input
                   type="checkbox"
                   // The first box stands for the whole field when nobody takes part.
@@ -71,7 +65,7 @@ export function ParticipantsField({
                 <ParticipantName name={name} hasGoal={hasGoal} />
               </label>
               {choice?.takesPart && (
-                <label className="flex items-center gap-2 text-sm text-slate-600">
+                <label className="text-ink-muted flex items-center gap-2 text-sm">
                   {t.minimum}
                   <input
                     type="number"
@@ -100,5 +94,5 @@ export function ParticipantsField({
 function ParticipantName({ name, hasGoal }: { name: string; hasGoal: boolean }) {
   const t = useMessages().rewards.form;
   if (!hasGoal) return name;
-  return <span className="text-slate-500">{t.hasOpenGoal(name)}</span>;
+  return <span className="text-ink-muted">{t.hasOpenGoal(name)}</span>;
 }

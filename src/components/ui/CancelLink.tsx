@@ -20,7 +20,7 @@ export function CancelLink({ fallback }: { fallback: string }) {
         event.preventDefault();
         void navigate(-1);
       }}
-      className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-center font-semibold text-slate-700 hover:bg-slate-100"
+      className="border-line-strong text-ink hover:bg-surface flex-1 rounded-xl border px-4 py-2.5 text-center font-semibold"
     >
       {t.common.cancel}
     </Link>

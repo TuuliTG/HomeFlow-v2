@@ -11,7 +11,6 @@ type WorkType = 'physical' | 'meta';
 
 interface MetricDetails {
   title: string;
-  description: string;
   /** "12 points · 3 tasks done" */
   summary: (member: MemberContribution) => string;
   /** Shown instead of a fairness score while no one has any. */
@@ -33,13 +32,12 @@ const META_BAR = 'bg-meta-500';
 
 function metricDetails(metric: Metric, t: Messages): MetricDetails {
   const { pointsSummary } = t.statistics;
-  const { description, empty } = t.statistics.metrics[metric];
+  const { empty } = t.statistics.metrics[metric];
   const pointsTitle = t.statistics.pointsEarned;
   switch (metric) {
     case 'points':
       return {
         title: pointsTitle,
-        description,
         empty,
         summary: ({ points, done }) => pointsSummary(points, done),
         bar: ({ physicalPoints, metaPoints }) => [
@@ -54,7 +52,6 @@ function metricDetails(metric: Metric, t: Messages): MetricDetails {
     case 'physicalPoints':
       return {
         title: pointsTitle,
-        description,
         empty,
         summary: ({ physicalPoints, physicalDone }) => pointsSummary(physicalPoints, physicalDone),
         bar: ({ physicalPoints }) => [
@@ -64,7 +61,6 @@ function metricDetails(metric: Metric, t: Messages): MetricDetails {
     case 'metaPoints':
       return {
         title: pointsTitle,
-        description,
         empty,
         summary: ({ metaPoints, metaDone }) => pointsSummary(metaPoints, metaDone),
         bar: ({ metaPoints }) => [{ kind: 'meta', value: metaPoints, className: META_BAR }],
@@ -72,7 +68,6 @@ function metricDetails(metric: Metric, t: Messages): MetricDetails {
     case 'created':
       return {
         title: t.statistics.tasksCreated,
-        description,
         empty,
         summary: ({ created }) => t.statistics.tasksCount(created),
         bar: ({ created }) => [{ kind: 'meta', value: created, className: META_BAR }],
@@ -91,23 +86,20 @@ export function MetricSection({
   userId: string;
 }) {
   const t = useMessages();
-  const { title, description, summary, empty, bar, legend } = metricDetails(metric, t);
+  const { title, summary, empty, bar, legend } = metricDetails(metric, t);
   const headingId = `${metric}-heading`;
   const most = Math.max(1, ...contributions.map((member) => member[metric]));
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
-      <div>
-        <h2 id={headingId} className="text-lg font-semibold text-slate-900">
-          {title}
-        </h2>
-        <p className="text-sm text-slate-600">{description}</p>
-      </div>
-      <div className="flex flex-col divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+      <h2 id={headingId} className="text-ink text-lg font-semibold">
+        {title}
+      </h2>
+      <div className="divide-line bg-surface shadow-card flex flex-col divide-y rounded-2xl">
         <FairnessScore contributions={contributions} metric={metric} empty={empty} />
         {legend && <Legend entries={legend} />}
         <ol
           aria-label={t.statistics.byMember(title)}
-          className="flex flex-col divide-y divide-slate-200"
+          className="divide-line flex flex-col divide-y"
         >
           {rankBy(contributions, metric).map((member) => (
             <li
@@ -116,8 +108,8 @@ export function MetricSection({
               className="flex flex-col gap-2 px-4 py-3 text-sm"
             >
               <div className="flex items-baseline justify-between gap-4">
-                <span className="font-medium text-slate-900">{memberName(member, userId, t)}</span>
-                <span className="text-slate-600">{summary(member)}</span>
+                <span className="text-ink font-medium">{memberName(member, userId, t)}</span>
+                <span className="text-ink-muted">{summary(member)}</span>
               </div>
               <Bar segments={bar(member)} most={most} />
             </li>
@@ -141,7 +133,7 @@ function Bar({ segments, most }: { segments: BarSegment[]; most: number }) {
           : undefined
       }
       aria-hidden={split ? undefined : true}
-      className="flex h-2 overflow-hidden rounded-full bg-slate-100"
+      className="bg-page flex h-2 overflow-hidden rounded-full"
     >
       {segments.map(({ kind, value, className }) => (
         <div
@@ -157,7 +149,7 @@ function Bar({ segments, most }: { segments: BarSegment[]; most: number }) {
 /** The bars' colours; each split bar also names its parts for screen readers. */
 function Legend({ entries }: { entries: { label: string; className: string }[] }) {
   return (
-    <p aria-hidden="true" className="flex gap-4 px-4 py-2 text-xs text-slate-600">
+    <p aria-hidden="true" className="text-ink-muted flex gap-4 px-4 py-2 text-xs">
       {entries.map(({ label, className }) => (
         <span key={label} className="flex items-center gap-1.5">
           <span className={`size-2.5 rounded-full ${className}`} />
@@ -180,11 +172,11 @@ function FairnessScore({
   const t = useMessages().statistics;
   if (contributions.length < 2) return null;
   const fairness = fairnessOf(contributions, metric);
-  if (!fairness) return <p className="px-4 py-3 text-sm text-slate-600">{empty}</p>;
+  if (!fairness) return <p className="text-ink-muted px-4 py-3 text-sm">{empty}</p>;
   return (
-    <p className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600">
+    <p className="text-ink-muted flex items-center gap-2 px-4 py-3 text-sm">
       {t.fairness}
-      <span className="text-lg font-bold text-slate-900">{fairness.score}</span>/ 100
+      <span className="text-ink text-lg font-bold">{fairness.score}</span>/ 100
       <span className="bg-brand-50 text-brand-900 ml-auto rounded-full px-3 py-1 font-semibold">
         {t.fairnessLabels[fairness.label]}
       </span>

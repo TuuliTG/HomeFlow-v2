@@ -4,10 +4,8 @@ import { common } from '@/locales/en/common';
 export const news = {
   eyebrow: 'News',
   title: 'What the family has done',
-  description: 'Shared tasks done in the last week. Give a thumbs up or leave a comment.',
   loadFailed: "We couldn't load the news. Check your connection and reload the page.",
-  empty:
-    'No shared tasks done in the last week yet. When someone marks one done, it shows up here.',
+  empty: 'No shared tasks done in the last week yet.',
   pointsEarned: 'Points earned',
   tasksDone: 'Tasks done',
   /** "Ben earned 10 points: 7 physical, 3 meta work", or "You earned 3 points of meta work". */

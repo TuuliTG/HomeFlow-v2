@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-10-18 (a task's details from the timetable)
+- **Updated:** 2026-11-01 (task labels; adding a task that is already done)
 
 ## Context
 
@@ -13,6 +13,9 @@ next one back rather than follow a fixed calendar.
 - `tasks` belong to a household: title, optional description (≤ 500 characters), type (`physical`/`meta`),
   points (1–10), `created_by` (from the default, never the client), optional `due_on`, `repeat_every_days`
   (1–365), `completed_at`/`completed_by` and `previous_task_id`. New tasks default to the creator's household.
+- **Links in descriptions**: the card turns `http(s)://` and `www.` addresses in a description into links that
+  open in a new tab (`descriptionParts()` in `descriptionLinks.ts`) and wraps long ones so they fit and can be
+  copied. Other schemes (`javascript:`, `mailto:`) stay plain text; the description is never rendered as HTML.
 - **Private tasks**: `is_private` (chosen when adding, never changed; the next occurrence keeps it). The select
   policy shows a private task only to its creator, so the board, "Show completed" and live updates hide it from
   the others, and every security definer function that acts on any open task skips other members' private ones.
@@ -52,6 +55,34 @@ next one back rather than follow a fixed calendar.
   open task. A task someone has picked up can't be taken by another member (55006); only they can put it back. Anyone
   can still mark any task done (credited to whoever does), so a task left picked up never blocks the family, but
   the app asks first ("Ben has picked this up. Mark it done anyway?").
+- **Asking someone**: a member can ask another to do an open shared task that is free or that they picked up (handing
+  it over). `task_requests` (one per task; asking again replaces it) is written only through `request_task()`,
+  `answer_task_request()` and `cancel_task_request()` and is visible with its task; only members who may do the task
+  can be asked (a child only a task for children). The member asked is notified (ADR 0005) and accepts, which picks
+  the task up for them, or declines; nobody gets a task without saying yes, keeping the product's "self-assignment"
+  principle (the one exception is a chore an adult gives a child, below). The card shows the request: Accept/Decline
+  to the member asked (also under _Asked of you_ on the Me page), Cancel to whoever asked, and a decline only to
+  whoever asked until dismissed. A trigger (`private.settle_task_requests()`) removes a request once the task is done
+  or someone other than the member asked picks it up, and an accepted one once they give it back; the member asked
+  picking the task up accepts it. Answering and cancelling lock the task before the request, like picking up, so they
+  can't deadlock. Each function touches the task row, so live updates carry requests too.
+- **Chores for one child**: an adult can give a task for children to one child in the household ("Whose chore is it?"
+  on the task form, shown once "Children can do it" is checked and the household has children; `assigned_to`, only for
+  a shared task for children, `tasks_assigned_only_for_children`). Parents asked for this: some chores are one child's
+  job, so asking and waiting for a yes doesn't fit. A trigger (`private.pick_up_for_assignee()`) picks it up for the
+  child, also from whoever had it, so it is on their Me page with no new list, and puts it back for any child when an
+  adult clears it. Requests and schedules are settled as for any change of hands; those triggers also fire on
+  `assigned_to`, as an `UPDATE OF` trigger doesn't see columns a BEFORE trigger changes, and giving a task to a child
+  settles its request even when the child already had it. It is the child's alone: they can't put it back
+  (`put_back_task()`), nobody can be asked to do it (`request_task()`), and other children don't see it
+  (`private.can_see_task()` and the select policy) nor are told it was added (`notify-household`), so neither can they
+  act on it. Adults see it on the board as "Only for Ben", can still mark it done like any task, and change or clear
+  the child by editing it (`update_task(task_assigned_to, task_change_assignee)`; a child's edit, or one from an app
+  that doesn't send it yet, keeps it). Only adults give tasks, and only to a child in their household
+  (`private.is_child_in_household()`, insert policy). The next occurrence goes to the same child while they are still
+  one; a child who becomes an adult keeps their chores picked up, no longer given to them, done ones included so
+  undoing one can't reopen it given to an adult (a trigger on `household_members`). Adding a task again from earlier
+  tasks doesn't copy the child.
 - **Fixing mistakes**: any adult, and a child for their own tasks, can edit (`update_task()`) or delete
   (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
@@ -71,6 +102,34 @@ next one back rather than follow a fixed calendar.
   (`private.task_image_removals`, noted by a trigger): after removing a picture or deleting a task. Uploads come
   first and are deleted again if saving fails; if a new task's pictures can't be attached, its edit page opens to
   add them again. Editing compares against the pictures the form opened with, so it keeps ones others added.
+- **Icons**: whoever may edit a task can give it an icon, chosen behind a "Choose an icon" button from a fixed set of
+  emojis (`taskIconNames`, drawn as the device's emoji by `TaskIcon`, no dependency), so children who can't read
+  yet see what it is about. The tile on its card shows it in the type's colours instead of the type's icon.
+  `tasks.icon` is a name (`bed`, `dog`, …), checked only for its format, so the set can grow without a
+  migration; the app reads a name it doesn't know as no icon. Insert, `update_task()` (`task_icon`), the next
+  occurrence (`complete_task()`) and `task_suggestions()` carry it. Line icons were tried first and were too hard
+  to tell apart.
+- **Labels** say what kind of chore a task is, so statistics can show how each kind of work is shared. A task has
+  any number up to ten, ticked behind a "Choose labels" button: the app's ready-made ones (`taskLabelNames` in
+  `src/lib/taskLabels.ts`, stored by name in `tasks.labels` like icons, read in each member's language; an older
+  app drops names it doesn't know, also when it saves an edit, which we accept as apps update themselves) and the
+  household's own (`tasks.custom_labels`, as typed, ≤ 30 characters). A label typed with a ready-made one's name
+  in any of the app's languages picks that one, and one the household has used picks its spelling,
+  so the same kind of chore isn't split. Own labels need no table: `custom_task_labels()` (security invoker, so RLS
+  hides labels only on other members' private tasks) offers the 30 used most on tasks, like
+  suggestions. `private.are_valid_task_labels()` checks the format and that each label appears once (own ones
+  ignoring case). Insert, `update_task()` (`task_labels`, `task_custom_labels`; null keeps them), the next
+  occurrence and `task_suggestions()` carry them; the card shows them after its other tags.
+- **Screens for children** (`useIsChild()`; until known, a loading message, and if it can't be told, the adults'
+  screens, which show a child only what they may see): the Me page (`src/app/MePage`) shows their open goals as
+  star jars (ADR 0007), their own tasks as big tiles (`ChildTaskTiles`: icon, name, one star per point, a round
+  Mark done button, Edit on ones they added), and their Completed list. Like adults, they pick tasks on Shared
+  tasks (`ChildBoard`), which shows the tasks for children, the only ones they see, as tiles: free to pick (Pick
+  up), picked by them and who is doing the rest, without the filters, then Show
+  completed. These are a child's only tabs (`MainNav`, showing the others once the user is known to be an adult):
+  News, Rewards and Statistics, and the goal forms, send a child to their Me page (`src/app/AdultsOnly`), where
+  their jars show their goals' progress. Children's screens carry no hints or explanations. Adults' screens are unchanged. Points are still called points, as
+  elsewhere.
 - **Points**: the Me screen shows the user's total points, summed when read (`own_total_points()`), not stored.
   Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
 - **Helping**: whoever marked a shared task with points done can say, for a week (as long as it is in the News), who
@@ -95,9 +154,25 @@ next one back rather than follow a fixed calendar.
   from the same sorted list, with the user's local date; the board has no calendar grid, which needs far more room
   on a phone (the Me page offers one as an optional view, below).
   "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done shared tasks.
-  A **Show** filter (`?show=`, one choice at a time, `taskFilter.ts`) narrows the board to tasks due **Today** or
+  A **Show** filter (`?show=`, one due date at a time, `taskFilter.ts`) narrows the board to tasks due **Today** or
   **This week** (the next seven days, so it ends where "Later" begins; both include overdue tasks, which still need
-  doing), with **No due date**, or **Available** (nobody has picked them up); **All** is the default.
+  doing), or with **No due date**; **All** is the default. **Available** (`?available=1`, nobody has picked them up)
+  is a separate toggle that combines with it, e.g. what is due today and still free. The due dates stay one choice
+  because two of them together would show nothing or the same as one. A
+  **Picked up by** row (`?who=<user id>`, `pickerFilter.ts`; not shown to someone alone in their household) narrows
+  it further to the tasks one member has picked up: **You**, then the others in the order they joined, as chips
+  where tapping the chosen one again shows everyone's again (the default, with none chosen; an "Everyone" chip
+  confused); a member not in the household (any more) shows everyone's. It and **Available** exclude each
+  other, as together they would always show nothing: choosing one clears the other. It leaves "Show completed" as
+  it is, like the search. These choices
+  ("Show completed" on a child's board too), like the Me page's view (`?view=`), are remembered on the device (ADR
+  0002), so the nav link brings them back.
+  A **search** above the filter (`?q=`, `searchTasks()`) narrows the board further to tasks whose title or
+  description contains every word typed, ignoring case but keeping ä apart from a (different letters in Finnish and Swedish), so
+  a family member can check whether a task already exists before adding it. It is done in the app on the tasks
+  already loaded, and isn't remembered on the device: a forgotten search would hide tasks unnoticed. It leaves the
+  completed tasks below as they are: they answer "what was done lately", not "does this task exist". A hidden
+  status region reads out how many tasks match while typing.
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
   long ago in the user's calendar days ("Last done by Ben, 3 days ago"), so the family sees who usually carries it
   and can take turns. It comes from `previous_task_id`, embedded as `previous_occurrence(...)`: PostgREST finds no
@@ -114,7 +189,17 @@ next one back rather than follow a fixed calendar.
   `task_suggestions()` (security invoker, so RLS hides other members' private tasks): one per title ignoring case,
   with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Typing a
   name lists the matching ones; picking one fills in the form without a due date. There is no templates table:
-  deleted tasks drop out on their own, and categories can later filter the same list.
+  deleted tasks drop out on their own, and labels can later filter the same list.
+- **Adding a task done already**: an "Already done" check mark on the New task form (not when adding from the
+  timetable, which plans a task to do) adds the task and then marks it done with `complete_task()` as the user,
+  so it is credited, celebrated and repeats exactly like one marked done from its card; it then has no due date
+  (the field hides) and the Me page opens, where it is under Completed. It can't also be one child's chore, as whoever adds it is
+  credited with doing it: with a child chosen, "Whose chore is it?" warns ("You can only mark your own tasks done
+  when adding them…") and saving focuses it instead, until "Any child" is chosen or the box unchecked. A warning
+  rather than hiding the field, so the user sees why and nothing they chose is dropped silently. Two requests rather than an insert with
+  `completed_at`, so marking done keeps one path and the insert policy stays as it is. If marking done fails,
+  the task stays open and its list opens with a notice to mark it done there (saving the form again would add it twice); if
+  its pictures fail, its edit page opens as usual and it is marked done later.
 - **Tasks from other apps**: a link to `/tasks/new?title=…&description=…&due=YYYY-MM-DD` fills in the New task
   form (`taskFromLink()`), so another app, such as the owner's email assistant, can hand over a task it found
   without any access to HomeFlow. The link only fills in the form: the user chooses the type, points and who it's
@@ -124,8 +209,9 @@ next one back rather than follow a fixed calendar.
   most often added ones, which changed under the user and weren't what they wanted. A star by the name field stars
   or unstars the task being named, also a new one, saved straight away; so does a star on each open task card and
   on each done task in the board's and the Me page's Completed lists. Favourites are shared by the household:
-  any member's star shows for everyone, and any member can remove it. `favourite_tasks` stores only the name
-  ignoring case (`title_key`), one row per member who starred it, so a star never reveals a private task: a member
+  any member's star shows for everyone, and any member can remove it, also by pressing and holding a favourite
+  on the form (or right-clicking it, or its context-menu key), which shows a Remove from favourites button.
+  `favourite_tasks` stores only the name ignoring case (`title_key`), one row per member who starred it, so a star never reveals a private task: a member
   sees a star they set or one on a task they can see (`private.can_see_favourite()`, which leans on the tasks'
   RLS). The details come from `task_suggestions()`, which returns the 50 most often added tasks plus every
   favourite, so a favourite whose task is deleted isn't offered.
@@ -169,6 +255,9 @@ next one back rather than follow a fixed calendar.
 
 ## Alternatives considered
 
+- Labels: one per task (a chore is often two kinds, e.g. Kitchen and Cleaning); a household labels table (renaming
+  or removing an own label would be easier, but it's more to manage, and a label nobody uses any more drops out
+  on its own); only free text (ready-made labels in each member's language keep statistics comparable).
 - Scheduling: a column on `tasks` (others would see your plans), native HTML drag and drop (doesn't work with
   touch), a timetable on the board (too little room on a phone).
 - A calendar recurrence rule (doesn't move with late tasks), reopening the same row (loses who did each
