@@ -2,8 +2,8 @@ import { useState } from 'react';
 
 interface SavingCheckboxProps {
   label: string;
-  /** Names the choice for screen readers, e.g. with whose it is. */
-  ariaLabel: string;
+  /** Names the choice for screen readers, e.g. with whose it is, when the label alone doesn't. */
+  ariaLabel?: string;
   checked: boolean;
   disabled: boolean;
   /** Saves the choice, settling once the saved value has loaded (a failure shows elsewhere). */

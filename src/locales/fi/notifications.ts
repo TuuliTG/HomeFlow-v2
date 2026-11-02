@@ -9,10 +9,22 @@ export const notifications: Messages['notifications'] = {
     checking: 'Tarkistetaan tätä laitetta…',
     blocked:
       'HomeFlow’n ilmoitukset on estetty. Salli ne puhelimen tai selaimen asetuksista ja palaa sitten tänne.',
-    off: 'Saa ilmoitus tälle laitteelle, kun joku lisää tehtävän.',
-    on: 'Saat ilmoituksen tälle laitteelle, kun joku lisää tehtävän.',
+    off: 'Saa ilmoituksia tälle laitteelle perheesi tehtävistä.',
+    on: 'Saat ilmoituksia tälle laitteelle perheesi tehtävistä.',
   },
   turnOn: 'Laita ilmoitukset päälle',
   turnOff: 'Laita ilmoitukset pois päältä',
   changeFailed: 'Ilmoituksia ei voitu muuttaa. Yritä uudelleen.',
+  choices: {
+    legend: 'Ilmoita minulle, kun',
+    kinds: {
+      taskAdded: 'joku lisää yhteisen tehtävän',
+      taskCompleted: 'joku tekee yhteisen tehtävän',
+      taskRequested: 'joku pyytää minua tekemään tehtävän',
+      requestAnswered: 'joku vastaa, kun pyydän häntä tekemään tehtävän',
+      reminder: 'asettamani muistutuksen aika tulee',
+    },
+    allDevices: 'Nämä valinnat koskevat kaikkia laitteitasi.',
+    saveFailed: 'Valintaasi ei voitu tallentaa. Yritä uudelleen.',
+  },
 };
