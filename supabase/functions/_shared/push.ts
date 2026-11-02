@@ -18,7 +18,22 @@ export interface PushMessage {
   url: string;
 }
 
+/**
+ * The kinds of notification a member can turn off one by one; each is a column of
+ * `notification_preferences`.
+ */
+export type NotificationKind =
+  'task_added' | 'task_completed' | 'task_requested' | 'request_answered' | 'reminder';
+
+/** A push message and the kind it is, so members who turned that kind off are skipped. */
+export interface Notification {
+  kind: NotificationKind;
+  message: PushMessage;
+}
+
 export interface PushDependencies {
+  /** Those of `userIds` who haven't turned `kind` off; a user who never chose gets every kind. */
+  usersWanting: (userIds: string[], kind: NotificationKind) => Promise<string[]>;
   subscriptionsOf: (userIds: string[]) => Promise<DeviceSubscription[]>;
   /** Sends one message; resolves to the push service's HTTP status code (201 on success). */
   send: (subscription: DeviceSubscription, message: PushMessage) => Promise<number>;
@@ -50,15 +65,20 @@ function isGone(status: number): boolean {
   return status === 404 || status === 410;
 }
 
-/** Sends `message` to every device of `userIds`, and forgets devices the push service reports gone. */
+/**
+ * Sends the notification's message to every device of those of `userIds` who want its kind, and
+ * forgets devices the push service reports gone.
+ */
 export async function pushToUsers(
   userIds: string[],
-  message: PushMessage,
+  { kind, message }: Notification,
   deps: PushDependencies,
 ): Promise<PushResult> {
   const result = { ...nothingSent };
   if (userIds.length === 0) return result;
-  const subscriptions = await deps.subscriptionsOf(userIds);
+  const recipients = await deps.usersWanting(userIds, kind);
+  if (recipients.length === 0) return result;
+  const subscriptions = await deps.subscriptionsOf(recipients);
   await Promise.all(
     subscriptions.map(async (subscription) => {
       const status = await deps.send(subscription, message).catch(() => 0);

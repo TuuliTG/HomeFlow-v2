@@ -3,9 +3,10 @@
  * can be unit-tested with Vitest. index.ts supplies the real dependencies.
  */
 import {
+  type Notification,
+  type NotificationKind,
   nothingSent,
   type PushDependencies,
-  type PushMessage,
   type PushResult,
   pushToUsers,
 } from '../_shared/push.ts';
@@ -48,14 +49,14 @@ export function parseRequestChange(payload: unknown): RequestChange | null {
   return { requestId: record.id, kind: payload.type === 'INSERT' ? 'asked' : 'answered' };
 }
 
-function message(body: string, url: string): PushMessage {
-  return { title: 'HomeFlow', body, url };
+function notification(kind: NotificationKind, body: string, url: string): Notification {
+  return { kind, message: { title: 'HomeFlow', body, url } };
 }
 
 /**
  * Tells the member asked who asks them to do which task, opening their tasks to answer; or tells
  * whoever asked how the member answered, opening the board. A request answered or replaced before
- * the webhook arrives sends nothing out of turn.
+ * the webhook arrives sends nothing out of turn. Either member may have turned that kind off.
  */
 export async function notifyRequest(
   { requestId, kind }: RequestChange,
@@ -68,7 +69,7 @@ export async function notifyRequest(
     const name = (await deps.displayNameOf(request.requestedBy)) ?? 'Someone';
     return pushToUsers(
       [request.requestedFor],
-      message(`${name} asks you to do ${request.taskTitle}`, '/me'),
+      notification('task_requested', `${name} asks you to do ${request.taskTitle}`, '/me'),
       deps,
     );
   }
@@ -78,5 +79,5 @@ export async function notifyRequest(
     request.answer === 'accepted'
       ? `${name} will do ${request.taskTitle}`
       : `${name} can't do ${request.taskTitle}`;
-  return pushToUsers([request.requestedBy], message(body, '/'), deps);
+  return pushToUsers([request.requestedBy], notification('request_answered', body, '/'), deps);
 }

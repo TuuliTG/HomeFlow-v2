@@ -2,7 +2,12 @@
 // Edge Functions' index.ts files. Type-checked with `deno check`, like them.
 import webpush from 'npm:web-push@3.6.7';
 
-import type { DeviceSubscription, PushDependencies, PushMessage } from '../push.ts';
+import type {
+  DeviceSubscription,
+  NotificationKind,
+  PushDependencies,
+  PushMessage,
+} from '../push.ts';
 import { supabase } from './supabaseAdmin.ts';
 
 export { supabase };
@@ -12,6 +17,18 @@ const SEND_TIMEOUT_MS = 10_000;
 const ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
 const env = (name: string) => Deno.env.get(name) ?? '';
+
+// Each kind is a boolean column of notification_preferences; a user without a row gets every kind.
+async function usersWanting(userIds: string[], kind: NotificationKind): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('notification_preferences')
+    .select('user_id')
+    .in('user_id', userIds)
+    .eq(kind, false);
+  if (error) throw error;
+  const optedOut = new Set(data.map((row: { user_id: string }) => row.user_id));
+  return userIds.filter((userId) => !optedOut.has(userId));
+}
 
 async function subscriptionsOf(userIds: string[]): Promise<DeviceSubscription[]> {
   const { data, error } = await supabase
@@ -50,7 +67,7 @@ async function forget(endpoint: string): Promise<void> {
   if (error) throw error;
 }
 
-export const pushDependencies: PushDependencies = { subscriptionsOf, send, forget };
+export const pushDependencies: PushDependencies = { usersWanting, subscriptionsOf, send, forget };
 
 export const missingVapidKeys = 'Set VAPID_SUBJECT, VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY';
 

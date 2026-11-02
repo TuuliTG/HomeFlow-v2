@@ -23,12 +23,14 @@ export async function sendDueReminders(deps: RemindDependencies): Promise<PushRe
   const results = await Promise.all(
     reminders.map(({ userId, taskTitle }) =>
       // Reminders are already taken from the database, so one that fails mustn't stop the others.
-      pushToUsers([userId], { title: 'Reminder', body: taskTitle, url: '/me' }, deps).catch(
-        async (error: unknown) => {
-          await deps.reportError('send-reminders: a reminder failed', error);
-          return { sent: 0, removed: 0, failed: 1 };
-        },
-      ),
+      pushToUsers(
+        [userId],
+        { kind: 'reminder', message: { title: 'Reminder', body: taskTitle, url: '/me' } },
+        deps,
+      ).catch(async (error: unknown) => {
+        await deps.reportError('send-reminders: a reminder failed', error);
+        return { sent: 0, removed: 0, failed: 1 };
+      }),
     ),
   );
   return results.reduce(

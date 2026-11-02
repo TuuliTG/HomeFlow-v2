@@ -17,6 +17,7 @@ function fakeDeps(overrides: Partial<RemindDependencies> = {}) {
         { userId: 'ben', taskTitle: 'Vacuum' },
       ]),
     ),
+    usersWanting: vi.fn((userIds: string[]) => Promise.resolve(userIds)),
     subscriptionsOf: vi.fn((userIds: string[]) => Promise.resolve(userIds.map(device))),
     send: vi.fn(() => Promise.resolve(201)),
     forget: vi.fn(() => Promise.resolve()),
@@ -54,6 +55,18 @@ describe('send due reminders', () => {
       [DeviceSubscription, unknown],
     ];
     expect(parsePushPayload(message)).toEqual(message);
+  });
+
+  it('skips the reminders of users who turned reminders off', async () => {
+    const deps = fakeDeps({
+      usersWanting: vi.fn((userIds: string[]) =>
+        Promise.resolve(userIds.filter((userId) => userId !== 'anna')),
+      ),
+    });
+
+    await expect(sendDueReminders(deps)).resolves.toEqual({ sent: 1, removed: 0, failed: 0 });
+    expect(deps.usersWanting).toHaveBeenCalledWith(['anna'], 'reminder');
+    expect(deps.send).not.toHaveBeenCalledWith(device('anna'), expect.anything());
   });
 
   it('does nothing when no reminder is due', async () => {
