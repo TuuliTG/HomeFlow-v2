@@ -1,6 +1,6 @@
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import type { HouseholdMember, SignInCode } from '@/features/household/household';
-import { SavingCheckbox } from '@/features/household/SavingCheckbox';
+import { SavingCheckbox } from '@/components/ui/SavingCheckbox';
 import {
   useHouseholdMembers,
   useNewChildSignInCode,

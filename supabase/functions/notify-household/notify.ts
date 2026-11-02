@@ -3,18 +3,21 @@
  * it can be unit-tested with Vitest. index.ts supplies the real dependencies.
  */
 import {
+  type Notification,
+  type NotificationKind,
   nothingSent,
   type PushDependencies,
-  type PushMessage,
   type PushResult,
   pushToUsers,
 } from '../_shared/push.ts';
 
-/** A newly added task, as read from the database. */
-export interface TaskAdded {
+/** A task the household is told about, as read from the database. */
+export interface HouseholdTask {
   householdId: string;
   title: string;
   createdBy: string | null;
+  /** Whoever marked it done; null while it is open. */
+  completedBy: string | null;
   /** Added automatically as the next occurrence of a repeating task, not by a member. */
   isRepeat: boolean;
   /** Seen only by whoever added it, so the family isn't told about it. */
@@ -25,6 +28,12 @@ export interface TaskAdded {
   assignedTo: string | null;
 }
 
+/** What happened to a task: it was added, or marked done. */
+export interface TaskChange {
+  taskId: string;
+  kind: 'added' | 'completed';
+}
+
 export interface HouseholdMember {
   userId: string;
   isChild: boolean;
@@ -32,7 +41,7 @@ export interface HouseholdMember {
 
 export interface NotifyDependencies extends PushDependencies {
   /** The task, read from the database rather than trusted from the webhook payload. */
-  taskById: (taskId: string) => Promise<TaskAdded | null>;
+  taskById: (taskId: string) => Promise<HouseholdTask | null>;
   /** Everyone in the household. */
   membersOf: (householdId: string) => Promise<HouseholdMember[]>;
   displayNameOf: (userId: string) => Promise<string | null>;
@@ -43,43 +52,62 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * The id of the task a Database Webhook payload reports as inserted; null for anything else. Only
- * the id is used: the task itself is read from the database, so a forged payload can't choose the
- * household or the text.
+ * The task a Database Webhook payload reports as inserted, or as marked done by an update; null for
+ * anything else, such as other edits. Only the id is used: the task itself is read from the
+ * database, so a forged payload can't choose the household, who is credited or the text.
  */
-export function parseAddedTaskId(payload: unknown): string | null {
-  if (!isRecord(payload) || payload.type !== 'INSERT' || payload.table !== 'tasks') return null;
-  const { record } = payload;
-  return isRecord(record) && typeof record.id === 'string' ? record.id : null;
+export function parseTaskChange(payload: unknown): TaskChange | null {
+  if (!isRecord(payload) || payload.table !== 'tasks') return null;
+  const { record, old_record: oldRecord } = payload;
+  if (!isRecord(record) || typeof record.id !== 'string') return null;
+  if (payload.type === 'INSERT') return { taskId: record.id, kind: 'added' };
+  const justDone =
+    payload.type === 'UPDATE' &&
+    isRecord(oldRecord) &&
+    oldRecord.completed_at === null &&
+    typeof record.completed_at === 'string';
+  return justDone ? { taskId: record.id, kind: 'completed' } : null;
 }
 
-function messageFor(creatorName: string | null, taskTitle: string): PushMessage {
-  return { title: 'HomeFlow', body: `${creatorName ?? 'Someone'} added ${taskTitle}`, url: '/' };
+function notification(kind: NotificationKind, body: string, url: string): Notification {
+  return { kind, message: { title: 'HomeFlow', body, url } };
 }
 
 /** Whether the member sees the task, like `private.can_see_task()` for a shared task in their household. */
-function canSee({ userId, isChild }: HouseholdMember, task: TaskAdded): boolean {
+function canSee({ userId, isChild }: HouseholdMember, task: HouseholdTask): boolean {
   return !isChild || (task.forChildren && (task.assignedTo === null || task.assignedTo === userId));
 }
 
 /**
- * Notifies every household member who can see the task except whoever added it, and forgets dead
- * devices. The next occurrence of a repeating task isn't news and a private task isn't the family's,
- * so neither notifies anyone; an adults-only task doesn't notify children, nor one child's chore the
- * others.
+ * Tells the household about a shared task: when it was added, every member who can see it except
+ * whoever added it (opening the board); when it was done, the other adults (opening News, to
+ * praise it; children have no News, ADR 0008). The next occurrence of a repeating task isn't news
+ * and a private task isn't the family's, so neither notifies anyone, nor does a task undone before
+ * the webhook arrived. Members who turned that kind off are skipped, and dead devices are forgotten.
  */
 export async function notifyHousehold(
-  taskId: string,
+  { taskId, kind }: TaskChange,
   deps: NotifyDependencies,
 ): Promise<PushResult> {
   const task = await deps.taskById(taskId);
-  if (!task || task.isRepeat || task.isPrivate) return nothingSent;
+  if (!task || task.isPrivate) return nothingSent;
+  if (kind === 'added' ? task.isRepeat : task.completedBy === null) return nothingSent;
+  const actor = kind === 'added' ? task.createdBy : task.completedBy;
   const members = await deps.membersOf(task.householdId);
   const recipients = members
-    .filter((member) => member.userId !== task.createdBy && canSee(member, task))
+    .filter(
+      (member) =>
+        member.userId !== actor && canSee(member, task) && (kind === 'added' || !member.isChild),
+    )
     .map(({ userId }) => userId);
   if (recipients.length === 0) return nothingSent;
 
-  const creatorName = task.createdBy ? await deps.displayNameOf(task.createdBy) : null;
-  return pushToUsers(recipients, messageFor(creatorName, task.title), deps);
+  const name = (actor ? await deps.displayNameOf(actor) : null) ?? 'Someone';
+  return pushToUsers(
+    recipients,
+    kind === 'added'
+      ? notification('task_added', `${name} added ${task.title}`, '/')
+      : notification('task_completed', `${name} did ${task.title}`, '/news'),
+    deps,
+  );
 }

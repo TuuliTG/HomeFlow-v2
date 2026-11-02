@@ -124,12 +124,13 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
    2. **Supabase → Edge Functions → Secrets:** add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
       (`mailto:` + your email) and `NOTIFY_WEBHOOK_SECRET` (e.g. `openssl rand -hex 32`).
    3. Run the **Deploy database** workflow if the functions aren't deployed yet.
-   4. **Supabase → Database Webhooks:** on insert into `tasks`, call the `notify-household` function (POST) with
+   4. **Supabase → Database Webhooks:** on insert and update of `tasks`, call the `notify-household` function (POST) with
       header `x-webhook-secret` set to the secret; on insert and update of `task_requests`, call `notify-request`
       the same way.
    5. **Supabase → Integrations → Cron:** every minute (`* * * * *`), call the `send-reminders` function (POST)
       with the same `x-webhook-secret` header.
-   6. In the app, turn on notifications on each device (on iPhone, add HomeFlow to the Home Screen first).
+   6. In the app, turn on notifications on each device (on iPhone, add HomeFlow to the Home Screen first), then
+      choose which ones to get.
 6. **Error monitoring** (optional):
    1. **Sentry account:** sign up at [sentry.io](https://sentry.io) and choose **EU data storage** (it can't be
       changed later). In **Settings → Security & Privacy**, turn on _Prevent Storing of IP Addresses_ and

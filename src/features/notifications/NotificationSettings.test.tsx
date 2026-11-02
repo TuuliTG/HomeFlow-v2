@@ -1,7 +1,9 @@
-import { act, screen, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { allNotifications } from '@/features/notifications/preferences';
+import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
@@ -16,7 +18,12 @@ const browser = vi.hoisted(() => ({
 }));
 vi.mock('@/features/notifications/browserPush', () => browser);
 
-const api = vi.hoisted(() => ({ saveSubscription: vi.fn(), deleteSubscription: vi.fn() }));
+const api = vi.hoisted(() => ({
+  saveSubscription: vi.fn(),
+  deleteSubscription: vi.fn(),
+  fetchPreferences: vi.fn(),
+  savePreference: vi.fn(),
+}));
 vi.mock('@/features/notifications/api', () => api);
 
 const VAPID_KEY = `B${'a'.repeat(86)}`;
@@ -42,6 +49,12 @@ describe('notification settings', () => {
     browser.unsubscribeDevice.mockResolvedValue(undefined);
     api.saveSubscription.mockResolvedValue(undefined);
     api.deleteSubscription.mockResolvedValue(undefined);
+    let saved = { ...allNotifications };
+    api.fetchPreferences.mockImplementation(() => Promise.resolve(saved));
+    api.savePreference.mockImplementation((_userId: string, kind: string, wanted: boolean) => {
+      saved = { ...saved, [kind]: wanted };
+      return Promise.resolve();
+    });
     logInAsFamilyMember();
   });
 
@@ -177,6 +190,61 @@ describe('notification settings', () => {
 
     await screen.findByRole('heading', { level: 1, name: 'Settings' });
     expect(screen.queryByRole('region', { name: 'Notifications' })).not.toBeInTheDocument();
+  });
+
+  it('lets the user choose which notifications they get once they are on', async () => {
+    const user = userEvent.setup();
+    const anna = logInAsFamilyMember();
+    browser.getDeviceSubscription.mockResolvedValue(device);
+    renderAppAt('/settings');
+
+    const choices = await screen.findByRole('group', { name: 'Notify me when' });
+    const done = await within(choices).findByRole('checkbox', {
+      name: 'someone finishes a shared task',
+    });
+    expect(within(choices).getAllByRole('checkbox')).toHaveLength(5);
+    expect(done).toBeChecked();
+
+    await user.click(done);
+
+    expect(api.savePreference).toHaveBeenCalledWith(anna.id, 'taskCompleted', false);
+    await waitFor(() => {
+      expect(done).not.toBeChecked();
+    });
+    expect(done).toBeEnabled();
+  });
+
+  it('offers no choices while notifications are off on this device', async () => {
+    renderAppAt('/settings');
+
+    await toggle('Turn on notifications');
+    expect(screen.queryByRole('group', { name: 'Notify me when' })).not.toBeInTheDocument();
+  });
+
+  it("doesn't offer children news of finished tasks, which they don't get", async () => {
+    const child = logInAsFamilyMember('carol@example.com', 'Carol');
+    fakeHouseholdBackend.setChild(child.id, true);
+    browser.getDeviceSubscription.mockResolvedValue(device);
+    renderAppAt('/settings');
+
+    const choices = await screen.findByRole('group', { name: 'Notify me when' });
+    expect(await within(choices).findAllByRole('checkbox')).toHaveLength(4);
+    expect(
+      within(choices).queryByRole('checkbox', { name: 'someone finishes a shared task' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('explains when a choice cannot be saved, and shows the saved one again', async () => {
+    const user = userEvent.setup();
+    browser.getDeviceSubscription.mockResolvedValue(device);
+    api.savePreference.mockRejectedValue(new Error('Network error'));
+    renderAppAt('/settings');
+
+    const reminders = await screen.findByRole('checkbox', { name: 'a reminder I set is due' });
+    await user.click(reminders);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't save your choice.");
+    expect(reminders).toBeChecked();
   });
 
   it('stops notifications on this device when the user logs out', async () => {

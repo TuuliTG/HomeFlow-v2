@@ -26,6 +26,7 @@ function fakeDeps(overrides: Partial<NotifyRequestDependencies> = {}) {
   return {
     requestById: vi.fn((requestId: string) => Promise.resolve(requestId === 'r1' ? request : null)),
     displayNameOf: vi.fn((userId: string) => Promise.resolve(names[userId] ?? null)),
+    usersWanting: vi.fn((userIds: string[]) => Promise.resolve(userIds)),
     subscriptionsOf: vi.fn((userIds: string[]) => Promise.resolve(userIds.map(device))),
     send: vi.fn(() => Promise.resolve(201)),
     forget: vi.fn(() => Promise.resolve()),
@@ -61,6 +62,22 @@ describe('notify request', () => {
 
     expect(deps.send).toHaveBeenCalledWith(device('anna'), { title: 'HomeFlow', body, url: '/' });
   });
+
+  it.each([
+    { kind: 'asked', answer: null, notificationKind: 'task_requested', member: 'ben' },
+    { kind: 'answered', answer: 'accepted', notificationKind: 'request_answered', member: 'anna' },
+  ] as const)(
+    'notifies about a request $kind only if the member wants that kind',
+    async ({ kind, answer, notificationKind, member }) => {
+      const deps = fakeDeps({ usersWanting: vi.fn(() => Promise.resolve([])) });
+      vi.mocked(deps.requestById).mockResolvedValue({ ...request, answer });
+
+      await notifyRequest({ requestId: 'r1', kind }, deps);
+
+      expect(deps.usersWanting).toHaveBeenCalledWith([member], notificationKind);
+      expect(deps.send).not.toHaveBeenCalled();
+    },
+  );
 
   it('sends a message the service worker shows as is', async () => {
     const deps = fakeDeps();

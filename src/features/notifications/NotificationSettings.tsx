@@ -1,3 +1,4 @@
+import { NotificationChoices } from '@/features/notifications/NotificationChoices';
 import {
   type NotificationStatus,
   usePushNotifications,
@@ -6,8 +7,15 @@ import { useMessages } from '@/lib/i18n/i18n';
 
 type ShownStatus = Exclude<NotificationStatus, 'not-set-up'>;
 
-/** Turns push notifications on or off for this device (ADR 0005). Hidden until push is set up. */
-export function NotificationSettings() {
+interface NotificationSettingsProps {
+  isChild: boolean;
+}
+
+/**
+ * Turns push notifications on or off for this device and, while they are on, chooses which kinds the
+ * user gets (ADR 0005). Hidden until push is set up.
+ */
+export function NotificationSettings({ isChild }: NotificationSettingsProps) {
   const { status, turnOn, turnOff, isChanging, failed } = usePushNotifications();
   const t = useMessages().notifications;
   const explanations: Record<ShownStatus, string> = t.explanations;
@@ -52,6 +60,7 @@ export function NotificationSettings() {
           {t.changeFailed}
         </p>
       )}
+      {isOn && <NotificationChoices isChild={isChild} />}
     </section>
   );
 }

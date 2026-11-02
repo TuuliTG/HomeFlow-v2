@@ -10,6 +10,7 @@ function device(userId: string, endpoint = `https://push.example.com/${userId}`)
 
 function fakeDeps(overrides: Partial<PushDependencies> = {}) {
   return {
+    usersWanting: vi.fn((userIds: string[]) => Promise.resolve(userIds)),
     subscriptionsOf: vi.fn(() =>
       Promise.resolve([
         device('ben', 'https://push.example.com/ben-phone'),
@@ -26,7 +27,9 @@ describe('push to users', () => {
   it("sends the message to each of the users' devices", async () => {
     const deps = fakeDeps();
 
-    await expect(pushToUsers(['ben', 'carol'], message, deps)).resolves.toEqual({
+    await expect(
+      pushToUsers(['ben', 'carol'], { kind: 'task_added', message }, deps),
+    ).resolves.toEqual({
       sent: 2,
       removed: 0,
       failed: 0,
@@ -41,7 +44,27 @@ describe('push to users', () => {
   it('does nothing for no users', async () => {
     const deps = fakeDeps();
 
-    await expect(pushToUsers([], message, deps)).resolves.toEqual({
+    await expect(pushToUsers([], { kind: 'task_added', message }, deps)).resolves.toEqual({
+      sent: 0,
+      removed: 0,
+      failed: 0,
+    });
+    expect(deps.subscriptionsOf).not.toHaveBeenCalled();
+  });
+
+  it('skips the users who turned this kind of notification off', async () => {
+    const deps = fakeDeps({ usersWanting: vi.fn(() => Promise.resolve(['ben'])) });
+
+    await pushToUsers(['ben', 'carol'], { kind: 'task_completed', message }, deps);
+
+    expect(deps.usersWanting).toHaveBeenCalledWith(['ben', 'carol'], 'task_completed');
+    expect(deps.subscriptionsOf).toHaveBeenCalledWith(['ben']);
+  });
+
+  it("doesn't look for devices when nobody wants the notification", async () => {
+    const deps = fakeDeps({ usersWanting: vi.fn(() => Promise.resolve([])) });
+
+    await expect(pushToUsers(['ben'], { kind: 'reminder', message }, deps)).resolves.toEqual({
       sent: 0,
       removed: 0,
       failed: 0,
@@ -56,7 +79,7 @@ describe('push to users', () => {
       ),
     });
 
-    await expect(pushToUsers(['ben'], message, deps)).resolves.toEqual({
+    await expect(pushToUsers(['ben'], { kind: 'task_added', message }, deps)).resolves.toEqual({
       sent: 0,
       removed: 2,
       failed: 0,
@@ -73,7 +96,7 @@ describe('push to users', () => {
       forget: () => Promise.reject(new Error('database unavailable')),
     });
 
-    await expect(pushToUsers(['ben'], message, deps)).resolves.toEqual({
+    await expect(pushToUsers(['ben'], { kind: 'task_added', message }, deps)).resolves.toEqual({
       sent: 1,
       removed: 0,
       failed: 1,
@@ -90,7 +113,9 @@ describe('push to users', () => {
       subscriptionsOf: () => Promise.resolve([device('ben'), device('carol'), device('dave')]),
     });
 
-    await expect(pushToUsers(['ben', 'carol', 'dave'], message, deps)).resolves.toEqual({
+    await expect(
+      pushToUsers(['ben', 'carol', 'dave'], { kind: 'task_added', message }, deps),
+    ).resolves.toEqual({
       sent: 1,
       removed: 0,
       failed: 2,
