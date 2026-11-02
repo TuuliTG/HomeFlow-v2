@@ -113,8 +113,9 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
    - Accept Supabase's DPA (Organization → Legal documents).
 2. **GitHub → Settings → Environments:** create `production` and set _Deployment branches_ to `main` only (this
    keeps other branches away from the secrets; adding yourself as required reviewer is optional). Add the secrets
-   `SUPABASE_ACCESS_TOKEN` (Supabase → Account → Access Tokens) and `SUPABASE_DB_PASSWORD`, and the variable
-   `SUPABASE_PROJECT_REF`. Then run the **Deploy database** workflow to apply the migrations and deploy the Edge
+   `SUPABASE_DB_URL` (Supabase → Connect → Session pooler, with the database password filled in and percent-encoded)
+   and `SUPABASE_ACCESS_TOKEN` (Supabase → Account → Access Tokens, with only _Edge Functions_ read-write), and the
+   variable `SUPABASE_PROJECT_REF`. Then run the **Deploy database** workflow to apply the migrations and deploy the Edge
    Functions.
 3. **Vercel:** import the GitHub repo and set the environment variables above for Production and Preview.
 4. **GitHub → Settings → Branches:** protect `main`, require a PR and the CI status checks, block force pushes.

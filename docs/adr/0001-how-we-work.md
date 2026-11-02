@@ -1,6 +1,6 @@
 # 0001. How we work
 
-- **Updated:** 2026-10-19
+- **Updated:** 2026-11-02
 
 ## Context
 
@@ -19,9 +19,10 @@ and the reasons behind choices must survive between sessions without becoming a 
 - **CI** (GitHub Actions): format, lint, types, knip, unit tests with coverage, build, Playwright e2e, database
   tests (pgTAP), dependency audit and CodeQL. **Vercel** deploys a preview per PR and production from `main`.
 - **Database deploys** — migrations and Edge Functions go to production only through the manual `Deploy database`
-  workflow (`workflow_dispatch`; GitHub environment `production` holds the Supabase token and DB password and
-  only releases them to `main`), so no laptop needs production credentials. It runs after the PR merges, so migrations must
-  stay compatible with the app version Vercel is still serving (add before you remove).
+  workflow (`workflow_dispatch`; GitHub environment `production` holds the database connection string and an
+  access token limited to Edge Functions, and only releases them to `main`), so no laptop needs production
+  credentials. It skips `supabase link`, which needs a token that reads most project settings. It runs after the PR
+  merges, so migrations must stay compatible with the app version Vercel is still serving (add before you remove).
 - **Tests** — Vitest + Testing Library, queried by role and label as a user would (coverage ≥ 80%). Feature `api`
   modules are replaced by in-memory fakes (`src/test/`). Playwright e2e runs on Pixel, iPhone and desktop with axe
   checks against a faked Supabase (`e2e/fakeSupabase.ts`). RLS and database functions are tested with pgTAP
