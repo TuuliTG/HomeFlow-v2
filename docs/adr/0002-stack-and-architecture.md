@@ -1,6 +1,6 @@
 # 0002. Stack and architecture
 
-- **Updated:** 2026-10-30 (the page never scrolls, only the app shell's content)
+- **Updated:** 2026-11-04 (ESLint enforces feature boundaries)
 
 ## Context
 
@@ -16,7 +16,8 @@ maintained by agents, so strict types and a predictable structure matter more th
   migrations; **every table has Row Level Security** with explicit policies. The browser has only the anon key.
 - **Feature folders**: `src/features/<feature>/` holds components, hooks, `api.ts` and tests; `src/app` the shell,
   routing and cross-feature composition; `src/components/ui` shared presentational components; `src/lib`
-  infrastructure. Features don't import each other's internals. Data flows components → hooks → `api.ts` →
+  infrastructure. Features don't import each other, and `components`/`lib` don't import features or `src/app`; ESLint's
+  `no-restricted-imports` enforces both (one block per folder in `src/features`). Data flows components → hooks → `api.ts` →
   `getSupabaseClient()`; components never call Supabase (ESLint enforces it).
 - **PWA** with `vite-plugin-pwa` and our own service worker (`src/sw.ts`), installable to the home screen.
   New versions **wait for the user** (`registerType: 'prompt'`): `UpdateBanner` registers the worker and offers
