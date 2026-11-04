@@ -20,6 +20,8 @@ export const notifications: Messages['notifications'] = {
     kinds: {
       taskAdded: 'någon lägger till en gemensam uppgift',
       taskCompleted: 'någon gör klart en gemensam uppgift',
+      taskLiked: 'någon ger tummen upp för en uppgift jag gjort',
+      taskCommented: 'någon kommenterar en uppgift jag gjort eller kommenterat',
       taskRequested: 'någon ber mig göra en uppgift',
       requestAnswered: 'någon svarar när jag ber dem göra en uppgift',
       reminder: 'det är dags för en påminnelse jag har satt',

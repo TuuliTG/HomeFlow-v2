@@ -161,8 +161,8 @@ describe('notify praise', () => {
 
     await notifyPraise(commented, deps);
 
-    const [, message] = vi.mocked(deps.send).mock.calls[0]!;
-    expect(message.body).toMatch(/^Anna commented on Dishes: (🎉)+…$/u);
+    const message = vi.mocked(deps.send).mock.calls.at(0)?.[1];
+    expect(message?.body).toMatch(/^Anna commented on Dishes: (🎉)+…$/u);
     expect(parsePushPayload(message)).toEqual(message);
   });
 

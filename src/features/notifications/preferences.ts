@@ -5,6 +5,8 @@
 export const notificationKinds = [
   'taskAdded',
   'taskCompleted',
+  'taskLiked',
+  'taskCommented',
   'taskRequested',
   'requestAnswered',
   'reminder',
@@ -18,6 +20,8 @@ export type NotificationPreferences = Record<NotificationKind, boolean>;
 export const allNotifications: NotificationPreferences = {
   taskAdded: true,
   taskCompleted: true,
+  taskLiked: true,
+  taskCommented: true,
   taskRequested: true,
   requestAnswered: true,
   reminder: true,

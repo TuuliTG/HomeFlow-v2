@@ -202,7 +202,7 @@ describe('notification settings', () => {
     const done = await within(choices).findByRole('checkbox', {
       name: 'someone finishes a shared task',
     });
-    expect(within(choices).getAllByRole('checkbox')).toHaveLength(5);
+    expect(within(choices).getAllByRole('checkbox')).toHaveLength(7);
     expect(done).toBeChecked();
 
     await user.click(done);
@@ -221,7 +221,7 @@ describe('notification settings', () => {
     expect(screen.queryByRole('group', { name: 'Notify me when' })).not.toBeInTheDocument();
   });
 
-  it("doesn't offer children news of finished tasks, which they don't get", async () => {
+  it("doesn't offer children what happens in News, which they don't get", async () => {
     const child = logInAsFamilyMember('carol@example.com', 'Carol');
     fakeHouseholdBackend.setChild(child.id, true);
     browser.getDeviceSubscription.mockResolvedValue(device);
@@ -229,9 +229,13 @@ describe('notification settings', () => {
 
     const choices = await screen.findByRole('group', { name: 'Notify me when' });
     expect(await within(choices).findAllByRole('checkbox')).toHaveLength(4);
-    expect(
-      within(choices).queryByRole('checkbox', { name: 'someone finishes a shared task' }),
-    ).not.toBeInTheDocument();
+    for (const name of [
+      'someone finishes a shared task',
+      'someone gives a thumbs up for a task I did',
+      'someone comments on a task I did or commented on',
+    ]) {
+      expect(within(choices).queryByRole('checkbox', { name })).not.toBeInTheDocument();
+    }
   });
 
   it('explains when a choice cannot be saved, and shows the saved one again', async () => {
