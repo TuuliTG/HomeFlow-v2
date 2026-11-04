@@ -34,7 +34,7 @@ export interface TaskComment {
 export type Praise =
   { kind: 'liked'; taskId: string; likedBy: string } | { kind: 'commented'; commentId: string };
 
-export interface HouseholdMember {
+interface HouseholdMember {
   userId: string;
   isChild: boolean;
 }

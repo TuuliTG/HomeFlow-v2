@@ -1,6 +1,7 @@
 // notify-praise Edge Function (ADR 0005): a Database Webhook calls it when a member gives a thumbs up to or comments
 // on a done task in News; it tells whoever did the task (and earlier commenters). The logic lives in notifyPraise.ts.
 import { isAuthorized } from '../_shared/push.ts';
+import { displayNameOf, membersOf } from '../_shared/deno/household.ts';
 import { reportError } from '../_shared/deno/monitoring.ts';
 import {
   configureVapid,
@@ -8,13 +9,7 @@ import {
   pushDependencies,
   supabase,
 } from '../_shared/deno/webPush.ts';
-import {
-  type HouseholdMember,
-  notifyPraise,
-  parsePraise,
-  type PraisedTask,
-  type TaskComment,
-} from './notifyPraise.ts';
+import { notifyPraise, parsePraise, type PraisedTask, type TaskComment } from './notifyPraise.ts';
 
 // Supabase's Edge Runtime keeps the function alive for promises handed to waitUntil.
 declare const EdgeRuntime: { waitUntil: (promise: Promise<unknown>) => void };
@@ -74,28 +69,6 @@ async function commentersOn(taskId: string): Promise<string[]> {
     .not('author_id', 'is', null);
   if (error) throw error;
   return data.map((row: { author_id: string }) => row.author_id);
-}
-
-async function membersOf(householdId: string): Promise<HouseholdMember[]> {
-  const { data, error } = await supabase
-    .from('household_members')
-    .select('user_id, is_child')
-    .eq('household_id', householdId);
-  if (error) throw error;
-  return data.map((row: { user_id: string; is_child: boolean }) => ({
-    userId: row.user_id,
-    isChild: row.is_child,
-  }));
-}
-
-async function displayNameOf(userId: string): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('display_name')
-    .eq('id', userId)
-    .maybeSingle();
-  if (error) throw error;
-  return (data as { display_name: string } | null)?.display_name ?? null;
 }
 
 Deno.serve(async (request) => {
