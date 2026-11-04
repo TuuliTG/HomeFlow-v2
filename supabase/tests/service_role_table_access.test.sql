@@ -1,7 +1,7 @@
 -- What the Edge Functions may do with the service role. Run with `npm run db:test` (needs Docker).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(6);
+select plan(8);
 
 select ok(
   has_table_privilege('service_role', 'public.tasks', 'select'),
@@ -24,6 +24,18 @@ select ok(
   not has_table_privilege('service_role', 'public.tasks', 'update')
     and not has_table_privilege('service_role', 'public.tasks', 'delete'),
   'the functions cannot change tasks'
+);
+select ok(
+  has_table_privilege('service_role', 'public.task_likes', 'select')
+    and has_table_privilege('service_role', 'public.task_comments', 'select')
+    and has_table_privilege('service_role', 'public.task_helpers', 'select'),
+  'notify-praise can read likes, comments and helpers'
+);
+select ok(
+  not has_table_privilege('service_role', 'public.task_likes', 'delete')
+    and not has_table_privilege('service_role', 'public.task_comments', 'delete')
+    and not has_table_privilege('service_role', 'public.task_helpers', 'insert'),
+  'notify-praise cannot change likes, comments or helpers'
 );
 select ok(
   not has_table_privilege('service_role', 'public.task_reminders', 'select'),

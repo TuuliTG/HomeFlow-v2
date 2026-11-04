@@ -16,9 +16,10 @@ select lives_ok(
   'a user can save their choices'
 );
 select results_eq(
-  $$ select user_id::text, task_added, task_completed, task_requested, request_answered, reminder
+  $$ select user_id::text, task_added, task_completed, task_liked, task_commented, task_requested,
+       request_answered, reminder
      from public.notification_preferences $$,
-  $$ values ('11111111-1111-1111-1111-111111111111', true, false, true, true, true) $$,
+  $$ values ('11111111-1111-1111-1111-111111111111', true, false, true, true, true, true, true) $$,
   'what the user didn''t turn off stays on'
 );
 select lives_ok(
