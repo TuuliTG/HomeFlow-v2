@@ -1,6 +1,6 @@
 # 0005. Push notifications
 
-- **Updated:** 2026-11-02 (choosing which notifications to get; done shared tasks)
+- **Updated:** 2026-11-04 (thumbs up and comments)
 
 ## Context
 
@@ -25,21 +25,27 @@ for apps added to the home screen (iOS 16.4+).
   with the same shared secret, tells the member asked who asks them to do which task (opening My tasks), and whoever
   asked whether they accepted or declined (opening the board). It reads the request with the service role and skips
   a request answered or replaced before the webhook arrived.
+- The **`notify-praise` Edge Function**, called by a Database Webhook on insert into `task_likes` and
+  `task_comments` with the same shared secret, tells whoever did the task and its helpers that someone gave it a
+  thumbs up or commented (opening News); a comment also reaches those who commented on it before, so replies are
+  heard. Never the member who praised, nor children (no News, ADR 0008). It reads the like or comment and the task
+  with the service role, so a thumbs up taken back, a comment deleted or a task undone before it runs sends nothing.
 - The **`send-reminders` Edge Function** sends task reminders (ADR 0004). **Supabase Cron** calls it every minute
   with the same shared secret, so reminders arrive within about a minute of their time.
 - **Choosing what to get:** `notification_preferences` holds one row per user, with a boolean per kind
-  (`task_added`, `task_completed`, `task_requested`, `request_answered`, `reminder`), for all their devices; no row
-  means every kind is on. Users read and upsert only their own row (RLS). Settings shows the choices while this
-  device's notifications are on (without `task_completed` for children). `pushToUsers()` takes the kind and skips
+  (`task_added`, `task_completed`, `task_liked`, `task_commented`, `task_requested`, `request_answered`,
+  `reminder`), for all their devices; no row means every kind is on. Users read and upsert only their own row (RLS).
+  Settings shows the choices while this device's notifications are on (without the News kinds for children). `pushToUsers()` takes the kind and skips
   the members who turned it off, so every function respects the choices in one place.
 - The functions use the **service role**, which has only the table privileges migrations grant it
   (`auto_expose_new_tables = false`, like newer cloud projects): reading tasks, members, names and devices, and
-  deleting gone devices, reading task requests and notification preferences. Reminders are taken only through `take_due_reminders()`.
-- Each function's logic is in a plain module (`notify.ts`, `notifyRequest.ts`, `remind.ts`), and sending to devices in
+  deleting gone devices, reading task requests, likes, comments, helpers and notification preferences. Reminders are taken only through `take_due_reminders()`.
+- Each function's logic is in a plain module (`notify.ts`, `notifyRequest.ts`, `notifyPraise.ts`, `remind.ts`), and sending to devices in
   `_shared/push.ts`, all unit-tested; the Deno-only parts (`index.ts`, `_shared/deno/`) are checked with
   `deno check`.
-- A notification says only who added which task and opens the board, who did which task and opens News, who asks the user to do which task or how
-  they answered, or which task a reminder is for and opens My tasks. `src/sw.ts` shows it; push messages are validated by hand (`src/lib/pushNotification.ts`) to keep the worker small.
+- A notification says only who added which task and opens the board, who did, gave a thumbs up for or commented on
+  which task (with the start of the comment, at most 100 characters) and opens News, who asks the user to do which
+  task or how they answered, or which task a reminder is for and opens My tasks. `src/sw.ts` shows it; push messages are validated by hand (`src/lib/pushNotification.ts`) to keep the worker small.
 
 ## Consequences
 
@@ -49,6 +55,7 @@ for apps added to the home screen (iOS 16.4+).
 - A reminder is taken before it is sent: if sending fails it is lost rather than sent twice.
 - The tasks webhook now runs on every task update (each pick-up, edit and live-refresh touch); the function drops
   those after parsing the payload, so they cost only an invocation.
+- Taking a thumbs up back and giving it again notifies again; a family is unlikely to bother.
 - A task marked done and undone within the hour still sent "did"; adding a task as "Already done" (ADR 0004)
   sends both "added" and "did".
 
