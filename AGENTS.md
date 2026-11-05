@@ -28,8 +28,9 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node 22 (≥ 22.22
 
 - Feature folders: `src/features/<feature>/` holds its components, hooks, `api.ts` and tests side by side.
   `src/app` = shell/routing/providers, `src/components/ui` = shared presentational components, `src/lib` = infrastructure.
-- Features must not import other features' internals; promote shared code to `components/ui` or `lib`. Read the
-  logged-in user with `useAuth()` from `@/lib/auth` (`useLoggedInUser()` on screens behind the login, ADR 0003).
+- Features must not import other features, and `components/ui`/`lib` must not import features or `src/app` (ESLint
+  enforces both); promote shared code to `components/ui` or `lib`. Read the logged-in user with `useAuth()` from
+  `@/lib/auth` (`useLoggedInUser()` on screens behind the login, ADR 0003).
   Cross-feature composition (e.g. `OnboardingGate`) lives in `src/app`.
 - `src/sw.ts` is the service worker (ADR 0005): WebWorker types via `tsconfig.sw.json`, no React or DOM. It may
   import only `src/lib` modules that don't touch the DOM; put its logic there so it can be unit-tested.

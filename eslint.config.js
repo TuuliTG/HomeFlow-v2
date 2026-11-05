@@ -1,4 +1,6 @@
 // @ts-check
+import { readdirSync } from 'node:fs';
+
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
@@ -6,6 +8,19 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+
+const FEATURES = readdirSync(new URL('src/features', import.meta.url), { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name);
+
+// Keep the Supabase client out of UI code — data access goes through feature api modules.
+const SUPABASE_IMPORT = {
+  name: '@supabase/supabase-js',
+  message: 'Use getSupabaseClient() from @/lib/supabase inside a feature api module.',
+};
+
+/** @param {{ group: string[]; message: string }[]} patterns */
+const restrictImports = (patterns = []) => ['error', { paths: [SUPABASE_IMPORT], patterns }];
 
 export default tseslint.config(
   {
@@ -66,19 +81,31 @@ export default tseslint.config(
   },
   {
     files: ['src/**/*.{ts,tsx}'],
+    rules: { 'no-restricted-imports': restrictImports() },
+  },
+  // Features stay independent: shared code moves to components/ui or lib, and cross-feature composition lives in
+  // src/app (AGENTS.md). Features are flat folders, so a relative `../` import always leaves the feature.
+  ...FEATURES.map((feature) => ({
+    files: [`src/features/${feature}/**/*.{ts,tsx}`],
     rules: {
-      // Keep the Supabase client out of UI code — data access goes through feature api modules.
-      'no-restricted-imports': [
-        'error',
+      'no-restricted-imports': restrictImports([
         {
-          paths: [
-            {
-              name: '@supabase/supabase-js',
-              message: 'Use getSupabaseClient() from @/lib/supabase inside a feature api module.',
-            },
-          ],
+          group: ['@/features/*', `!@/features/${feature}`, '../*'],
+          message:
+            'Features must not import other features; move shared code to components/ui or lib.',
         },
-      ],
+      ]),
+    },
+  })),
+  {
+    files: ['src/components/**/*.{ts,tsx}', 'src/lib/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': restrictImports([
+        {
+          group: ['@/features/*', '@/app/*'],
+          message: 'Shared code must not depend on features or the app shell.',
+        },
+      ]),
     },
   },
   {
