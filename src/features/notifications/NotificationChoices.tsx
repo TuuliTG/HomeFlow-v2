@@ -4,15 +4,18 @@ import { useNotificationPreferences } from '@/features/notifications/useNotifica
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface NotificationChoicesProps {
-  /** Children have no News, so they aren't told when someone finishes a task (ADR 0008). */
+  /** Children have no News, so they aren't told about finished tasks, thumbs up or comments (ADR 0008). */
   isChild: boolean;
 }
+
+/** The kinds that open News. */
+const newsKinds = new Set<NotificationKind>(['taskCompleted', 'taskLiked', 'taskCommented']);
 
 /** Which kinds of notification the user gets, on all their devices (ADR 0005). */
 export function NotificationChoices({ isChild }: NotificationChoicesProps) {
   const { preferences, setPreference, isSaving, failed } = useNotificationPreferences();
   const t = useMessages().notifications.choices;
-  const kinds = notificationKinds.filter((kind) => !isChild || kind !== 'taskCompleted');
+  const kinds = notificationKinds.filter((kind) => !isChild || !newsKinds.has(kind));
 
   return (
     <fieldset className="flex flex-col gap-2">

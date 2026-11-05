@@ -23,7 +23,13 @@ export interface PushMessage {
  * `notification_preferences`.
  */
 export type NotificationKind =
-  'task_added' | 'task_completed' | 'task_requested' | 'request_answered' | 'reminder';
+  | 'task_added'
+  | 'task_completed'
+  | 'task_liked'
+  | 'task_commented'
+  | 'task_requested'
+  | 'request_answered'
+  | 'reminder';
 
 /** A push message and the kind it is, so members who turned that kind off are skipped. */
 export interface Notification {

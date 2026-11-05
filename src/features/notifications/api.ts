@@ -11,6 +11,8 @@ import { getSupabaseClient } from '@/lib/supabase';
 const columns: Record<NotificationKind, string> = {
   taskAdded: 'task_added',
   taskCompleted: 'task_completed',
+  taskLiked: 'task_liked',
+  taskCommented: 'task_commented',
   taskRequested: 'task_requested',
   requestAnswered: 'request_answered',
   reminder: 'reminder',
@@ -20,6 +22,8 @@ const preferencesRowSchema = z
   .object({
     task_added: z.boolean(),
     task_completed: z.boolean(),
+    task_liked: z.boolean(),
+    task_commented: z.boolean(),
     task_requested: z.boolean(),
     request_answered: z.boolean(),
     reminder: z.boolean(),
@@ -60,6 +64,8 @@ export async function fetchPreferences(): Promise<NotificationPreferences> {
   return {
     taskAdded: row.task_added,
     taskCompleted: row.task_completed,
+    taskLiked: row.task_liked,
+    taskCommented: row.task_commented,
     taskRequested: row.task_requested,
     requestAnswered: row.request_answered,
     reminder: row.reminder,

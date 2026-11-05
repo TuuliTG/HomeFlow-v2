@@ -75,7 +75,7 @@ supabase/           config, SQL migrations, database tests, Edge Functions
   Supabase directly, and external data is validated with Zod.
 - **Security:** every table has Row Level Security; family data is scoped to the user's household.
 - **Edge Functions** (Deno): `add-child` and `child-sign-in` for children without email, `notify-household`,
-  `notify-request` and `send-reminders` for push notifications.
+  `notify-request`, `notify-praise` and `send-reminders` for push notifications.
 - **Texts** live in `src/locales/`, never inline in components.
 - **Errors:** a crashed screen shows a reload page; crashes, unhandled errors and Edge Function failures are
   reported to Sentry when a DSN is set.
@@ -126,7 +126,7 @@ Conventions for contributors and AI agents are in [AGENTS.md](AGENTS.md).
    3. Run the **Deploy database** workflow if the functions aren't deployed yet.
    4. **Supabase → Database Webhooks:** on insert and update of `tasks`, call the `notify-household` function (POST) with
       header `x-webhook-secret` set to the secret; on insert and update of `task_requests`, call `notify-request`
-      the same way.
+      the same way; on insert of `task_likes` and of `task_comments`, call `notify-praise` the same way.
    5. **Supabase → Integrations → Cron:** every minute (`* * * * *`), call the `send-reminders` function (POST)
       with the same `x-webhook-secret` header.
    6. In the app, turn on notifications on each device (on iPhone, add HomeFlow to the Home Screen first), then

@@ -19,6 +19,8 @@ export const notifications = {
     kinds: {
       taskAdded: 'someone adds a shared task',
       taskCompleted: 'someone finishes a shared task',
+      taskLiked: 'someone gives a thumbs up for a task I did',
+      taskCommented: 'someone comments on a task I did or commented on',
       taskRequested: 'someone asks me to do a task',
       requestAnswered: 'someone answers when I ask them to do a task',
       reminder: 'a reminder I set is due',

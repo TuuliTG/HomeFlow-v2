@@ -57,6 +57,8 @@ describe('notifications api', () => {
       data: {
         task_added: true,
         task_completed: false,
+        task_liked: true,
+        task_commented: false,
         task_requested: true,
         request_answered: false,
         reminder: true,
@@ -67,6 +69,8 @@ describe('notifications api', () => {
     await expect(fetchPreferences()).resolves.toEqual({
       taskAdded: true,
       taskCompleted: false,
+      taskLiked: true,
+      taskCommented: false,
       taskRequested: true,
       requestAnswered: false,
       reminder: true,
@@ -80,6 +84,8 @@ describe('notifications api', () => {
     await expect(fetchPreferences()).resolves.toEqual({
       taskAdded: true,
       taskCompleted: true,
+      taskLiked: true,
+      taskCommented: true,
       taskRequested: true,
       requestAnswered: true,
       reminder: true,
