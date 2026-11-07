@@ -1,6 +1,6 @@
 # 0003. Accounts and households
 
-- **Updated:** 2026-10-11
+- **Updated:** 2026-11-07
 
 ## Context
 
@@ -36,6 +36,14 @@ little personal data as possible, and joining a family must be low effort withou
   passes to `verifyOtp`. Adults make a new code (`new_child_sign_in_code()`), e.g. for a new device or after
   logging out; only for children added this way, so nobody signs in as a member with their own password. No email
   or password is stored for the child, and an adult (the parent) creates the account.
+- **Several accounts on one device**, for a child without a device of their own. On the household page an adult
+  taps "Use on this device" for a child without email: the app makes a sign-in code and takes it at once. The
+  account in use then waits in `localStorage` (`homeflow:deviceAccounts`: its tokens and display name) and the app
+  continues as the child; the menu under the name switches back and forth with one tap, no password (the owner's
+  choice: no worse than handing over a logged-in phone). Each account keeps its own Supabase session, swapped with
+  `setSession()`, so RLS always sees whoever uses the app. The query cache is dropped and the screens start afresh
+  on every switch. A kept account whose session has ended is forgotten when switched to; one that can't be reached
+  (offline) is kept. Logging out ends only the account in use; the login page offers to continue as the others.
 - **RLS scopes family data** with `household_id = (select private.current_household_id())`, a security-definer
   helper in the unexposed `private` schema.
 
@@ -48,6 +56,10 @@ little personal data as possible, and joining a family must be low effort withou
   a code means trying a share of 32^8 (about 10^12) codes within 15 minutes, fewer the more codes are live at once;
   there is no further rate limit.
 - Invite codes can't be rotated yet; there is no leaving a household or deleting an account in the app.
+- Anyone holding a device can switch to every account signed in on it, adults included. Kept tokens are as
+  exposed as Supabase's own session in `localStorage`. The device's push notifications stay with whoever turned
+  them on, or last opened Settings (ADR 0005), not with the account in use.
+- Only children without email can be added to a device this way; another adult's account still means logging out.
 - Supporting several households per user means replacing `current_household_id()` and the unique membership.
 
 ## Alternatives considered
@@ -55,4 +67,6 @@ little personal data as possible, and joining a family must be low effort withou
 - Emailed codes or magic links (need custom SMTP to reach the installed app), Google/Apple sign-in (another
   processor), email invitations (store invitees' emails before they consent).
 - For children: Supabase anonymous sign-in (a cleared device loses the account and its history), a name and PIN
-  (easy to guess, easy to forget), profiles switched on a parent's phone (every member must log in for RLS).
+  (easy to guess, easy to forget), profiles without their own login switched on a parent's phone (RLS needs
+  each member's own session; kept sessions do that instead). Asking for the adult's password to switch back
+  (safer from a child, but slower; may come later).
