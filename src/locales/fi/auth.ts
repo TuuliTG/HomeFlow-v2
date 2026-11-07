@@ -36,6 +36,7 @@ export const auth: Messages['auth'] = {
     other: 'Se ei onnistunut. Yritä hetken päästä uudelleen.',
   },
   switchAccount: {
+    menu: 'Tilit tällä laitteella',
     to: (name: string) => `Vaihda käyttäjään: ${name}`,
     continueAs: (name: string) => `Jatka käyttäjänä: ${name}`,
     onThisDevice: 'Kirjautuneena tällä laitteella',

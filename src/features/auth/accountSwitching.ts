@@ -10,6 +10,7 @@ import {
   readDeviceAccounts,
   type SessionTokens,
 } from '@/features/auth/deviceAccounts';
+import { AccountSignedOutError } from '@/lib/auth';
 
 // Several members can stay signed in on one device, e.g. a parent and a child without a device of their own
 // (ADR 0003). Each keeps their own Supabase session, so RLS sees whoever uses the app; the others wait in
@@ -17,27 +18,23 @@ import {
 
 /** Keeps the account in use waiting on this device, so it can be switched back to without logging in. */
 async function keepCurrentAccount(): Promise<SessionTokens | null> {
+  const signedIn = await currentSessionTokens();
+  if (!signedIn) return null;
+  const profile = await fetchOwnProfile(signedIn.userId);
+  // Read the tokens again right before switching: they may have been refreshed while the profile loaded.
   const current = await currentSessionTokens();
   if (!current) return null;
-  const profile = await fetchOwnProfile(current.userId);
   keepDeviceAccount({ ...current, displayName: profile?.displayName ?? '' });
   return current;
 }
 
-/** Goes back to the account that was in use when switching away from it failed. */
+/** Stays with the account that was in use, after switching away from it failed. */
 async function stayWith(current: SessionTokens | null): Promise<void> {
   if (!current) return;
-  // Switching can drop the current session from storage: put it back.
-  await signInWithTokens(current).catch(() => undefined);
-  forgetDeviceAccount(current.userId);
-}
-
-/** Switching found that the account's session has ended, so it was taken off this device. */
-export class AccountSignedOutError extends Error {
-  constructor() {
-    super("The account's session on this device has ended");
-    this.name = 'AccountSignedOutError';
-  }
+  // Switching rarely drops the current session; make sure it is in use. If that fails too, keep it on the
+  // list so the login page offers to continue as it.
+  const restored = await signInWithTokens(current).catch(() => false);
+  if (restored) forgetDeviceAccount(current.userId);
 }
 
 /**

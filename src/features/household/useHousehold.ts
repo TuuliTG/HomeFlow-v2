@@ -10,7 +10,7 @@ import {
   setMemberCanAddTasks,
   setMemberIsChild,
 } from '@/features/household/api';
-import { useAuth } from '@/lib/auth';
+import { AccountSignedOutError, useAuth } from '@/lib/auth';
 
 const householdKey = (userId: string | undefined) => ['household', userId] as const;
 
@@ -92,12 +92,13 @@ export function useChildOnThisDevice() {
   return useMutation({
     mutationFn: async (childId: string) => {
       if (otherAccounts.some((account) => account.userId === childId)) {
-        const switched = await switchAccount(childId).then(
-          () => true,
-          // Their session here may have ended; a new code signs them in again.
-          () => false,
-        );
-        if (switched) return;
+        try {
+          await switchAccount(childId);
+          return;
+        } catch (error) {
+          // Their session here has ended: a new code signs them in again.
+          if (!(error instanceof AccountSignedOutError)) throw error;
+        }
       }
       const { code } = await newChildSignInCode(childId);
       await signInChildOnThisDevice(code);

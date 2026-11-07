@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { fakeAuthBackend } from '@/test/fakeAuthApi';
+import { FAKE_PASSWORD, fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
@@ -144,6 +144,37 @@ describe('switching accounts on one device', () => {
 
     expect(await screen.findByText('Hello, Anna')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Switch to Ben' })).not.toBeInTheDocument();
+  });
+
+  it("doesn't show the child what was loaded for the adult", async () => {
+    annaWithBen();
+    const user = userEvent.setup();
+    renderAppAt('/household');
+    expect(await screen.findByRole('heading', { name: 'Invite your family' })).toBeInTheDocument();
+
+    await useBenOnThisDevice(user);
+    await user.click(screen.getByRole('link', { name: 'The Virtanens' }));
+
+    await screen.findByRole('region', { name: 'Members' });
+    expect(screen.queryByRole('heading', { name: 'Invite your family' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Child's name")).not.toBeInTheDocument();
+  });
+
+  it('stops offering an account once it logs in with its password', async () => {
+    annaWithBen();
+    const user = userEvent.setup();
+    renderAppAt('/household');
+    await useBenOnThisDevice(user);
+    await user.click(screen.getByText('Hello, Ben'));
+    await user.click(screen.getByRole('button', { name: 'Log out' }));
+
+    await user.type(await screen.findByLabelText('Email'), 'anna@example.com');
+    await user.type(screen.getByLabelText('Password'), FAKE_PASSWORD);
+    await user.click(screen.getByRole('button', { name: 'Log in' }));
+
+    expect(await screen.findByText('Hello, Anna')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Log out' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: /Switch to/ })).not.toBeInTheDocument();
   });
 
   it('keeps the top bar as it was while only one account is signed in here', async () => {

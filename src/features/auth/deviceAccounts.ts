@@ -38,7 +38,10 @@ function writeDeviceAccounts(accounts: DeviceAccount[]): void {
   else localStorage.setItem(storageKey, JSON.stringify(accounts));
 }
 
-/** Keeps `account` waiting on this device, first in the list, replacing what was kept for it before. */
+/**
+ * Keeps `account` waiting on this device, first in the list, replacing what was kept for it before. Throws if
+ * storage is unavailable, so a switch stops before it would lose the account.
+ */
 export function keepDeviceAccount(account: DeviceAccount): void {
   writeDeviceAccounts([
     account,
@@ -46,7 +49,14 @@ export function keepDeviceAccount(account: DeviceAccount): void {
   ]);
 }
 
-/** Takes the account off the list, e.g. once it is the one in use. */
+/**
+ * Takes the account off the list, e.g. once it is the one in use. Never throws: unlike keeping an account,
+ * failing to forget one loses nothing.
+ */
 export function forgetDeviceAccount(userId: string): void {
-  writeDeviceAccounts(readDeviceAccounts().filter((account) => account.userId !== userId));
+  try {
+    writeDeviceAccounts(readDeviceAccounts().filter((account) => account.userId !== userId));
+  } catch {
+    // Storage is unavailable; the entry is dropped when it is next used or the user signs in.
+  }
 }

@@ -36,6 +36,7 @@ export const auth: Messages['auth'] = {
     other: 'Det gick inte. Försök igen om en stund.',
   },
   switchAccount: {
+    menu: 'Konton på den här enheten',
     to: (name: string) => `Byt till ${name}`,
     continueAs: (name: string) => `Fortsätt som ${name}`,
     onThisDevice: 'Inloggade på den här enheten',

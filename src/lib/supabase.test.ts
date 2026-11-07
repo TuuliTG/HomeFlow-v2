@@ -36,14 +36,20 @@ describe('functionErrorStatus', () => {
   });
 });
 
-describe('isAuthOffline', () => {
-  it('tells a lost connection from Supabase Auth turning the request down', async () => {
-    const { AuthApiError, AuthRetryableFetchError } = await import('@supabase/supabase-js');
-    const { isAuthOffline } = await import('@/lib/supabase');
+describe('isSessionEnded', () => {
+  it('forgets a session only when Supabase Auth says it is gone', async () => {
+    const { AuthApiError, AuthRetryableFetchError, AuthSessionMissingError, AuthUnknownError } =
+      await import('@supabase/supabase-js');
+    const { isSessionEnded } = await import('@/lib/supabase');
 
-    expect(isAuthOffline(new AuthRetryableFetchError('Failed to fetch', 0))).toBe(true);
-    expect(
-      isAuthOffline(new AuthApiError('Invalid Refresh Token', 400, 'refresh_token_not_found')),
-    ).toBe(false);
+    expect(isSessionEnded(new AuthSessionMissingError())).toBe(true);
+    expect(isSessionEnded(new AuthApiError('Gone', 400, 'refresh_token_not_found'))).toBe(true);
+    expect(isSessionEnded(new AuthApiError('Gone', 403, 'session_not_found'))).toBe(true);
+    expect(isSessionEnded(new AuthApiError('Slow down', 429, 'over_request_rate_limit'))).toBe(
+      false,
+    );
+    expect(isSessionEnded(new AuthRetryableFetchError('Failed to fetch', 0))).toBe(false);
+    expect(isSessionEnded(new AuthUnknownError('Not JSON', null))).toBe(false);
+    expect(isSessionEnded(new Error('Network error'))).toBe(false);
   });
 });

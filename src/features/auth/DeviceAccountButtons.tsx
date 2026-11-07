@@ -24,7 +24,7 @@ export function DeviceAccountButtons({ switcher, label }: DeviceAccountButtonsPr
             type="button"
             disabled={switching}
             onClick={() => void switchTo(account.userId, name)}
-            className="bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 text-left font-medium text-white disabled:opacity-60"
+            className="bg-brand-600 hover:bg-brand-700 min-h-11 rounded-xl px-3 py-2 text-left font-medium text-white disabled:opacity-60"
           >
             {label(name)}
           </button>

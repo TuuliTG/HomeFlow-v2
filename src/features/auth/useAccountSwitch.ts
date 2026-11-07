@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
-import { AccountSignedOutError } from '@/features/auth/accountSwitching';
-import { useAuth } from '@/lib/auth';
+import { AccountSignedOutError, useAuth } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /**

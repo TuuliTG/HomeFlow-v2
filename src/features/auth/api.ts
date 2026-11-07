@@ -3,7 +3,12 @@ import { z } from 'zod';
 import type { SessionTokens } from '@/features/auth/deviceAccounts';
 import { LoginError, type LoginFailureReason } from '@/features/auth/loginError';
 import type { AuthUser } from '@/lib/auth';
-import { functionErrorStatus, getSupabaseClient, isAuthOffline } from '@/lib/supabase';
+import {
+  functionErrorStatus,
+  getSupabaseClient,
+  getThrowawaySupabaseClient,
+  isSessionEnded,
+} from '@/lib/supabase';
 
 export interface Profile {
   displayName: string;
@@ -88,16 +93,24 @@ export async function currentSessionTokens(): Promise<SessionTokens | null> {
 
 /**
  * Continues as an account kept on this device, in place of the current one, which stays valid. Resolves to
- * false if the kept session has ended (e.g. it logged out on another device); throws if Supabase can't be
- * reached.
+ * false, leaving the current account in use, if the kept session has ended (e.g. it logged out on another
+ * device); throws if it couldn't tell (e.g. offline).
  */
 export async function signInWithTokens(tokens: SessionTokens): Promise<boolean> {
-  const { error } = await getSupabaseClient().auth.setSession({
+  // Try the session out on a throwaway client first: one the app's client found ended would log out the
+  // account in use. This also refreshes an expired session, so the app's client gets a working one.
+  const tried = await getThrowawaySupabaseClient().auth.setSession({
     access_token: tokens.accessToken,
     refresh_token: tokens.refreshToken,
   });
-  if (error && isAuthOffline(error)) throw error;
-  return !error;
+  if (tried.error) {
+    if (isSessionEnded(tried.error)) return false;
+    throw tried.error;
+  }
+  if (!tried.data.session || tried.data.user?.id !== tokens.userId) return false;
+  const { error } = await getSupabaseClient().auth.setSession(tried.data.session);
+  if (error) throw error;
+  return true;
 }
 
 /**

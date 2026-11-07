@@ -36,6 +36,7 @@ export const auth = {
     other: "That didn't work. Try again in a moment.",
   },
   switchAccount: {
+    menu: 'Accounts on this device',
     to: (name: string) => `Switch to ${name}`,
     continueAs: (name: string) => `Continue as ${name}`,
     onThisDevice: 'Signed in on this device',

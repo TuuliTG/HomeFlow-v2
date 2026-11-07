@@ -43,6 +43,7 @@ export function AccountStatus() {
     <details className="group relative min-w-0 text-sm">
       <summary className="hover:bg-surface -my-1 flex min-h-11 cursor-pointer list-none items-center gap-1 rounded-xl px-2 [&::-webkit-details-marker]:hidden">
         {name}
+        <span className="sr-only">{t.auth.switchAccount.menu}</span>
         <ChevronDownIcon className="text-ink-muted size-5 shrink-0 transition-transform group-open:rotate-180" />
       </summary>
       <div className="bg-surface shadow-card absolute right-0 z-30 mt-2 flex w-56 flex-col gap-2 rounded-2xl p-3">
