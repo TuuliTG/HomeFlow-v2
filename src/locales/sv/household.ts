@@ -44,6 +44,9 @@ export const household: Messages['household'] = {
     newCode: 'Ny inloggningskod',
     newCodeFor: (name: string) => `Ny inloggningskod för ${name}`,
     newCodeFailed: 'Det gick inte att skapa en ny kod. Försök igen.',
+    useHere: 'Använd på den här enheten',
+    useHereFor: (name: string) => `Använd på den här enheten som ${name}`,
+    useHereFailed: 'Det gick inte att logga in barnet på den här enheten. Försök igen.',
   },
   family: {
     heading: 'Din familj',

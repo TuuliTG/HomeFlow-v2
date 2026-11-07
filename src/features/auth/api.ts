@@ -1,8 +1,14 @@
 import { z } from 'zod';
 
+import type { SessionTokens } from '@/features/auth/deviceAccounts';
 import { LoginError, type LoginFailureReason } from '@/features/auth/loginError';
 import type { AuthUser } from '@/lib/auth';
-import { functionErrorStatus, getSupabaseClient } from '@/lib/supabase';
+import {
+  functionErrorStatus,
+  getSupabaseClient,
+  getThrowawaySupabaseClient,
+  isSessionEnded,
+} from '@/lib/supabase';
 
 export interface Profile {
   displayName: string;
@@ -69,6 +75,42 @@ export async function signInWithChildCode(code: string): Promise<void> {
 export async function logOut(): Promise<void> {
   const { error } = await getSupabaseClient().auth.signOut({ scope: 'local' });
   if (error) throw error;
+}
+
+/** What signs the current account back in later, or null when logged out (ADR 0003). */
+export async function currentSessionTokens(): Promise<SessionTokens | null> {
+  const { data, error } = await getSupabaseClient().auth.getSession();
+  if (error) throw error;
+  const { session } = data;
+  return (
+    session && {
+      userId: session.user.id,
+      accessToken: session.access_token,
+      refreshToken: session.refresh_token,
+    }
+  );
+}
+
+/**
+ * Continues as an account kept on this device, in place of the current one, which stays valid. Resolves to
+ * false, leaving the current account in use, if the kept session has ended (e.g. it logged out on another
+ * device); throws if it couldn't tell (e.g. offline).
+ */
+export async function signInWithTokens(tokens: SessionTokens): Promise<boolean> {
+  // Try the session out on a throwaway client first: one the app's client found ended would log out the
+  // account in use. This also refreshes an expired session, so the app's client gets a working one.
+  const tried = await getThrowawaySupabaseClient().auth.setSession({
+    access_token: tokens.accessToken,
+    refresh_token: tokens.refreshToken,
+  });
+  if (tried.error) {
+    if (isSessionEnded(tried.error)) return false;
+    throw tried.error;
+  }
+  if (!tried.data.session || tried.data.user?.id !== tokens.userId) return false;
+  const { error } = await getSupabaseClient().auth.setSession(tried.data.session);
+  if (error) throw error;
+  return true;
 }
 
 /**

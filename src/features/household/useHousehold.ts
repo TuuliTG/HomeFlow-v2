@@ -10,6 +10,7 @@ import {
   setMemberCanAddTasks,
   setMemberIsChild,
 } from '@/features/household/api';
+import { AccountSignedOutError, useAuth } from '@/lib/auth';
 
 const householdKey = (userId: string | undefined) => ['household', userId] as const;
 
@@ -80,6 +81,29 @@ export function useAddChild(householdId: string) {
 /** Makes a new sign-in code for a child who signs in with codes. */
 export function useNewChildSignInCode() {
   return useMutation({ mutationFn: newChildSignInCode });
+}
+
+/**
+ * Continues as a child who signs in with codes on this device, e.g. a child without a device of their own:
+ * switches to them if they are already signed in here, else signs them in with a new code (ADR 0003).
+ */
+export function useChildOnThisDevice() {
+  const { otherAccounts, switchAccount, signInChildOnThisDevice } = useAuth();
+  return useMutation({
+    mutationFn: async (childId: string) => {
+      if (otherAccounts.some((account) => account.userId === childId)) {
+        try {
+          await switchAccount(childId);
+          return;
+        } catch (error) {
+          // Their session here has ended: a new code signs them in again.
+          if (!(error instanceof AccountSignedOutError)) throw error;
+        }
+      }
+      const { code } = await newChildSignInCode(childId);
+      await signInChildOnThisDevice(code);
+    },
+  });
 }
 
 /** Lets a child add tasks, or stops them. */

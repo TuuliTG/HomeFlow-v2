@@ -18,16 +18,24 @@ export type NotificationStatus =
 
 const deviceKey = (userId: string) => ['push-subscription', userId] as const;
 
-/** Forgets this device and unsubscribes it; used on log-out. Never throws. */
-export async function turnOffNotificationsOnThisDevice(): Promise<void> {
+/**
+ * Stops the logged-out user's notifications on this device; used on log-out. Never throws. The device stays
+ * subscribed while others are signed in on it (ADR 0003): one of them may get its notifications.
+ */
+export async function turnOffNotificationsOnThisDevice({
+  othersSignedInHere,
+}: {
+  othersSignedInHere: boolean;
+}): Promise<void> {
   if (pushSupport() !== 'supported') return;
   try {
+    // Deletes only the user's own subscription (RLS), not another account's for this device.
     const endpoint = await getDeviceEndpoint();
     if (endpoint) await deleteSubscription(endpoint);
   } catch {
     // Logging out must not fail because of notifications; the push service drops the row later.
   } finally {
-    await unsubscribeDevice().catch(() => undefined);
+    if (!othersSignedInHere) await unsubscribeDevice().catch(() => undefined);
   }
 }
 

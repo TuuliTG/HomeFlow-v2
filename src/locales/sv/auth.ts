@@ -35,6 +35,14 @@ export const auth: Messages['auth'] = {
     'unknown-child-code': 'Koden fungerar inte. Be en vuxen i familjen om en ny kod.',
     other: 'Det gick inte. Försök igen om en stund.',
   },
+  switchAccount: {
+    menu: 'Konton på den här enheten',
+    to: (name: string) => `Byt till ${name}`,
+    continueAs: (name: string) => `Fortsätt som ${name}`,
+    onThisDevice: 'Inloggade på den här enheten',
+    failed: (name: string) => `Det gick inte att byta till ${name}. Försök igen.`,
+    signedOut: (name: string) => `${name} är inte längre inloggad på den här enheten.`,
+  },
   childCode: {
     open: 'Logga in med en barnkod',
     heading: 'Logga in med en barnkod',
