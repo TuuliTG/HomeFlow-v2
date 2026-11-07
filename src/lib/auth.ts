@@ -9,11 +9,23 @@ export interface AuthUser {
   email: string;
 }
 
+/** Another account signed in on this device, ready to switch to without logging in (ADR 0003). */
+export interface OtherAccount {
+  userId: string;
+  displayName: string;
+}
+
 export interface AuthState {
   /** `loading` until the stored session has been checked on startup. */
   status: 'loading' | 'ready';
   user: AuthUser | null;
   logOut: () => Promise<void>;
+  /** The accounts waiting on this device, the most recently used first. */
+  otherAccounts: OtherAccount[];
+  /** Continues as one of `otherAccounts`; the current account waits in its place. */
+  switchAccount: (userId: string) => Promise<void>;
+  /** Signs a child in with their sign-in code on this device; the current account waits meanwhile. */
+  signInChildOnThisDevice: (code: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthState | null>(null);

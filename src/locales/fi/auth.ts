@@ -35,6 +35,13 @@ export const auth: Messages['auth'] = {
     'unknown-child-code': 'Koodi ei toimi. Pyydä perheesi aikuiselta uusi koodi.',
     other: 'Se ei onnistunut. Yritä hetken päästä uudelleen.',
   },
+  switchAccount: {
+    to: (name: string) => `Vaihda käyttäjään: ${name}`,
+    continueAs: (name: string) => `Jatka käyttäjänä: ${name}`,
+    onThisDevice: 'Kirjautuneena tällä laitteella',
+    failed: (name: string) => `Vaihto ei onnistunut (${name}). Yritä uudelleen.`,
+    signedOut: (name: string) => `${name} ei ole enää kirjautuneena tällä laitteella.`,
+  },
   childCode: {
     open: 'Kirjaudu lapsen koodilla',
     heading: 'Kirjaudu lapsen koodilla',

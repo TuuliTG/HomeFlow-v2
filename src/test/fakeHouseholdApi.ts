@@ -64,6 +64,17 @@ export const fakeHouseholdBackend = {
     memberships.set(userId, household.id);
     return household;
   },
+  /** Adds a child without email to the household, like `add_child()`; they sign in with codes. */
+  addChildAccount(displayName: string, householdName: string): AuthUser {
+    const child = fakeAuthBackend.addProfile(
+      `${displayName.toLowerCase()}@child.homeflow.invalid`,
+      displayName,
+    );
+    fakeHouseholdBackend.addMember(child.id, householdName);
+    children.add(child.id);
+    childAccounts.add(child.id);
+    return child;
+  },
   householdIdOf: (userId: string) => memberships.get(userId) ?? null,
   /** Marks the member as a child or an adult, like `set_member_is_child()` without its checks. */
   setChild(userId: string, isChild: boolean) {

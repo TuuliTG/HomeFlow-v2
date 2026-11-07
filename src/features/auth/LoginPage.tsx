@@ -4,6 +4,8 @@ import { Navigate } from 'react-router';
 import { paths } from '@/app/paths';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ChildCodeForm } from '@/features/auth/ChildCodeForm';
+import { DeviceAccountButtons } from '@/features/auth/DeviceAccountButtons';
+import { useAccountSwitch } from '@/features/auth/useAccountSwitch';
 import { DisplayNameForm } from '@/features/auth/DisplayNameForm';
 import { PasswordForm } from '@/features/auth/PasswordForm';
 import { useOwnProfile } from '@/features/auth/useOwnProfile';
@@ -11,8 +13,9 @@ import { useAuth } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /**
- * Log in with email and password (or create an account), or as a child with a sign-in code. A first-time
- * user then picks a display name; anyone who already has one is sent on to the app.
+ * Log in with email and password (or create an account), or as a child with a sign-in code, or continue as
+ * another account still signed in on this device. A first-time user then picks a display name; anyone who
+ * already has one is sent on to the app.
  */
 export function LoginPage() {
   const { status, user } = useAuth();
@@ -32,6 +35,8 @@ export function LoginPage() {
 
 function LoginForms() {
   const [withChildCode, setWithChildCode] = useState(false);
+  const { otherAccounts } = useAuth();
+  const switcher = useAccountSwitch();
   const t = useMessages();
 
   if (withChildCode) {
@@ -45,6 +50,14 @@ function LoginForms() {
   }
   return (
     <div className="flex flex-col gap-6">
+      {(otherAccounts.length > 0 || switcher.failure) && (
+        <section aria-labelledby="on-this-device" className="flex flex-col gap-2">
+          <h2 id="on-this-device" className="text-ink font-semibold">
+            {t.auth.switchAccount.onThisDevice}
+          </h2>
+          <DeviceAccountButtons switcher={switcher} label={t.auth.switchAccount.continueAs} />
+        </section>
+      )}
       <PasswordForm />
       <div className="border-line flex flex-col gap-2 border-t pt-6">
         <button

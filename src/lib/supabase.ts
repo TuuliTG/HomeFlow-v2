@@ -1,4 +1,9 @@
-import { createClient, FunctionsHttpError, type SupabaseClient } from '@supabase/supabase-js';
+import {
+  createClient,
+  FunctionsHttpError,
+  isAuthRetryableFetchError,
+  type SupabaseClient,
+} from '@supabase/supabase-js';
 
 import { parseEnv } from '@/lib/env';
 
@@ -20,4 +25,9 @@ export function getSupabaseClient(): SupabaseClient {
 /** The HTTP status an Edge Function answered with when `functions.invoke()` failed, or null if it didn't answer. */
 export function functionErrorStatus(error: unknown): number | null {
   return error instanceof FunctionsHttpError ? (error.context as Response).status : null;
+}
+
+/** Whether a Supabase Auth call failed for lack of a connection, so trying again later may work. */
+export function isAuthOffline(error: unknown): boolean {
+  return isAuthRetryableFetchError(error);
 }

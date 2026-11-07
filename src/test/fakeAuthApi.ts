@@ -18,6 +18,13 @@ const profiles = new Map<string, Profile>();
 const listeners = new Set<(user: AuthUser | null) => void>();
 /** One-time sign-in codes of children without email → the child. */
 const childCodes = new Map<string, AuthUser>();
+/** Accounts whose sessions ended elsewhere, so their kept tokens no longer sign in. */
+const endedSessions = new Set<string>();
+
+/** User ids in fake tokens are the user's email after `user:`, so tokens lead back to the user. */
+function userWithId(userId: string): AuthUser {
+  return userFor(userId.replace(/^user:/, ''));
+}
 
 function userFor(email: string): AuthUser {
   return { id: `user:${email}`, email };
@@ -39,6 +46,11 @@ export const fakeAuthBackend = {
     profiles.clear();
     listeners.clear();
     childCodes.clear();
+    endedSessions.clear();
+  },
+  /** Ends the user's sessions, as if they logged out everywhere: tokens kept for them stop working. */
+  endSessions(userId: string) {
+    endedSessions.add(userId);
   },
   /** Lets `code` sign in the child once (like `take_child_sign_in_code()`), replacing their earlier code. */
   setChildCode(child: AuthUser, code: string) {
@@ -104,6 +116,22 @@ export const signInWithChildCode: typeof authApi.signInWithChildCode = (code) =>
   childCodes.delete(key);
   setCurrentUser(child);
   return Promise.resolve();
+};
+
+export const currentSessionTokens: typeof authApi.currentSessionTokens = () =>
+  Promise.resolve(
+    currentUser && {
+      userId: currentUser.id,
+      accessToken: `access:${currentUser.id}`,
+      refreshToken: `refresh:${currentUser.id}`,
+    },
+  );
+
+export const signInWithTokens: typeof authApi.signInWithTokens = (tokens) => {
+  if (requestsFail) return Promise.reject(new Error('Network error'));
+  if (endedSessions.has(tokens.userId)) return Promise.resolve(false);
+  setCurrentUser(userWithId(tokens.userId));
+  return Promise.resolve(true);
 };
 
 export const logOut: typeof authApi.logOut = () => {

@@ -35,3 +35,15 @@ describe('functionErrorStatus', () => {
     expect(functionErrorStatus(null)).toBeNull();
   });
 });
+
+describe('isAuthOffline', () => {
+  it('tells a lost connection from Supabase Auth turning the request down', async () => {
+    const { AuthApiError, AuthRetryableFetchError } = await import('@supabase/supabase-js');
+    const { isAuthOffline } = await import('@/lib/supabase');
+
+    expect(isAuthOffline(new AuthRetryableFetchError('Failed to fetch', 0))).toBe(true);
+    expect(
+      isAuthOffline(new AuthApiError('Invalid Refresh Token', 400, 'refresh_token_not_found')),
+    ).toBe(false);
+  });
+});

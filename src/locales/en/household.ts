@@ -43,6 +43,9 @@ export const household = {
     newCode: 'New sign-in code',
     newCodeFor: (name: string) => `New sign-in code for ${name}`,
     newCodeFailed: "We couldn't make a new code. Try again.",
+    useHere: 'Use on this device',
+    useHereFor: (name: string) => `Use on this device as ${name}`,
+    useHereFailed: "We couldn't sign the child in on this device. Try again.",
   },
   family: {
     heading: 'Your family',

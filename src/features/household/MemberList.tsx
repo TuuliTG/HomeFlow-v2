@@ -2,6 +2,7 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import type { HouseholdMember, SignInCode } from '@/features/household/household';
 import { SavingCheckbox } from '@/components/ui/SavingCheckbox';
 import {
+  useChildOnThisDevice,
   useHouseholdMembers,
   useNewChildSignInCode,
   useSetMemberCanAddTasks,
@@ -24,6 +25,8 @@ interface MemberActions {
   setCanAddTasks?: (canAddTasks: boolean) => Promise<void>;
   /** Makes a new sign-in code for a child without email. */
   newCode?: (childName: string) => void;
+  /** Continues as a child without email on this device. */
+  signInHere?: () => void;
 }
 
 /**
@@ -39,6 +42,7 @@ function useMemberActions(
   const setIsChild = useSetMemberIsChild(householdId);
   const setCanAddTasks = useSetMemberCanAddTasks(householdId);
   const newCode = useNewChildSignInCode();
+  const childHere = useChildOnThisDevice();
   const t = useMessages().household.members;
 
   function actionsFor(member: HouseholdMember, isAdult: boolean): MemberActions {
@@ -58,6 +62,9 @@ function useMemberActions(
             },
           });
         },
+        signInHere: () => {
+          childHere.mutate(memberId);
+        },
       }),
     };
   }
@@ -65,11 +72,12 @@ function useMemberActions(
   return {
     actionsFor,
     isSaving: setIsChild.isPending || setCanAddTasks.isPending,
-    isMakingCode: newCode.isPending,
+    isMakingCode: newCode.isPending || childHere.isPending,
     failure:
       (setIsChild.isError && t.setChildFailed) ||
       (setCanAddTasks.isError && t.setCanAddTasksFailed) ||
-      (newCode.isError && t.newCodeFailed),
+      (newCode.isError && t.newCodeFailed) ||
+      (childHere.isError && t.useHereFailed),
   };
 }
 
@@ -123,7 +131,7 @@ interface MemberRowProps {
   isYou: boolean;
   actions: MemberActions;
   isSaving: boolean;
-  /** A code is being made, so another tap wouldn't replace it before it shows. */
+  /** A code is being made (or used), so another tap wouldn't replace it before it shows. */
   isMakingCode: boolean;
 }
 
@@ -131,7 +139,7 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
   const { common, household } = useMessages();
   const t = household.members;
   const name = member.displayName ?? common.newMember;
-  const { newCode, setIsChild, setCanAddTasks } = actions;
+  const { newCode, signInHere, setIsChild, setCanAddTasks } = actions;
   return (
     <li className="text-ink flex items-center justify-between gap-3 px-4 py-3">
       <div className="flex flex-col items-start gap-1">
@@ -150,6 +158,17 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
             className="text-brand-600 text-sm font-medium underline disabled:opacity-60"
           >
             {t.newCode}
+          </button>
+        )}
+        {signInHere && (
+          <button
+            type="button"
+            aria-label={t.useHereFor(name)}
+            disabled={isMakingCode}
+            onClick={signInHere}
+            className="text-brand-600 text-sm font-medium underline disabled:opacity-60"
+          >
+            {t.useHere}
           </button>
         )}
       </div>
