@@ -157,7 +157,7 @@ describe('tasks for children', () => {
 
     await user.click(await screen.findByRole('link', { name: 'Edit: Tidy my room' }));
     const title = await screen.findByLabelText('Task');
-    expect(screen.queryByRole('checkbox', { name: 'Children can do it' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Who is it for?' })).not.toBeInTheDocument();
     await user.type(title, ' and desk');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 

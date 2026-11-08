@@ -261,7 +261,7 @@ export interface HelpedTask {
   id: string;
   title: string;
   type: TaskType;
-  /** The user's share of its points. */
+  /** The user's bonus points for helping. */
   points: number;
   /** When it was marked done (ISO timestamp). */
   completedAt: string;
