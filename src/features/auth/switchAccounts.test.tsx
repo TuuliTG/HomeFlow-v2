@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
@@ -14,9 +14,16 @@ function annaWithBen() {
   return { anna, ben };
 }
 
-async function useBenOnThisDevice(user: UserEvent) {
-  await user.click(await screen.findByRole('button', { name: 'Use on this device as Ben' }));
-  await screen.findByText('Hello, Ben');
+const benOnThisDevice = { name: 'Ben is signed in on this device' };
+
+/** Ticks Ben as signed in on this device, and waits until he is. */
+async function signBenInHere(user: UserEvent) {
+  const box = await screen.findByRole('checkbox', benOnThisDevice);
+  await user.click(box);
+  await waitFor(() => {
+    expect(box).toBeEnabled();
+  });
+  expect(box).toBeChecked();
 }
 
 async function switchTo(user: UserEvent, name: string) {
@@ -24,8 +31,26 @@ async function switchTo(user: UserEvent, name: string) {
   await user.click(screen.getByRole('button', { name: `Switch to ${name}` }));
 }
 
+/** Signs Ben in on this device and continues as him. */
+async function useBenOnThisDevice(user: UserEvent) {
+  await signBenInHere(user);
+  await switchTo(user, 'Ben');
+  await screen.findByText('Hello, Ben');
+}
+
 describe('switching accounts on one device', () => {
-  it('lets an adult hand their device to a child without a code, landing on their Me page', async () => {
+  it('signs a child without a code in on this device while the adult stays', async () => {
+    const { anna } = annaWithBen();
+    const user = userEvent.setup();
+    renderAppAt('/household');
+
+    await signBenInHere(user);
+
+    expect(fakeAuthBackend.currentUser()?.id).toBe(anna.id);
+    expect(screen.getByText('Hello, Anna')).toBeInTheDocument();
+  });
+
+  it('lets an adult hand their device to a child signed in here, landing on their Me page', async () => {
     annaWithBen();
     const user = userEvent.setup();
     renderAppAt('/household');
@@ -49,20 +74,52 @@ describe('switching accounts on one device', () => {
     expect(await screen.findByText('Hello, Ben')).toBeInTheDocument();
   });
 
-  it('switches to a child already signed in here, without making them a new code', async () => {
+  it('shows a child signed in here as ticked after switching back', async () => {
     annaWithBen();
     const user = userEvent.setup();
     renderAppAt('/household');
     await useBenOnThisDevice(user);
     await switchTo(user, 'Anna');
     await screen.findByText('Hello, Anna');
-    // Making Ben a new code fails, so only switching can sign him in.
-    fakeHouseholdBackend.failRequests();
+
     await user.click(screen.getByRole('link', { name: 'The Virtanens' }));
 
-    await useBenOnThisDevice(user);
+    expect(await screen.findByRole('checkbox', benOnThisDevice)).toBeChecked();
+  });
 
-    expect(fakeAuthBackend.currentUser()?.id).toBe('user:ben@child.homeflow.invalid');
+  it('signs a child out of this device, ending their session', async () => {
+    const { ben } = annaWithBen();
+    const user = userEvent.setup();
+    renderAppAt('/household');
+    await signBenInHere(user);
+    const box = screen.getByRole('checkbox', benOnThisDevice);
+
+    await user.click(box);
+
+    await waitFor(() => {
+      expect(box).toBeEnabled();
+    });
+    expect(box).not.toBeChecked();
+    expect(fakeAuthBackend.hasSession(ben.id)).toBe(false);
+    expect(screen.getByRole('button', { name: 'Log out' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Switch to Ben' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the child signed in here when signing them out fails', async () => {
+    const { ben } = annaWithBen();
+    const user = userEvent.setup();
+    renderAppAt('/household');
+    await signBenInHere(user);
+    fakeAuthBackend.failRequests();
+    const box = screen.getByRole('checkbox', benOnThisDevice);
+
+    await user.click(box);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "We couldn't sign the child in or out on this device. Try again.",
+    );
+    expect(box).toBeChecked();
+    expect(fakeAuthBackend.hasSession(ben.id)).toBe(true);
   });
 
   it("is offered only for other members' child accounts, and only to adults", async () => {
@@ -73,15 +130,15 @@ describe('switching accounts on one device', () => {
     const user = userEvent.setup();
     renderAppAt('/household');
 
-    await screen.findByRole('button', { name: 'Use on this device as Ben' });
+    await screen.findByRole('checkbox', benOnThisDevice);
     expect(
-      screen.queryByRole('button', { name: 'Use on this device as Carl' }),
+      screen.queryByRole('checkbox', { name: 'Carl is signed in on this device' }),
     ).not.toBeInTheDocument();
     await useBenOnThisDevice(user);
     await user.click(screen.getByRole('link', { name: 'The Virtanens' }));
     const members = await screen.findByRole('region', { name: 'Members' });
     await within(members).findByText('Anna');
-    expect(screen.queryByRole('button', { name: /on this device/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /on this device/ })).not.toBeInTheDocument();
   });
 
   it('says so when the child could not be signed in here, and stays with the adult', async () => {
@@ -90,11 +147,12 @@ describe('switching accounts on one device', () => {
     const user = userEvent.setup();
     renderAppAt('/household');
 
-    await user.click(await screen.findByRole('button', { name: 'Use on this device as Ben' }));
+    await user.click(await screen.findByRole('checkbox', benOnThisDevice));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      "We couldn't sign the child in on this device. Try again.",
+      "We couldn't sign the child in or out on this device. Try again.",
     );
+    expect(screen.getByRole('checkbox', benOnThisDevice)).not.toBeChecked();
     expect(screen.getByText('Hello, Anna')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
   });

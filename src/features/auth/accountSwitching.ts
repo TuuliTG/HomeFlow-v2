@@ -1,7 +1,8 @@
 import {
+  childSessionFromCode,
   currentSessionTokens,
+  endKeptSession,
   fetchOwnProfile,
-  signInWithChildCode,
   signInWithTokens,
 } from '@/features/auth/api';
 import {
@@ -60,15 +61,22 @@ export async function switchToDeviceAccount(userId: string): Promise<void> {
   forgetDeviceAccount(userId);
 }
 
-/** Signs a child in with a sign-in code on this device, keeping the current account waiting. */
-export async function signInChildOnThisDevice(code: string): Promise<void> {
-  const current = await keepCurrentAccount();
-  try {
-    await signInWithChildCode(code);
-  } catch (error) {
-    await stayWith(current);
-    throw error;
-  }
-  const child = await currentSessionTokens();
-  if (child) forgetDeviceAccount(child.userId);
+/**
+ * Signs a child in with a sign-in code on this device, where they wait to be switched to; the account in use
+ * stays.
+ */
+export async function keepChildOnThisDevice(code: string, displayName: string): Promise<void> {
+  const child = await childSessionFromCode(code);
+  keepDeviceAccount({ ...child, displayName });
+}
+
+/**
+ * Signs an account waiting on this device out of it: its session ends, then the device forgets it. If ending
+ * the session fails (e.g. offline), it stays signed in here to try again.
+ */
+export async function signOutOnThisDevice(userId: string): Promise<void> {
+  const kept = readDeviceAccounts().find((account) => account.userId === userId);
+  if (!kept) return;
+  await endKeptSession(kept);
+  forgetDeviceAccount(userId);
 }

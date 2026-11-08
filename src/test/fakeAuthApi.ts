@@ -52,6 +52,8 @@ export const fakeAuthBackend = {
   endSessions(userId: string) {
     endedSessions.add(userId);
   },
+  /** Whether tokens kept for the user still sign in. */
+  hasSession: (userId: string) => !endedSessions.has(userId),
   /** Lets `code` sign in the child once (like `take_child_sign_in_code()`), replacing their earlier code. */
   setChildCode(child: AuthUser, code: string) {
     for (const [earlier, user] of childCodes) if (user.id === child.id) childCodes.delete(earlier);
@@ -106,7 +108,8 @@ export const createAccount: typeof authApi.createAccount = (email, password) => 
   return Promise.resolve();
 };
 
-export const signInWithChildCode: typeof authApi.signInWithChildCode = (code) => {
+/** Takes a child's one-time code, like the `child-sign-in` Edge Function. */
+function takeChildCode(code: string): Promise<AuthUser> {
   if (requestsFail) return Promise.reject(new Error('Network error'));
   const key = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   const child = childCodes.get(key);
@@ -114,18 +117,31 @@ export const signInWithChildCode: typeof authApi.signInWithChildCode = (code) =>
     return Promise.reject(new LoginError('unknown-child-code', 'Unknown, used or expired code'));
   }
   childCodes.delete(key);
-  setCurrentUser(child);
+  return Promise.resolve(child);
+}
+
+function tokensFor(user: AuthUser) {
+  return { userId: user.id, accessToken: `access:${user.id}`, refreshToken: `refresh:${user.id}` };
+}
+
+export const signInWithChildCode: typeof authApi.signInWithChildCode = async (code) => {
+  setCurrentUser(await takeChildCode(code));
+};
+
+export const childSessionFromCode: typeof authApi.childSessionFromCode = async (code) => {
+  const child = await takeChildCode(code);
+  endedSessions.delete(child.id);
+  return tokensFor(child);
+};
+
+export const endKeptSession: typeof authApi.endKeptSession = (tokens) => {
+  if (requestsFail) return Promise.reject(new Error('Network error'));
+  endedSessions.add(tokens.userId);
   return Promise.resolve();
 };
 
 export const currentSessionTokens: typeof authApi.currentSessionTokens = () =>
-  Promise.resolve(
-    currentUser && {
-      userId: currentUser.id,
-      accessToken: `access:${currentUser.id}`,
-      refreshToken: `refresh:${currentUser.id}`,
-    },
-  );
+  Promise.resolve(currentUser && tokensFor(currentUser));
 
 export const signInWithTokens: typeof authApi.signInWithTokens = (tokens) => {
   if (requestsFail) return Promise.reject(new Error('Network error'));
