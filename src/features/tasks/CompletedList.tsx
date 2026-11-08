@@ -8,7 +8,6 @@ import { emptyClassName } from '@/features/tasks/meStyles';
 import {
   canChooseHelpers,
   type CompletedTask,
-  doersShare,
   type HelpedTask,
   UNDO_WINDOW_MS,
 } from '@/features/tasks/task';
@@ -29,8 +28,11 @@ function newestFirst(done: CompletedTask[], helped: HelpedTask[]): CompletedEntr
   ].sort((a, b) => b.task.completedAt.localeCompare(a.task.completedAt));
 }
 
-/** The tasks the user did and those they helped with, so a helper sees their share of the work too. */
-export function CompletedList() {
+/**
+ * The tasks the user did and those they helped with, so a helper sees their bonus too. Children don't say who
+ * helped them (`asksWhoHelped`).
+ */
+export function CompletedList({ asksWhoHelped = true }: { asksWhoHelped?: boolean }) {
   const user = useLoggedInUser();
   const completed = useCompletedTasks(user.id);
   const helped = useHelpedTasks(user.id);
@@ -55,7 +57,12 @@ export function CompletedList() {
     >
       {entries.map((entry) =>
         entry.kind === 'done' ? (
-          <CompletedItem key={`done:${entry.task.id}`} task={entry.task} userId={user.id} />
+          <CompletedItem
+            key={`done:${entry.task.id}`}
+            task={entry.task}
+            userId={user.id}
+            asksWhoHelped={asksWhoHelped}
+          />
         ) : (
           <HelpedItem key={`helped:${entry.task.id}`} task={entry.task} />
         ),
@@ -64,7 +71,7 @@ export function CompletedList() {
   );
 }
 
-/** A task the user helped with: who did it and the user's share of its points. */
+/** A task the user helped with: who did it and the user's bonus points. */
 function HelpedItem({ task }: { task: HelpedTask }) {
   const { common, tasks } = useMessages();
   const t = tasks.me;
@@ -90,14 +97,19 @@ function DoneMark() {
   );
 }
 
-function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }) {
+interface CompletedItemProps {
+  task: CompletedTask;
+  userId: string;
+  asksWhoHelped: boolean;
+}
+
+function CompletedItem({ task, userId, asksWhoHelped }: CompletedItemProps) {
   const undo = useUndoCompleteTask(userId);
   const { common, tasks } = useMessages();
   const t = tasks.me;
   // Checked when the item appears; the database has the final say.
   const [now] = useState(Date.now);
   const canUndo = now - new Date(task.completedAt).getTime() < UNDO_WINDOW_MS;
-  const ownPoints = doersShare(task);
 
   return (
     <li className="flex flex-col gap-1 px-4 py-3 text-sm">
@@ -107,10 +119,10 @@ function CompletedItem({ task, userId }: { task: CompletedTask; userId: string }
           <span className="text-ink font-semibold">{task.title}</span>
           <span className="text-ink-muted">
             {t.doneOn(common.shortDate(new Date(task.completedAt)))}
-            {ownPoints !== null && ` · ${common.points(ownPoints)}`}
+            {task.points !== null && ` · ${common.points(task.points)}`}
           </span>
           <TaskHelpersLine helpers={task.helpers} />
-          {canChooseHelpers(task, now) && (
+          {asksWhoHelped && canChooseHelpers(task, now) && (
             <Link
               to={paths.taskHelpers(task.id)}
               aria-label={tasks.helpers.whoHelpedLabel(task.title)}

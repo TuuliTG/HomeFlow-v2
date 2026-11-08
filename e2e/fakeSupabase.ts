@@ -233,7 +233,7 @@ export async function fakeSupabase(page: Page) {
     };
   }
 
-  /** Who helped with each done task and their shares (task_helpers), by task id. */
+  /** Who helped with each done task and their bonus points (task_helpers), by task id. */
   const helpers = new Map<string, { user_id: string; points: number }[]>();
 
   /** A task with who helped, like `task_helpers(user_id, points)` embedded in the select. */
@@ -241,12 +241,13 @@ export async function fakeSupabase(page: Page) {
     return { ...task, task_helpers: helpers.get(task.id) ?? [] };
   }
 
-  /** Like private.task_credits: the doer gets what the helpers didn't, each helper their share. */
+  /** Like private.task_credits: the doer gets the task's points, each helper their bonus. */
   function creditsOf(task: TaskRow): { user_id: string | null; points: number }[] {
     if (task.completed_at === null || task.is_private) return [];
-    const shares = helpers.get(task.id) ?? [];
-    const helped = shares.reduce((total, share) => total + share.points, 0);
-    return [{ user_id: task.completed_by, points: (task.points ?? 0) - helped }, ...shares];
+    return [
+      { user_id: task.completed_by, points: task.points ?? 0 },
+      ...(helpers.get(task.id) ?? []),
+    ];
   }
 
   function joinAs(household: HouseholdRow) {
@@ -465,9 +466,9 @@ export async function fakeSupabase(page: Page) {
     return reply(route, 200, next.id);
   }
 
-  /** Like set_task_helpers(): who helped with a task the user did, sharing at most its points. */
+  /** Like set_task_helpers(): who helped with a task the user did, each with a bonus of 1–10 points. */
   async function setTaskHelpers(route: Route) {
-    const { task_id, helpers: shares } = route.request().postDataJSON() as {
+    const { task_id, helpers: bonuses } = route.request().postDataJSON() as {
       task_id: string;
       helpers: { user_id: string; points: number }[];
     };
@@ -477,10 +478,10 @@ export async function fakeSupabase(page: Page) {
     if (task?.points === undefined || task.points === null) {
       return reply(route, 400, { code: 'P0002', message: 'No task of yours done this week' });
     }
-    if (shares.reduce((total, share) => total + share.points, 0) > task.points) {
-      return reply(route, 400, { code: '23514', message: 'More than the task points' });
+    if (bonuses.some((bonus) => bonus.points < 1 || bonus.points > 10)) {
+      return reply(route, 400, { code: '23514', message: 'A bonus is 1–10 points' });
     }
-    helpers.set(task_id, shares);
+    helpers.set(task_id, bonuses);
     return reply(route, 200, null);
   }
 

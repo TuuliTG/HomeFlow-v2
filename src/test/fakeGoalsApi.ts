@@ -7,7 +7,7 @@ import { creditsOf, requestsFailing, tasks } from '@/test/fakeTasksBackend';
 /**
  * In-memory stand-in for `@/features/rewards/api`, installed for every unit test in `setup.ts`. Like
  * `household_goals()`, it counts the points of shared tasks in `fakeTasksBackend` done since a goal was
- * set, helpers' shares included, and decides whether a goal is reached like `goal_is_reached()`. Like
+ * set, helpers' bonus points included, and decides whether a goal is reached like `goal_is_reached()`. Like
  * its policies, members see all their household's goals and claim the shared goals they take part in
  * and their own, and only adults add, change and delete goals, one open goal of each kind per member.
  */

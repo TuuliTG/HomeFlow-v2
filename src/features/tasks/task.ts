@@ -43,6 +43,9 @@ export const UNDO_WINDOW_MS = 60 * 60 * 1000;
  */
 export const HELPERS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** The most bonus points a helper can get for one task (`task_helpers`). */
+export const MAX_HELPER_BONUS = 10;
+
 /** How often a task can repeat, in days; offered as choices when creating a task. */
 export const repeatChoices = [1, 2, 3, 7, 14, 30] as const;
 
@@ -213,7 +216,7 @@ export interface TaskSuggestion extends Omit<NewTask, 'dueOn' | 'assignedTo'> {
   isOpen: boolean;
 }
 
-/** Someone who helped with a task, and their share of its points (`task_helpers`). */
+/** Someone who helped with a task, and the bonus points they earned (`task_helpers`). */
 export interface TaskHelper {
   userId: string;
   /** Their display name, if they have chosen one. */
@@ -230,14 +233,8 @@ export interface CompletedTask {
   points: number | null;
   /** When it was marked done (ISO timestamp). */
   completedAt: string;
-  /** Who helped; their shares come out of the task's points. */
+  /** Who helped; their bonus points come on top of the task's. */
   helpers: TaskHelper[];
-}
-
-/** The points the task earned whoever marked it done: what the helpers didn't get. */
-export function doersShare({ points, helpers }: CompletedTask): number | null {
-  if (points === null) return null;
-  return helpers.reduce((rest, helper) => rest - helper.points, points);
 }
 
 /**

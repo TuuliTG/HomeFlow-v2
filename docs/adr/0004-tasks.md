@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-01 (task labels; adding a task that is already done)
+- **Updated:** 2026-11-08 (helpers earn bonus points; children don't say who helped)
 
 ## Context
 
@@ -132,20 +132,21 @@ next one back rather than follow a fixed calendar.
   elsewhere.
 - **Points**: the Me screen shows the user's total points, summed when read (`own_total_points()`), not stored.
   Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
-- **Helping**: whoever marked a shared task with points done can say, for a week (as long as it is in the News), who
-  helped them and give each helper a share of its points (`task_helpers`, written only by `set_task_helpers()`, which
+- **Helping**: an adult who marked a shared task with points done can say, for a week (as long as it is in the News),
+  who helped them and give each helper bonus points (`task_helpers`, written only by `set_task_helpers()`, which
   replaces the helpers). Right after marking such a task done, a prompt ("Laundry done! Did someone help?") links to
   the form for a while, unless nobody else is in the household (`WhoHelpedPrompt`, found from TanStack Query's
   mutation state, since the card goes when the board refreshes); "Who helped?" on the Me page's Completed list offers
   it for the rest of the week. We ask after the tap rather than adding a "Do together" button to every card: a phone's
-  action row is already full, and who helped is only known once the work is done. Shares are 1–10 and together at most the
-  task's points, and come out of the doer's points, so a task is worth the same however many helped: adding helpers
-  can't inflate totals or skew fairness. Only the doer chooses, since they give away their own points; a helper is
-  any other member, also a child helping with an adults-only task (they get the points without seeing the task). The
-  form suggests an even split. `private.task_credits` (a view only security definer functions read) credits the doer
-  the rest and each helper their share; statistics, goals and `own_total_points()` count it, and News adds up the
-  same from the embedded helpers. Undoing a task removes its helpers; a repeat doesn't copy them. A helper's Me page
-  lists the tasks they helped with among those they did ("You helped Anna", with their share), read with
+  action row is already full, and who helped is only known once the work is done. A bonus is 1–10 points (1 by default)
+  **on top of** the task's, which the doer keeps: parents found that doing a chore with a child's help takes longer,
+  so sharing out its points felt like a penalty. Bonuses do add to totals; the doer chooses them, and statistics show
+  who did what. Only the doer chooses; a helper is any other member, also a child helping with an adults-only task
+  (they get the points without seeing the task). **Children don't say who helped** (`set_task_helpers()` refuses
+  them, and their screens have no prompt or link): the tasks they do are theirs. `private.task_credits` (a view only
+  security definer functions read) credits the doer the task's points and each helper their bonus; statistics, goals
+  and `own_total_points()` count it, and News adds up the same from the embedded helpers. Undoing a task removes its helpers; a repeat doesn't copy them. A helper's Me page
+  lists the tasks they helped with among those they did ("You helped Anna", with their bonus), read with
   `own_helped_tasks()` (security definer): a child sees there the title of an adults-only task they helped with, and
   only there. The task stays off their board and News, and other children's, to keep a child's view simple.
 - The board (the **Shared tasks** page) shows open shared tasks, soonest due first and tasks without a due date last (newest first within a date).

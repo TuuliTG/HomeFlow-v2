@@ -29,8 +29,8 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
   opt-in, and an adult can make it one child's chore, which goes straight onto that child's Me page); up to three pictures to clarify details; an optional icon (e.g. a bed) shown on the task's tile; a **private** check mark keeps a task to yourself, without points. An **Already done** check mark adds a task you have just done and marks it done at once. Creating a task gets positive
   feedback and counts towards _tasks created_ (no points).
 - **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
-  On a done task, _Who helped?_ (also asked right after marking it done) gives helpers (a child who helped, an adult
-  who shared it) part of its points; helpers see the tasks they helped with under _Completed_. _To do_ can also show
+  On a done task, an adult's _Who helped?_ (also asked right after marking it done) gives helpers (a child who helped,
+  an adult who shared it) bonus points on top of the task's; helpers see the tasks they helped with under _Completed_. _To do_ can also show
   as a private timetable of a day or a week, to plan when to do each task by dragging it to a time.
 - **News** — what the family has done in the last week, by day: each member's points that day (physical and meta
   work apart) and each shared task done. Members give a thumbs up to others' work and comment on it.

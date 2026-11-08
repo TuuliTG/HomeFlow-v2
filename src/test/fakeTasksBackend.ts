@@ -18,7 +18,7 @@ export interface StoredTask extends NewTask {
   createdAt: string;
   /** Who marked it done and when (ISO timestamp); null while open. */
   completed: { by: string; at: string } | null;
-  /** Who helped whoever marked it done, and their shares of its points (`task_helpers`). */
+  /** Who helped whoever marked it done, and their bonus points (`task_helpers`). */
   helpers: { userId: string; points: number }[];
   /** Its pictures' file names, in order (`task_images`). */
   images: string[];
@@ -95,13 +95,12 @@ function addDays(isoDate: string, days: number): string {
 }
 
 /**
- * Who earned the points of a done shared task, like `private.task_credits`: the doer what the helpers
- * didn't get, and each helper their share. None for an open or private task.
+ * Who earned points with a done shared task, like `private.task_credits`: the doer all its points, and
+ * each helper their bonus. None for an open or private task.
  */
 export function creditsOf(task: StoredTask): Credit[] {
   if (!task.completed || task.isPrivate) return [];
-  const helped = task.helpers.reduce((total, helper) => total + helper.points, 0);
-  return [{ userId: task.completed.by, points: (task.points ?? 0) - helped }, ...task.helpers];
+  return [{ userId: task.completed.by, points: task.points ?? 0 }, ...task.helpers];
 }
 
 /** A task's helpers with their names, like the embedded `task_helpers`. */

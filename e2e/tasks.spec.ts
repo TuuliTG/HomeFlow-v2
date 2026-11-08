@@ -274,7 +274,9 @@ test('family member can show the tasks done in the household and star one', asyn
   ).toBeVisible();
 });
 
-test('family member can say who helped with a task and share its points', async ({ page }) => {
+test('family member can say who helped with a task and give them bonus points', async ({
+  page,
+}) => {
   await fakeSupabase(page);
   await logInAsNewUser(page);
   await page.getByLabel('Invite code').fill(EXISTING_HOUSEHOLD.inviteCode);
@@ -291,15 +293,15 @@ test('family member can say who helped with a task and share its points', async 
   expect(board.violations, 'a11y violations with the prompt').toEqual([]);
   await page.getByRole('link', { name: 'Who helped with Laundry?' }).click();
   await page.getByRole('checkbox', { name: 'Ben helped' }).check();
-  await page.getByRole('combobox', { name: 'Points for Ben' }).selectOption('1');
-  await expect(page.getByText('You keep 2 points.')).toBeVisible();
+  await expect(page.getByText('You keep all 2 points; bonuses come on top.')).toBeVisible();
+  await page.getByRole('combobox', { name: 'Bonus points for Ben' }).selectOption('3');
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations on the helpers page').toEqual([]);
   await page.getByRole('button', { name: 'Save' }).click();
 
   await expect(page).toHaveURL('/me');
   const completed = page.getByRole('list', { name: 'Completed tasks' });
-  await expect(completed.getByText('Helped by Ben (1 point)')).toBeVisible();
+  await expect(completed.getByText('Helped by Ben (3 points)')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Points earned' })).toContainText('2');
 });
 
