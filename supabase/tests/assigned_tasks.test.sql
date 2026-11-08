@@ -160,15 +160,19 @@ select is(
   'a task no longer given to a child is put back'
 );
 
--- A child who becomes an adult keeps their chores picked up, but no longer given to them.
+-- A child who becomes an adult gives back their chores, which are no longer given to them: adults don't do tasks
+-- for children.
 select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
   1::smallint, null, 1::smallint, true, null, '44444444-4444-4444-4444-444444444444', true);
 select public.set_member_is_child('44444444-4444-4444-4444-444444444444', false);
 select is(
   (select array[assigned_to, picked_up_by] from public.tasks where id = current_setting('test.next_bed')::uuid),
-  array[null, '44444444-4444-4444-4444-444444444444']::uuid[],
-  'a new adult keeps the task picked up, no longer given to them'
+  array[null, null]::uuid[],
+  'a new adult gives back a task for children, no longer given to them'
 );
+reset role;
+update public.household_members set is_child = true where user_id = '44444444-4444-4444-4444-444444444444';
+set local role authenticated;
 
 -- An app that doesn't say whose chore it is yet keeps the child.
 select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
@@ -185,15 +189,17 @@ select is(
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select public.pick_up_task(current_setting('test.cat')::uuid);
 select public.set_task_schedule(current_setting('test.cat')::uuid, now() + interval '1 day', 30);
-select public.request_task(current_setting('test.cat')::uuid, '11111111-1111-1111-1111-111111111111');
+select public.request_task(current_setting('test.cat')::uuid, '44444444-4444-4444-4444-444444444444');
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.update_task(current_setting('test.cat')::uuid, 'Feed the cat', null, 'physical',
   2::smallint, null, null, true, null, '22222222-2222-2222-2222-222222222222', true);
+set local request.jwt.claims = '{"sub": "44444444-4444-4444-4444-444444444444", "role": "authenticated"}';
 select throws_ok(
   $$ select public.answer_task_request(current_setting('test.cat')::uuid, true) $$,
   'P0002', null,
   'a request for a task given to a child is settled, even if the child already had it'
 );
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.update_task(current_setting('test.cat')::uuid, 'Feed the cat', null, 'physical',
   2::smallint, null, null, true, null, null, true);
 reset role;
@@ -204,10 +210,7 @@ select is(
 );
 set local role authenticated;
 
--- Dora is a child again. Ben picks the cat up and plans when to feed it; Anna gives it to Dora instead.
-reset role;
-update public.household_members set is_child = true where user_id = '44444444-4444-4444-4444-444444444444';
-set local role authenticated;
+-- Ben picks the cat up and plans when to feed it; Anna gives it to Dora instead.
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select public.pick_up_task(current_setting('test.cat')::uuid);
 select public.set_task_schedule(current_setting('test.cat')::uuid, now() + interval '1 day', 30);
@@ -230,9 +233,9 @@ select public.set_member_is_child('44444444-4444-4444-4444-444444444444', false)
 set local request.jwt.claims = '{"sub": "44444444-4444-4444-4444-444444444444", "role": "authenticated"}';
 select public.undo_complete_task(current_setting('test.cat')::uuid);
 select is(
-  (select assigned_to from public.tasks where id = current_setting('test.cat')::uuid),
-  null::uuid,
-  'a reopened chore is not given to a member who has become an adult'
+  (select array[assigned_to, picked_up_by] from public.tasks where id = current_setting('test.cat')::uuid),
+  array[null, null]::uuid[],
+  'a reopened chore is neither given to nor held by a member who has become an adult'
 );
 
 -- Carol, in another household, can't give a task to Ben.

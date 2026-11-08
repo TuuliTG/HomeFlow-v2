@@ -48,6 +48,29 @@ export function taskInput(values: FieldValues, isChild: boolean) {
   };
 }
 
+interface FormState {
+  isChild: boolean;
+  isPrivate: boolean;
+  forChildren: boolean;
+  /** Whether the form offers to add the task as already done. */
+  canBeDoneAlready: boolean;
+}
+
+/**
+ * Which fields the form shows, as it changes to suit who the task is for. An adult's task for children
+ * (`isForChildren`) asks which children and the stars each earns, and is neither a type of work nor added as
+ * done, since adults don't do it.
+ */
+export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready }: FormState) {
+  const isForChildren = !isChild && !isPrivate && forChildren;
+  return {
+    isForChildren,
+    type: !isForChildren,
+    points: !isPrivate,
+    alreadyDone: canBeDoneAlready && !isForChildren,
+  };
+}
+
 /** Who the task is for, as the field values say. */
 function audience(values: FieldValues, isChild: boolean) {
   // An adult's private task is theirs alone, so it isn't for children either.

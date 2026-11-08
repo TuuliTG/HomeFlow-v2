@@ -101,11 +101,7 @@ export async function fetchTasks(): Promise<Task[]> {
   );
 }
 
-/**
- * Adds a task to the user's household and returns its id; the database fills in the household and the
- * creator.
- */
-export async function addTask({
+function taskRow({
   repeatEveryDays,
   dueOn,
   isPrivate,
@@ -113,22 +109,33 @@ export async function addTask({
   assignedTo,
   customLabels,
   ...task
-}: NewTask): Promise<string> {
+}: NewTask) {
+  return {
+    ...task,
+    repeat_every_days: repeatEveryDays,
+    due_on: dueOn,
+    is_private: isPrivate,
+    for_children: forChildren,
+    assigned_to: assignedTo,
+    custom_labels: customLabels,
+  };
+}
+
+/**
+ * Adds tasks to the user's household, all or none, e.g. a chore for each of several children, and returns
+ * their ids in the same order; the database fills in the household and the creator.
+ */
+export async function addTasks(tasks: NewTask[]): Promise<string[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
-    .insert({
-      ...task,
-      repeat_every_days: repeatEveryDays,
-      due_on: dueOn,
-      is_private: isPrivate,
-      for_children: forChildren,
-      assigned_to: assignedTo,
-      custom_labels: customLabels,
-    })
-    .select('id')
-    .single();
+    .insert(tasks.map(taskRow))
+    .select('id');
   if (error) throw error;
-  return z.object({ id: z.string() }).parse(data).id;
+  return z
+    .array(z.object({ id: z.string() }))
+    .length(tasks.length)
+    .parse(data)
+    .map((row) => row.id);
 }
 
 /**

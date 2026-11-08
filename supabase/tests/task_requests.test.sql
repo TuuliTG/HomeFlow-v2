@@ -2,7 +2,7 @@
 -- Anna and Ben (adults) and Carol (a child) share a household; Dave has his own.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(29);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -55,6 +55,11 @@ select throws_ok(
   format($$ select public.request_task(%L, '33333333-3333-3333-3333-333333333333') $$, current_setting('test.dishes')),
   'P0002', null,
   'a child cannot be asked to do an adults-only task'
+);
+select throws_ok(
+  format($$ select public.request_task(%L, '22222222-2222-2222-2222-222222222222') $$, current_setting('test.cat')),
+  'P0002', null,
+  'an adult cannot be asked to do a task for children'
 );
 select throws_ok(
   format($$ select public.request_task(%L, '22222222-2222-2222-2222-222222222222') $$, current_setting('test.present')),
@@ -164,16 +169,16 @@ select results_eq(
 
 -- A request is settled once someone else picks the task up or it is done.
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
-select public.request_task(current_setting('test.cat')::uuid, '22222222-2222-2222-2222-222222222222');
+insert into public.tasks (title, type, points) values ('Sweep', 'physical', 1);
+select public.request_task(id, '22222222-2222-2222-2222-222222222222') from public.tasks where title = 'Sweep';
 select public.request_task(current_setting('test.plants')::uuid, '22222222-2222-2222-2222-222222222222');
-set local request.jwt.claims = '{"sub": "33333333-3333-3333-3333-333333333333", "role": "authenticated"}';
-select public.pick_up_task(current_setting('test.cat')::uuid);
-set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select public.pick_up_task(id) from public.tasks where title = 'Sweep';
 select public.complete_task(current_setting('test.plants')::uuid, current_date);
 select is_empty(
   format(
-    $$ select * from public.task_requests where task_id in (%L, %L) $$,
-    current_setting('test.cat'), current_setting('test.plants')
+    $$ select * from public.task_requests r join public.tasks t on t.id = r.task_id
+       where t.title = 'Sweep' or t.id = %L $$,
+    current_setting('test.plants')
   ),
   'a request goes once someone else picks the task up or it is done'
 );

@@ -86,8 +86,8 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
        */
       isPrivate: z.boolean(),
       /**
-       * Whether children in the household see it and can do it; adults see every task. A child's own
-       * tasks are always for children.
+       * Whether it is the children's: they see it and do it, and adults only see, edit and delete it while
+       * shared (`private.can_do_task()`). A child's own tasks are always for children.
        */
       forChildren: z.boolean(),
       /** What the task's tile shows instead of its type's icon; null for none. */
@@ -175,7 +175,18 @@ export function canRequest(task: Task, userId: string): boolean {
 }
 
 /**
- * The other members the user could ask to do the task: everyone else for a task for children, only
+ * Whether a member can pick up and mark done the task (`private.can_do_task()`): a shared task for children
+ * is the children's only, so its stars always go to a child.
+ */
+export function canDoTask(
+  task: Pick<Task, 'forChildren' | 'isPrivate'>,
+  isChild: boolean,
+): boolean {
+  return isChild || task.isPrivate || !task.forChildren;
+}
+
+/**
+ * The other members the user could ask to do the task: the children for a task for children, the
  * adults for the others (`request_task()`).
  */
 export function membersToAsk<M extends { id: string; isChild: boolean }>(
@@ -183,7 +194,7 @@ export function membersToAsk<M extends { id: string; isChild: boolean }>(
   members: M[],
   userId: string,
 ): M[] {
-  return members.filter((member) => member.id !== userId && (task.forChildren || !member.isChild));
+  return members.filter((member) => member.id !== userId && member.isChild === task.forChildren);
 }
 
 export interface LastDone {

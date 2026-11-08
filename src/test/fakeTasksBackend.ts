@@ -1,5 +1,5 @@
 import type * as liveApi from '@/features/tasks/liveApi';
-import type { NewTask, TaskHelper } from '@/features/tasks/task';
+import { canDoTask, type NewTask, type TaskHelper } from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
@@ -53,6 +53,11 @@ export function canSee(userId: string, task: StoredTask): boolean {
     ((task.forChildren && (task.assignedTo === null || task.assignedTo === userId)) ||
       !fakeHouseholdBackend.isChild(userId))
   );
+}
+
+/** Whether `userId` can pick up and mark done the task, like `private.can_do_task()`. */
+function canDo(userId: string, task: StoredTask): boolean {
+  return canDoTask(task, fakeHouseholdBackend.isChild(userId));
 }
 
 /** Whether `userId` is a child in the household, who can be given a task (`private.is_child_in_household()`). */
@@ -184,6 +189,7 @@ export const fakeTasksBackend = {
   /** Picks up an open task for `userId`, like `pick_up_task()`, and delivers the change live. */
   pickUpTaskAs(userId: string, taskId: string) {
     const task = openTaskOf(userId, taskId);
+    if (!canDo(userId, task)) throw new Error('Only children pick up tasks for children');
     if (task.pickedUpBy === userId) return;
     if (task.pickedUpBy) throw new Error('Someone else has picked up this task');
     task.pickedUpBy = userId;
@@ -196,6 +202,7 @@ export const fakeTasksBackend = {
    */
   completeTaskAs(userId: string, taskId: string, completedOn: string) {
     const task = openTaskOf(userId, taskId);
+    if (!canDo(userId, task)) throw new Error('Only children mark tasks for children done');
     completions += 1;
     // A millisecond apart, so the newest completion sorts first.
     task.completed = { by: userId, at: new Date(Date.now() + completions).toISOString() };

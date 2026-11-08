@@ -5,6 +5,10 @@ export const tasks = {
   board: {
     title: 'Shared tasks',
     showCompleted: 'Show completed',
+    /** The tasks for children, which adults only check and edit; children do them. */
+    showChildrens: "Show children's tasks",
+    childrens: "Children's tasks",
+    noChildrens: 'No tasks for children here.',
     show: 'Show',
     /** The filter by who has picked tasks up. */
     who: 'Picked up by',

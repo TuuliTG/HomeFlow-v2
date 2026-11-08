@@ -78,7 +78,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
             householdId,
             before: imagesBefore,
           });
-          await navigate(paths.taskList(changed.isPrivate));
+          await navigate(paths.taskList(changed));
         }}
       />
       <DeleteTask task={task} userId={userId} />
@@ -126,7 +126,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
             // Not mutate()'s onSuccess: the refetch after deleting removes the task, which unmounts
             // this form before that callback would run. A failure shows through isError.
             deleteTask.mutateAsync(task).then(
-              () => navigate(paths.taskList(task.isPrivate)),
+              () => navigate(paths.taskList(task)),
               () => undefined,
             );
           }}

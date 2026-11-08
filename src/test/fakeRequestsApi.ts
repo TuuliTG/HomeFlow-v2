@@ -33,7 +33,7 @@ export const fakeRequestsBackend = {
     const canDoIt =
       memberId !== userId &&
       fakeHouseholdBackend.householdIdOf(memberId) === task.householdId &&
-      (task.forChildren || !fakeHouseholdBackend.isChild(memberId));
+      fakeHouseholdBackend.isChild(memberId) === task.forChildren;
     if (!canDoIt) throw new Error('No member with this id in your household can do this task');
     requests.set(taskId, { requestedBy: userId, requestedFor: memberId, answer: null });
     deliver(task, { kind: 'changed' });

@@ -7,6 +7,9 @@ export const tasks: Messages['tasks'] = {
   board: {
     title: 'Gemensamma uppgifter',
     showCompleted: 'Visa gjorda',
+    showChildrens: 'Visa barnens uppgifter',
+    childrens: 'Barnens uppgifter',
+    noChildrens: 'Inga uppgifter för barn här.',
     show: 'Visa',
     who: 'Tagen av',
     you: 'Du',

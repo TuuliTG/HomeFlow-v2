@@ -354,11 +354,10 @@ describe('tasks api', () => {
     await expect(api.fetchTasks()).rejects.toBe(failure);
   });
 
-  it('adds a task, leaving household and creator to the database, and returns its id', async () => {
+  it('adds tasks, leaving household and creator to the database, and returns their ids', async () => {
     query.insert.mockReturnValue(query);
-    query.single.mockResolvedValue({ data: { id: 't9' }, error: null });
-
-    const id = await api.addTask({
+    query.select.mockResolvedValue({ data: [{ id: 't9' }, { id: 't10' }], error: null });
+    const task: NewTask = {
       ...newTask,
       repeatEveryDays: 7,
       dueOn: '2026-10-10',
@@ -367,10 +366,12 @@ describe('tasks api', () => {
       assignedTo: 'ben',
       labels: ['cleaning'],
       customLabels: ['Upstairs'],
-    });
+    };
+
+    const ids = await api.addTasks([task, { ...task, assignedTo: 'carol' }]);
 
     expect(client.from).toHaveBeenCalledWith('tasks');
-    expect(query.insert).toHaveBeenCalledWith({
+    const row = {
       title: 'Vacuum',
       description: null,
       type: 'physical',
@@ -383,16 +384,17 @@ describe('tasks api', () => {
       assigned_to: 'ben',
       labels: ['cleaning'],
       custom_labels: ['Upstairs'],
-    });
+    };
+    expect(query.insert).toHaveBeenCalledWith([row, { ...row, assigned_to: 'carol' }]);
     expect(query.select).toHaveBeenCalledWith('id');
-    expect(id).toBe('t9');
+    expect(ids).toEqual(['t9', 't10']);
   });
 
   it('passes errors on when adding fails', async () => {
     query.insert.mockReturnValue(query);
-    query.single.mockResolvedValue({ data: null, error: failure });
+    query.select.mockResolvedValue({ data: null, error: failure });
 
-    await expect(api.addTask(newTask)).rejects.toBe(failure);
+    await expect(api.addTasks([newTask])).rejects.toBe(failure);
   });
 
   it('marks a task done on the given day', async () => {

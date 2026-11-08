@@ -326,38 +326,45 @@ export async function fakeSupabase(page: Page) {
     return reply(route, 204);
   }
 
+  /** What the app sends to add a task. */
+  type NewTaskRow = Pick<
+    TaskRow,
+    | 'title'
+    | 'description'
+    | 'type'
+    | 'points'
+    | 'repeat_every_days'
+    | 'due_on'
+    | 'is_private'
+    | 'for_children'
+    | 'assigned_to'
+    | 'labels'
+    | 'custom_labels'
+  >;
+
   async function tasksEndpoint(route: Route) {
     const request = route.request();
     if (request.method() === 'POST') {
       if (!ownHousehold) return reply(route, 400, { code: '23502', message: 'No household' });
-      const task = request.postDataJSON() as Pick<
-        TaskRow,
-        | 'title'
-        | 'description'
-        | 'type'
-        | 'points'
-        | 'repeat_every_days'
-        | 'due_on'
-        | 'is_private'
-        | 'for_children'
-        | 'assigned_to'
-        | 'labels'
-        | 'custom_labels'
-      >;
-      const id = `e2e-task-${String(tasks.length)}`;
-      tasks.unshift({
-        ...task,
-        id,
-        household_id: ownHousehold.id,
-        created_by: user.id,
-        // Like the trigger on tasks: a task given to a child is picked up for them.
-        picked_up_by: task.assigned_to,
-        created_at: new Date().toISOString(),
-        completed_at: null,
-        completed_by: null,
-        previous_task_id: null,
+      const homeId = ownHousehold.id;
+      const body = request.postDataJSON() as NewTaskRow | NewTaskRow[];
+      const ids = (Array.isArray(body) ? body : [body]).map((task) => {
+        const id = `e2e-task-${String(tasks.length)}`;
+        tasks.unshift({
+          ...task,
+          id,
+          household_id: homeId,
+          created_by: user.id,
+          // Like the trigger on tasks: a task given to a child is picked up for them.
+          picked_up_by: task.assigned_to,
+          created_at: new Date().toISOString(),
+          completed_at: null,
+          completed_by: null,
+          previous_task_id: null,
+        });
+        return { id };
       });
-      return replyWithRows(route, [{ id }]);
+      return replyWithRows(route, ids);
     }
     const householdId = ownHousehold?.id;
     // The news asks for the household's shared tasks done since a date (`completed_at=gte.<timestamp>`), newest

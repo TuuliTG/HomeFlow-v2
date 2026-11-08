@@ -7,6 +7,8 @@ import { useMessages } from '@/lib/i18n/i18n';
 interface TaskPointsFieldProps {
   /** A child doesn't choose the points of their task: an adult awards them (ADR 0004). */
   isChild: boolean;
+  /** An adult's task for children earns each child who does it these points, shown as stars. */
+  forChildren: boolean;
   value: string;
   onChange: (points: string) => void;
   inputRef: Ref<HTMLInputElement>;
@@ -16,6 +18,7 @@ interface TaskPointsFieldProps {
 /** The points a shared task earns; none for a child, whose task an adult awards points to. */
 export function TaskPointsField({
   isChild,
+  forChildren,
   value,
   onChange,
   inputRef,
@@ -25,7 +28,7 @@ export function TaskPointsField({
   if (isChild) return null;
   return (
     <label className="text-ink flex flex-col gap-1 text-sm font-medium">
-      {t.points}
+      {forChildren ? t.stars : t.points}
       <input
         type="number"
         name="points"

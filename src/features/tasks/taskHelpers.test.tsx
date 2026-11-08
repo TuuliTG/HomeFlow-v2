@@ -178,7 +178,7 @@ describe('helping with a task', () => {
       points: 1,
       forChildren: true,
     });
-    fakeTasksBackend.completeTaskAs(anna.id, 'task:1', '2026-10-11');
+    fakeTasksBackend.completeTaskAs(ben.id, 'task:1', '2026-10-11');
     fakeAuthBackend.logInAs('ben@example.com');
     const { router } = renderAppAt('/me');
 
@@ -190,6 +190,7 @@ describe('helping with a task', () => {
 
     // Ben is a child and Laundry is for adults: it stays off his board.
     await router.navigate('/?completed=1');
+    await screen.findByRole('heading', { name: 'Tasks for you' });
     expect(await screen.findByText('Feed the cat')).toBeInTheDocument();
     expect(screen.queryByText('Laundry')).not.toBeInTheDocument();
   });
