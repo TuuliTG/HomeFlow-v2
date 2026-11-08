@@ -10,7 +10,7 @@ import {
   setMemberCanAddTasks,
   setMemberIsChild,
 } from '@/features/household/api';
-import { AccountSignedOutError, useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 
 const householdKey = (userId: string | undefined) => ['household', userId] as const;
 
@@ -83,25 +83,28 @@ export function useNewChildSignInCode() {
   return useMutation({ mutationFn: newChildSignInCode });
 }
 
+interface ChildOnThisDevice {
+  childId: string;
+  displayName: string;
+  /** Signs the child in on this device when true, out of it when false. */
+  onThisDevice: boolean;
+}
+
 /**
- * Continues as a child who signs in with codes on this device, e.g. a child without a device of their own:
- * switches to them if they are already signed in here, else signs them in with a new code (ADR 0003).
+ * Signs a child who signs in with codes in on this device with a new code, e.g. a child without a device of
+ * their own, or out of it again. The account in use stays; the child is then switched to from the account
+ * menu (ADR 0003).
  */
-export function useChildOnThisDevice() {
-  const { otherAccounts, switchAccount, signInChildOnThisDevice } = useAuth();
+export function useSetChildOnThisDevice() {
+  const { keepChildOnThisDevice, signOutOnThisDevice } = useAuth();
   return useMutation({
-    mutationFn: async (childId: string) => {
-      if (otherAccounts.some((account) => account.userId === childId)) {
-        try {
-          await switchAccount(childId);
-          return;
-        } catch (error) {
-          // Their session here has ended: a new code signs them in again.
-          if (!(error instanceof AccountSignedOutError)) throw error;
-        }
+    mutationFn: async ({ childId, displayName, onThisDevice }: ChildOnThisDevice) => {
+      if (!onThisDevice) {
+        await signOutOnThisDevice(childId);
+        return;
       }
       const { code } = await newChildSignInCode(childId);
-      await signInChildOnThisDevice(code);
+      await keepChildOnThisDevice(code, displayName);
     },
   });
 }

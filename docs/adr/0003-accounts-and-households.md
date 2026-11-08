@@ -37,9 +37,10 @@ little personal data as possible, and joining a family must be low effort withou
   logging out; only for children added this way, so nobody signs in as a member with their own password. No email
   or password is stored for the child, and an adult (the parent) creates the account.
 - **Several accounts on one device**, for a child without a device of their own. On the household page an adult
-  taps "Use on this device" for a child without email: the app makes a sign-in code and takes it at once. The
-  account in use then waits in `localStorage` (`homeflow:deviceAccounts`: its tokens and display name) and the app
-  continues as the child; the menu under the name switches back and forth with one tap, no password (the owner's
+  ticks "On this device" for a child without email: the app makes a sign-in code and takes it at once on a
+  throwaway in-memory client, so the adult stays in use. Accounts not in use wait in `localStorage`
+  (`homeflow:deviceAccounts`: their tokens and display name); unticking ends the child's session and forgets it
+  here. The menu under the name switches back and forth with one tap, no password (the owner's
   choice: no worse than handing over a logged-in phone). Each account keeps its own Supabase session, so RLS always
   sees whoever uses the app. A kept session is tried on a throwaway in-memory client first (the app's own client
   logs out the user in use when it meets an ended session), then handed to the app's client with `setSession()`.

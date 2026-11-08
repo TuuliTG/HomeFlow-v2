@@ -28,7 +28,11 @@ const supabase = vi.hoisted(() => {
 });
 
 const getSupabaseClient = vi.hoisted(() => vi.fn());
-const throwawayAuth = vi.hoisted(() => ({ setSession: vi.fn() }));
+const throwawayAuth = vi.hoisted(() => ({
+  setSession: vi.fn(),
+  verifyOtp: vi.fn(),
+  signOut: vi.fn(),
+}));
 vi.mock('@/lib/supabase', () => ({
   getSupabaseClient,
   getThrowawaySupabaseClient: () => ({ auth: throwawayAuth }),
@@ -82,6 +86,28 @@ describe('auth api', () => {
     });
     auth.verifyOtp.mockResolvedValueOnce({ error: { code: 'otp_expired', message: 'Expired' } });
     await expect(api.signInWithChildCode('KX7P-29QF')).rejects.toMatchObject({ reason: 'other' });
+  });
+
+  it("signs a child in on a throwaway client, handing over their session and leaving the app's alone", async () => {
+    supabase.client.functions.invoke.mockResolvedValueOnce({
+      data: { tokenHash: 'token-hash' },
+      error: null,
+    });
+    throwawayAuth.verifyOtp.mockResolvedValueOnce({
+      data: { session: { access_token: 'a', refresh_token: 'r', user: { id: 'ben' } } },
+      error: null,
+    });
+
+    await expect(api.childSessionFromCode('KX7P-29QF')).resolves.toEqual({
+      userId: 'ben',
+      accessToken: 'a',
+      refreshToken: 'r',
+    });
+    expect(throwawayAuth.verifyOtp).toHaveBeenCalledWith({
+      token_hash: 'token-hash',
+      type: 'email',
+    });
+    expect(auth.verifyOtp).not.toHaveBeenCalled();
   });
 
   it('logs in with email and password', async () => {
@@ -250,6 +276,24 @@ describe('auth api', () => {
 
       await expect(api.signInWithTokens(kept)).resolves.toBe(false);
       expect(auth.setSession).not.toHaveBeenCalled();
+    });
+
+    it('ends a kept session, unless it has already ended', async () => {
+      throwawayAuth.setSession.mockResolvedValueOnce({ data: { session: fresh }, error: null });
+      throwawayAuth.signOut.mockResolvedValueOnce({ error: null });
+      await api.endKeptSession(kept);
+      expect(throwawayAuth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+
+      throwawayAuth.signOut.mockClear();
+      throwawayAuth.setSession.mockResolvedValueOnce({
+        data: { session: null },
+        error: { code: 'session_not_found', message: 'Session not found' },
+      });
+      await api.endKeptSession(kept);
+      expect(throwawayAuth.signOut).not.toHaveBeenCalled();
+
+      throwawayAuth.setSession.mockResolvedValueOnce({ data: { session: null }, error: failure });
+      await expect(api.endKeptSession(kept)).rejects.toBe(failure);
     });
 
     it("throws when it can't tell, e.g. offline", async () => {
