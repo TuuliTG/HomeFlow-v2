@@ -44,7 +44,7 @@ function card(name: string) {
 }
 
 describe('news page', () => {
-  it('names who helped, crediting them their share of the points', async () => {
+  it("names who helped, crediting them their bonus on top of the doer's points", async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
     const laundry = doTask(anna.id, anna.id, { title: 'Laundry', points: 5 });
@@ -59,7 +59,7 @@ describe('news page', () => {
       within(within(today).getByRole('list', { name: 'Points earned' }))
         .getAllByRole('listitem')
         .map((summary) => summary.textContent),
-    ).toEqual(['You earned 3 points of physical work', 'Ben earned 2 points of physical work']);
+    ).toEqual(['You earned 5 points of physical work', 'Ben earned 2 points of physical work']);
   });
 
   it("shows what everyone did each day, with each member's points that day", async () => {

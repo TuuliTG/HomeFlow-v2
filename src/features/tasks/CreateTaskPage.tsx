@@ -5,18 +5,17 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { parseToDoView, startFromLink } from '@/features/tasks/schedule';
 import { findSuggestion, suggestionAsTask } from '@/features/tasks/suggestions';
-import type { NewTask } from '@/features/tasks/task';
+import { canDoTask, type NewTask } from '@/features/tasks/task';
 import {
   type DraftImage,
   ImagesNotSavedError,
   imagesNotSavedState,
 } from '@/features/tasks/taskImages';
 import { notMarkedDoneState } from '@/features/tasks/notMarkedDone';
-import { TaskForm } from '@/features/tasks/TaskForm';
+import { type SaveOptions, TaskForm } from '@/features/tasks/TaskForm';
 import { taskFromLink } from '@/features/tasks/taskLink';
 import { usePlanNewTask } from '@/features/tasks/useSchedules';
 import {
-  type DoneTask,
   useAddTask,
   useCompleteTask,
   useFavouriteTasks,
@@ -60,7 +59,7 @@ interface NewTaskFormProps {
 }
 
 function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
-  const saveTask = useSaveNewTask(userId, householdId);
+  const saveTask = useSaveNewTask(userId, isChild, householdId);
   const suggestions = useTaskSuggestions(userId);
   const favourites = useFavouriteTasks(userId);
   const setFavourite = useSetFavouriteTask(userId);
@@ -109,7 +108,7 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
  * Adds a new task, then marks it done if the user said it is already, or plans it in their timetable if
  * they are adding it from there (`paths.newTaskAt`), and opens where it shows.
  */
-function useSaveNewTask(userId: string, householdId: string | null) {
+function useSaveNewTask(userId: string, isChild: boolean, householdId: string | null) {
   const addTask = useAddTask(userId);
   const planNewTask = usePlanNewTask(userId);
   const completeTask = useCompleteTask(userId);
@@ -117,13 +116,14 @@ function useSaveNewTask(userId: string, householdId: string | null) {
   const [searchParams] = useSearchParams();
   const startsAt = startFromLink(searchParams);
 
-  async function markDone(task: DoneTask) {
+  async function markDone(taskId: string, task: NewTask) {
+    const { title, points, isPrivate } = task;
     try {
-      await completeTask.mutateAsync(task);
+      await completeTask.mutateAsync({ id: taskId, title, points, isPrivate });
     } catch (error) {
       // The task was added, so saving it again would add it twice: the user marks it done from its card.
       void reportError(error);
-      await navigate(paths.taskList(task.isPrivate), { state: notMarkedDoneState });
+      await navigate(paths.taskList(task), { state: notMarkedDoneState });
       return;
     }
     await navigate(paths.me);
@@ -140,24 +140,24 @@ function useSaveNewTask(userId: string, householdId: string | null) {
     await navigate(paths.meAs(parseToDoView(searchParams.get('view'))));
   }
 
-  async function save(task: NewTask, images: DraftImage[], isDone: boolean) {
+  async function save(task: NewTask, images: DraftImage[], { isDone, alsoFor }: SaveOptions) {
     let taskId: string;
     try {
-      taskId = await addTask.mutateAsync({ task, images, householdId: householdId ?? '' });
+      taskId = await addTask.mutateAsync({
+        task,
+        images,
+        householdId: householdId ?? '',
+        alsoFor,
+      });
     } catch (error) {
       if (!(error instanceof ImagesNotSavedError)) throw error;
       // The task was added: adding its pictures again on the edit page doesn't add it twice.
       await navigate(paths.editTask(error.taskId), { state: imagesNotSavedState });
       return;
     }
-    if (isDone)
-      await markDone({
-        id: taskId,
-        title: task.title,
-        points: task.points,
-        isPrivate: task.isPrivate,
-      });
-    else if (startsAt === null) await navigate(paths.taskList(task.isPrivate));
+    if (isDone) await markDone(taskId, task);
+    // Only children plan tasks for children.
+    else if (startsAt === null || !canDoTask(task, isChild)) await navigate(paths.taskList(task));
     else await plan(taskId, task, startsAt);
   }
 

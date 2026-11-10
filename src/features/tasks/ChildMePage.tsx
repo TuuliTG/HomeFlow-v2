@@ -40,7 +40,7 @@ export function ChildMePage({ goals }: ChildMePageProps) {
           <h2 id="completed-heading" className={sectionHeadingClassName}>
             {t.me.completed}
           </h2>
-          <CompletedList />
+          <CompletedList asksWhoHelped={false} />
         </section>
       </div>
     </>

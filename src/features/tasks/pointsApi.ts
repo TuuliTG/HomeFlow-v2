@@ -50,7 +50,7 @@ export async function awardTaskPoints(taskId: string, points: number): Promise<v
 
 /**
  * All the points the user has earned in their household (`own_total_points()`): from shared tasks they
- * marked done, less what helpers got, and their shares of tasks they helped with. Private tasks have
+ * marked done, and the bonus points of tasks they helped with. Private tasks have
  * none, and a child's task waiting for an adult to award its points has none yet.
  */
 export async function fetchTotalPoints(): Promise<number> {

@@ -1,5 +1,5 @@
 import type * as helpersApi from '@/features/tasks/helpersApi';
-import { HELPERS_WINDOW_MS } from '@/features/tasks/task';
+import { HELPERS_WINDOW_MS, MAX_HELPER_BONUS } from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { asCurrentUser } from '@/test/fakeTasksApi';
@@ -28,23 +28,23 @@ function checkHelpers(userId: string, helpers: Credit[]) {
   if (new Set(helpers.map((helper) => helper.userId)).size !== helpers.length) {
     throw new Error('Someone is listed twice');
   }
-  if (helpers.some((helper) => helper.points < 1)) throw new Error('A share is at least 1');
+  if (helpers.some((helper) => helper.points < 1 || helper.points > MAX_HELPER_BONUS)) {
+    throw new Error('A bonus is 1–10 points');
+  }
 }
 
 export const fakeHelpersBackend = {
   /**
-   * Sets who helped `userId` with a shared task they marked done, like `set_task_helpers()`: other
-   * members of their household, each listed once, sharing at most the task's points, within a week.
+   * Sets who helped `userId` with a shared task they marked done, like `set_task_helpers()`: an adult
+   * gives other members of their household, each listed once, a bonus of 1–10 points, within a week.
    */
   setHelpersAs(userId: string, taskId: string, helpers: Credit[]) {
+    if (fakeHouseholdBackend.isChild(userId)) throw new Error("Children don't say who helped");
     const task = tasks.find((candidate) => candidate.id === taskId);
     if (!task || !canChooseHelpersOf(userId, taskId)) {
       throw new Error('You have not marked this task done in the last week');
     }
     checkHelpers(userId, helpers);
-    if (helpers.reduce((total, helper) => total + helper.points, 0) > (task.points ?? 0)) {
-      throw new Error("Helpers share at most the task's points");
-    }
     task.helpers = helpers.map((helper) => ({ ...helper }));
   },
 };

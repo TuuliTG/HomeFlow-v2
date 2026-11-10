@@ -36,7 +36,7 @@ async function findCompleted(title: string) {
 }
 
 describe('helping with a task', () => {
-  it("gives a helper some of the task's points from the Me page", async () => {
+  it("gives a helper bonus points from the Me page, keeping all of the task's", async () => {
     annaDidTheLaundry();
     const user = userEvent.setup();
     const { router } = renderAppAt('/me');
@@ -44,22 +44,23 @@ describe('helping with a task', () => {
     await user.click(await screen.findByRole('link', { name: 'Who helped with Laundry?' }));
 
     expect(await screen.findByRole('heading', { name: 'Who helped?' })).toBeInTheDocument();
-    expect(screen.getByText(/Share Laundry's 5 points/)).toBeInTheDocument();
+    expect(screen.getByText(/Give whoever helped with Laundry bonus points/)).toBeInTheDocument();
     expect(screen.queryByRole('checkbox', { name: 'Anna helped' })).not.toBeInTheDocument();
+    expect(screen.getByText('You keep all 5 points; bonuses come on top.')).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: 'Ben helped' }));
-    // An even split by default, which the user can change.
-    expect(screen.getByRole('combobox', { name: 'Points for Ben' })).toHaveValue('2');
-    expect(screen.getByText('You keep 3 points.')).toBeInTheDocument();
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Points for Ben' }), '1');
-    expect(screen.getByText('You keep 4 points.')).toBeInTheDocument();
+    // A point by default, up to 10 whatever the task is worth.
+    const bonus = screen.getByRole('combobox', { name: 'Bonus points for Ben' });
+    expect(bonus).toHaveValue('1');
+    expect(within(bonus).getAllByRole('option')).toHaveLength(10);
+    await user.selectOptions(bonus, '7');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(router.state.location.pathname).toBe('/me');
     const laundry = await findCompleted('Laundry');
-    expect(laundry).toHaveTextContent('4 points');
-    expect(laundry).toHaveTextContent('Helped by Ben (1 point)');
+    expect(laundry).toHaveTextContent('5 points');
+    expect(laundry).toHaveTextContent('Helped by Ben (7 points)');
     const points = screen.getByRole('region', { name: 'Points earned' });
-    expect(await within(points).findByText('4')).toBeInTheDocument();
+    expect(await within(points).findByText('5')).toBeInTheDocument();
   });
 
   it('credits the helper, also a child who cannot see the task', async () => {
@@ -75,7 +76,7 @@ describe('helping with a task', () => {
     expect(await within(points).findByText('2')).toBeInTheDocument();
     unmount();
 
-    // A child's Me page shows their share under the tasks they have done.
+    // A child's Me page shows their bonus under the tasks they have done.
     fakeAuthBackend.logInAs('ben@example.com');
     renderAppAt('/me');
 
@@ -84,15 +85,14 @@ describe('helping with a task', () => {
     expect(within(laundry).getByText(/2 points/)).toBeInTheDocument();
   });
 
-  it('shares a task between adults evenly, and shows who helped on the board', async () => {
+  it('gives several helpers bonuses, and shows who helped on the board', async () => {
     annaDidTheLaundry();
     const user = userEvent.setup();
     const { router } = renderAppAt('/tasks/task:0/helpers');
 
     await user.click(await screen.findByRole('checkbox', { name: 'Dan helped' }));
     await user.click(screen.getByRole('checkbox', { name: 'Ben helped' }));
-    expect(screen.getByRole('combobox', { name: 'Points for Dan' })).toHaveValue('2');
-    expect(screen.getByRole('combobox', { name: 'Points for Ben' })).toHaveValue('1');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Bonus points for Dan' }), '2');
     await user.click(screen.getByRole('checkbox', { name: 'Ben helped' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await findCompleted('Laundry');
@@ -105,21 +105,6 @@ describe('helping with a task', () => {
     });
   });
 
-  it("won't give away more than the task's points", async () => {
-    annaDidTheLaundry();
-    const user = userEvent.setup();
-    renderAppAt('/tasks/task:0/helpers');
-
-    await user.click(await screen.findByRole('checkbox', { name: 'Ben helped' }));
-    await user.click(screen.getByRole('checkbox', { name: 'Dan helped' }));
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Points for Ben' }), '5');
-
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      "Together that's more than the task's 5 points.",
-    );
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
-  });
-
   it('changes or removes helpers chosen before', async () => {
     const { anna, ben } = annaDidTheLaundry();
     fakeHelpersBackend.setHelpersAs(anna.id, 'task:0', [{ userId: ben.id, points: 3 }]);
@@ -128,7 +113,7 @@ describe('helping with a task', () => {
 
     const benHelped = await screen.findByRole('checkbox', { name: 'Ben helped' });
     expect(benHelped).toBeChecked();
-    expect(screen.getByRole('combobox', { name: 'Points for Ben' })).toHaveValue('3');
+    expect(screen.getByRole('combobox', { name: 'Bonus points for Ben' })).toHaveValue('3');
     await user.click(benHelped);
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
@@ -193,7 +178,7 @@ describe('helping with a task', () => {
       points: 1,
       forChildren: true,
     });
-    fakeTasksBackend.completeTaskAs(anna.id, 'task:1', '2026-10-11');
+    fakeTasksBackend.completeTaskAs(ben.id, 'task:1', '2026-10-11');
     fakeAuthBackend.logInAs('ben@example.com');
     const { router } = renderAppAt('/me');
 
@@ -205,6 +190,7 @@ describe('helping with a task', () => {
 
     // Ben is a child and Laundry is for adults: it stays off his board.
     await router.navigate('/?completed=1');
+    await screen.findByRole('heading', { name: 'Tasks for you' });
     expect(await screen.findByText('Feed the cat')).toBeInTheDocument();
     expect(screen.queryByText('Laundry')).not.toBeInTheDocument();
   });
@@ -226,7 +212,7 @@ describe('asking who helped after marking a task done', () => {
     return { user, ...result };
   }
 
-  it('asks right away, and links to sharing the points', async () => {
+  it('asks right away, and links to giving bonus points', async () => {
     const anna = logInAsFamilyMember();
     addMember('ben@example.com', 'Ben', true);
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Laundry', type: 'physical', points: 5 });
@@ -262,6 +248,27 @@ describe('asking who helped after marking a task done', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('never asks a child', async () => {
+    const anna = logInAsFamilyMember();
+    const ben = addMember('ben@example.com', 'Ben', true);
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Feed the cat',
+      type: 'physical',
+      points: 1,
+      forChildren: true,
+      assignedTo: ben.id,
+    });
+    fakeAuthBackend.logInAs('ben@example.com');
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('button', { name: 'Mark done: Feed the cat' }));
+
+    await findCompleted('Feed the cat');
+    expect(screen.queryByText(/Did someone help/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Who helped/ })).not.toBeInTheDocument();
   });
 
   it('does not ask for a private task, or when nobody else is in the household', async () => {

@@ -43,7 +43,7 @@ describe('asking a family member to do a task', () => {
 
   it.each([
     ['only adults for an adults-only task', false, ['Ben']],
-    ['children too for a task for children', true, ['Ben', 'Carol']],
+    ['only children for a task for children', true, ['Carol']],
   ])('offers %s', async (_case, forChildren, names) => {
     const anna = logInAsFamilyMember();
     addMember('ben@example.com', 'Ben');
@@ -190,7 +190,7 @@ describe('asking a family member to do a task', () => {
     const ben = addMember('ben@example.com', 'Ben', true);
     const dust = addTask(anna.id, 'Dust', true);
     fakeTasksBackend.pickUpTaskAs(ben.id, dust);
-    renderAppAt('/');
+    renderAppAt('/?children=1');
 
     const vacuum = await screen.findByRole('listitem', { name: 'Vacuum' });
     const dusting = screen.getByRole('listitem', { name: 'Dust' });

@@ -35,7 +35,7 @@ export const common = {
     names.length <= 1
       ? names.join('')
       : `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''}`,
-  /** "Helped by Ben (2 points)": who helped with a task and their shares, from `share`. */
+  /** "Helped by Ben (2 points)": who helped with a task and their bonus points, from `share`. */
   helpedBy: (shares: string[]) => `Helped by ${common.joinNames(shares)}`,
   /** "Ben (2 points)". */
   share: (name: string, count: number) => `${name} (${common.points(count)})`,
