@@ -1,7 +1,7 @@
 import { useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
-  addTask,
+  addTasks,
   completeTask,
   deleteTask,
   fetchTasks,
@@ -138,17 +138,20 @@ interface TaskWithImages {
 }
 
 /**
- * Adds a task with its pictures and returns its id. Uploads the pictures first, so a failed upload adds
- * nothing; if the task is added but its pictures can't be attached, rejects with `ImagesNotSavedError`.
+ * Adds a task with its pictures and returns its id, with a copy for each child in `alsoFor`, all or none.
+ * Uploads the pictures first, so a failed upload adds nothing; if the tasks are added but their pictures
+ * can't be attached, rejects with `ImagesNotSavedError` for the first.
  */
 export function useAddTask(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ task, images, householdId }: TaskWithImages) =>
+    mutationFn: ({ task, images, householdId, alsoFor }: TaskWithImages & { alsoFor: string[] }) =>
       saveWithImages(householdId, images, async (uploaded) => {
-        const taskId = await addTask(task);
+        const copies = alsoFor.map((childId) => ({ ...task, assignedTo: childId }));
+        const taskIds = await addTasks([task, ...copies]);
+        const taskId = taskIds[0] ?? '';
         try {
-          await replaceTaskImages(taskId, [], uploaded);
+          for (const id of taskIds) await replaceTaskImages(id, [], uploaded);
         } catch {
           throw new ImagesNotSavedError(taskId);
         }

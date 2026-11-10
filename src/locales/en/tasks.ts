@@ -5,6 +5,10 @@ export const tasks = {
   board: {
     title: 'Shared tasks',
     showCompleted: 'Show completed',
+    /** The tasks for children, which adults only check and edit; children do them. */
+    showChildrens: "Show children's tasks",
+    childrens: "Children's tasks",
+    noChildrens: 'No tasks for children here.',
     show: 'Show',
     /** The filter by who has picked tasks up. */
     who: 'Picked up by',
@@ -166,18 +170,17 @@ export const tasks = {
     othersDoing: 'Others are doing',
     doingIt: (name: string) => `${name} is doing it`,
   },
-  /** Saying who helped with a task the user did, and sharing its points with them. */
+  /** Saying who helped with a task the user did, and giving them bonus points. */
   helpers: {
     eyebrow: 'Completed',
     title: 'Who helped?',
     description: (title: string, points: string) =>
-      `Share ${title}'s ${points} with whoever helped. What you give comes out of your points.`,
+      `Give whoever helped with ${title} bonus points. You still get all its ${points}.`,
     whoHelped: 'Who helped?',
     whoHelpedLabel: (title: string) => `Who helped with ${title}?`,
     helped: (name: string) => `${name} helped`,
-    pointsFor: (name: string) => `Points for ${name}`,
-    youKeep: (kept: string) => `You keep ${kept}.`,
-    tooMany: (points: string) => `Together that's more than the task's ${points}.`,
+    bonusFor: (name: string) => `Bonus points for ${name}`,
+    youKeep: (points: string) => `You keep all ${points}; bonuses come on top.`,
     noOneElse: 'Nobody else is in your household yet.',
     unavailable: 'You can say who helped for a week after marking a shared task with points done.',
     loadFailed:

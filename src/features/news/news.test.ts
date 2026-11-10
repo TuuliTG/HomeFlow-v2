@@ -49,7 +49,7 @@ describe('groupByDay', () => {
     ]);
   });
 
-  it("credits helpers their shares, out of the doer's points", () => {
+  it("credits helpers their bonus points on top of the doer's", () => {
     const items = [
       item({
         taskId: 't1',
@@ -73,8 +73,8 @@ describe('groupByDay', () => {
     const [today] = groupByDay(items, '2026-10-10', en);
 
     expect(today?.summaries).toEqual([
-      { member: anna, physicalPoints: 3, metaPoints: 2 },
-      { member: ben, physicalPoints: 2, metaPoints: 0 },
+      { member: anna, physicalPoints: 5, metaPoints: 2 },
+      { member: ben, physicalPoints: 2, metaPoints: 4 },
       { member: carl, physicalPoints: 0, metaPoints: 2 },
     ]);
   });

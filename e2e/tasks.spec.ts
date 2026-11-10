@@ -26,7 +26,6 @@ test('family member can create a task and see it on the shared task board', asyn
   await page.getByLabel('Task', { exact: true }).fill('Water plants');
   await page.getByRole('radio', { name: 'Meta work' }).check();
   await page.getByLabel('Points').fill('5');
-  await page.getByRole('checkbox', { name: 'Children can do it' }).check();
   await page.getByRole('button', { name: 'Choose labels' }).click();
   await page.getByText('Garden and yard', { exact: true }).click();
   await expect(page.getByRole('checkbox', { name: 'Garden and yard' })).toBeChecked();
@@ -40,13 +39,39 @@ test('family member can create a task and see it on the shared task board', asyn
   const task = page.getByRole('listitem', { name: 'Water plants' });
   await expect(task).toBeVisible();
   await expect(task.getByText('5 points')).toBeVisible();
-  await expect(task.getByText('For children')).toBeVisible();
   await expect(task.getByText('Added by you')).toBeVisible();
   await expect(task.getByText('Garden and yard')).toBeVisible();
   await expect(task.getByText('Weekends')).toBeVisible();
 
   await page.reload();
   await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
+});
+
+test('family member can add a task for the children, kept apart from their own', async ({
+  page,
+}) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+
+  // The choice is a segmented control: its radios are hidden behind their labels.
+  await page.getByRole('group', { name: 'Who is it for?' }).getByText('Children').click();
+  await expect(page.getByRole('radio', { name: 'Children' })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Keep it private' })).toBeHidden();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on a task for children').toEqual([]);
+  await page.getByLabel('Task', { exact: true }).fill('Feed the cat');
+  await page.getByLabel('Stars for each child').fill('2');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  const childrens = page.getByRole('region', { name: "Children's tasks" });
+  const task = childrens.getByRole('listitem', { name: 'Feed the cat' });
+  await expect(task.getByText('For children')).toBeVisible();
+  await expect(task.getByText('2 points')).toBeVisible();
+  await expect(task.getByRole('button', { name: 'Mark done: Feed the cat' })).toHaveCount(0);
+  await page.getByRole('switch', { name: "Show children's tasks" }).uncheck();
+  await expect(page.getByText('Feed the cat')).toBeHidden();
 });
 
 test('family member can attach a picture to a task and see it on the board', async ({ page }) => {
@@ -277,7 +302,9 @@ test('family member can show the tasks done in the household and star one', asyn
   ).toBeVisible();
 });
 
-test('family member can say who helped with a task and share its points', async ({ page }) => {
+test('family member can say who helped with a task and give them bonus points', async ({
+  page,
+}) => {
   await fakeSupabase(page);
   await logInAsNewUser(page);
   await page.getByLabel('Invite code').fill(EXISTING_HOUSEHOLD.inviteCode);
@@ -294,16 +321,16 @@ test('family member can say who helped with a task and share its points', async 
   expect(board.violations, 'a11y violations with the prompt').toEqual([]);
   await page.getByRole('link', { name: 'Who helped with Laundry?' }).click();
   await page.getByRole('checkbox', { name: 'Ben helped' }).check();
-  await page.getByRole('combobox', { name: 'Points for Ben' }).selectOption('1');
-  await expect(page.getByText('You keep 2 points.')).toBeVisible();
+  await expect(page.getByText('You keep all 3 points; bonuses come on top.')).toBeVisible();
+  await page.getByRole('combobox', { name: 'Bonus points for Ben' }).selectOption('3');
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations on the helpers page').toEqual([]);
   await page.getByRole('button', { name: 'Save' }).click();
 
   await expect(page).toHaveURL('/me');
   const completed = page.getByRole('list', { name: 'Completed tasks' });
-  await expect(completed.getByText('Helped by Ben (1 point)')).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Points earned' })).toContainText('2');
+  await expect(completed.getByText('Helped by Ben (3 points)')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Points earned' })).toContainText('3');
 });
 
 test('family member can ask another to do a task, and call it off', async ({ page }) => {

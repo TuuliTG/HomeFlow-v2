@@ -3,7 +3,7 @@ import { type ReactNode, useCallback, useId, useState } from 'react';
 import { StarIcon } from '@/components/ui/icons';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
 import { descriptionParts } from '@/features/tasks/descriptionLinks';
-import { isToDoBy, type Task } from '@/features/tasks/task';
+import { canDoTask, isToDoBy, type Task } from '@/features/tasks/task';
 import { AskLink, EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskImages } from '@/features/tasks/TaskImages';
@@ -12,7 +12,12 @@ import { TaskReminder } from '@/features/tasks/TaskReminder';
 import { TaskRequestPanel } from '@/features/tasks/TaskRequestPanel';
 import { TaskTags } from '@/features/tasks/TaskTags';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
-import { useCompleteTask, usePickUpTask, usePutBackTask } from '@/features/tasks/useTasks';
+import {
+  useCompleteTask,
+  useIsChild,
+  usePickUpTask,
+  usePutBackTask,
+} from '@/features/tasks/useTasks';
 
 interface TaskCardProps {
   task: Task;
@@ -117,23 +122,37 @@ function TaskDescription({ description }: { description: string }) {
 
 type Action = keyof Messages['tasks']['card']['failures'];
 
+/** Whether the user may pick up and mark done the task; not until it's known whether they are a child. */
+function useCanDo(task: Task, currentUserId: string): boolean {
+  const isChild = useIsChild(currentUserId);
+  return isChild !== undefined && canDoTask(task, isChild);
+}
+
 /** The action that failed first, if any. */
 function failedAction(failed: Record<Action, boolean>): Action | undefined {
   return (['complete', 'pickUp', 'putBack'] as const).find((action) => failed[action]);
 }
 
 /**
- * Whether the user can pick the task up or put it back. A private task is already the user's own, and
- * a task given to a child is theirs alone, so neither applies.
+ * Whether the user can pick the task up or put it back. A private task is already the user's own, a task
+ * given to a child is theirs alone, and the user may not do it at all (`canDo`), so none of those applies.
  */
-function pickUpAction(task: Task, currentUserId: string): 'pickUp' | 'putBack' | null {
-  if (task.isPrivate || task.assignedTo !== null) return null;
+function pickUpAction(
+  task: Task,
+  currentUserId: string,
+  canDo: boolean,
+): 'pickUp' | 'putBack' | null {
+  if (!canDo || task.isPrivate || task.assignedTo !== null) return null;
   if (task.pickedUpBy === currentUserId) return 'putBack';
   return task.pickedUpBy === null ? 'pickUp' : null;
 }
 
-/** Pick up (or put back, if it's yours) and Mark done, with a message when one fails. */
+/**
+ * Pick up (or put back, if it's yours) and Mark done, with a message when one fails. An adult only edits a
+ * task for children, or asks a child to do it.
+ */
 function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'currentUserId'>) {
+  const canDo = useCanDo(task, currentUserId);
   const completeTask = useCompleteTask(currentUserId);
   const pickUpTask = usePickUpTask(currentUserId);
   const putBackTask = usePutBackTask(currentUserId);
@@ -141,7 +160,7 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
   const t = tasks.card;
   const [isConfirming, setIsConfirming] = useState(false);
   const isSomeoneElses = task.pickedUpBy !== null && task.pickedUpBy !== currentUserId;
-  const pickUp = pickUpAction(task, currentUserId);
+  const pickUp = pickUpAction(task, currentUserId, canDo);
   const isBusy = completeTask.isPending || pickUpTask.isPending || putBackTask.isPending;
   const failure = failedAction({
     complete: completeTask.isError,
@@ -205,15 +224,16 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
               },
               'bg-brand-50 text-brand-900 hover:bg-brand-100',
             )}
-          {button(
-            t.markDone,
-            () => {
-              // Taking over someone else's task is allowed, but shouldn't happen by accident.
-              if (isSomeoneElses) setIsConfirming(true);
-              else markDone();
-            },
-            'bg-brand-700 hover:bg-brand-900 text-white',
-          )}
+          {canDo &&
+            button(
+              t.markDone,
+              () => {
+                // Taking over someone else's task is allowed, but shouldn't happen by accident.
+                if (isSomeoneElses) setIsConfirming(true);
+                else markDone();
+              },
+              'bg-brand-700 hover:bg-brand-900 text-white',
+            )}
         </div>
       )}
     </>

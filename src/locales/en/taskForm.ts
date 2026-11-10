@@ -89,10 +89,18 @@ export const taskForm = {
     tooMany: (max: number) => `A task can have up to ${String(max)} labels.`,
   },
   keepPrivate: 'Keep it private',
-  forChildren: 'Children can do it',
+  /** Adults choose first who the task is for; the form changes to suit. */
+  whoFor: 'Who is it for?',
+  audiences: { adults: 'Adults', children: 'Children' },
+  /** Adding a task for children: one copy for each child chosen, on their Me page. */
+  whichChildren: 'Which children?',
+  whichChildrenHint:
+    'Each child chosen gets it on their Me page. Choose none and any child can pick it up.',
   assignedTo: 'Whose chore is it?',
   anyChild: 'Any child',
   points: 'Points',
+  /** The points of a task for children, which each child earns for doing it. */
+  stars: 'Stars for each child',
   images: {
     label: 'Pictures (optional)',
     add: 'Add a picture',
@@ -118,8 +126,6 @@ export const taskForm = {
     onlySharedHavePoints: 'Only shared tasks have points.',
     checkDetails: 'Check the task details.',
     saveFailed: "We couldn't save the task. Try again.",
-    doneChoreForChild: (name: string) =>
-      `You can only mark your own tasks done when adding them. Choose “Any child”, or leave “Already done” unchecked for ${name} to mark it done.`,
   },
   reminder: {
     /** "Reminder today at 18:00", "Reminder Sat 17 Oct at 9:00". */

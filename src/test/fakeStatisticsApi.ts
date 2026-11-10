@@ -6,7 +6,7 @@ import { creditsOf, requestsFailing, tasks } from '@/test/fakeTasksBackend';
 /**
  * In-memory stand-in for `@/features/statistics/api`, installed for every unit test in `setup.ts`.
  * Counts the tasks in `fakeTasksBackend` like `household_statistics()`: the logged-in user's household
- * only, shared tasks only, crediting helpers their shares.
+ * only, shared tasks only, crediting helpers their bonus points.
  */
 export const fetchContributions: typeof statisticsApi.fetchContributions = (since) => {
   const user = fakeAuthBackend.currentUser();

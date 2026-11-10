@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import { inputClassName } from '@/components/ui/formStyles';
 import { SearchIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
@@ -11,6 +13,7 @@ import { PickerChoice } from '@/features/tasks/PickerChoice';
 import { nothingPickedUpMessage, usePickerFilter } from '@/features/tasks/pickerFilter';
 import { PointsToAward } from '@/features/tasks/PointsToAward';
 import { ChildBoard } from '@/features/tasks/ChildBoard';
+import type { Task } from '@/features/tasks/task';
 import { useIsChild, useTasks } from '@/features/tasks/useTasks';
 import { today } from '@/lib/dates';
 import {
@@ -26,6 +29,7 @@ import { useMessages } from '@/lib/i18n/i18n';
 import { useSearchParam } from '@/lib/useSearchParam';
 
 const SHOW_COMPLETED_PARAM = 'completed';
+const SHOW_CHILDRENS_PARAM = 'children';
 const FILTER_PARAM = 'show';
 const AVAILABLE_PARAM = 'available';
 const SEARCH_PARAM = 'q';
@@ -38,12 +42,14 @@ export function SharedTasksPage() {
 }
 
 /**
- * The board for adults: every shared task by due date, with a search, filters (also by who has picked tasks up)
- * and the household's completed tasks.
+ * The board for adults: the shared tasks adults do by due date, with a search, filters (also by who has picked
+ * tasks up), and on request the tasks for children, which adults only check and edit, and the household's
+ * completed tasks.
  */
 function Board() {
   const user = useLoggedInUser();
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
+  const [showChildrens, setShowChildrens] = useSwitchParam(SHOW_CHILDRENS_PARAM, user.id);
   const [due, setDue] = useDueFilterParam(user.id);
   const [availableOnly, setAvailableOnly] = useSwitchParam(AVAILABLE_PARAM, user.id);
   const { picker, members, setPickerId } = usePickerFilter(user.id);
@@ -82,9 +88,25 @@ function Board() {
           picker={picker}
           onChange={showPickedUpBy}
         />
-        <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
+        <div className="flex flex-wrap gap-x-5">
+          <Switch
+            label={t.board.showChildrens}
+            checked={showChildrens}
+            onChange={setShowChildrens}
+          />
+          <Switch
+            label={t.board.showCompleted}
+            checked={showCompleted}
+            onChange={setShowCompleted}
+          />
+        </div>
       </div>
-      <TaskList filter={{ due, availableOnly }} picker={picker} search={search} />
+      <TaskList
+        filter={{ due, availableOnly }}
+        picker={picker}
+        search={search}
+        showChildrens={showChildrens}
+      />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
   );
@@ -191,9 +213,12 @@ interface TaskListProps {
   /** Only the tasks this member has picked up; null for everyone's. */
   picker: HouseholdMember | null;
   search: string;
+  /** Also lists the tasks for children, apart from the adults' own. */
+  showChildrens: boolean;
 }
 
-function TaskList({ filter, picker, search }: TaskListProps) {
+/** The adults' tasks the filters leave, and below them, on request, the children's. */
+function TaskList({ filter, picker, search, showChildrens }: TaskListProps) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
   const messages = useMessages();
@@ -213,10 +238,12 @@ function TaskList({ filter, picker, search }: TaskListProps) {
   if (shared.length === 0) {
     return <EmptyMessage>{t.empty.all}</EmptyMessage>;
   }
-  const shown = searchTasks(
+  const matching = searchTasks(
     pickedUpBy(filterTasks(shared, filter, today()), picker?.id ?? null),
     search,
   );
+  const shown = matching.filter((task) => !task.forChildren);
+  const childrens = matching.filter((task) => task.forChildren);
   const searched = search.trim();
   function emptyMessage(): string {
     if (searched !== '') return t.noMatches(searched);
@@ -227,14 +254,33 @@ function TaskList({ filter, picker, search }: TaskListProps) {
     <>
       {/* Mounted while the tasks show, so screen readers hear how many match as the search is typed. */}
       <p role="status" className="sr-only">
-        {searched === '' ? '' : t.matches(shown.length)}
+        {searched === '' ? '' : t.matches(shown.length + (showChildrens ? childrens.length : 0))}
       </p>
       {shown.length === 0 ? (
         <EmptyMessage>{emptyMessage()}</EmptyMessage>
       ) : (
         <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />
       )}
+      {showChildrens && <ChildrensTasks tasks={childrens} currentUserId={user.id} />}
     </>
+  );
+}
+
+/** The tasks for children the filters leave, for adults to check and edit; only children do them. */
+function ChildrensTasks({ tasks, currentUserId }: { tasks: Task[]; currentUserId: string }) {
+  const headingId = useId();
+  const t = useMessages().tasks.board;
+  return (
+    <section aria-labelledby={headingId} className="mt-4 flex flex-col gap-3">
+      <h2 id={headingId} className="text-ink text-lg font-semibold">
+        {t.childrens}
+      </h2>
+      {tasks.length === 0 ? (
+        <EmptyMessage>{t.noChildrens}</EmptyMessage>
+      ) : (
+        <DueTaskGroups tasks={tasks} currentUserId={currentUserId} headingLevel={3} />
+      )}
+    </section>
   );
 }
 

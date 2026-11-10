@@ -1,9 +1,9 @@
--- Helping with a task: whoever marked a shared task done gives helpers some of its points. Run with
+-- Helping with a task: whoever marked a shared task done gives helpers bonus points, keeping all of its own. Run with
 -- `npm run db:test` (needs Docker). Anna and Dan (adults) and Ben (a child) share a household; Carol has her own.
 -- Anna does the laundry, an adults-only task, and Ben helps.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(21);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -86,12 +86,11 @@ select throws_ok(
 );
 select throws_ok(
   format(
-    $$ select public.set_task_helpers(%L, '[{"user_id": "22222222-2222-2222-2222-222222222222", "points": 3},
-       {"user_id": "44444444-4444-4444-4444-444444444444", "points": 3}]') $$,
+    $$ select public.set_task_helpers(%L, '[{"user_id": "22222222-2222-2222-2222-222222222222", "points": 11}]') $$,
     current_setting('test.laundry')
   ),
   '23514', null,
-  'helpers share at most the task''s points'
+  'a helper''s bonus is at most 10 points'
 );
 select throws_ok(
   format(
@@ -106,7 +105,7 @@ select lives_ok(
     $$ select public.set_task_helpers(%L, '[{"user_id": "22222222-2222-2222-2222-222222222222", "points": 2}]') $$,
     current_setting('test.laundry')
   ),
-  'the doer can give a helper some of the points'
+  'the doer can give a helper bonus points'
 );
 select throws_ok(
   $$ insert into public.task_helpers (task_id, user_id, points)
@@ -115,43 +114,50 @@ select throws_ok(
   'helpers are set only through set_task_helpers()'
 );
 
--- The task is worth the same; Ben's share moves from Anna to him everywhere points count.
+-- Anna keeps the task's points and Ben's bonus counts for him everywhere points count.
 select results_eq(
   $$ select user_id::text, done, points from public.household_statistics(now() - interval '1 day') order by user_id $$,
-  $$ values ('11111111-1111-1111-1111-111111111111', 1, 3), ('22222222-2222-2222-2222-222222222222', 1, 2),
+  $$ values ('11111111-1111-1111-1111-111111111111', 1, 5), ('22222222-2222-2222-2222-222222222222', 1, 2),
        ('44444444-4444-4444-4444-444444444444', 0, 0) $$,
-  'statistics credit the doer what is left and the helper their share'
+  'statistics credit the doer the task''s points and the helper their bonus'
 );
-select is(public.own_total_points(), 4 + 3, 'the doer keeps what the helpers did not get');
+select is(public.own_total_points(), 4 + 5, 'the doer keeps all the task''s points');
 select results_eq(
   $$ select points, reached from public.household_goals() $$,
   $$ values (2, true) $$,
-  'a helper''s share counts towards their goals'
+  'a helper''s bonus counts towards their goals'
 );
 
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
-select is(public.own_total_points(), 2, 'a child gets their share of an adults-only task they helped with');
+select is(public.own_total_points(), 2, 'a child gets their bonus for an adults-only task they helped with');
 select is_empty(
   $$ select 1 from public.task_helpers $$,
   'a child does not see helpers of a task they cannot see'
 );
 select throws_ok(
   format($$ select public.set_task_helpers(%L, '[]') $$, current_setting('test.laundry')),
+  '42501', null,
+  'children don''t say who helped'
+);
+
+set local request.jwt.claims = '{"sub": "44444444-4444-4444-4444-444444444444", "role": "authenticated"}';
+select throws_ok(
+  format($$ select public.set_task_helpers(%L, '[]') $$, current_setting('test.laundry')),
   'P0002', null,
   'only whoever marked the task done chooses its helpers'
 );
 
--- Anna shares it with Dan as well, replacing the helpers, then undoes it.
+-- Anna gives Dan a bonus as well, replacing the helpers, then undoes it.
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select lives_ok(
   format(
     $$ select public.set_task_helpers(%L, '[{"user_id": "22222222-2222-2222-2222-222222222222", "points": 2},
-       {"user_id": "44444444-4444-4444-4444-444444444444", "points": 3}]') $$,
+       {"user_id": "44444444-4444-4444-4444-444444444444", "points": 6}]') $$,
     current_setting('test.laundry')
   ),
-  'helpers can share all the points'
+  'bonuses can add up to more than the task''s points'
 );
-select is(public.own_total_points(), 4, 'the doer can give away all the points');
+select is(public.own_total_points(), 4 + 5, 'bonuses never cost the doer points');
 select lives_ok(
   format('select public.undo_complete_task(%L)', current_setting('test.laundry')),
   'the doer can undo a task with helpers'

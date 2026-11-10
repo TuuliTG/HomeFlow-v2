@@ -6,6 +6,9 @@ export const tasks: Messages['tasks'] = {
   board: {
     title: 'Yhteiset tehtävät',
     showCompleted: 'Näytä tehdyt',
+    showChildrens: 'Näytä lasten tehtävät',
+    childrens: 'Lasten tehtävät',
+    noChildrens: 'Ei lasten tehtäviä täällä.',
     show: 'Näytä',
     who: 'Varaaja',
     you: 'Sinä',
@@ -153,13 +156,12 @@ export const tasks: Messages['tasks'] = {
     eyebrow: 'Tehdyt',
     title: 'Kuka auttoi?',
     description: (title, points) =>
-      `Jaa tehtävän ${title} pisteitä (${points}) auttaneille. Antamasi pisteet vähennetään omistasi.`,
+      `Anna tehtävässä ${title} auttaneille bonuspisteitä. Saat silti kaikki sen pisteet (${points}).`,
     whoHelped: 'Kuka auttoi?',
     whoHelpedLabel: (title) => `Kuka auttoi: ${title}?`,
     helped: (name) => `${name} auttoi`,
-    pointsFor: (name) => `Pisteet: ${name}`,
-    youKeep: (kept) => `Sinulle jää ${kept}.`,
-    tooMany: (points) => `Yhteensä enemmän kuin tehtävän pisteet (${points}).`,
+    bonusFor: (name) => `Bonuspisteet: ${name}`,
+    youKeep: (points) => `Pidät kaikki pisteet (${points}); bonukset tulevat niiden päälle.`,
     noOneElse: 'Kotitaloudessasi ei ole vielä muita.',
     unavailable:
       'Auttajat voi valita viikon ajan siitä, kun merkitsit pisteitä antavan yhteisen tehtävän tehdyksi.',

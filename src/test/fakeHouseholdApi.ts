@@ -83,8 +83,13 @@ export const fakeHouseholdBackend = {
       return;
     }
     children.delete(userId);
-    // Like the trigger on household_members: only children are given tasks; they keep them picked up.
-    for (const task of tasks) if (task.assignedTo === userId) task.assignedTo = null;
+    // Like the trigger on household_members: only children are given tasks, and do the open shared tasks for
+    // children.
+    for (const task of tasks) {
+      if (task.assignedTo === userId) task.assignedTo = null;
+      const isChildrens = task.forChildren && !task.isPrivate && task.completed === null;
+      if (isChildrens && task.pickedUpBy === userId) task.pickedUpBy = null;
+    }
   },
   isChild: (userId: string) => children.has(userId),
   /** Lets a child add tasks or stops them, like `set_member_can_add_tasks()` without its checks. */

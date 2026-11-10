@@ -34,7 +34,7 @@ describe('tasks for children', () => {
     expect(screen.queryByText('Pay the bills')).not.toBeInTheDocument();
   });
 
-  it('are marked on the board for adults, who see every task', async () => {
+  it("are listed apart on the adults' board, where adults can't do them", async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, {
       title: 'Feed the cat',
@@ -43,28 +43,53 @@ describe('tasks for children', () => {
       forChildren: true,
     });
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Pay the bills', type: 'meta', points: 3 });
+    const user = userEvent.setup();
     renderAppAt('/');
 
-    const forChildren = await screen.findByRole('listitem', { name: 'Feed the cat' });
-    expect(within(forChildren).getByText('For children')).toBeInTheDocument();
-    const adultsOnly = screen.getByRole('listitem', { name: 'Pay the bills' });
+    const adultsOnly = await screen.findByRole('listitem', { name: 'Pay the bills' });
     expect(within(adultsOnly).queryByText('For children')).not.toBeInTheDocument();
+    expect(screen.queryByRole('listitem', { name: 'Feed the cat' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('switch', { name: "Show children's tasks" }));
+    const childrens = screen.getByRole('region', { name: "Children's tasks" });
+    const forChildren = within(childrens).getByRole('listitem', { name: 'Feed the cat' });
+    expect(within(forChildren).getByText('For children')).toBeInTheDocument();
+    expect(
+      within(forChildren).getByRole('link', { name: 'Edit: Feed the cat' }),
+    ).toBeInTheDocument();
+    expect(
+      within(forChildren).queryByRole('button', { name: /^(Pick up|Mark done)/ }),
+    ).not.toBeInTheDocument();
   });
 
-  it('are chosen with a check mark when an adult adds a task, adults only by default', async () => {
+  it('are chosen first when an adult adds a task, for adults by default, and change the form', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
-    renderAppAt('/tasks/new');
+    const { router } = renderAppAt('/tasks/new');
 
-    const forChildren = await screen.findByRole('checkbox', { name: 'Children can do it' });
-    expect(forChildren).not.toBeChecked();
+    const whoFor = await screen.findByRole('group', { name: 'Who is it for?' });
+    expect(within(whoFor).getByRole('radio', { name: 'Adults' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Keep it private' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Already done' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Type' })).toBeInTheDocument();
+    await user.click(within(whoFor).getByRole('radio', { name: 'Children' }));
+
+    // Adults don't do it, so it is neither private, a type of their work, nor added as done.
+    expect(screen.queryByRole('checkbox', { name: 'Keep it private' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'Already done' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Type' })).not.toBeInTheDocument();
+    const stars = screen.getByLabelText('Stars for each child');
+    await user.clear(stars);
+    await user.type(stars, '2');
     await user.type(screen.getByLabelText('Task'), 'Tidy the toys');
-    await user.click(forChildren);
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    const task = await screen.findByRole('listitem', { name: 'Tidy the toys' });
+    // It shows among the children's tasks on the board.
+    const childrens = await screen.findByRole('region', { name: "Children's tasks" });
+    const task = within(childrens).getByRole('listitem', { name: 'Tidy the toys' });
     expect(within(task).getByText('For children')).toBeInTheDocument();
-    expect(tasks.at(-1)).toMatchObject({ title: 'Tidy the toys', forChildren: true });
+    expect(router.state.location.search).toBe('?children=1');
+    expect(tasks.at(-1)).toMatchObject({ title: 'Tidy the toys', forChildren: true, points: 2 });
   });
 
   it("aren't asked about for an adult's private task, which stays theirs alone", async () => {
@@ -72,9 +97,9 @@ describe('tasks for children', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await user.click(await screen.findByRole('checkbox', { name: 'Children can do it' }));
+    await user.click(await screen.findByRole('radio', { name: 'Children' }));
+    await user.click(screen.getByRole('radio', { name: 'Adults' }));
     await user.click(screen.getByRole('checkbox', { name: 'Keep it private' }));
-    expect(screen.queryByRole('checkbox', { name: 'Children can do it' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Task'), 'Buy a present');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
@@ -89,7 +114,7 @@ describe('tasks for children', () => {
     renderAppAt('/tasks/new');
 
     await user.type(await screen.findByLabelText('Task'), 'Tidy my room');
-    expect(screen.queryByRole('checkbox', { name: 'Children can do it' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Who is it for?' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     expect(await screen.findByRole('listitem', { name: 'Tidy my room' })).toBeInTheDocument();
@@ -105,16 +130,17 @@ describe('tasks for children', () => {
       forChildren: true,
     });
     const user = userEvent.setup();
-    renderAppAt('/');
+    renderAppAt('/?children=1');
 
     await user.click(await screen.findByRole('link', { name: 'Edit: Feed the cat' }));
-    const forChildren = await screen.findByRole('checkbox', { name: 'Children can do it' });
+    const forChildren = await screen.findByRole('radio', { name: 'Children' });
     expect(forChildren).toBeChecked();
-    await user.click(forChildren);
+    await user.click(screen.getByRole('radio', { name: 'Adults' }));
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     const task = await screen.findByRole('listitem', { name: 'Feed the cat' });
     expect(within(task).queryByText('For children')).not.toBeInTheDocument();
+    expect(within(task).getByRole('button', { name: 'Pick up: Feed the cat' })).toBeInTheDocument();
   });
 
   it('stay for children when a child edits one they added', async () => {
@@ -131,7 +157,7 @@ describe('tasks for children', () => {
 
     await user.click(await screen.findByRole('link', { name: 'Edit: Tidy my room' }));
     const title = await screen.findByLabelText('Task');
-    expect(screen.queryByRole('checkbox', { name: 'Children can do it' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Who is it for?' })).not.toBeInTheDocument();
     await user.type(title, ' and desk');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 

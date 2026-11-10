@@ -136,8 +136,8 @@ describe('awarding points', () => {
 
 describe('what a child sees of tasks they may not change', () => {
   it("offers no Add again to a child who isn't allowed to add tasks", async () => {
-    const { anna } = setUpFamily();
-    fakeTasksBackend.completeTaskAs(anna.id, 'task:0', '2026-10-10');
+    const { ben } = setUpFamily();
+    fakeTasksBackend.completeTaskAs(ben.id, 'task:0', '2026-10-10');
     logInAsBen();
     renderAppAt('/?completed=1');
 
@@ -166,7 +166,7 @@ describe('what a child sees of tasks they may not change', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/task:1/edit');
 
-    expect(await screen.findByLabelText('Points')).toHaveValue(null);
+    expect(await screen.findByLabelText('Stars for each child')).toHaveValue(null);
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Points must be a whole number from 1 to 10.',

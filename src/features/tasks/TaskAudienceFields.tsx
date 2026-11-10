@@ -1,70 +1,61 @@
-import type { Ref } from 'react';
-
 import { CheckboxField } from '@/features/tasks/CheckboxField';
-import { TaskAssigneeField } from '@/features/tasks/TaskAssigneeField';
+import { TaskAudienceChoice } from '@/features/tasks/TaskAudienceChoice';
+import { TaskChildrenField } from '@/features/tasks/TaskChildrenField';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskAudienceFieldsProps {
-  /** Only a new task can be made private. */
-  canBePrivate: boolean;
-  /** A child's tasks are always for children, so they aren't asked. */
+  /** Only a new task can be made private, or added for several children. */
+  isNew: boolean;
+  /** A child's tasks are always for children, so they are only asked whether to keep one private. */
   isChild: boolean;
   isPrivate: boolean;
   onPrivateChange: (isPrivate: boolean) => void;
   forChildren: boolean;
   onForChildrenChange: (forChildren: boolean) => void;
-  /** Whether the task is being added as already done, which only the user's own task can be. */
-  isDone: boolean;
-  assignedTo: string | null;
-  onAssignedToChange: (assignedTo: string | null) => void;
-  assigneeRef: Ref<HTMLSelectElement>;
+  /** The children whose chore it is; none for any child. */
+  childIds: string[];
+  onChildIdsChange: (childIds: string[]) => void;
   currentUserId: string;
 }
 
 /**
- * Who the task is for: kept private to its creator, or shared, and then whether children can do it, and if so
- * whether it is one child's chore.
+ * Who the task is for, at the top of the form: an adult chooses the adults, and whether to keep the task
+ * private, or the children, and which of them (ADR 0004). A private task being edited stays the creator's.
  */
 export function TaskAudienceFields({
-  canBePrivate,
+  isNew,
   isChild,
   isPrivate,
   onPrivateChange,
   forChildren,
   onForChildrenChange,
-  isDone,
-  assignedTo,
-  onAssignedToChange,
-  assigneeRef,
+  childIds,
+  onChildIdsChange,
   currentUserId,
 }: TaskAudienceFieldsProps) {
   const t = useMessages().taskForm;
+  const keepPrivate = isNew && (
+    <CheckboxField
+      name="isPrivate"
+      label={t.keepPrivate}
+      checked={isPrivate}
+      onChange={onPrivateChange}
+    />
+  );
+  if (isChild) return keepPrivate;
+  if (isPrivate && !isNew) return null;
   return (
     <>
-      {canBePrivate && (
-        <CheckboxField
-          name="isPrivate"
-          label={t.keepPrivate}
-          checked={isPrivate}
-          onChange={onPrivateChange}
-        />
-      )}
-      {!isPrivate && !isChild && (
-        <CheckboxField
-          name="forChildren"
-          label={t.forChildren}
-          checked={forChildren}
-          onChange={onForChildrenChange}
-        />
-      )}
-      {!isPrivate && !isChild && forChildren && (
-        <TaskAssigneeField
+      <TaskAudienceChoice forChildren={forChildren} onChange={onForChildrenChange} />
+      {forChildren ? (
+        <TaskChildrenField
           currentUserId={currentUserId}
-          value={assignedTo}
-          onChange={onAssignedToChange}
-          isDone={isDone}
-          selectRef={assigneeRef}
+          canChooseSeveral={isNew}
+          value={childIds}
+          onChange={onChildIdsChange}
         />
+      ) : (
+        keepPrivate
       )}
     </>
   );
