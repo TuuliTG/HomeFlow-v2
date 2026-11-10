@@ -235,9 +235,6 @@ function TaskList({ filter, picker, search, showChildrens }: TaskListProps) {
   }
   // Private tasks are listed only on the Me page.
   const shared = tasks.data.filter((task) => !task.isPrivate);
-  if (shared.length === 0) {
-    return <EmptyMessage>{t.empty.all}</EmptyMessage>;
-  }
   const matching = searchTasks(
     pickedUpBy(filterTasks(shared, filter, today()), picker?.id ?? null),
     search,
@@ -246,6 +243,7 @@ function TaskList({ filter, picker, search, showChildrens }: TaskListProps) {
   const childrens = matching.filter((task) => task.forChildren);
   const searched = search.trim();
   function emptyMessage(): string {
+    if (shared.length === 0) return t.empty.all;
     if (searched !== '') return t.noMatches(searched);
     if (picker !== null) return nothingPickedUpMessage(picker, user.id, messages);
     return (filter.availableOnly ? t.emptyAvailable : t.empty)[filter.due];

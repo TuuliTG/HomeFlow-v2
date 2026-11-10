@@ -62,6 +62,18 @@ describe('tasks for children', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('are shown on request even while the household has no tasks yet', async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await user.click(await screen.findByRole('switch', { name: "Show children's tasks" }));
+
+    expect(screen.getByText('No tasks yet. Create the first one!')).toBeInTheDocument();
+    const childrens = screen.getByRole('region', { name: "Children's tasks" });
+    expect(within(childrens).getByText('No tasks for children here.')).toBeInTheDocument();
+  });
+
   it('are chosen first when an adult adds a task, for adults by default, and change the form', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
