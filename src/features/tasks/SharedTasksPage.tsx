@@ -1,3 +1,7 @@
+import { Navigate } from 'react-router';
+
+import { paths } from '@/app/paths';
+
 import { inputClassName } from '@/components/ui/formStyles';
 import { SearchIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
@@ -11,7 +15,6 @@ import type { HouseholdMember } from '@/features/tasks/helpersApi';
 import { PickerChoice } from '@/features/tasks/PickerChoice';
 import { nothingPickedUpMessage, usePickerFilter } from '@/features/tasks/pickerFilter';
 import { PointsToAward } from '@/features/tasks/PointsToAward';
-import { ChildBoard } from '@/features/tasks/ChildBoard';
 import { useIsChild, useTasks } from '@/features/tasks/useTasks';
 import { today } from '@/lib/dates';
 import {
@@ -32,11 +35,12 @@ const FILTER_PARAM = 'show';
 const AVAILABLE_PARAM = 'available';
 const SEARCH_PARAM = 'q';
 
+/** The Shared tasks screen; children have none and are sent to their Me page, which lists the tasks free to pick. */
 export function SharedTasksPage() {
   const user = useLoggedInUser();
   const isChild = useIsChild(user.id);
   if (isChild === undefined) return <LoadingMessage />;
-  return isChild ? <ChildBoard completed={<CompletedTasks />} /> : <Board />;
+  return isChild ? <Navigate to={paths.me} replace /> : <Board />;
 }
 
 /**
@@ -98,19 +102,6 @@ function Board() {
         search={search}
         childrens={childrens}
       />
-      {showCompleted && <HouseholdCompletedTasks />}
-    </>
-  );
-}
-
-/** "Show completed" below a child's tiles, which lists the household's recently done tasks (for children). */
-function CompletedTasks() {
-  const user = useLoggedInUser();
-  const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
-  const t = useMessages().tasks.board;
-  return (
-    <>
-      <Switch label={t.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
   );

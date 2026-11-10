@@ -7,19 +7,17 @@ import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /** The tabs everyone has, children included. */
-const childNavItems = [
-  { to: paths.me, labelKey: 'me', Icon: UserIcon },
-  { to: paths.tasks, labelKey: 'tasks', Icon: CheckListIcon },
-] as const;
+const childNavItems = [{ to: paths.me, labelKey: 'me', Icon: UserIcon }] as const;
 
 const adultNavItems = [
   ...childNavItems,
+  { to: paths.tasks, labelKey: 'tasks', Icon: CheckListIcon },
   { to: paths.news, labelKey: 'news', Icon: NewsIcon },
   { to: paths.rewards, labelKey: 'rewards', Icon: StarIcon },
   { to: paths.statistics, labelKey: 'statistics', Icon: ChartIcon },
 ] as const;
 
-/** The tabs: a child has only Me and Shared tasks; the rest appear once the user is known to be an adult. */
+/** The tabs: a child has only Me; the rest appear once the user is known to be an adult. */
 export function MainNav() {
   const t = useMessages();
   const user = useLoggedInUser();

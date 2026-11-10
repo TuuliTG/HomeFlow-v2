@@ -145,15 +145,8 @@ export const tasks: Messages['tasks'] = {
     title: 'Omat tähdet',
     myTasks: 'Omat tehtävät',
     nothingToDo: 'Ei vielä tehtäviä.',
-    pickOnBoard: 'Valitse tehtävä Yhteiset-sivulta',
-  },
-  childBoard: {
-    title: 'Tehtävät sinulle',
     free: 'Vapaana',
     nothingFree: 'Juuri nyt ei ole vapaita tehtäviä.',
-    yours: 'Sinun valitsemasi',
-    othersDoing: 'Muut tekevät',
-    doingIt: (name) => `${name} tekee tätä`,
   },
   helpers: {
     eyebrow: 'Tehdyt',

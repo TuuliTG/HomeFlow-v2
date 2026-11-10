@@ -143,12 +143,11 @@ next one back rather than follow a fixed calendar.
 - **Screens for children** (`useIsChild()`; until known, a loading message, and if it can't be told, the adults'
   screens, which show a child only what they may see): the Me page (`src/app/MePage`) shows their open goals as
   star jars (ADR 0007), their own tasks as big tiles (`ChildTaskTiles`: icon, name, one star per point, a round
-  Mark done button, Edit on ones they added), and their Completed list. Like adults, they pick tasks on Shared
-  tasks (`ChildBoard`), which shows the tasks for children, the only ones they see, as tiles: free to pick (Pick
-  up), picked by them and who is doing the rest, without the filters, then Show
-  completed. These are a child's only tabs (`MainNav`, showing the others once the user is known to be an adult):
-  News, Rewards and Statistics, and the goal forms, send a child to their Me page (`src/app/AdultsOnly`), where
-  their jars show their goals' progress. Children's screens carry no hints or explanations. Adults' screens are unchanged. Points are still called points, as
+  Mark done button, Edit on ones they added), below them the tasks for children nobody has picked up (the only
+  shared tasks they see) as tiles to Pick up, and their Completed list. Me is a child's only tab (`MainNav`,
+  showing the others once the user is known to be an adult): one screen with nothing to filter keeps it simple, so
+  they don't see who is doing the other tasks. Shared tasks, News, Rewards and Statistics, and the goal forms, send
+  a child to their Me page (`SharedTasksPage`, `src/app/AdultsOnly`), where their jars show their goals' progress. Children's screens carry no hints or explanations. Adults' screens are unchanged. Points are still called points, as
   elsewhere.
 - **Points**: the Me screen shows the user's total points, summed when read (`own_total_points()`), not stored.
   Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
@@ -225,7 +224,8 @@ next one back rather than follow a fixed calendar.
   for and saves it as usual, so the normal checks, RLS and push apply. A name or description too long to save is
   shortened and a due date that isn't a date is left out. A link opened while logged out is lost at the login.
 - **Favourites**: before a name is typed, the form offers the household's favourite tasks by name instead of the
-  most often added ones, which changed under the user and weren't what they wanted. A star by the name field stars
+  most often added ones, which changed under the user and weren't what they wanted. They are folded away behind
+  a Favourites button showing how many there are, closed each time, so a long list doesn't push the form down. A star by the name field stars
   or unstars the task being named, also a new one, saved straight away; so does a star on each open task card and
   on each done task in the board's and the Me page's Completed lists. Favourites are shared by the household:
   any member's star shows for everyone, and any member can remove it, also by pressing and holding a favourite

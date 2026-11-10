@@ -169,30 +169,17 @@ describe('helping with a task', () => {
     expect(await screen.findByText('Nobody else is in your household yet.')).toBeInTheDocument();
   });
 
-  it('shows a helper the tasks they helped with on their Me page, without the task on their board', async () => {
+  it('shows a helper the tasks they helped with on their Me page', async () => {
     const { anna, ben } = annaDidTheLaundry();
     fakeHelpersBackend.setHelpersAs(anna.id, 'task:0', [{ userId: ben.id, points: 2 }]);
-    fakeTasksBackend.addTaskAs(anna.id, {
-      title: 'Feed the cat',
-      type: 'physical',
-      points: 1,
-      forChildren: true,
-    });
-    fakeTasksBackend.completeTaskAs(ben.id, 'task:1', '2026-10-11');
     fakeAuthBackend.logInAs('ben@example.com');
-    const { router } = renderAppAt('/me');
+    renderAppAt('/me');
 
     const laundry = await findCompleted('Laundry');
     expect(laundry).toHaveTextContent('2 points');
     expect(laundry).toHaveTextContent('You helped Anna');
     expect(within(laundry).queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
     expect(within(laundry).queryByRole('link', { name: /Who helped/ })).not.toBeInTheDocument();
-
-    // Ben is a child and Laundry is for adults: it stays off his board.
-    await router.navigate('/?completed=1');
-    await screen.findByRole('heading', { name: 'Tasks for you' });
-    expect(await screen.findByText('Feed the cat')).toBeInTheDocument();
-    expect(screen.queryByText('Laundry')).not.toBeInTheDocument();
   });
 
   it('explains when the task or the household cannot be loaded', async () => {

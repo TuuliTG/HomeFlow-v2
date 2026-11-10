@@ -155,15 +155,8 @@ export const tasks: Messages['tasks'] = {
     title: 'Mina stjärnor',
     myTasks: 'Mina uppgifter',
     nothingToDo: 'Inget att göra än.',
-    pickOnBoard: 'Välj en uppgift under Gemensamma',
-  },
-  childBoard: {
-    title: 'Uppgifter för dig',
     free: 'Lediga att välja',
     nothingFree: 'Inga lediga uppgifter just nu.',
-    yours: 'Valda av dig',
-    othersDoing: 'Andra gör',
-    doingIt: (name) => `${name} gör den`,
   },
   helpers: {
     eyebrow: 'Gjorda',

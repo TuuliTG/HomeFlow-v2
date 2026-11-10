@@ -68,17 +68,16 @@ describe('AppShell for children', () => {
     fakeHouseholdBackend.setChild(ben.id, true);
   });
 
-  it('has only the Me and Shared tasks tabs', async () => {
+  it('has only the Me tab', async () => {
     renderAppAt('/me');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'My stars' })).toBeInTheDocument();
     const nav = screen.getByRole('navigation', { name: 'Main' });
-    expect(within(nav).getAllByRole('link')).toHaveLength(2);
+    expect(within(nav).getAllByRole('link')).toHaveLength(1);
     expect(within(nav).getByRole('link', { name: 'Me' })).toBeInTheDocument();
-    expect(within(nav).getByRole('link', { name: 'Shared tasks' })).toBeInTheDocument();
   });
 
-  it.each(['/news', '/rewards', '/rewards/new', '/statistics'])(
+  it.each(['/', '/news', '/rewards', '/rewards/new', '/statistics'])(
     'sends them from %s to their Me page',
     async (path) => {
       renderAppAt(path);
