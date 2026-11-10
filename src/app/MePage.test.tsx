@@ -61,19 +61,49 @@ describe('the Me page for children', () => {
     expect(within(completed).getByText('Make your bed')).toBeInTheDocument();
   });
 
-  it('shows only their own tasks, and sends them to Shared tasks to pick more', async () => {
-    logInAsChild();
+  it('lists the free tasks for children, to pick up and then mark done', async () => {
+    const { anna } = logInAsChild();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Pay the bills', type: 'meta', points: 3 });
     const user = userEvent.setup();
     renderAppAt('/me');
 
-    const myTasks = await screen.findByRole('list', { name: 'My tasks' });
-    await user.click(within(myTasks).getByRole('button', { name: 'Mark done: Make your bed' }));
-    expect(screen.queryByText('Feed the cat')).not.toBeInTheDocument();
+    const free = await screen.findByRole('list', { name: 'Free to pick' });
+    const cat = within(free).getByRole('listitem', { name: 'Feed the cat' });
+    expect(within(cat).getByRole('img', { name: '3 points' })).toBeInTheDocument();
+    expect(screen.queryByText('Pay the bills')).not.toBeInTheDocument();
 
-    await user.click(await screen.findByRole('link', { name: 'Pick a task on Shared tasks' }));
+    await user.click(within(free).getByRole('button', { name: 'Pick up: Feed the cat' }));
+
+    expect(await screen.findByText('No free tasks right now.')).toBeInTheDocument();
+    const myTasks = screen.getByRole('list', { name: 'My tasks' });
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Tasks for you' }),
+      within(myTasks).getByRole('button', { name: 'Mark done: Feed the cat' }),
     ).toBeInTheDocument();
+  });
+
+  it('leaves out the tasks other children are doing', async () => {
+    const { anna } = logInAsChild();
+    const mia = fakeAuthBackend.addProfile('mia@example.com', 'Mia');
+    fakeHouseholdBackend.addMember(mia.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(mia.id, true);
+    const plants = fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Water the plants',
+      type: 'physical',
+      points: 1,
+      forChildren: true,
+    });
+    fakeTasksBackend.pickUpTaskAs(mia.id, plants);
+    renderAppAt('/me');
+
+    expect(await screen.findByRole('list', { name: 'Free to pick' })).toBeInTheDocument();
+    expect(screen.queryByText('Water the plants')).not.toBeInTheDocument();
+  });
+
+  it('sends them from the Shared tasks address to their Me page', async () => {
+    logInAsChild();
+    renderAppAt('/?children=1');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'My stars' })).toBeInTheDocument();
   });
 
   it('shows their own goal and the shared goal they take part in', async () => {

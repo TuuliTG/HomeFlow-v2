@@ -142,12 +142,11 @@ next one back rather than follow a fixed calendar.
 - **Screens for children** (`useIsChild()`; until known, a loading message, and if it can't be told, the adults'
   screens, which show a child only what they may see): the Me page (`src/app/MePage`) shows their open goals as
   star jars (ADR 0007), their own tasks as big tiles (`ChildTaskTiles`: icon, name, one star per point, a round
-  Mark done button, Edit on ones they added), and their Completed list. Like adults, they pick tasks on Shared
-  tasks (`ChildBoard`), which shows the tasks for children, the only ones they see, as tiles: free to pick (Pick
-  up), picked by them and who is doing the rest, without the filters, then Show
-  completed. These are a child's only tabs (`MainNav`, showing the others once the user is known to be an adult):
-  News, Rewards and Statistics, and the goal forms, send a child to their Me page (`src/app/AdultsOnly`), where
-  their jars show their goals' progress. Children's screens carry no hints or explanations. Adults' screens are unchanged. Points are still called points, as
+  Mark done button, Edit on ones they added), below them the tasks for children nobody has picked up (the only
+  shared tasks they see) as tiles to Pick up, and their Completed list. Me is a child's only tab (`MainNav`,
+  showing the others once the user is known to be an adult): one screen with nothing to filter keeps it simple, so
+  they don't see who is doing the other tasks. Shared tasks, News, Rewards and Statistics, and the goal forms, send
+  a child to their Me page (`SharedTasksPage`, `src/app/AdultsOnly`), where their jars show their goals' progress. Children's screens carry no hints or explanations. Adults' screens are unchanged. Points are still called points, as
   elsewhere.
 - **Points**: the Me screen shows the user's total points, summed when read (`own_total_points()`), not stored.
   Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
