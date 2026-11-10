@@ -23,9 +23,18 @@ function favourite(userId: string, ...titles: string[]) {
   for (const title of titles) fakeFavouritesBackend.setFavouriteAs(userId, title, true);
 }
 
+/** Opens the favourites, folded away on the New task form. */
+async function openFavourites() {
+  const toggle = await screen.findByRole('button', { name: /^Favourites/ });
+  if (toggle.getAttribute('aria-expanded') === 'false') fireEvent.click(toggle);
+}
+
+/** The favourite tasks' buttons, once opened. */
 async function favouriteButtons() {
-  const favourites = await screen.findByRole('region', { name: 'Favourites' });
-  return within(favourites).queryAllByRole('button');
+  await openFavourites();
+  const favourites = screen.getByRole('region', { name: 'Favourites' });
+  const list = within(favourites).queryByRole('list');
+  return list ? within(list).getAllByRole('button') : [];
 }
 
 describe('adding a task again', () => {
@@ -44,8 +53,11 @@ describe('adding a task again', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await screen.findByRole('button', { name: /Vacuum/ });
+    const toggle = await screen.findByRole('button', { name: /^Favourites\s*2$/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: /Vacuum/ })).not.toBeInTheDocument();
     const buttons = await favouriteButtons();
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
     expect(buttons.map((button) => button.textContent)).toEqual([
       'Take out trash · 1 point',
       'Vacuum · 3 points',
@@ -107,6 +119,7 @@ describe('adding a task again', () => {
     await screen.findByRole('listitem', { name: 'Water plants' });
     await user.click(screen.getByRole('link', { name: 'New task' }));
 
+    await openFavourites();
     expect((await screen.findByRole('button', { name: /Water plants/ })).textContent).toBe(
       'Water plants · 3 points',
     );
@@ -146,6 +159,7 @@ describe('adding a task again', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
+    await openFavourites();
     await user.click(await screen.findByRole('button', { name: /Take out trash/ }));
     const star = screen.getByRole('button', { name: 'Favourite' });
     expect(star).toHaveAttribute('aria-pressed', 'true');
@@ -162,6 +176,7 @@ describe('adding a task again', () => {
     favourite(anna.id, TRASH.title);
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
+    await openFavourites();
     await screen.findByText('Press and hold a favourite to remove it.');
 
     const chip = await screen.findByRole('button', { name: /Take out trash/ });
@@ -175,7 +190,7 @@ describe('adding a task again', () => {
     await user.click(remove);
 
     await screen.findByText("Tap the star by a task's name to keep it here for next time.");
-    expect(screen.getByRole('heading', { name: 'Favourites' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: /^Favourites/ })).toHaveFocus();
     await waitFor(() => {
       expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual([]);
     });
@@ -188,6 +203,7 @@ describe('adding a task again', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
+    await openFavourites();
     const chip = await screen.findByRole('button', { name: /Take out trash/ });
     await user.pointer({ keys: '[MouseRight]', target: chip });
     expect(screen.getByRole('button', { name: /Remove from favourites/ })).toHaveFocus();
@@ -209,6 +225,7 @@ describe('adding a task again', () => {
     favourite(anna.id, TRASH.title);
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
+    await openFavourites();
 
     await user.pointer({
       keys: '[MouseRight]',
@@ -230,6 +247,7 @@ describe('adding a task again', () => {
     favourite(anna.id, TRASH.title);
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
+    await openFavourites();
     const chip = await screen.findByRole('button', { name: /Take out trash/ });
 
     await user.pointer({ keys: '[MouseRight]', target: chip });
@@ -309,6 +327,7 @@ describe('adding a task again', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
+    await openFavourites();
     await user.click(await screen.findByRole('button', { name: /Take out trash/ }));
 
     expect(screen.getByLabelText('Repeats')).toHaveValue('7');
@@ -322,6 +341,7 @@ describe('adding a task again', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
+    await openFavourites();
     await user.click(await screen.findByRole('button', { name: /Take out trash/ }));
     expect(screen.getByText(/Take out trash is already on the board/)).toBeInTheDocument();
 
@@ -348,6 +368,7 @@ describe('adding a task again', () => {
     favourite(ben.id, 'Plan a surprise');
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
+    await openFavourites();
 
     const button = await screen.findByRole('button', { name: /Buy a present/ });
     expect((await favouriteButtons()).map((each) => each.textContent)).toEqual([
@@ -374,7 +395,6 @@ describe('adding a task again', () => {
     await screen.findByRole('heading', { level: 1, name: 'Shared tasks' });
     await user.click(screen.getByRole('link', { name: 'New task' }));
 
-    await screen.findByRole('button', { name: /Take out trash/ });
     expect((await favouriteButtons()).map((button) => button.textContent)).toEqual([
       'Take out trash · 1 point',
     ]);

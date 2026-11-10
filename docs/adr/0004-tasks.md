@@ -223,7 +223,8 @@ next one back rather than follow a fixed calendar.
   for and saves it as usual, so the normal checks, RLS and push apply. A name or description too long to save is
   shortened and a due date that isn't a date is left out. A link opened while logged out is lost at the login.
 - **Favourites**: before a name is typed, the form offers the household's favourite tasks by name instead of the
-  most often added ones, which changed under the user and weren't what they wanted. A star by the name field stars
+  most often added ones, which changed under the user and weren't what they wanted. They are folded away behind
+  a Favourites button showing how many there are, closed each time, so a long list doesn't push the form down. A star by the name field stars
   or unstars the task being named, also a new one, saved straight away; so does a star on each open task card and
   on each done task in the board's and the Me page's Completed lists. Favourites are shared by the household:
   any member's star shows for everyone, and any member can remove it, also by pressing and holding a favourite
