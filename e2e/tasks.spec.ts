@@ -111,6 +111,7 @@ test('family member can add a task again from earlier tasks and favourites', asy
     'true',
   );
   await page.getByLabel('Task', { exact: true }).fill('');
+  await page.getByRole('button', { name: /^Favourites/ }).click();
   await page
     .getByRole('region', { name: 'Favourites' })
     .getByRole('button', { name: /Take out trash/ })
@@ -120,6 +121,7 @@ test('family member can add a task again from earlier tasks and favourites', asy
   ).toBeVisible();
 
   await page.getByLabel('Task', { exact: true }).fill('');
+  await page.getByRole('button', { name: /^Favourites/ }).click();
   await page
     .getByRole('region', { name: 'Favourites' })
     .getByRole('button', { name: /Take out trash/ })
@@ -269,6 +271,7 @@ test('family member can show the tasks done in the household and star one', asyn
   await star.click();
   await expect(star).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByRole('button', { name: /^Favourites/ }).click();
   await expect(
     page.getByRole('region', { name: 'Favourites' }).getByRole('button', { name: /Vacuum/ }),
   ).toBeVisible();

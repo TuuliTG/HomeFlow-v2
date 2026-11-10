@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 
+import { ChevronDownIcon } from '@/components/ui/icons';
 import { suggestionPointsLabel } from '@/features/tasks/suggestions';
 import type { TaskSuggestion } from '@/features/tasks/task';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -25,8 +26,9 @@ interface FavouriteTaskListProps {
 }
 
 /**
- * The household's favourite tasks, each a button that fills in the form, or how to add some. Pressing and
- * holding one (or right-clicking it, or its context-menu key) offers to remove it from the favourites.
+ * The household's favourite tasks, folded away behind a button so they don't fill the form. Opened, each is
+ * a button that fills in the form, or it says how to add some. Pressing and holding one (or right-clicking
+ * it, or its context-menu key) offers to remove it from the favourites.
  */
 export function FavouriteTaskList({
   suggestions,
@@ -34,45 +36,63 @@ export function FavouriteTaskList({
   onRemove,
   isSaving,
 }: FavouriteTaskListProps) {
-  const headingId = useId();
+  const [isOpen, setIsOpen] = useState(false);
+  const titleId = useId();
+  const contentId = useId();
   const hintId = useId();
-  const headingRef = useRef<HTMLHeadingElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const t = useMessages();
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-2">
-      {/* Takes the focus from a removed favourite's Remove button, so it isn't lost. */}
-      <h2
-        id={headingId}
-        ref={headingRef}
-        tabIndex={-1}
-        className="text-ink text-sm font-medium focus:outline-none"
-      >
-        {t.taskForm.favourites}
+    <section aria-labelledby={titleId} className="flex flex-col gap-2">
+      <h2 className="text-ink text-sm font-medium">
+        <button
+          ref={toggleRef}
+          type="button"
+          aria-expanded={isOpen}
+          aria-controls={contentId}
+          onClick={() => {
+            setIsOpen((open) => !open);
+          }}
+          className="hover:bg-surface -mx-2 flex min-h-11 items-center gap-2 rounded-xl px-2"
+        >
+          <span id={titleId}>{t.taskForm.favourites}</span>
+          {suggestions.length > 0 && (
+            <span className="bg-brand-50 text-brand-900 rounded-full px-2 text-xs">
+              {suggestions.length}
+            </span>
+          )}
+          <ChevronDownIcon
+            className={`text-ink-muted size-5 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
       </h2>
-      {suggestions.length === 0 ? (
-        <p className="text-ink-muted text-sm">{t.taskForm.noFavourites}</p>
-      ) : (
-        <>
-          <ul className="flex flex-wrap gap-2">
-            {suggestions.map((suggestion) => (
-              <FavouriteTask
-                key={suggestion.title}
-                suggestion={suggestion}
-                hintId={hintId}
-                isSaving={isSaving}
-                onPick={onPick}
-                onRemove={(title) => {
-                  onRemove(title);
-                  headingRef.current?.focus();
-                }}
-              />
-            ))}
-          </ul>
-          <p id={hintId} className="text-ink-muted text-xs">
-            {t.taskForm.holdToRemoveFavourite}
-          </p>
-        </>
-      )}
+      <div id={contentId} hidden={!isOpen} className="flex flex-col gap-2">
+        {suggestions.length === 0 ? (
+          <p className="text-ink-muted text-sm">{t.taskForm.noFavourites}</p>
+        ) : (
+          <>
+            <ul className="flex flex-wrap gap-2">
+              {suggestions.map((suggestion) => (
+                <FavouriteTask
+                  key={suggestion.title}
+                  suggestion={suggestion}
+                  hintId={hintId}
+                  isSaving={isSaving}
+                  onPick={onPick}
+                  onRemove={(title) => {
+                    onRemove(title);
+                    // Takes the focus from the removed favourite's Remove button, so it isn't lost.
+                    toggleRef.current?.focus();
+                  }}
+                />
+              ))}
+            </ul>
+            <p id={hintId} className="text-ink-muted text-xs">
+              {t.taskForm.holdToRemoveFavourite}
+            </p>
+          </>
+        )}
+      </div>
     </section>
   );
 }
