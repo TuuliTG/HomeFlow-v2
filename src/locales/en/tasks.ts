@@ -5,10 +5,16 @@ export const tasks = {
   board: {
     title: 'Shared tasks',
     showCompleted: 'Show completed',
-    /** The tasks for children, which adults only check and edit; children do them. */
-    showChildrens: "Show children's tasks",
-    childrens: "Children's tasks",
-    noChildrens: 'No tasks for children here.',
+    /**
+     * Which list the board shows adults: their own tasks, or the tasks for children, which adults only check
+     * and edit; children do them. The legend is for screen readers.
+     */
+    lists: {
+      legend: 'Whose tasks',
+      adults: "Adults' tasks",
+      children: "Children's tasks",
+    },
+    noChildrens: 'No tasks for children yet. Create the first one!',
     show: 'Show',
     /** The filter by who has picked tasks up. */
     who: 'Picked up by',

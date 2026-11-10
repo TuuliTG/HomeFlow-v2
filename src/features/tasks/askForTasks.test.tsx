@@ -190,12 +190,14 @@ describe('asking a family member to do a task', () => {
     const ben = addMember('ben@example.com', 'Ben', true);
     const dust = addTask(anna.id, 'Dust', true);
     fakeTasksBackend.pickUpTaskAs(ben.id, dust);
-    renderAppAt('/?children=1');
+    const user = userEvent.setup();
+    renderAppAt('/');
 
-    const vacuum = await screen.findByRole('listitem', { name: 'Vacuum' });
-    const dusting = screen.getByRole('listitem', { name: 'Dust' });
     // Ben is a child, so only tasks for children could be asked of him; he has picked up the one there is.
+    const vacuum = await screen.findByRole('listitem', { name: 'Vacuum' });
     expect(within(vacuum).queryByRole('link', { name: /^Ask someone/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: "Children's tasks" }));
+    const dusting = await screen.findByRole('listitem', { name: 'Dust' });
     expect(within(dusting).queryByRole('link', { name: /^Ask someone/ })).not.toBeInTheDocument();
   });
 

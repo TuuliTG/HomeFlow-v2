@@ -50,9 +50,11 @@ describe('tasks for children', () => {
     expect(within(adultsOnly).queryByText('For children')).not.toBeInTheDocument();
     expect(screen.queryByRole('listitem', { name: 'Feed the cat' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('switch', { name: "Show children's tasks" }));
-    const childrens = screen.getByRole('region', { name: "Children's tasks" });
-    const forChildren = within(childrens).getByRole('listitem', { name: 'Feed the cat' });
+    await user.click(screen.getByRole('radio', { name: "Children's tasks" }));
+    const forChildren = screen.getByRole('listitem', { name: 'Feed the cat' });
+    // One list at a time: the adults' own tasks make way for the children's.
+    expect(screen.queryByRole('listitem', { name: 'Pay the bills' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Picked up by' })).not.toBeInTheDocument();
     expect(within(forChildren).getByText('For children')).toBeInTheDocument();
     expect(
       within(forChildren).getByRole('link', { name: 'Edit: Feed the cat' }),
@@ -62,16 +64,18 @@ describe('tasks for children', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('are shown on request even while the household has no tasks yet', async () => {
+  it('are listed on request even while the household has no tasks yet', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
     renderAppAt('/');
 
-    await user.click(await screen.findByRole('switch', { name: "Show children's tasks" }));
+    expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: "Children's tasks" }));
 
-    expect(screen.getByText('No tasks yet. Create the first one!')).toBeInTheDocument();
-    const childrens = screen.getByRole('region', { name: "Children's tasks" });
-    expect(within(childrens).getByText('No tasks for children here.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('No tasks for children yet. Create the first one!'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('No tasks yet. Create the first one!')).not.toBeInTheDocument();
   });
 
   it('are chosen first when an adult adds a task, for adults by default, and change the form', async () => {
@@ -96,9 +100,9 @@ describe('tasks for children', () => {
     await user.type(screen.getByLabelText('Task'), 'Tidy the toys');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    // It shows among the children's tasks on the board.
-    const childrens = await screen.findByRole('region', { name: "Children's tasks" });
-    const task = within(childrens).getByRole('listitem', { name: 'Tidy the toys' });
+    // The board opens on the children's tasks, where it shows.
+    const task = await screen.findByRole('listitem', { name: 'Tidy the toys' });
+    expect(screen.getByRole('radio', { name: "Children's tasks" })).toBeChecked();
     expect(within(task).getByText('For children')).toBeInTheDocument();
     expect(router.state.location.search).toBe('?children=1');
     expect(tasks.at(-1)).toMatchObject({ title: 'Tidy the toys', forChildren: true, points: 2 });

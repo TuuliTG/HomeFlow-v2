@@ -58,8 +58,7 @@ describe('giving a task to one child', () => {
     await user.type(screen.getByLabelText('Stars for each child'), '2');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    const childrens = await screen.findByRole('region', { name: "Children's tasks" });
-    const copies = within(childrens).getAllByRole('listitem', { name: 'Empty the dishwasher' });
+    const copies = await screen.findAllByRole('listitem', { name: 'Empty the dishwasher' });
     expect(copies.map((copy) => within(copy).getByText(/^Only for/).textContent).sort()).toEqual([
       'Only for Ben',
       'Only for Dora',

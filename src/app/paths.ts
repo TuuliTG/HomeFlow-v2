@@ -15,7 +15,7 @@ export const paths = {
   taskHelpers: (taskId: string) => `/tasks/${taskId}/helpers`,
   /**
    * Where a task is listed: private tasks only on the Me page, shared ones on the board, those for children
-   * among the children's tasks there.
+   * in its list of children's tasks.
    */
   taskList: ({ isPrivate, forChildren }: { isPrivate: boolean; forChildren: boolean }) => {
     if (isPrivate) return '/me';
