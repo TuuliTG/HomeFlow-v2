@@ -1,4 +1,3 @@
-import { useId } from 'react';
 import { Navigate } from 'react-router';
 
 import { paths } from '@/app/paths';
@@ -7,6 +6,7 @@ import { inputClassName } from '@/components/ui/formStyles';
 import { SearchIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { FilterChoice } from '@/features/tasks/FilterChoice';
 import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
@@ -15,7 +15,6 @@ import type { HouseholdMember } from '@/features/tasks/helpersApi';
 import { PickerChoice } from '@/features/tasks/PickerChoice';
 import { nothingPickedUpMessage, usePickerFilter } from '@/features/tasks/pickerFilter';
 import { PointsToAward } from '@/features/tasks/PointsToAward';
-import type { Task } from '@/features/tasks/task';
 import { useIsChild, useTasks } from '@/features/tasks/useTasks';
 import { today } from '@/lib/dates';
 import {
@@ -31,7 +30,7 @@ import { useMessages } from '@/lib/i18n/i18n';
 import { useSearchParam } from '@/lib/useSearchParam';
 
 const SHOW_COMPLETED_PARAM = 'completed';
-const SHOW_CHILDRENS_PARAM = 'children';
+const CHILDRENS_PARAM = 'children';
 const FILTER_PARAM = 'show';
 const AVAILABLE_PARAM = 'available';
 const SEARCH_PARAM = 'q';
@@ -45,14 +44,14 @@ export function SharedTasksPage() {
 }
 
 /**
- * The board for adults: the shared tasks adults do by due date, with a search, filters (also by who has picked
- * tasks up), and on request the tasks for children, which adults only check and edit, and the household's
- * completed tasks.
+ * The board for adults: either the shared tasks adults do or the tasks for children, which adults only check and
+ * edit, by due date, with a search, filters (for adults' tasks also by who has picked them up), and on request
+ * the household's completed tasks.
  */
 function Board() {
   const user = useLoggedInUser();
   const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
-  const [showChildrens, setShowChildrens] = useSwitchParam(SHOW_CHILDRENS_PARAM, user.id);
+  const [childrens, setChildrens] = useSwitchParam(CHILDRENS_PARAM, user.id);
   const [due, setDue] = useDueFilterParam(user.id);
   const [availableOnly, setAvailableOnly] = useSwitchParam(AVAILABLE_PARAM, user.id);
   const { picker, members, setPickerId } = usePickerFilter(user.id);
@@ -78,6 +77,7 @@ function Board() {
       </div>
       <PointsToAward />
       <div className="flex flex-col gap-3">
+        <ListChoice childrens={childrens} onChange={setChildrens} />
         <SearchField search={search} onChange={setSearch} />
         <FilterChoice
           due={due}
@@ -85,30 +85,22 @@ function Board() {
           availableOnly={availableOnly}
           onAvailableOnlyChange={showAvailableOnly}
         />
-        <PickerChoice
-          currentUserId={user.id}
-          members={members}
-          picker={picker}
-          onChange={showPickedUpBy}
-        />
-        <div className="flex flex-wrap gap-x-5">
-          <Switch
-            label={t.board.showChildrens}
-            checked={showChildrens}
-            onChange={setShowChildrens}
+        {/* Adults can't pick up tasks for children, so only adults' tasks are filtered by who has. */}
+        {!childrens && (
+          <PickerChoice
+            currentUserId={user.id}
+            members={members}
+            picker={picker}
+            onChange={showPickedUpBy}
           />
-          <Switch
-            label={t.board.showCompleted}
-            checked={showCompleted}
-            onChange={setShowCompleted}
-          />
-        </div>
+        )}
+        <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       </div>
       <TaskList
         filter={{ due, availableOnly }}
-        picker={picker}
+        picker={childrens ? null : picker}
         search={search}
-        showChildrens={showChildrens}
+        childrens={childrens}
       />
       {showCompleted && <HouseholdCompletedTasks />}
     </>
@@ -148,6 +140,29 @@ function useSearchTextParam() {
     parse: (value) => value ?? '',
     serialise: (search) => (search === '' ? null : search),
   });
+}
+
+interface ListChoiceProps {
+  childrens: boolean;
+  onChange: (childrens: boolean) => void;
+}
+
+const lists = ['adults', 'children'] as const;
+
+/** Whether the board lists the adults' own tasks or the tasks for children; one at a time. */
+function ListChoice({ childrens, onChange }: ListChoiceProps) {
+  const t = useMessages().tasks.board.lists;
+  return (
+    <SegmentedChoice
+      legend={t.legend}
+      options={lists}
+      labels={t}
+      value={childrens ? 'children' : 'adults'}
+      onChange={(list) => {
+        onChange(list === 'children');
+      }}
+    />
+  );
 }
 
 interface SearchFieldProps {
@@ -203,12 +218,12 @@ interface TaskListProps {
   /** Only the tasks this member has picked up; null for everyone's. */
   picker: HouseholdMember | null;
   search: string;
-  /** Also lists the tasks for children, apart from the adults' own. */
-  showChildrens: boolean;
+  /** Lists the tasks for children instead of the adults' own. */
+  childrens: boolean;
 }
 
-/** The adults' tasks the filters leave, and below them, on request, the children's. */
-function TaskList({ filter, picker, search, showChildrens }: TaskListProps) {
+/** The adults' tasks, or the tasks for children, that the filters leave. */
+function TaskList({ filter, picker, search, childrens }: TaskListProps) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
   const messages = useMessages();
@@ -224,18 +239,14 @@ function TaskList({ filter, picker, search, showChildrens }: TaskListProps) {
     );
   }
   // Private tasks are listed only on the Me page.
-  const shared = tasks.data.filter((task) => !task.isPrivate);
-  if (shared.length === 0) {
-    return <EmptyMessage>{t.empty.all}</EmptyMessage>;
-  }
-  const matching = searchTasks(
-    pickedUpBy(filterTasks(shared, filter, today()), picker?.id ?? null),
+  const listed = tasks.data.filter((task) => !task.isPrivate && task.forChildren === childrens);
+  const shown = searchTasks(
+    pickedUpBy(filterTasks(listed, filter, today()), picker?.id ?? null),
     search,
   );
-  const shown = matching.filter((task) => !task.forChildren);
-  const childrens = matching.filter((task) => task.forChildren);
   const searched = search.trim();
   function emptyMessage(): string {
+    if (listed.length === 0) return childrens ? t.noChildrens : t.empty.all;
     if (searched !== '') return t.noMatches(searched);
     if (picker !== null) return nothingPickedUpMessage(picker, user.id, messages);
     return (filter.availableOnly ? t.emptyAvailable : t.empty)[filter.due];
@@ -244,33 +255,14 @@ function TaskList({ filter, picker, search, showChildrens }: TaskListProps) {
     <>
       {/* Mounted while the tasks show, so screen readers hear how many match as the search is typed. */}
       <p role="status" className="sr-only">
-        {searched === '' ? '' : t.matches(shown.length + (showChildrens ? childrens.length : 0))}
+        {searched === '' ? '' : t.matches(shown.length)}
       </p>
       {shown.length === 0 ? (
         <EmptyMessage>{emptyMessage()}</EmptyMessage>
       ) : (
         <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />
       )}
-      {showChildrens && <ChildrensTasks tasks={childrens} currentUserId={user.id} />}
     </>
-  );
-}
-
-/** The tasks for children the filters leave, for adults to check and edit; only children do them. */
-function ChildrensTasks({ tasks, currentUserId }: { tasks: Task[]; currentUserId: string }) {
-  const headingId = useId();
-  const t = useMessages().tasks.board;
-  return (
-    <section aria-labelledby={headingId} className="mt-4 flex flex-col gap-3">
-      <h2 id={headingId} className="text-ink text-lg font-semibold">
-        {t.childrens}
-      </h2>
-      {tasks.length === 0 ? (
-        <EmptyMessage>{t.noChildrens}</EmptyMessage>
-      ) : (
-        <DueTaskGroups tasks={tasks} currentUserId={currentUserId} headingLevel={3} />
-      )}
-    </section>
   );
 }
 

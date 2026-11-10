@@ -71,7 +71,7 @@ describe('adding a task that is already done', () => {
     await user.type(screen.getByLabelText('Task'), 'Make your bed');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    await screen.findByRole('region', { name: "Children's tasks" });
+    await screen.findByRole('listitem', { name: 'Make your bed' });
     expect(tasks.at(-1)).toMatchObject({ forChildren: true, completed: null });
   });
 

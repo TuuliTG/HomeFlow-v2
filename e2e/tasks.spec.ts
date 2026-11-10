@@ -65,13 +65,16 @@ test('family member can add a task for the children, kept apart from their own',
   await page.getByLabel('Stars for each child').fill('2');
   await page.getByRole('button', { name: 'Create task' }).click();
 
-  const childrens = page.getByRole('region', { name: "Children's tasks" });
-  const task = childrens.getByRole('listitem', { name: 'Feed the cat' });
+  // The board opens on the children's tasks, one list at a time.
+  const lists = page.getByRole('group', { name: 'Whose tasks' });
+  await expect(lists.getByRole('radio', { name: "Children's tasks" })).toBeChecked();
+  const task = page.getByRole('listitem', { name: 'Feed the cat' });
   await expect(task.getByText('For children')).toBeVisible();
   await expect(task.getByText('2 points')).toBeVisible();
   await expect(task.getByRole('button', { name: 'Mark done: Feed the cat' })).toHaveCount(0);
-  await page.getByRole('switch', { name: "Show children's tasks" }).uncheck();
+  await lists.getByText("Adults' tasks").click();
   await expect(page.getByText('Feed the cat')).toBeHidden();
+  await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
 });
 
 test('family member can attach a picture to a task and see it on the board', async ({ page }) => {

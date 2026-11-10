@@ -32,22 +32,23 @@ next one back rather than follow a fixed calendar.
   child" (its points), and has no type, "Keep it private" or "Already done". **A shared task for children is the
   children's only**: parents wanted the children's chores kept apart from their own, so its stars always go to a
   child, and adults keep their own tasks (e.g. their own "Empty the dishwasher" with other points). Adults see,
-  edit and delete them under "Show children's tasks" on the board (`?children=1`, where saving one opens), apart
-  from their own, and can ask a child to do one, but can't pick one up, be asked to do one or mark one done: a
-  trigger (`private.check_task_doer()`, using `private.can_do_task()`) refuses every way of picking up or marking
-  done, `request_task()` asks only children for them (and only adults for adults-only ones), and making a task one
-  for children, or a child becoming an adult, takes it back from adults with their reminders, plans and requests
-  (`private.put_back_from_adults()`). An adult's own private tasks stay theirs to do. A
-  child (ADR 0003) sees and acts only on tasks for children, and every task they add is one (insert policy;
-  `update_task()` refuses a child making one adults-only). `private.can_see_task()` holds the visibility rule
-  (household, private, children) for every security definer function acting on a task, reminders and undo
-  included; the select policy spells the same rule out inline, since a function with `SET` isn't inlined and would
-  stop the household index being used. A child never holds an adults-only task: making one adults-only, or marking
-  its picker as a child, puts it back and removes their reminder (`private.put_back_adults_tasks()`), and
-  `take_due_reminders()` never sends a child one; a new child's private tasks become theirs for children.
-  Statistics and goals count every shared task for everyone (`household_statistics()`, `private.goal_points()` and
-  `private.goal_member_points()` are security definer and return no task titles); a child's News lists only tasks
-  for children.
+  edit and delete them on the board's "Children's tasks" list, chosen instead of "Adults' tasks" at its top
+  (`?children=1`, where saving one opens; one list at a time, as showing both under a tick box was misleading;
+  search and due filters apply to either, the filter by who picked a task up only to adults' tasks), and can ask a
+  child to do one, but can't pick one up, be asked to do one or mark one done: a trigger
+  (`private.check_task_doer()`, using `private.can_do_task()`) refuses every way of picking up or marking done,
+  `request_task()` asks only children for them (and only adults for adults-only ones), and making a task one for
+  children, or a child becoming an adult, takes it back from adults with their reminders, plans and requests
+  (`private.put_back_from_adults()`). An adult's own private tasks stay theirs to do. A child (ADR 0003) sees and
+  acts only on tasks for children, and every task they add is one (insert policy; `update_task()` refuses a child
+  making one adults-only). `private.can_see_task()` holds the visibility rule (household, private, children) for
+  every security definer function acting on a task, reminders and undo included; the select policy spells the same
+  rule out inline, since a function with `SET` isn't inlined and would stop the household index being used. A
+  child never holds an adults-only task: making one adults-only, or marking its picker as a child, puts it back
+  and removes their reminder (`private.put_back_adults_tasks()`), and `take_due_reminders()` never sends a child
+  one; a new child's private tasks become theirs for children. Statistics and goals count every shared task for
+  everyone (`household_statistics()`, `private.goal_points()` and `private.goal_member_points()` are security
+  definer and return no task titles); a child's News lists only tasks for children.
 - **Children adding tasks**: adults always add tasks; a child only when an adult allows it
   (`household_members.can_add_tasks`, `set_member_can_add_tasks()`, ADR 0003), shared or private. **A child's shared
   task has no points** until an adult awards them (`award_task_points()`, adults only, once), so a child can't pick
