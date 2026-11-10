@@ -159,16 +159,8 @@ export const tasks = {
     title: 'My stars',
     myTasks: 'My tasks',
     nothingToDo: 'Nothing to do yet.',
-    pickOnBoard: 'Pick a task on Shared tasks',
-  },
-  /** The Shared tasks screen for children: the tasks for children as big tiles. */
-  childBoard: {
-    title: 'Tasks for you',
     free: 'Free to pick',
     nothingFree: 'No free tasks right now.',
-    yours: 'Picked by you',
-    othersDoing: 'Others are doing',
-    doingIt: (name: string) => `${name} is doing it`,
   },
   /** Saying who helped with a task the user did, and giving them bonus points. */
   helpers: {
