@@ -4,7 +4,11 @@ import { Fragment, type ReactNode, useCallback, useEffect, useMemo, useRef, useS
 import { useNavigate } from 'react-router';
 
 import { paths } from '@/app/paths';
-import { signInChildOnThisDevice, switchToDeviceAccount } from '@/features/auth/accountSwitching';
+import {
+  keepChildOnThisDevice,
+  signOutOnThisDevice,
+  switchToDeviceAccount,
+} from '@/features/auth/accountSwitching';
 import { logOut, subscribeToAuthChanges } from '@/features/auth/api';
 import { forgetDeviceAccount, readDeviceAccounts } from '@/features/auth/deviceAccounts';
 import { AuthContext, type AuthState, type AuthUser, type OtherAccount } from '@/lib/auth';
@@ -77,6 +81,15 @@ export function AuthProvider({ children, beforeLogOut }: AuthProviderProps) {
     [navigate],
   );
 
+  /** Signs an account in or out of this device without switching, then shows who is waiting here. */
+  const changingAccountsHere = useCallback(async (change: () => Promise<void>) => {
+    try {
+      await change();
+    } finally {
+      setOtherAccounts(readOtherAccounts());
+    }
+  }, []);
+
   const auth = useMemo<AuthState>(
     () => ({
       ...session,
@@ -86,9 +99,11 @@ export function AuthProvider({ children, beforeLogOut }: AuthProviderProps) {
         await logOut();
       },
       switchAccount: (userId) => switching(() => switchToDeviceAccount(userId)),
-      signInChildOnThisDevice: (code) => switching(() => signInChildOnThisDevice(code)),
+      keepChildOnThisDevice: (code, displayName) =>
+        changingAccountsHere(() => keepChildOnThisDevice(code, displayName)),
+      signOutOnThisDevice: (userId) => changingAccountsHere(() => signOutOnThisDevice(userId)),
     }),
-    [session, otherAccounts, beforeLogOut, switching],
+    [session, otherAccounts, beforeLogOut, switching, changingAccountsHere],
   );
 
   // Another account starts the screens afresh, so nothing of the previous one's stays on them.

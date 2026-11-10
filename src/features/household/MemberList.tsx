@@ -2,12 +2,13 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import type { HouseholdMember, SignInCode } from '@/features/household/household';
 import { SavingCheckbox } from '@/components/ui/SavingCheckbox';
 import {
-  useChildOnThisDevice,
   useHouseholdMembers,
   useNewChildSignInCode,
+  useSetChildOnThisDevice,
   useSetMemberCanAddTasks,
   useSetMemberIsChild,
 } from '@/features/household/useHousehold';
+import { useAuth } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface MemberListProps {
@@ -25,8 +26,10 @@ interface MemberActions {
   setCanAddTasks?: (canAddTasks: boolean) => Promise<void>;
   /** Makes a new sign-in code for a child without email. */
   newCode?: (childName: string) => void;
-  /** Continues as a child without email on this device. */
-  signInHere?: () => void;
+  /** Whether a child without email is signed in on this device, waiting to be switched to. */
+  isOnThisDevice?: boolean;
+  /** Signs a child without email in on this device or out of it, settling once that is done. */
+  setOnThisDevice?: (onThisDevice: boolean) => Promise<void>;
 }
 
 /**
@@ -42,7 +45,8 @@ function useMemberActions(
   const setIsChild = useSetMemberIsChild(householdId);
   const setCanAddTasks = useSetMemberCanAddTasks(householdId);
   const newCode = useNewChildSignInCode();
-  const childHere = useChildOnThisDevice();
+  const childHere = useSetChildOnThisDevice();
+  const { otherAccounts } = useAuth();
   const t = useMessages().household.members;
 
   function actionsFor(member: HouseholdMember, isAdult: boolean): MemberActions {
@@ -62,9 +66,11 @@ function useMemberActions(
             },
           });
         },
-        signInHere: () => {
-          childHere.mutate(memberId);
-        },
+        isOnThisDevice: otherAccounts.some((account) => account.userId === memberId),
+        setOnThisDevice: (onThisDevice: boolean) =>
+          childHere
+            .mutateAsync({ childId: memberId, displayName: member.displayName ?? '', onThisDevice })
+            .catch(() => undefined),
       }),
     };
   }
@@ -77,7 +83,7 @@ function useMemberActions(
       (setIsChild.isError && t.setChildFailed) ||
       (setCanAddTasks.isError && t.setCanAddTasksFailed) ||
       (newCode.isError && t.newCodeFailed) ||
-      (childHere.isError && t.useHereFailed),
+      (childHere.isError && t.setOnThisDeviceFailed),
   };
 }
 
@@ -139,7 +145,7 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
   const { common, household } = useMessages();
   const t = household.members;
   const name = member.displayName ?? common.newMember;
-  const { newCode, signInHere, setIsChild, setCanAddTasks } = actions;
+  const { newCode, setIsChild, setCanAddTasks, setOnThisDevice } = actions;
   return (
     <li className="text-ink flex items-center justify-between gap-3 px-4 py-3">
       <div className="flex flex-col items-start gap-1">
@@ -158,17 +164,6 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
             className="text-brand-600 text-sm font-medium underline disabled:opacity-60"
           >
             {t.newCode}
-          </button>
-        )}
-        {signInHere && (
-          <button
-            type="button"
-            aria-label={t.useHereFor(name)}
-            disabled={isMakingCode}
-            onClick={signInHere}
-            className="text-brand-600 text-sm font-medium underline disabled:opacity-60"
-          >
-            {t.useHere}
           </button>
         )}
       </div>
@@ -195,6 +190,15 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
             checked={member.canAddTasks}
             disabled={isSaving}
             onChange={setCanAddTasks}
+          />
+        )}
+        {setOnThisDevice && (
+          <SavingCheckbox
+            label={t.onThisDevice}
+            ariaLabel={t.onThisDeviceFor(name)}
+            checked={actions.isOnThisDevice ?? false}
+            disabled={isMakingCode}
+            onChange={setOnThisDevice}
           />
         )}
       </div>

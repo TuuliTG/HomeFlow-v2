@@ -35,8 +35,10 @@ export interface AuthState {
    * `AccountSignedOutError` if that account's session has ended.
    */
   switchAccount: (userId: string) => Promise<void>;
-  /** Signs a child in with their sign-in code on this device; the current account waits meanwhile. */
-  signInChildOnThisDevice: (code: string) => Promise<void>;
+  /** Signs a child in with their sign-in code on this device, to wait in `otherAccounts`; the user stays. */
+  keepChildOnThisDevice: (code: string, displayName: string) => Promise<void>;
+  /** Signs one of `otherAccounts` out of this device. */
+  signOutOnThisDevice: (userId: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthState | null>(null);

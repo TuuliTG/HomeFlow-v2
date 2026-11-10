@@ -54,21 +54,68 @@ export async function createAccount(email: string, password: string): Promise<vo
 const childSignInSchema = z.object({ tokenHash: z.string() });
 
 /**
- * Signs a child without email in with the one-time code an adult gave them (`child-sign-in` Edge
- * Function, ADR 0003). The function answers with a token like a magic link's, which logs in here.
+ * Trades the one-time code an adult gave a child without email for a token like a magic link's, which signs
+ * them in with `verifyOtp` (`child-sign-in` Edge Function, ADR 0003).
  */
-export async function signInWithChildCode(code: string): Promise<void> {
-  const client = getSupabaseClient();
-  const result = await client.functions.invoke<unknown>('child-sign-in', { body: { code } });
+async function childTokenHash(code: string): Promise<string> {
+  const result = await getSupabaseClient().functions.invoke<unknown>('child-sign-in', {
+    body: { code },
+  });
   // functions-js types its error as any; it is a FunctionsError.
   const error = result.error as Error | null;
   if (functionErrorStatus(error) === 401) {
     throw new LoginError('unknown-child-code', 'Unknown, used or expired code');
   }
   if (error) throw error;
-  const { tokenHash } = childSignInSchema.parse(result.data);
-  const verified = await client.auth.verifyOtp({ token_hash: tokenHash, type: 'email' });
+  return childSignInSchema.parse(result.data).tokenHash;
+}
+
+/** Signs a child without email in with their sign-in code. */
+export async function signInWithChildCode(code: string): Promise<void> {
+  const tokenHash = await childTokenHash(code);
+  const verified = await getSupabaseClient().auth.verifyOtp({
+    token_hash: tokenHash,
+    type: 'email',
+  });
   if (verified.error) throw toLoginError(verified.error);
+}
+
+/**
+ * Signs a child without email in with their sign-in code on a throwaway client, so the account in use stays,
+ * and hands over the child's session to keep on this device.
+ */
+export async function childSessionFromCode(code: string): Promise<SessionTokens> {
+  const tokenHash = await childTokenHash(code);
+  const verified = await getThrowawaySupabaseClient().auth.verifyOtp({
+    token_hash: tokenHash,
+    type: 'email',
+  });
+  if (verified.error) throw toLoginError(verified.error);
+  const { session } = verified.data;
+  if (!session) throw new LoginError('other', 'Signing the child in gave no session');
+  return {
+    userId: session.user.id,
+    accessToken: session.access_token,
+    refreshToken: session.refresh_token,
+  };
+}
+
+/**
+ * Ends a session kept on this device, so its tokens no longer sign in anywhere. A session that has already
+ * ended needs nothing more.
+ */
+export async function endKeptSession(tokens: SessionTokens): Promise<void> {
+  const throwaway = getThrowawaySupabaseClient();
+  const tried = await throwaway.auth.setSession({
+    access_token: tokens.accessToken,
+    refresh_token: tokens.refreshToken,
+  });
+  if (tried.error) {
+    if (isSessionEnded(tried.error)) return;
+    throw tried.error;
+  }
+  const { error } = await throwaway.auth.signOut({ scope: 'local' });
+  if (error) throw error;
 }
 
 /** Logs out on this device only. */
