@@ -7,8 +7,8 @@ const PICKER_PARAM = 'who';
 
 /**
  * Whose picked-up tasks the board shows, kept in the address as `?who=<user id>` and remembered on this device;
- * everyone's by default, also for someone who isn't in the household (any more). Returns the member chosen, the
- * household's members and how to choose another.
+ * everyone's by default, also for someone who isn't in the household (any more) or is a child, since children
+ * don't pick up adults' tasks. Returns the adult chosen, the household's adults and how to choose another.
  */
 export function usePickerFilter(userId: string) {
   const members = useHouseholdMembers(userId);
@@ -18,9 +18,9 @@ export function usePickerFilter(userId: string) {
     serialise: (value) => value,
     rememberAs: `board.${PICKER_PARAM}:${userId}`,
   });
-  const all = members.data ?? [];
-  const picker = all.find((member) => member.id === pickerId) ?? null;
-  return { picker, members: all, setPickerId };
+  const adults = (members.data ?? []).filter((member) => !member.isChild);
+  const picker = adults.find((member) => member.id === pickerId) ?? null;
+  return { picker, members: adults, setPickerId };
 }
 
 /** What the board says when nothing it shows is picked up by the member chosen. */
