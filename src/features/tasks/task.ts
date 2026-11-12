@@ -49,6 +49,9 @@ export const MAX_HELPER_BONUS = 10;
 /** How often a task can repeat, in days; offered as choices when creating a task. */
 export const repeatChoices = [1, 2, 3, 7, 14, 30] as const;
 
+/** The longest a task can go between repeats, in days: a year. */
+const MAX_REPEAT_DAYS = 365;
+
 /** Checks a task's details, explaining what to fix in the user's language. */
 export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
   z
@@ -77,7 +80,12 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
         .max(MAX_POINTS, errors.pointsRange)
         .nullable(),
       /** Days after it is done that the task comes back; null for a one-off task. */
-      repeatEveryDays: z.number().int().min(1).max(365).nullable(),
+      repeatEveryDays: z
+        .number(errors.repeatRange)
+        .int(errors.repeatRange)
+        .min(1, errors.repeatRange)
+        .max(MAX_REPEAT_DAYS, errors.repeatRange)
+        .nullable(),
       /** Local date (YYYY-MM-DD) the task should be done by, if any. */
       dueOn: z.iso.date(errors.invalidDueDate).nullable(),
       /**

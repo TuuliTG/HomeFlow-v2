@@ -110,6 +110,13 @@ export const taskForm: Messages['taskForm'] = {
   },
   repeats: 'Toistuu',
   doesNotRepeat: 'Ei toistu',
+  customRepeat: 'Muu väli…',
+  repeatEvery: 'Toistoväli',
+  repeatUnit: 'Päivät vai viikot',
+  repeatUnits: {
+    days: (count) => (count === 1 ? 'päivä' : 'päivää'),
+    weeks: (count) => (count === 1 ? 'viikko' : 'viikkoa'),
+  },
   dueDate: 'Määräpäivä',
   alreadyDone: 'Jo tehty',
   errors: {
@@ -118,6 +125,7 @@ export const taskForm: Messages['taskForm'] = {
     descriptionTooLong: (max) => `Kuvauksessa saa olla enintään ${String(max)} merkkiä.`,
     pointsRange: 'Pisteiden pitää olla kokonaisluku 1–10.',
     invalidDueDate: 'Valitse kelvollinen määräpäivä.',
+    repeatRange: 'Valitse, kuinka usein tehtävä toistuu: 1–365 päivän välein.',
     onlySharedHavePoints: 'Vain yhteisillä tehtävillä on pisteitä.',
     checkDetails: 'Tarkista tehtävän tiedot.',
     saveFailed: 'Tehtävää ei voitu tallentaa. Yritä uudelleen.',

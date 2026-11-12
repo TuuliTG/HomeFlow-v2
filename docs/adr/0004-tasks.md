@@ -14,6 +14,9 @@ next one back rather than follow a fixed calendar.
 - `tasks` belong to a household: title, optional description (≤ 500 characters), type (`physical`/`meta`),
   points (1–10), `created_by` (from the default, never the client), optional `due_on`, `repeat_every_days`
   (1–365), `completed_at`/`completed_by` and `previous_task_id`. New tasks default to the creator's household.
+- **Repeat intervals**: the form offers ready-made intervals (`repeatChoices`) and "Custom…", every so many
+  days or weeks (`taskRepeat.ts`); the database stores days only, so a custom interval of whole weeks shows in
+  weeks when edited.
 - **Links in descriptions**: the card turns `http(s)://` and `www.` addresses in a description into links that
   open in a new tab (`descriptionParts()` in `descriptionLinks.ts`) and wraps long ones so they fit and can be
   copied. Other schemes (`javascript:`, `mailto:`) stay plain text; the description is never rendered as HTML.

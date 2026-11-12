@@ -10,7 +10,13 @@ import {
   type TaskType,
 } from '@/features/tasks/task';
 import type { TaskIconName } from '@/lib/taskIcons';
-import { fieldValues, shownFields, taskInput } from '@/features/tasks/taskFormValues';
+import {
+  type FieldName,
+  fieldOf,
+  fieldValues,
+  shownFields,
+  taskInput,
+} from '@/features/tasks/taskFormValues';
 import { TaskDescriptionField } from '@/features/tasks/TaskDescriptionField';
 import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
 import { TaskIconField } from '@/features/tasks/TaskIconField';
@@ -25,16 +31,10 @@ import { TaskTimingFields } from '@/features/tasks/TaskTimingFields';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 import { useMessages } from '@/lib/i18n/i18n';
 
-type FieldName = 'title' | 'description' | 'points' | 'dueOn';
-
 interface FormError {
   /** The field to fix, or null when saving failed. */
   field: FieldName | null;
   message: string;
-}
-
-function fieldOf(path: PropertyKey | undefined): FieldName {
-  return path === 'description' || path === 'points' || path === 'dueOn' ? path : 'title';
 }
 
 interface TaskFormProps {
@@ -95,8 +95,7 @@ export function TaskForm({
   const [description, setDescription] = useState(initialValues.description);
   const [type, setType] = useState<TaskType>(initialValues.type);
   const [points, setPoints] = useState(initialValues.points);
-  /** Days between occurrences, or '' for a one-off task. */
-  const [repeatEveryDays, setRepeatEveryDays] = useState(initialValues.repeat);
+  const [repeat, setRepeat] = useState(initialValues.repeat);
   const [dueOn, setDueOn] = useState(initialValues.dueOn);
   const [isPrivate, setIsPrivate] = useState(initialValues.isPrivate);
   const [forChildren, setForChildren] = useState(initialValues.forChildren);
@@ -114,12 +113,14 @@ export function TaskForm({
   const errorId = useId();
   const titleRef = useRef<HTMLInputElement>(null);
   const pointsRef = useRef<HTMLInputElement>(null);
+  const repeatCountRef = useRef<HTMLInputElement>(null);
   const dueOnRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const fieldRefs = {
     title: titleRef,
     description: descriptionRef,
     points: pointsRef,
+    repeatEveryDays: repeatCountRef,
     dueOn: dueOnRef,
   };
 
@@ -134,7 +135,7 @@ export function TaskForm({
     setDescription(values.description);
     setType(values.type);
     setPoints(values.points);
-    setRepeatEveryDays(values.repeat);
+    setRepeat(values.repeat);
     setDueOn(values.dueOn);
     setIsPrivate(values.isPrivate);
     setForChildren(values.forChildren);
@@ -169,7 +170,7 @@ export function TaskForm({
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
-    const values = { title, description, type, points, repeat: repeatEveryDays, dueOn };
+    const values = { title, description, type, points, repeat, dueOn };
     const [assignedTo = null, ...alsoFor] = childIds;
     const parsed = newTaskSchema(t).safeParse(
       taskInput({ ...values, ...labels, isPrivate, forChildren, icon, assignedTo }, isChild),
@@ -260,8 +261,10 @@ export function TaskForm({
       )}
 
       <TaskTimingFields
-        repeat={repeatEveryDays}
-        onRepeatChange={setRepeatEveryDays}
+        repeat={repeat}
+        onRepeatChange={setRepeat}
+        repeatCountRef={repeatCountRef}
+        repeatCountErrorProps={errorPropsFor('repeatEveryDays')}
         dueOn={dueOn}
         onDueOnChange={setDueOn}
         dueOnRef={dueOnRef}

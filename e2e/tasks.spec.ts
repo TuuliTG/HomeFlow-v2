@@ -188,6 +188,25 @@ test('family member can mark a repeating task done and see it come back', async 
   await expect(page.getByText('Was due Tue 6 Oct')).toBeHidden();
 });
 
+test('family member can repeat a task at a custom interval', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('Water the plants');
+  await page.getByLabel('Repeats').selectOption({ label: 'Custom…' });
+  await page.getByLabel('Every', { exact: true }).fill('3');
+  await page.getByLabel('Days or weeks').selectOption({ label: 'weeks' });
+  await page.screenshot({ path: test.info().outputPath('custom-repeat.png') });
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on the task form').toEqual([]);
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  const task = page.getByRole('listitem', { name: 'Water the plants' });
+  await expect(task.getByText('Every 3 weeks')).toBeVisible();
+});
+
 test('family member can pick up a task, find it on the Me screen and mark it done there', async ({
   page,
 }) => {
