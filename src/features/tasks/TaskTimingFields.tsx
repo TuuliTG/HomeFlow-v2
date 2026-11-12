@@ -2,8 +2,8 @@ import type { Ref } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
 import { CheckboxField } from '@/features/tasks/CheckboxField';
-import { CustomRepeatField, RepeatChoiceField } from '@/features/tasks/TaskRepeatField';
-import type { RepeatFieldValue } from '@/features/tasks/taskRepeat';
+import { TaskRepeatField } from '@/features/tasks/TaskRepeatField';
+import { CUSTOM_REPEAT, type RepeatFieldValue } from '@/features/tasks/taskRepeat';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskTimingFieldsProps {
@@ -43,8 +43,14 @@ export function TaskTimingFields({
         />
       )}
 
-      <div className="flex gap-3">
-        <RepeatChoiceField value={repeat} onChange={onRepeatChange} />
+      {/* A custom interval needs the width, so the due date then goes under it. */}
+      <div className={repeat.choice === CUSTOM_REPEAT ? 'flex flex-col gap-3' : 'flex gap-3'}>
+        <TaskRepeatField
+          value={repeat}
+          onChange={onRepeatChange}
+          countRef={repeatCountRef}
+          countErrorProps={repeatCountErrorProps}
+        />
         {!alreadyDone?.checked && (
           <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
             {t.taskForm.dueDate}
@@ -62,12 +68,6 @@ export function TaskTimingFields({
           </label>
         )}
       </div>
-      <CustomRepeatField
-        value={repeat}
-        onChange={onRepeatChange}
-        countRef={repeatCountRef}
-        countErrorProps={repeatCountErrorProps}
-      />
     </>
   );
 }

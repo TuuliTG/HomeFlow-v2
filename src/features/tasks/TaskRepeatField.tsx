@@ -14,85 +14,81 @@ function unitOf(value: string): RepeatUnit {
   return repeatUnits.find((unit) => unit === value) ?? 'days';
 }
 
-interface RepeatFieldProps {
+interface TaskRepeatFieldProps {
   value: RepeatFieldValue;
   onChange: (repeat: RepeatFieldValue) => void;
-}
-
-/** How often a task repeats: not at all, a ready-made choice, or a custom interval (`CustomRepeatField`). */
-export function RepeatChoiceField({ value, onChange }: RepeatFieldProps) {
-  const t = useMessages();
-  return (
-    <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
-      {t.taskForm.repeats}
-      <select
-        name="repeatEveryDays"
-        value={value.choice}
-        onChange={(event) => {
-          onChange({ ...value, choice: event.target.value });
-        }}
-        className={inputClassName}
-      >
-        <option value="">{t.taskForm.doesNotRepeat}</option>
-        {repeatChoices.map((days) => (
-          <option key={days} value={days}>
-            {t.tasks.repeat(days)}
-          </option>
-        ))}
-        <option value={CUSTOM_REPEAT}>{t.taskForm.customRepeat}</option>
-      </select>
-    </label>
-  );
-}
-
-interface CustomRepeatFieldProps extends RepeatFieldProps {
-  /** The interval's count, focused when it needs fixing. */
+  /** The custom interval's count, focused when it needs fixing. */
   countRef: Ref<HTMLInputElement>;
   countErrorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
 }
 
-/** A custom interval, every so many days or weeks; shown only when "Custom…" is chosen. */
-export function CustomRepeatField({
+/**
+ * How often a task repeats: not at all, a ready-made choice, or "Custom…", which asks under it for every so
+ * many days or weeks.
+ */
+export function TaskRepeatField({
   value,
   onChange,
   countRef,
   countErrorProps,
-}: CustomRepeatFieldProps) {
-  const t = useMessages().taskForm;
-  if (value.choice !== CUSTOM_REPEAT) return null;
+}: TaskRepeatFieldProps) {
+  const t = useMessages();
   return (
-    <div className="flex items-end gap-2">
+    <div className="flex flex-1 flex-col gap-2">
       <label className="text-ink flex flex-col gap-1 text-sm font-medium">
-        {t.repeatEvery}
-        <input
-          type="number"
-          name="repeatCount"
-          ref={countRef}
-          {...countErrorProps}
-          inputMode="numeric"
-          min={1}
-          value={value.count}
+        {t.taskForm.repeats}
+        <select
+          name="repeatEveryDays"
+          value={value.choice}
           onChange={(event) => {
-            onChange({ ...value, count: event.target.value });
+            onChange({ ...value, choice: event.target.value });
           }}
-          className={`${inputClassName} w-24`}
-        />
+          className={inputClassName}
+        >
+          <option value="">{t.taskForm.doesNotRepeat}</option>
+          {repeatChoices.map((days) => (
+            <option key={days} value={days}>
+              {t.tasks.repeat(days)}
+            </option>
+          ))}
+          <option value={CUSTOM_REPEAT}>{t.taskForm.customRepeat}</option>
+        </select>
       </label>
-      <select
-        name="repeatUnit"
-        aria-label={t.repeatUnit}
-        value={value.unit}
-        onChange={(event) => {
-          onChange({ ...value, unit: unitOf(event.target.value) });
-        }}
-        className={inputClassName}
-      >
-        {repeatUnits.map((unit) => (
-          <option key={unit} value={unit}>
-            {t.repeatUnits[unit]}
-          </option>
-        ))}
-      </select>
+      {value.choice === CUSTOM_REPEAT && (
+        <div className="flex items-end gap-2">
+          <label className="text-ink flex flex-col gap-1 text-sm font-medium">
+            {t.taskForm.repeatEvery}
+            <input
+              type="number"
+              name="repeatCount"
+              ref={countRef}
+              {...countErrorProps}
+              inputMode="numeric"
+              min={1}
+              value={value.count}
+              onChange={(event) => {
+                onChange({ ...value, count: event.target.value });
+              }}
+              className={`${inputClassName} w-24`}
+            />
+          </label>
+          <select
+            name="repeatUnit"
+            aria-label={t.taskForm.repeatUnit}
+            value={value.unit}
+            onChange={(event) => {
+              onChange({ ...value, unit: unitOf(event.target.value) });
+            }}
+            className={inputClassName}
+          >
+            {repeatUnits.map((unit) => (
+              <option key={unit} value={unit}>
+                {t.taskForm.repeatUnits[unit](Number(value.count))}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 }

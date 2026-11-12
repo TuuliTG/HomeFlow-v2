@@ -112,8 +112,11 @@ export const taskForm: Messages['taskForm'] = {
   doesNotRepeat: 'Ei toistu',
   customRepeat: 'Muu väli…',
   repeatEvery: 'Toistoväli',
-  repeatUnit: 'Päivää vai viikkoa',
-  repeatUnits: { days: 'päivää', weeks: 'viikkoa' },
+  repeatUnit: 'Päivät vai viikot',
+  repeatUnits: {
+    days: (count) => (count === 1 ? 'päivä' : 'päivää'),
+    weeks: (count) => (count === 1 ? 'viikko' : 'viikkoa'),
+  },
   dueDate: 'Määräpäivä',
   alreadyDone: 'Jo tehty',
   errors: {

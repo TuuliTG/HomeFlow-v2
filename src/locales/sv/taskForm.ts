@@ -114,7 +114,10 @@ export const taskForm: Messages['taskForm'] = {
   customRepeat: 'Annat intervall…',
   repeatEvery: 'Intervall',
   repeatUnit: 'Dagar eller veckor',
-  repeatUnits: { days: 'dagar', weeks: 'veckor' },
+  repeatUnits: {
+    days: (count) => (count === 1 ? 'dag' : 'dagar'),
+    weeks: (count) => (count === 1 ? 'vecka' : 'veckor'),
+  },
   dueDate: 'Förfallodag',
   alreadyDone: 'Redan gjord',
   errors: {
@@ -123,7 +126,7 @@ export const taskForm: Messages['taskForm'] = {
     descriptionTooLong: (max) => `Beskrivningen får ha högst ${String(max)} tecken.`,
     pointsRange: 'Poängen måste vara ett heltal från 1 till 10.',
     invalidDueDate: 'Välj en giltig förfallodag.',
-    repeatRange: 'Välj hur ofta uppgiften upprepas: var 1–365:e dag.',
+    repeatRange: 'Välj hur ofta uppgiften upprepas: med 1–365 dagars mellanrum.',
     onlySharedHavePoints: 'Bara gemensamma uppgifter har poäng.',
     checkDetails: 'Kontrollera uppgiftens detaljer.',
     saveFailed: 'Det gick inte att spara uppgiften. Försök igen.',

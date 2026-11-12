@@ -56,6 +56,35 @@ describe('repeating a task at a custom interval', () => {
     expect(screen.getByLabelText('Every')).toHaveAttribute('aria-invalid', 'true');
   });
 
+  it.each([
+    ['left empty', ''],
+    ['not a whole number of days', '1.5'],
+  ])('asks for an interval again when it is %s', async (_, count) => {
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.type(await screen.findByLabelText('Task'), 'Defrost the freezer');
+    await user.selectOptions(screen.getByLabelText('Repeats'), 'Custom…');
+    if (count !== '') await user.type(screen.getByLabelText('Every'), count);
+    await user.selectOptions(screen.getByLabelText('Days or weeks'), 'weeks');
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Choose how often it repeats: every 1 to 365 days.',
+    );
+    expect(screen.getByLabelText('Every')).toHaveFocus();
+  });
+
+  it('names the unit in the singular for one', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.selectOptions(await screen.findByLabelText('Repeats'), 'Custom…');
+    await user.type(screen.getByLabelText('Every'), '1');
+
+    expect(screen.getByLabelText('Days or weeks')).toHaveDisplayValue('day');
+  });
+
   it('shows and changes a custom interval when editing', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, {

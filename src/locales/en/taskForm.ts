@@ -118,7 +118,11 @@ export const taskForm = {
   customRepeat: 'Custom…',
   repeatEvery: 'Every',
   repeatUnit: 'Days or weeks',
-  repeatUnits: { days: 'days', weeks: 'weeks' },
+  /** A custom interval's unit, after its count. */
+  repeatUnits: {
+    days: (count: number): string => (count === 1 ? 'day' : 'days'),
+    weeks: (count: number): string => (count === 1 ? 'week' : 'weeks'),
+  },
   dueDate: 'Due date',
   alreadyDone: 'Already done',
   errors: {
