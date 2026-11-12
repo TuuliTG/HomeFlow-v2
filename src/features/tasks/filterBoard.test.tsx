@@ -313,6 +313,39 @@ describe('filtering the board by who has picked tasks up', () => {
     expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
   });
 
+  it("offers only adults, since children don't pick up adults' tasks", async () => {
+    const { mia } = familyWithTasks();
+    fakeHouseholdBackend.addChildAccount('Lumi', 'The Virtanens');
+    renderAppAt(`/?who=${mia.id}`);
+    await screen.findByRole('listitem', { name: 'Mop' });
+
+    const who = screen.getByRole('group', { name: 'Picked up by' });
+    const offered = within(who)
+      .getAllByRole('checkbox')
+      .map((member) => member.closest('label')?.textContent);
+    expect(offered).toEqual(['You', 'Ben', 'Mia']);
+  });
+
+  it("shows everyone's tasks when a child was chosen before", async () => {
+    familyWithTasks();
+    const lumi = fakeHouseholdBackend.addChildAccount('Lumi', 'The Virtanens');
+    renderAppAt(`/?who=${lumi.id}`);
+
+    await screen.findByRole('listitem', { name: 'Dust' });
+    expectNobodyChosen(screen.getByRole('group', { name: 'Picked up by' }));
+    expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
+  });
+
+  it("isn't offered to the only adult in a household with children", async () => {
+    const anna = logInAsFamilyMember();
+    fakeHouseholdBackend.addChildAccount('Lumi', 'The Virtanens');
+    addTask(anna.id, 'Dust');
+    renderAppAt('/');
+
+    await screen.findByRole('listitem', { name: 'Dust' });
+    expect(screen.queryByRole('group', { name: 'Picked up by' })).not.toBeInTheDocument();
+  });
+
   it("isn't offered to someone alone in their household", async () => {
     const anna = logInAsFamilyMember();
     addTask(anna.id, 'Dust');

@@ -10,13 +10,13 @@ interface PickerChoiceProps {
 }
 
 /**
- * One tap to see the tasks one family member has picked up (you, then the others), and another on the same name
+ * One tap to see the tasks one adult has picked up (you, then the others), and another on the same name
  * to see everyone's again. At most one is chosen; none shows everyone's.
  */
 export function PickerChoice({ currentUserId, members, picker, onChange }: PickerChoiceProps) {
   const { common, tasks } = useMessages();
   const t = tasks.board;
-  // Nobody else to tell apart.
+  // No other adult to tell apart.
   if (members.length < 2) return null;
   const others = members.filter((member) => member.id !== currentUserId);
   const options = [
