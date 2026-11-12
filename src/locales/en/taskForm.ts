@@ -114,6 +114,11 @@ export const taskForm = {
   },
   repeats: 'Repeats',
   doesNotRepeat: "Doesn't repeat",
+  /** Offered under "Repeats" to choose an interval of one's own, asked for as `repeatEvery` and `repeatUnit`. */
+  customRepeat: 'Custom…',
+  repeatEvery: 'Every',
+  repeatUnit: 'Days or weeks',
+  repeatUnits: { days: 'days', weeks: 'weeks' },
   dueDate: 'Due date',
   alreadyDone: 'Already done',
   errors: {
@@ -123,6 +128,7 @@ export const taskForm = {
       `Keep the description to ${String(max)} characters or fewer.`,
     pointsRange: 'Points must be a whole number from 1 to 10.',
     invalidDueDate: 'Pick a valid due date.',
+    repeatRange: 'Choose how often it repeats: every 1 to 365 days.',
     onlySharedHavePoints: 'Only shared tasks have points.',
     checkDetails: 'Check the task details.',
     saveFailed: "We couldn't save the task. Try again.",

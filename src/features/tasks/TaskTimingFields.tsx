@@ -2,13 +2,15 @@ import type { Ref } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
 import { CheckboxField } from '@/features/tasks/CheckboxField';
-import { repeatChoices } from '@/features/tasks/task';
+import { CustomRepeatField, RepeatChoiceField } from '@/features/tasks/TaskRepeatField';
+import type { RepeatFieldValue } from '@/features/tasks/taskRepeat';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskTimingFieldsProps {
-  /** Days between occurrences, or '' for a one-off task. */
-  repeat: string;
-  onRepeatChange: (repeat: string) => void;
+  repeat: RepeatFieldValue;
+  onRepeatChange: (repeat: RepeatFieldValue) => void;
+  repeatCountRef: Ref<HTMLInputElement>;
+  repeatCountErrorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
   dueOn: string;
   onDueOnChange: (dueOn: string) => void;
   dueOnRef: Ref<HTMLInputElement>;
@@ -21,6 +23,8 @@ interface TaskTimingFieldsProps {
 export function TaskTimingFields({
   repeat,
   onRepeatChange,
+  repeatCountRef,
+  repeatCountErrorProps,
   dueOn,
   onDueOnChange,
   dueOnRef,
@@ -40,24 +44,7 @@ export function TaskTimingFields({
       )}
 
       <div className="flex gap-3">
-        <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
-          {t.taskForm.repeats}
-          <select
-            name="repeatEveryDays"
-            value={repeat}
-            onChange={(event) => {
-              onRepeatChange(event.target.value);
-            }}
-            className={inputClassName}
-          >
-            <option value="">{t.taskForm.doesNotRepeat}</option>
-            {repeatChoices.map((days) => (
-              <option key={days} value={days}>
-                {t.tasks.repeat(days)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <RepeatChoiceField value={repeat} onChange={onRepeatChange} />
         {!alreadyDone?.checked && (
           <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
             {t.taskForm.dueDate}
@@ -75,6 +62,12 @@ export function TaskTimingFields({
           </label>
         )}
       </div>
+      <CustomRepeatField
+        value={repeat}
+        onChange={onRepeatChange}
+        countRef={repeatCountRef}
+        countErrorProps={repeatCountErrorProps}
+      />
     </>
   );
 }
