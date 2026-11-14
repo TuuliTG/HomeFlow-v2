@@ -1,7 +1,9 @@
 import { useId } from 'react';
 
+import { FoldButton } from '@/components/ui/FoldButton';
 import { CheckIcon } from '@/components/ui/icons';
 import { TaskIcon } from '@/components/ui/TaskIcon';
+import { useFoldedParam } from '@/features/tasks/foldedParam';
 import type { Task } from '@/features/tasks/task';
 import { useCompleteTask } from '@/features/tasks/useTasks';
 import { today } from '@/lib/dates';
@@ -16,24 +18,32 @@ interface RoutineChipsProps {
 /**
  * Everyday chores, like emptying the dishwasher, as small chips instead of cards (ADR 0004). A routine that
  * is due is a button that marks it done with one tap; one done until its next due date shows who did it.
- * Nothing without routines.
+ * They fold away behind their heading, which still counts those left to do. Nothing without routines.
  */
 export function RoutineChips({ routines, currentUserId }: RoutineChipsProps) {
   const completeTask = useCompleteTask(currentUserId);
   const t = useMessages();
   const headingId = useId();
+  const listId = useId();
+  const [folded, setFolded] = useFoldedParam('routines', currentUserId);
   const todayDate = today();
+  const toDo = routines.filter((routine) => !isDoneForNow(routine, todayDate)).length;
 
   if (routines.length === 0) return null;
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3 pt-2">
-      <h2
-        id={headingId}
-        className="text-ink-muted flex items-center gap-2 text-sm font-extrabold tracking-wide uppercase"
-      >
-        {t.tasks.routines.heading}
+      <h2 className="text-ink-muted flex items-center gap-2 text-sm font-extrabold tracking-wide uppercase">
+        <FoldButton
+          folded={folded}
+          onFoldedChange={setFolded}
+          controls={listId}
+          count={toDo}
+          countClassName="bg-brand-50 text-brand-900"
+        >
+          <span id={headingId}>{t.tasks.routines.heading}</span>
+        </FoldButton>
       </h2>
-      <ul className="flex flex-wrap gap-2">
+      <ul id={listId} hidden={folded} className="flex flex-wrap gap-2">
         {routines.map((routine) => (
           <li key={routine.id} className="max-w-full">
             {isDoneForNow(routine, todayDate) ? (

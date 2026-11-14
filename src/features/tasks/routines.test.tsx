@@ -47,7 +47,9 @@ describe('routines on the board', () => {
 
     expect(await within(routines()).findByText('Done by you')).toBeInTheDocument();
     expect(within(routines()).getByText('Empty the dishwasher')).toBeInTheDocument();
-    expect(within(routines()).queryByRole('button')).not.toBeInTheDocument();
+    expect(
+      within(routines()).queryByRole('button', { name: /^Mark done/ }),
+    ).not.toBeInTheDocument();
   });
 
   it('can still mark an overdue routine done', async () => {
@@ -74,6 +76,34 @@ describe('routines on the board', () => {
 
     expect(screen.getByRole('listitem', { name: 'Empty the dishwasher' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Routines' })).not.toBeInTheDocument();
+  });
+});
+
+describe('hiding the routines', () => {
+  it('folds them away, saying how many are still to do, and remembers it on this device', async () => {
+    const anna = logInAsFamilyMember();
+    addRoutine(anna.id, 'Empty the dishwasher', '2026-10-08');
+    addRoutine(anna.id, 'Feed the cat', '2026-10-07');
+    const user = userEvent.setup();
+    const { unmount } = renderAppAt('/');
+    const toggle = await screen.findByRole('button', { name: /^Routines/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveTextContent('2');
+    expect(
+      screen.queryByRole('button', { name: 'Mark done: Feed the cat' }),
+    ).not.toBeInTheDocument();
+    unmount();
+
+    renderAppAt('/');
+
+    expect(await screen.findByRole('button', { name: /^Routines/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
   });
 });
 

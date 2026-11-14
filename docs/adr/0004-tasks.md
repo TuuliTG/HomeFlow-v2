@@ -205,7 +205,8 @@ next one back rather than follow a fixed calendar.
   next occurrence and "add again" keep it). The board shows routines as small chips above the due dates
   (`RoutineChips`) instead of cards: a due one is a button that marks it done with one tap (tinted when overdue, no
   confirmation even if someone picked it up, since anyone may do a routine), and one done until its next due date
-  is a quiet chip saying who did it. Celebrating and "Who helped?" follow as for a card; undo is in the completed
+  is a quiet chip saying who did it. Like the Overdue group, the section folds away behind its heading
+  (`?routines=hidden`, remembered on the device), which still counts the routines left to do. Celebrating and "Who helped?" follow as for a card; undo is in the completed
   list as for any task. A search shows routines as ordinary cards, which is how one is found to edit it. We chose an
   explicit check mark over treating every daily task as a routine, because some daily tasks deserve a card.
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
