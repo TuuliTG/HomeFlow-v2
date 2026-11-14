@@ -27,7 +27,7 @@ export function HouseholdPage() {
   if (!household.data) {
     return (
       <>
-        <PageHeader eyebrow={t.eyebrow} title={t.yourHousehold} />
+        <PageHeader title={t.yourHousehold} />
         <p role="alert" className="text-danger-700 text-sm">
           {t.loadFailed}
         </p>
@@ -43,7 +43,7 @@ export function HouseholdPage() {
   };
   return (
     <>
-      <PageHeader eyebrow={t.eyebrow} title={name} />
+      <PageHeader title={name} />
       <div className="flex flex-col gap-6">
         {/* The two ways to bring someone in: inviting them, or adding a child without email. */}
         {isAdult && <InviteCode code={inviteCode} />}

@@ -1,6 +1,5 @@
-import { Link } from 'react-router';
-
 import { paths } from '@/app/paths';
+import { AddLink } from '@/components/ui/AddLink';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { GoalCard } from '@/features/rewards/GoalCard';
@@ -32,7 +31,7 @@ export function RewardsPage() {
   return (
     <>
       <div className="flex items-start justify-between gap-4">
-        <PageHeader eyebrow={t.eyebrow} title={t.title} />
+        <PageHeader title={t.title} />
         <NewGoalLink />
       </div>
       <Goals />
@@ -47,15 +46,7 @@ function NewGoalLink() {
   const { isAdult } = useGoalSetters(user.id);
   const t = useMessages().rewards;
   if (!isAdult) return null;
-  return (
-    <Link
-      to={paths.newGoal}
-      className="bg-brand-700 hover:bg-brand-900 shrink-0 rounded-xl px-3 py-2 text-sm font-bold text-white"
-    >
-      <span aria-hidden="true">+ </span>
-      {t.newGoal}
-    </Link>
-  );
+  return <AddLink to={paths.newGoal} label={t.newGoal} />;
 }
 
 function Goals() {

@@ -47,6 +47,9 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node 22 (≥ 22.22
   `text-ink-muted`, `brand-*`, `meta-*`, `danger-*`, `notice-*`…, ADR 0002), never Tailwind's own palette
   (`slate-*`, `red-*`, `bg-white`, `bg-[#…]`); `src/themeTokens.test.ts` fails on those. `text-white` on a filled
   colour is fine. Need a new colour? Add a token.
+- Simple, minimalistic UI, always: as few words, borders and controls as the task needs. Prefer an icon with an
+  accessible label (`aria-label`) over a text button when the icon is clear (e.g. a plus to add), and leave out
+  decoration that carries no meaning. Every UI change gets a simplicity round (workflow step 5).
 - Mobile first: design for ~390px wide, then enhance with `md:` breakpoints. Accessible by default (roles, labels, contrast).
 - Import with the `@/` alias. Add dependencies with `npm install <pkg>` (exact versions are saved automatically).
 
@@ -59,16 +62,20 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node 22 (≥ 22.22
 2. Plan briefly; write or update tests first where practical.
 3. Implement in small Conventional Commits (`feat: …`, `fix: …`, `refactor: …`). Keep refactors in separate commits from behaviour changes.
 4. Run `npm run verify` (and `npm run e2e` when UI flows change). Fix, don't skip or weaken checks.
-5. Run the **housekeeping** skill: README, AGENTS.md, ADRs, stale comments, dead code, refactoring needs.
+5. **Simplicity round on every UI change**: run the **simplicity** skill (`ui-simplicity-reviewer` agent) and
+   simplify until a round finds nothing more to remove, like the refactoring loop for code.
+   **Show the user screenshots of every UI change** (at ~390px wide, before and after where useful), or prototype
+   images before building a larger UI change, so they can see it instead of reading about it.
+6. Run the **housekeeping** skill: README, AGENTS.md, ADRs, stale comments, dead code, refactoring needs.
    Decisions go into the few topic ADRs in `docs/adr/` (update the matching one; see its README), kept short.
-6. Self-review with the **code-review** skill / `code-reviewer` agent, then push and open a PR using the template.
-7. Merge only when CI is green (branch protection enforces this).
-8. **Follow-ups go into GitHub issues.** When a task leaves follow-up work (deferred scope, review findings left
+7. Self-review with the **code-review** skill / `code-reviewer` agent, then push and open a PR using the template.
+8. Merge only when CI is green (branch protection enforces this).
+9. **Follow-ups go into GitHub issues.** When a task leaves follow-up work (deferred scope, review findings left
    for later, gaps noticed along the way), list them for the user with a proposed title and short description each,
    and create the issues only after the user confirms. Link them from the PR, and reference an issue in any TODO.
 
 Skills in `.claude/skills/`: `feature-workflow`, `housekeeping`, `adr`, `clean-code`, `refactoring`, `testing`,
-`security`, `code-review`. Use them; they define the quality bar.
+`security`, `code-review`, `simplicity`. Use them; they define the quality bar.
 
 ## Don'ts
 

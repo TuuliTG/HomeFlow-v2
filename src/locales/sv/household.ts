@@ -1,7 +1,6 @@
 import type { Messages } from '@/locales/en';
 
 export const household: Messages['household'] = {
-  eyebrow: 'Hushåll',
   yourHousehold: 'Ditt hushåll',
   loadFailed: 'Det gick inte att ladda hushållet. Kontrollera anslutningen och ladda om sidan.',
   setUp: {

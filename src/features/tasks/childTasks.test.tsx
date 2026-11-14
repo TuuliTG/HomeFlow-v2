@@ -50,7 +50,7 @@ describe('tasks for children', () => {
     expect(within(adultsOnly).queryByText('For children')).not.toBeInTheDocument();
     expect(screen.queryByRole('listitem', { name: 'Feed the cat' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('radio', { name: "Children's tasks" }));
+    await user.click(screen.getByRole('radio', { name: 'Children' }));
     const forChildren = screen.getByRole('listitem', { name: 'Feed the cat' });
     // One list at a time: the adults' own tasks make way for the children's.
     expect(screen.queryByRole('listitem', { name: 'Pay the bills' })).not.toBeInTheDocument();
@@ -70,7 +70,7 @@ describe('tasks for children', () => {
     renderAppAt('/');
 
     expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
-    await user.click(screen.getByRole('radio', { name: "Children's tasks" }));
+    await user.click(screen.getByRole('radio', { name: 'Children' }));
 
     expect(
       await screen.findByText('No tasks for children yet. Create the first one!'),
@@ -102,7 +102,7 @@ describe('tasks for children', () => {
 
     // The board opens on the children's tasks, where it shows.
     const task = await screen.findByRole('listitem', { name: 'Tidy the toys' });
-    expect(screen.getByRole('radio', { name: "Children's tasks" })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Children' })).toBeChecked();
     expect(within(task).getByText('For children')).toBeInTheDocument();
     expect(router.state.location.search).toBe('?children=1');
     expect(tasks.at(-1)).toMatchObject({ title: 'Tidy the toys', forChildren: true, points: 2 });

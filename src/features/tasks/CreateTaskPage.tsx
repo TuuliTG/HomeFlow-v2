@@ -33,7 +33,7 @@ export function CreateTaskPage() {
 
   return (
     <>
-      <PageHeader eyebrow={t.tasks.eyebrow} title={t.tasks.newTask} />
+      <PageHeader title={t.tasks.newTask} />
       {membership.isPending ? (
         <LoadingMessage />
       ) : membership.data?.canAddTasks === false ? (

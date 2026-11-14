@@ -5,7 +5,6 @@ const tasksCount = (count: number) => (count === 1 ? '1 task' : `${String(count)
 
 /** The Statistics tab: fairness and each member's share. */
 export const statistics = {
-  eyebrow: 'Statistics',
   title: 'Fairness & progress',
   period: 'Period',
   periods: { week: 'This week', month: 'This month', all: 'All time' },

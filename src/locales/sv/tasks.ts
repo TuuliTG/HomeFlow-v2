@@ -2,14 +2,13 @@ import type { Messages } from '@/locales/en';
 import { ordinal } from '@/locales/sv/common';
 
 export const tasks: Messages['tasks'] = {
-  eyebrow: 'Uppgifter',
   newTask: 'Ny uppgift',
   board: {
     title: 'Gemensamma uppgifter',
     lists: {
       legend: 'Vems uppgifter',
-      adults: 'De vuxnas uppgifter',
-      children: 'Barnens uppgifter',
+      adults: 'Vuxna',
+      children: 'Barn',
     },
     noChildrens: 'Inga uppgifter för barn än. Skapa den första!',
     show: 'Visa',
@@ -126,7 +125,6 @@ export const tasks: Messages['tasks'] = {
     },
   },
   me: {
-    eyebrow: 'Jag',
     title: 'Mina uppgifter',
     pointsEarned: 'Intjänade poäng',
     pointsLoadFailed: 'Det gick inte att ladda dina poäng.',
@@ -147,7 +145,6 @@ export const tasks: Messages['tasks'] = {
     youHelped: (name) => `Du hjälpte ${name}`,
   },
   child: {
-    eyebrow: 'Jag',
     title: 'Mina stjärnor',
     myTasks: 'Mina uppgifter',
     nothingToDo: 'Inget att göra än.',
@@ -155,7 +152,6 @@ export const tasks: Messages['tasks'] = {
     nothingFree: 'Inga lediga uppgifter just nu.',
   },
   helpers: {
-    eyebrow: 'Gjorda',
     title: 'Vem hjälpte till?',
     description: (title, points) =>
       `Ge dem som hjälpte till med ${title} bonuspoäng. Du får ändå alla ${points}.`,
@@ -175,7 +171,6 @@ export const tasks: Messages['tasks'] = {
   requests: {
     ask: 'Fråga',
     askLabel: (title) => `Be någon göra ${title}`,
-    eyebrow: 'Uppgifter',
     title: 'Fråga någon',
     whoToAsk: 'Vem du frågar',
     send: 'Skicka förfrågan',

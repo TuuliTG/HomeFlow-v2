@@ -2,7 +2,6 @@ import type { Messages } from '@/locales/en';
 import { common } from '@/locales/sv/common';
 
 export const news: Messages['news'] = {
-  eyebrow: 'Nyheter',
   title: 'Vad familjen har gjort',
   loadFailed: 'Det gick inte att ladda nyheterna. Kontrollera anslutningen och ladda om sidan.',
   empty: 'Inga gemensamma uppgifter gjorda den senaste veckan än.',

@@ -19,10 +19,14 @@ Follow these steps in order. Do not skip steps; say explicitly if one does not a
    Commit with Conventional Commits (`feat: add task pick-up button`).
 6. **Verify** — `npm run verify` must pass. Run `npm run e2e` when a user flow or layout changed.
    Fix the cause; never weaken lint rules, types or thresholds to pass.
-7. **Housekeeping** — Run the `housekeeping` skill (docs, ADRs, stale comments, dead code, refactoring).
-8. **Review** — Run the `code-review` skill or delegate to the `code-reviewer` agent. Address findings.
-9. **PR** — Push the branch (`git push -u origin <branch>`) and open a PR filling in
-   `.github/pull_request_template.md`. Mention the Vercel preview for UI changes.
-10. **Merge** only after CI is green. After merge, delete the branch.
-11. **Follow-ups** — List any follow-up work with a proposed issue title and description, ask the user to confirm,
+7. **Simplicity** — For any change users can see, run the `simplicity` skill (`ui-simplicity-reviewer` agent)
+   and repeat until nothing more can go.
+   Then show the user screenshots of the changed screens at ~390px wide (prototype images first for larger UI
+   changes), see `AGENTS.md`.
+8. **Housekeeping** — Run the `housekeeping` skill (docs, ADRs, stale comments, dead code, refactoring).
+9. **Review** — Run the `code-review` skill or delegate to the `code-reviewer` agent. Address findings.
+10. **PR** — Push the branch (`git push -u origin <branch>`) and open a PR filling in
+    `.github/pull_request_template.md`. Mention the Vercel preview for UI changes.
+11. **Merge** only after CI is green. After merge, delete the branch.
+12. **Follow-ups** — List any follow-up work with a proposed issue title and description, ask the user to confirm,
     then create the confirmed ones as GitHub issues and link them from the PR (see `AGENTS.md`).

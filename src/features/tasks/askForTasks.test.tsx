@@ -196,7 +196,7 @@ describe('asking a family member to do a task', () => {
     // Ben is a child, so only tasks for children could be asked of him; he has picked up the one there is.
     const vacuum = await screen.findByRole('listitem', { name: 'Vacuum' });
     expect(within(vacuum).queryByRole('link', { name: /^Ask someone/ })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('radio', { name: "Children's tasks" }));
+    await user.click(screen.getByRole('radio', { name: 'Children' }));
     const dusting = await screen.findByRole('listitem', { name: 'Dust' });
     expect(within(dusting).queryByRole('link', { name: /^Ask someone/ })).not.toBeInTheDocument();
   });
