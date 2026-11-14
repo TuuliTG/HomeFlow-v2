@@ -168,6 +168,7 @@ export const fakeTasksBackend = {
         assignedTo: null,
         labels: [],
         customLabels: [],
+        isRoutine: false,
         ...task,
         id,
         householdId,

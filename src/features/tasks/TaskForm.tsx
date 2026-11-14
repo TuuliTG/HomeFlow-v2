@@ -7,11 +7,11 @@ import {
   type NewTask,
   newTaskSchema,
   type TaskSuggestion,
-  type TaskType,
 } from '@/features/tasks/task';
-import type { TaskIconName } from '@/lib/taskIcons';
 import {
+  canBeRoutine,
   type FieldName,
+  type FieldValues,
   fieldOf,
   fieldValues,
   shownFields,
@@ -21,7 +21,6 @@ import { TaskDescriptionField } from '@/features/tasks/TaskDescriptionField';
 import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
 import { TaskIconField } from '@/features/tasks/TaskIconField';
 import { TaskImagesField } from '@/features/tasks/TaskImagesField';
-import type { TaskLabels } from '@/features/tasks/taskLabelChoices';
 import { TaskLabelsField } from '@/features/tasks/TaskLabelsField';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
@@ -91,20 +90,8 @@ export function TaskForm({
   onSave,
 }: TaskFormProps) {
   const [initialValues] = useState(() => fieldValues(initial ?? prefill));
-  const [title, setTitle] = useState(initialValues.title);
-  const [description, setDescription] = useState(initialValues.description);
-  const [type, setType] = useState<TaskType>(initialValues.type);
-  const [points, setPoints] = useState(initialValues.points);
-  const [repeat, setRepeat] = useState(initialValues.repeat);
-  const [dueOn, setDueOn] = useState(initialValues.dueOn);
-  const [isPrivate, setIsPrivate] = useState(initialValues.isPrivate);
-  const [forChildren, setForChildren] = useState(initialValues.forChildren);
-  const [icon, setIcon] = useState<TaskIconName | null>(initialValues.icon);
+  const [fields, setFields] = useState(initialValues);
   const [childIds, setChildIds] = useState(childIdsOf(initialValues.assignedTo));
-  const [labels, setLabels] = useState<TaskLabels>({
-    labels: initialValues.labels,
-    customLabels: initialValues.customLabels,
-  });
   const [isDone, setIsDone] = useState(false);
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
@@ -129,26 +116,29 @@ export function TaskForm({
     return { 'aria-invalid': hasError, 'aria-describedby': hasError ? errorId : undefined };
   }
 
+  /** Changes some of the fields, e.g. `change({ dueOn: '' })`. */
+  function change(changed: Partial<FieldValues>) {
+    setFields((current) => ({ ...current, ...changed }));
+  }
+
+  /** Changes one field, e.g. `set('title')` as the title field's `onChange`. */
+  function set<K extends keyof FieldValues>(key: K) {
+    return (value: FieldValues[K]) => {
+      setFields((current) => ({ ...current, [key]: value }));
+    };
+  }
+
   function fillIn(suggestion: TaskSuggestion) {
     const values = fieldValues(suggestionAsTask(suggestion));
-    setTitle(values.title);
-    setDescription(values.description);
-    setType(values.type);
-    setPoints(values.points);
-    setRepeat(values.repeat);
-    setDueOn(values.dueOn);
-    setIsPrivate(values.isPrivate);
-    setForChildren(values.forChildren);
-    setIcon(values.icon);
+    setFields(values);
     setChildIds(childIdsOf(values.assignedTo));
-    setLabels({ labels: values.labels, customLabels: values.customLabels });
     setError(null);
   }
 
   /** A task done already has no due date. */
   function checkAlreadyDone(checked: boolean) {
     setIsDone(checked);
-    if (checked) setDueOn('');
+    if (checked) change({ dueOn: '' });
   }
 
   /** Says what to fix, focusing the field to fix it in. */
@@ -161,20 +151,17 @@ export function TaskForm({
 
   /** Who the task is for, which an adult chooses first: then a task for children is the children's only. */
   function chooseAudience(isForChildren: boolean) {
-    setForChildren(isForChildren);
+    change({ forChildren: isForChildren });
     if (!isForChildren) return;
     // Adults don't do tasks for children, so it can be neither private nor added as done.
-    setIsPrivate(false);
+    change({ isPrivate: false });
     setIsDone(false);
   }
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
-    const values = { title, description, type, points, repeat, dueOn };
     const [assignedTo = null, ...alsoFor] = childIds;
-    const parsed = newTaskSchema(t).safeParse(
-      taskInput({ ...values, ...labels, isPrivate, forChildren, icon, assignedTo }, isChild),
-    );
+    const parsed = newTaskSchema(t).safeParse(taskInput({ ...fields, assignedTo }, isChild));
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
       showInvalid(issue?.path[0], issue?.message);
@@ -186,6 +173,7 @@ export function TaskForm({
     });
   }
 
+  const { isPrivate, forChildren } = fields;
   const shown = shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready });
 
   return (
@@ -201,7 +189,7 @@ export function TaskForm({
         isNew={!initial}
         isChild={isChild}
         isPrivate={isPrivate}
-        onPrivateChange={setIsPrivate}
+        onPrivateChange={set('isPrivate')}
         forChildren={shown.isForChildren}
         onForChildrenChange={chooseAudience}
         childIds={childIds}
@@ -210,8 +198,8 @@ export function TaskForm({
       />
 
       <TaskTitleField
-        value={title}
-        onChange={setTitle}
+        value={fields.title}
+        onChange={set('title')}
         suggestions={suggestions}
         onPick={fillIn}
         favourites={favourites}
@@ -220,8 +208,8 @@ export function TaskForm({
       />
 
       <TaskDescriptionField
-        value={description}
-        onChange={setDescription}
+        value={fields.description}
+        onChange={set('description')}
         textareaRef={descriptionRef}
         errorProps={errorPropsFor('description')}
       />
@@ -236,14 +224,14 @@ export function TaskForm({
         currentUserId={currentUserId}
       />
 
-      {shown.type && <TaskTypeField value={type} onChange={setType} />}
+      {shown.type && <TaskTypeField value={fields.type} onChange={set('type')} />}
 
-      <TaskIconField value={icon} onChange={setIcon} />
+      <TaskIconField value={fields.icon} onChange={set('icon')} />
 
       <TaskLabelsField
-        value={labels}
+        value={{ labels: fields.labels, customLabels: fields.customLabels }}
         onChange={(changed) => {
-          setLabels(changed);
+          change(changed);
           setError(null);
         }}
         currentUserId={currentUserId}
@@ -253,25 +241,30 @@ export function TaskForm({
         <TaskPointsField
           isChild={isChild}
           forChildren={shown.isForChildren}
-          value={points}
-          onChange={setPoints}
+          value={fields.points}
+          onChange={set('points')}
           inputRef={pointsRef}
           errorProps={errorPropsFor('points')}
         />
       )}
 
       <TaskTimingFields
-        repeat={repeat}
-        onRepeatChange={setRepeat}
+        repeat={fields.repeat}
+        onRepeatChange={set('repeat')}
         repeatCountRef={repeatCountRef}
         repeatCountErrorProps={errorPropsFor('repeatEveryDays')}
-        dueOn={dueOn}
-        onDueOnChange={setDueOn}
+        dueOn={fields.dueOn}
+        onDueOnChange={set('dueOn')}
         dueOnRef={dueOnRef}
         dueOnErrorProps={errorPropsFor('dueOn')}
         alreadyDone={
           shown.alreadyDone ? { checked: isDone, onChange: checkAlreadyDone } : undefined
         }
+        routine={{
+          offered: canBeRoutine({ isChild, isPrivate, forChildren, repeat: fields.repeat }),
+          checked: fields.isRoutine,
+          onChange: set('isRoutine'),
+        }}
       />
 
       {error && (

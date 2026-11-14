@@ -24,6 +24,7 @@ describe('taskFromLink', () => {
       assignedTo: null,
       labels: [],
       customLabels: [],
+      isRoutine: false,
     });
   });
 

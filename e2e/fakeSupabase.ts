@@ -45,6 +45,7 @@ interface TaskRow {
   /** Ready-made label names, and the household's own labels as typed. */
   labels: string[];
   custom_labels: string[];
+  is_routine: boolean;
   created_at: string;
   completed_at: string | null;
   completed_by: string | null;
@@ -131,6 +132,7 @@ export async function fakeSupabase(page: Page) {
       assigned_to: null,
       labels: [],
       custom_labels: [],
+      is_routine: false,
       created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
@@ -340,6 +342,7 @@ export async function fakeSupabase(page: Page) {
     | 'assigned_to'
     | 'labels'
     | 'custom_labels'
+    | 'is_routine'
   >;
 
   async function tasksEndpoint(route: Route) {
@@ -543,6 +546,7 @@ export async function fakeSupabase(page: Page) {
       task_assigned_to: string | null;
       task_labels: string[];
       task_custom_labels: string[];
+      task_is_routine: boolean;
     };
     const task = ownOpenTask(body.task_id);
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
@@ -557,6 +561,7 @@ export async function fakeSupabase(page: Page) {
       assigned_to: body.task_assigned_to,
       labels: body.task_labels,
       custom_labels: body.task_custom_labels,
+      is_routine: body.task_is_routine,
       ...(body.task_assigned_to !== task.assigned_to && { picked_up_by: body.task_assigned_to }),
     });
     return reply(route, 204);
@@ -750,6 +755,7 @@ export async function fakeSupabase(page: Page) {
         for_children: newest.for_children,
         labels: newest.labels,
         custom_labels: newest.custom_labels,
+        is_routine: newest.is_routine,
         times_added: occurrences.length,
         is_open: occurrences.some((task) => task.completed_at === null),
       };

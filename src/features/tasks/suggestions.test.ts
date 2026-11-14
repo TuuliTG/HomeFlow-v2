@@ -21,6 +21,7 @@ function suggestion(title: string, details: Partial<TaskSuggestion> = {}): TaskS
     icon: null,
     labels: [],
     customLabels: [],
+    isRoutine: false,
     timesAdded: 1,
     isOpen: false,
     ...details,
@@ -60,6 +61,7 @@ describe('suggestionAsTask', () => {
       repeatEveryDays: 7,
       forChildren: true,
       icon: 'trash',
+      isRoutine: true,
       timesAdded: 4,
       isOpen: true,
     } as const;
@@ -78,6 +80,7 @@ describe('suggestionAsTask', () => {
       icon: 'trash',
       labels: ['kitchen'],
       customLabels: ['Bins'],
+      isRoutine: true,
       dueOn: null,
       assignedTo: null,
     });

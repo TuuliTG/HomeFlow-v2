@@ -60,6 +60,10 @@ export const tasks = {
     later: 'Later',
     noDueDate: 'No due date',
   },
+  /** Everyday chores shown as chips marked done with one tap. */
+  routines: {
+    heading: 'Routines',
+  },
   /** "Every day", "Every 3 days", "Every week", "Every 2 weeks". */
   repeat: (days: number) => {
     if (days === 1) return 'Every day';

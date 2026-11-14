@@ -106,6 +106,11 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
       labels: z.array(z.enum(taskLabelNames)),
       /** The household's own labels, as typed; the field keeps them short and the database checks them. */
       customLabels: z.array(z.string()),
+      /**
+       * An everyday chore, like emptying the dishwasher, that the board shows as a small chip marked done with
+       * one tap rather than as a card (ADR 0004). Only a repeating task can be one.
+       */
+      isRoutine: z.boolean(),
     })
     .refine((task) => !task.isPrivate || task.points === null, {
       path: ['points'],
@@ -129,6 +134,7 @@ export const NEW_TASK_DEFAULTS: Readonly<Omit<NewTask, 'title' | 'description' |
   assignedTo: null,
   labels: [],
   customLabels: [],
+  isRoutine: false,
 };
 
 export interface Task extends NewTask {

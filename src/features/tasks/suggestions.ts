@@ -42,6 +42,7 @@ export function suggestionAsTask({
   icon,
   labels,
   customLabels,
+  isRoutine,
 }: TaskSuggestion): NewTask {
   return {
     title,
@@ -54,6 +55,7 @@ export function suggestionAsTask({
     icon,
     labels,
     customLabels,
+    isRoutine,
     dueOn: null,
     assignedTo: null,
   };
