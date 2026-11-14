@@ -40,7 +40,7 @@ export function fieldValues(
   };
 }
 
-type FieldValues = ReturnType<typeof fieldValues>;
+export type FieldValues = ReturnType<typeof fieldValues>;
 
 /** The task the field values describe, for `newTaskSchema` to check. */
 export function taskInput(values: FieldValues, isChild: boolean) {
