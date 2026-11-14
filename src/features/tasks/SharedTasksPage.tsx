@@ -15,6 +15,8 @@ import type { HouseholdMember } from '@/features/tasks/helpersApi';
 import { PickerChoice } from '@/features/tasks/PickerChoice';
 import { nothingPickedUpMessage, usePickerFilter } from '@/features/tasks/pickerFilter';
 import { PointsToAward } from '@/features/tasks/PointsToAward';
+import { RoutineChips } from '@/features/tasks/RoutineChips';
+import type { Task } from '@/features/tasks/task';
 import { useIsChild, useTasks } from '@/features/tasks/useTasks';
 import { today } from '@/lib/dates';
 import {
@@ -245,6 +247,7 @@ function TaskList({ filter, picker, search, childrens }: TaskListProps) {
     search,
   );
   const searched = search.trim();
+  const { routines, cards } = splitRoutines(shown, searched !== '');
   function emptyMessage(): string {
     if (listed.length === 0) return childrens ? t.noChildrens : t.empty.all;
     if (searched !== '') return t.noMatches(searched);
@@ -257,13 +260,20 @@ function TaskList({ filter, picker, search, childrens }: TaskListProps) {
       <p role="status" className="sr-only">
         {searched === '' ? '' : t.matches(shown.length)}
       </p>
-      {shown.length === 0 ? (
-        <EmptyMessage>{emptyMessage()}</EmptyMessage>
-      ) : (
-        <DueTaskGroups tasks={shown} currentUserId={user.id} headingLevel={2} />
-      )}
+      <RoutineChips routines={routines} currentUserId={user.id} />
+      {shown.length === 0 && <EmptyMessage>{emptyMessage()}</EmptyMessage>}
+      {cards.length > 0 && <DueTaskGroups tasks={cards} currentUserId={user.id} headingLevel={2} />}
     </>
   );
+}
+
+/** Routines are chips above the due dates, except in a search, which finds them as cards to open and edit. */
+function splitRoutines(tasks: Task[], isSearching: boolean): { routines: Task[]; cards: Task[] } {
+  if (isSearching) return { routines: [], cards: tasks };
+  return {
+    routines: tasks.filter((task) => task.isRoutine),
+    cards: tasks.filter((task) => !task.isRoutine),
+  };
 }
 
 function EmptyMessage({ children }: { children: string }) {

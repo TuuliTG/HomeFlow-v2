@@ -26,6 +26,7 @@ function task(title: string, dueOn: string | null, pickedUpBy: string | null = n
     assignedTo: null,
     labels: [],
     customLabels: [],
+    isRoutine: false,
     createdBy: 'anna',
     creatorName: 'Anna',
     pickedUpBy,

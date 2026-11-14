@@ -44,6 +44,7 @@ const newTask: NewTask = {
   assignedTo: null,
   labels: [],
   customLabels: [],
+  isRoutine: false,
 };
 const row = {
   id: 't1',
@@ -61,6 +62,7 @@ const row = {
   assigned_to: null,
   labels: [],
   custom_labels: [],
+  is_routine: false,
   task_images: [],
   previous: null,
   request: null,
@@ -156,6 +158,7 @@ describe('tasks api', () => {
       assignedTo: 'ben',
       labels: ['cleaning'],
       customLabels: ['Upstairs'],
+      isRoutine: true,
     });
 
     expect(client.rpc).toHaveBeenCalledWith('update_task', {
@@ -172,6 +175,7 @@ describe('tasks api', () => {
       task_change_assignee: true,
       task_labels: ['cleaning'],
       task_custom_labels: ['Upstairs'],
+      task_is_routine: true,
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
@@ -366,6 +370,7 @@ describe('tasks api', () => {
       assignedTo: 'ben',
       labels: ['cleaning'],
       customLabels: ['Upstairs'],
+      isRoutine: true,
     };
 
     const ids = await api.addTasks([task, { ...task, assignedTo: 'carol' }]);
@@ -384,6 +389,7 @@ describe('tasks api', () => {
       assigned_to: 'ben',
       labels: ['cleaning'],
       custom_labels: ['Upstairs'],
+      is_routine: true,
     };
     expect(query.insert).toHaveBeenCalledWith([row, { ...row, assigned_to: 'carol' }]);
     expect(query.select).toHaveBeenCalledWith('id');

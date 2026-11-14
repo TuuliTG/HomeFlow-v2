@@ -17,9 +17,14 @@ interface TaskTimingFieldsProps {
   dueOnErrorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
   /** "Already done", offered when adding a task; a task done already isn't asked for a due date. */
   alreadyDone: { checked: boolean; onChange: (checked: boolean) => void } | undefined;
+  /** Whether it is a routine, offered for repeating shared tasks (`canBeRoutine()`). */
+  routine: { offered: boolean; checked: boolean; onChange: (checked: boolean) => void };
 }
 
-/** When a task is to be done: whether it is done already, how often it repeats and when it is due. */
+/**
+ * When a task is to be done: whether it is done already, how often it repeats, when it is due and whether a
+ * repeating task is a routine.
+ */
 export function TaskTimingFields({
   repeat,
   onRepeatChange,
@@ -30,6 +35,7 @@ export function TaskTimingFields({
   dueOnRef,
   dueOnErrorProps,
   alreadyDone,
+  routine,
 }: TaskTimingFieldsProps) {
   const t = useMessages();
   return (
@@ -68,6 +74,15 @@ export function TaskTimingFields({
           </label>
         )}
       </div>
+
+      {routine.offered && (
+        <CheckboxField
+          name="isRoutine"
+          label={t.taskForm.routine}
+          checked={routine.checked}
+          onChange={routine.onChange}
+        />
+      )}
     </>
   );
 }
