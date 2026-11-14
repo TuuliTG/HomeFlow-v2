@@ -21,6 +21,11 @@ function expectShown(shown: string[], hidden: string[]) {
   }
 }
 
+/** The filters are folded behind a button next to the search. */
+async function openFilters() {
+  await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
+}
+
 /** Wednesday 8 October 2026, midday where the test runs. */
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -32,6 +37,35 @@ afterEach(() => {
 });
 
 describe('filtering the board', () => {
+  it('folds the filters behind a button, and shows those that are on as chips that turn them off', async () => {
+    const anna = logInAsFamilyMember();
+    addTask(anna.id, 'Vacuum', '2026-10-08');
+    addTask(anna.id, 'Dust');
+    const user = userEvent.setup();
+    const { router } = renderAppAt('/?show=today&available=1');
+    await screen.findByRole('listitem', { name: 'Vacuum' });
+
+    const filters = screen.getByRole('button', { name: 'Filters' });
+    expect(filters).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('radio', { name: 'Today' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Remove filter: Available' }));
+    expect(router.state.location.search).toBe('?show=today');
+    expect(screen.queryByRole('button', { name: /Available/ })).not.toBeInTheDocument();
+    expectShown(['Vacuum'], ['Dust']);
+
+    await user.click(filters);
+    expect(filters).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('radio', { name: 'Today' })).toBeChecked();
+    expect(screen.queryByRole('button', { name: /^Remove filter/ })).not.toBeInTheDocument();
+
+    await user.click(filters);
+    await user.click(screen.getByRole('button', { name: 'Remove filter: Today' }));
+    expect(router.state.location.search).toBe('');
+    expect(screen.queryByRole('button', { name: /^Remove filter/ })).not.toBeInTheDocument();
+    expectShown(['Vacuum', 'Dust'], []);
+  });
+
   it('shows all tasks until a filter is chosen', async () => {
     const anna = logInAsFamilyMember();
     addTask(anna.id, 'Vacuum', '2026-10-08');
@@ -39,6 +73,7 @@ describe('filtering the board', () => {
     renderAppAt('/');
 
     await screen.findByRole('listitem', { name: 'Vacuum' });
+    await openFilters();
     expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
     expectShown(['Vacuum', 'Dust'], []);
   });
@@ -53,6 +88,7 @@ describe('filtering the board', () => {
     const user = userEvent.setup();
     renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Vacuum' });
+    await openFilters();
 
     await user.click(screen.getByRole('radio', { name: 'Today' }));
     expectShown(['Vacuum', 'Cook'], ['Mop', 'Change bed linen', 'Dust']);
@@ -85,6 +121,7 @@ describe('filtering the board', () => {
     const user = userEvent.setup();
     renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Vacuum' });
+    await openFilters();
 
     await user.click(screen.getByRole('checkbox', { name: 'Available' }));
 
@@ -101,6 +138,7 @@ describe('filtering the board', () => {
     const user = userEvent.setup();
     const { router } = renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Vacuum' });
+    await openFilters();
 
     await user.click(screen.getByRole('radio', { name: 'Today' }));
     await user.click(screen.getByRole('checkbox', { name: 'Available' }));
@@ -124,6 +162,7 @@ describe('filtering the board', () => {
     renderAppAt('/?show=today&available=1');
 
     expect(await screen.findByText('Everything due today has been picked up.')).toBeInTheDocument();
+    await openFilters();
     expect(screen.getByRole('checkbox', { name: 'Available' })).toBeChecked();
     expectShown([], ['Vacuum', 'Dust']);
   });
@@ -134,6 +173,7 @@ describe('filtering the board', () => {
     const user = userEvent.setup();
     const { router } = renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Dust' });
+    await openFilters();
 
     await user.click(screen.getByRole('radio', { name: 'No due date' }));
     await user.click(screen.getByRole('checkbox', { name: 'Available' }));
@@ -142,7 +182,9 @@ describe('filtering the board', () => {
     await user.click(screen.getByRole('link', { name: 'Statistics' }));
     await user.click(await screen.findByRole('link', { name: 'Shared tasks' }));
     expect(router.state.location.search).toBe('');
-    expect(await screen.findByRole('radio', { name: 'No due date' })).toBeChecked();
+    await screen.findByRole('listitem', { name: 'Dust' });
+    await openFilters();
+    expect(screen.getByRole('radio', { name: 'No due date' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Available' })).toBeChecked();
 
     await user.click(screen.getByRole('radio', { name: 'All' }));
@@ -158,6 +200,7 @@ describe('filtering the board', () => {
     renderAppAt('/');
 
     await screen.findByRole('listitem', { name: 'Dust' });
+    await openFilters();
     expect(screen.getByRole('radio', { name: 'No due date' })).toBeChecked();
   });
 
@@ -173,6 +216,7 @@ describe('filtering the board', () => {
     const user = userEvent.setup();
     const { router } = renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Dust' });
+    await openFilters();
 
     await user.click(screen.getByRole('radio', { name: 'No due date' }));
     expect(router.state.location.search).toBe('?show=undated');
@@ -185,6 +229,7 @@ describe('filtering the board', () => {
     renderAppAt('/?show=today');
 
     expect(await screen.findByText('Nothing is due today.')).toBeInTheDocument();
+    await openFilters();
     expect(screen.getByRole('radio', { name: 'Today' })).toBeChecked();
     expectShown([], ['Dust']);
   });
@@ -197,6 +242,7 @@ describe('filtering the board', () => {
     const user = userEvent.setup();
     const { router } = renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Vacuum' });
+    await openFilters();
 
     await user.type(screen.getByRole('searchbox', { name: 'Search tasks' }), 'dish');
     expectShown(['Wash the dishes', 'Empty the dishwasher'], ['Vacuum']);
@@ -221,6 +267,7 @@ describe('filtering the board', () => {
     renderAppAt('/?q=vacuum');
 
     await screen.findByRole('listitem', { name: 'Vacuum' });
+    await openFilters();
     expect(screen.getByRole('searchbox', { name: 'Search tasks' })).toHaveValue('vacuum');
     expectShown(['Vacuum'], ['Wash the dishes']);
   });
@@ -245,8 +292,16 @@ describe('filtering the board by who has picked tasks up', () => {
     return { anna, ben, mia };
   }
 
+  function offered(who: HTMLElement) {
+    return within(who)
+      .getAllByRole('checkbox')
+      .map((choice) => choice.closest('label')?.textContent);
+  }
+
   function expectNobodyChosen(who: HTMLElement) {
-    for (const member of within(who).getAllByRole('checkbox')) expect(member).not.toBeChecked();
+    for (const choice of within(who).getAllByRole('checkbox')) {
+      if (choice.closest('label')?.textContent !== 'Available') expect(choice).not.toBeChecked();
+    }
   }
 
   it("shows everyone's tasks until a family member is chosen, then only theirs, until chosen again", async () => {
@@ -254,6 +309,7 @@ describe('filtering the board by who has picked tasks up', () => {
     const user = userEvent.setup();
     const { router } = renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Dust' });
+    await openFilters();
 
     const who = screen.getByRole('group', { name: 'Picked up by' });
     expectNobodyChosen(who);
@@ -279,6 +335,7 @@ describe('filtering the board by who has picked tasks up', () => {
     renderAppAt(`/?who=${mia.id}`);
 
     await screen.findByRole('listitem', { name: 'Mop' });
+    await openFilters();
     expectShown(['Mop'], ['Cook', 'Vacuum', 'Dust']);
     await user.click(screen.getByRole('radio', { name: 'Today' }));
     expect(screen.getByText('Mia has no tasks picked up here.')).toBeInTheDocument();
@@ -289,6 +346,7 @@ describe('filtering the board by who has picked tasks up', () => {
     const user = userEvent.setup();
     const { router } = renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Dust' });
+    await openFilters();
     const who = screen.getByRole('group', { name: 'Picked up by' });
 
     await user.click(within(who).getByRole('checkbox', { name: 'Ben' }));
@@ -303,11 +361,22 @@ describe('filtering the board by who has picked tasks up', () => {
     expect(router.state.location.search).toMatch(/^\?who=[^&]+$/);
   });
 
+  it('shows the family member chosen as a chip that turns the filter off', async () => {
+    const { ben } = familyWithTasks();
+    const user = userEvent.setup();
+    renderAppAt(`/?who=${ben.id}`);
+    await screen.findByRole('listitem', { name: 'Vacuum' });
+
+    await user.click(screen.getByRole('button', { name: 'Remove filter: Ben' }));
+    expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
+  });
+
   it("shows everyone's tasks for someone who isn't in the household", async () => {
     familyWithTasks();
     renderAppAt('/?who=someone-else');
 
     await screen.findByRole('listitem', { name: 'Dust' });
+    await openFilters();
     expectNobodyChosen(screen.getByRole('group', { name: 'Picked up by' }));
     expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
   });
@@ -317,12 +386,14 @@ describe('filtering the board by who has picked tasks up', () => {
     fakeHouseholdBackend.addChildAccount('Lumi', 'The Virtanens');
     renderAppAt(`/?who=${mia.id}`);
     await screen.findByRole('listitem', { name: 'Mop' });
+    await openFilters();
 
-    const who = screen.getByRole('group', { name: 'Picked up by' });
-    const offered = within(who)
-      .getAllByRole('checkbox')
-      .map((member) => member.closest('label')?.textContent);
-    expect(offered).toEqual(['You', 'Ben', 'Mia']);
+    expect(offered(screen.getByRole('group', { name: 'Picked up by' }))).toEqual([
+      'Available',
+      'You',
+      'Ben',
+      'Mia',
+    ]);
   });
 
   it("shows everyone's tasks when a child was chosen before", async () => {
@@ -331,26 +402,29 @@ describe('filtering the board by who has picked tasks up', () => {
     renderAppAt(`/?who=${lumi.id}`);
 
     await screen.findByRole('listitem', { name: 'Dust' });
+    await openFilters();
     expectNobodyChosen(screen.getByRole('group', { name: 'Picked up by' }));
     expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
   });
 
-  it("isn't offered to the only adult in a household with children", async () => {
+  it('offers only the tasks nobody has picked up to the only adult in a household with children', async () => {
     const anna = logInAsFamilyMember();
     fakeHouseholdBackend.addChildAccount('Lumi', 'The Virtanens');
     addTask(anna.id, 'Dust');
     renderAppAt('/');
 
     await screen.findByRole('listitem', { name: 'Dust' });
-    expect(screen.queryByRole('group', { name: 'Picked up by' })).not.toBeInTheDocument();
+    await openFilters();
+    expect(offered(screen.getByRole('group', { name: 'Picked up by' }))).toEqual(['Available']);
   });
 
-  it("isn't offered to someone alone in their household", async () => {
+  it('offers only the tasks nobody has picked up to someone alone in their household', async () => {
     const anna = logInAsFamilyMember();
     addTask(anna.id, 'Dust');
     renderAppAt('/');
 
     await screen.findByRole('listitem', { name: 'Dust' });
-    expect(screen.queryByRole('group', { name: 'Picked up by' })).not.toBeInTheDocument();
+    await openFilters();
+    expect(offered(screen.getByRole('group', { name: 'Picked up by' }))).toEqual(['Available']);
   });
 });

@@ -32,3 +32,12 @@ export function nothingPickedUpMessage(
   if (picker.id === currentUserId) return tasks.board.noneForYou;
   return tasks.board.noneFor(picker.name ?? common.someone);
 }
+
+/** What the board's filters call a member: you, or their name. */
+export function pickerName(
+  member: HouseholdMember,
+  currentUserId: string,
+  { common, tasks }: Messages,
+): string {
+  return member.id === currentUserId ? tasks.board.you : (member.name ?? common.someone);
+}

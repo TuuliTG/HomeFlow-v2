@@ -7,11 +7,10 @@ import { SearchIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
+import { BoardFilters } from '@/features/tasks/BoardFilters';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
-import { FilterChoice } from '@/features/tasks/FilterChoice';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import type { HouseholdMember } from '@/features/tasks/helpersApi';
-import { PickerChoice } from '@/features/tasks/PickerChoice';
 import { nothingPickedUpMessage, usePickerFilter } from '@/features/tasks/pickerFilter';
 import { PointsToAward } from '@/features/tasks/PointsToAward';
 import { RoutineChips } from '@/features/tasks/RoutineChips';
@@ -76,22 +75,19 @@ function Board() {
       <PointsToAward />
       <div className="flex flex-col gap-3">
         <ListChoice childrens={childrens} onChange={setChildrens} />
-        <SearchField search={search} onChange={setSearch} />
-        <FilterChoice
+        <BoardFilters
+          currentUserId={user.id}
           due={due}
           onDueChange={setDue}
           availableOnly={availableOnly}
           onAvailableOnlyChange={showAvailableOnly}
-        />
-        {/* Adults can't pick up tasks for children, so only adults' tasks are filtered by who has. */}
-        {!childrens && (
-          <PickerChoice
-            currentUserId={user.id}
-            members={members}
-            picker={picker}
-            onChange={showPickedUpBy}
-          />
-        )}
+          // Adults can't pick up tasks for children, so only adults' tasks are filtered by who has.
+          members={childrens ? [] : members}
+          picker={childrens ? null : picker}
+          onPickerChange={showPickedUpBy}
+        >
+          <SearchField search={search} onChange={setSearch} />
+        </BoardFilters>
       </div>
       <TaskList
         filter={{ due, availableOnly }}

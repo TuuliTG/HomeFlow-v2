@@ -134,3 +134,19 @@ export function PlusIcon(props: IconProps) {
     </BaseIcon>
   );
 }
+
+export function FilterIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M4 7h16M7 12h10M10 17h4" />
+    </BaseIcon>
+  );
+}
+
+export function CloseIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M6 6l12 12M18 6 6 18" />
+    </BaseIcon>
+  );
+}

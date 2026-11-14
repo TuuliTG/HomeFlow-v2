@@ -1,47 +1,76 @@
-import { chipClassName } from '@/features/tasks/chipStyles';
+import { chipClassName, filterLegendClassName } from '@/features/tasks/chipStyles';
 import type { HouseholdMember } from '@/features/tasks/helpersApi';
+import { pickerName } from '@/features/tasks/pickerFilter';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface PickerChoiceProps {
   currentUserId: string;
+  /** The adults to tell apart; none for the tasks for children, which adults don't pick up. */
   members: HouseholdMember[];
   picker: HouseholdMember | null;
   onChange: (pickerId: string | null) => void;
+  availableOnly: boolean;
+  onAvailableOnlyChange: (availableOnly: boolean) => void;
 }
 
 /**
- * One tap to see the tasks one adult has picked up (you, then the others), and another on the same name
- * to see everyone's again. At most one is chosen; none shows everyone's.
+ * One tap to see the tasks nobody has picked up, or those one adult has (you, then the others), and another on
+ * the same choice to see all again. At most one is chosen.
  */
-export function PickerChoice({ currentUserId, members, picker, onChange }: PickerChoiceProps) {
-  const { common, tasks } = useMessages();
-  const t = tasks.board;
-  // No other adult to tell apart.
-  if (members.length < 2) return null;
-  const others = members.filter((member) => member.id !== currentUserId);
-  const options = [
-    { id: currentUserId, label: t.you },
-    ...others.map((member) => ({ id: member.id, label: member.name ?? common.someone })),
+export function PickerChoice({
+  currentUserId,
+  members,
+  picker,
+  onChange,
+  availableOnly,
+  onAvailableOnlyChange,
+}: PickerChoiceProps) {
+  const messages = useMessages();
+  const t = messages.tasks.board;
+  // With one adult, there is no one to tell apart.
+  const adults = members.length < 2 ? [] : members;
+  const ordered = [
+    ...adults.filter((member) => member.id === currentUserId),
+    ...adults.filter((member) => member.id !== currentUserId),
   ];
   return (
-    <fieldset className="flex flex-wrap items-center gap-2">
-      <legend className="sr-only">{t.who}</legend>
-      <span aria-hidden="true" className="text-ink-muted text-sm font-semibold">
-        {t.who}:
-      </span>
-      {options.map((option) => (
-        <label key={option.id} className={chipClassName}>
-          <input
-            type="checkbox"
-            checked={picker?.id === option.id}
-            onChange={(event) => {
-              onChange(event.target.checked ? option.id : null);
+    <fieldset>
+      <legend className={filterLegendClassName}>{t.who}</legend>
+      <div className="flex flex-wrap gap-2">
+        <Chip label={t.available} checked={availableOnly} onChange={onAvailableOnlyChange} />
+        {ordered.map((member) => (
+          <Chip
+            key={member.id}
+            label={pickerName(member, currentUserId, messages)}
+            checked={picker?.id === member.id}
+            onChange={(checked) => {
+              onChange(checked ? member.id : null);
             }}
-            className="sr-only"
           />
-          {option.label}
-        </label>
-      ))}
+        ))}
+      </div>
     </fieldset>
+  );
+}
+
+interface ChipProps {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}
+
+function Chip({ label, checked, onChange }: ChipProps) {
+  return (
+    <label className={chipClassName}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => {
+          onChange(event.target.checked);
+        }}
+        className="sr-only"
+      />
+      {label}
+    </label>
   );
 }

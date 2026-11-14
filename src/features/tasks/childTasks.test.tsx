@@ -54,7 +54,11 @@ describe('tasks for children', () => {
     const forChildren = screen.getByRole('listitem', { name: 'Feed the cat' });
     // One list at a time: the adults' own tasks make way for the children's.
     expect(screen.queryByRole('listitem', { name: 'Pay the bills' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: 'Picked up by' })).not.toBeInTheDocument();
+    // Adults don't pick up tasks for children, so the filter offers only the tasks nobody has.
+    await user.click(screen.getByRole('button', { name: 'Filters' }));
+    const who = screen.getByRole('group', { name: 'Picked up by' });
+    expect(within(who).getAllByRole('checkbox')).toHaveLength(1);
+    expect(within(who).getByRole('checkbox', { name: 'Available' })).toBeInTheDocument();
     expect(within(forChildren).getByText('For children')).toBeInTheDocument();
     expect(
       within(forChildren).getByRole('link', { name: 'Edit: Feed the cat' }),

@@ -13,7 +13,11 @@ export const tasks = {
       children: 'Children',
     },
     noChildrens: 'No tasks for children yet. Create the first one!',
-    show: 'Show',
+    /** The board's filters, behind a button next to the search. */
+    filtersButton: 'Filters',
+    removeFilter: (filter: string) => `Remove filter: ${filter}`,
+    /** The filter by due date. */
+    dueDate: 'Due date',
     /** The filter by who has picked tasks up. */
     who: 'Picked up by',
     you: 'You',
@@ -35,7 +39,7 @@ export const tasks = {
       week: 'Nothing is due this week.',
       undated: 'Every task has a due date.',
     },
-    /** Only the tasks nobody has picked up; combines with the filters above. */
+    /** Only the tasks nobody has picked up; one of the choices in the filter by who has picked tasks up. */
     available: 'Available',
     /** What the board says when nothing is left to pick up within the filter. */
     emptyAvailable: {
