@@ -50,23 +50,6 @@ describe('starring tasks from the task lists', () => {
     });
   });
 
-  it("stars a task from the household's completed tasks", async () => {
-    const anna = logInAsFamilyMember();
-    fakeTasksBackend.addTaskAs(anna.id, TRASH);
-    fakeTasksBackend.completeTaskAs(anna.id, 'task:0', '2026-10-08');
-    const user = userEvent.setup();
-    renderAppAt('/?completed=1');
-
-    const completed = await screen.findByRole('region', { name: 'Completed' });
-    await user.click(
-      await within(completed).findByRole('button', { name: 'Favourite: Take out trash' }),
-    );
-
-    await waitFor(() => {
-      expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
-    });
-  });
-
   it('stars a task from the completed tasks on the Me page', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, TRASH);

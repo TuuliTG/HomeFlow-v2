@@ -135,16 +135,6 @@ describe('awarding points', () => {
 });
 
 describe('what a child sees of tasks they may not change', () => {
-  it("offers no Add again to a child who isn't allowed to add tasks", async () => {
-    const { ben } = setUpFamily();
-    fakeTasksBackend.completeTaskAs(ben.id, 'task:0', '2026-10-10');
-    logInAsBen();
-    renderAppAt('/?completed=1');
-
-    await screen.findByText('Feed the cat');
-    expect(screen.queryByRole('link', { name: /Add again/ })).not.toBeInTheDocument();
-  });
-
   it("doesn't let a child edit an adult's task from its address", async () => {
     setUpFamily({ benCanAddTasks: true });
     logInAsBen();

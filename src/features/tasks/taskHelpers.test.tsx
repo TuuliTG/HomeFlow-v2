@@ -85,24 +85,19 @@ describe('helping with a task', () => {
     expect(within(laundry).getByText(/2 points/)).toBeInTheDocument();
   });
 
-  it('gives several helpers bonuses, and shows who helped on the board', async () => {
+  it('gives several helpers bonuses, and shows who helped', async () => {
     annaDidTheLaundry();
     const user = userEvent.setup();
-    const { router } = renderAppAt('/tasks/task:0/helpers');
+    renderAppAt('/tasks/task:0/helpers');
 
     await user.click(await screen.findByRole('checkbox', { name: 'Dan helped' }));
     await user.click(screen.getByRole('checkbox', { name: 'Ben helped' }));
     await user.selectOptions(screen.getByRole('combobox', { name: 'Bonus points for Dan' }), '2');
     await user.click(screen.getByRole('checkbox', { name: 'Ben helped' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
-    await findCompleted('Laundry');
 
-    await router.navigate('/?completed=1');
-    // The list may render again as the board loads, so look it up afresh each time.
-    await waitFor(() => {
-      const completed = screen.getByRole('region', { name: 'Completed' });
-      expect(within(completed).getByText('Helped by Dan (2 points)')).toBeInTheDocument();
-    });
+    const laundry = await findCompleted('Laundry');
+    expect(within(laundry).getByText('Helped by Dan (2 points)')).toBeInTheDocument();
   });
 
   it('changes or removes helpers chosen before', async () => {

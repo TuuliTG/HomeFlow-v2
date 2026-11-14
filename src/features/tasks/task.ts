@@ -31,9 +31,6 @@ export const MAX_TASK_IMAGES = 3;
 /** How long the address a task picture is shown from works, in seconds. */
 export const IMAGE_URL_LIFETIME_SECONDS = 60 * 60;
 
-/** How many recently done tasks the board shows with "Show completed". */
-export const HOUSEHOLD_COMPLETED_LIMIT = 30;
-
 /** How long after marking a task done the user can undo it; `undo_complete_task()` enforces it. */
 export const UNDO_WINDOW_MS = 60 * 60 * 1000;
 
@@ -286,13 +283,6 @@ export interface HelpedTask {
 /** Whether to ask who helped right after marking the task done: only a shared task with points can be shared. */
 export function canAskWhoHelped(task: Pick<Task, 'points' | 'isPrivate'>): boolean {
   return task.points !== null && !task.isPrivate;
-}
-
-/** A task someone in the household has marked done. */
-export interface HouseholdCompletedTask extends CompletedTask {
-  completedBy: string | null;
-  /** Their display name, if they have chosen one. */
-  completerName: string | null;
 }
 
 /** When the user wants to be reminded of a task that is theirs to do (`set_task_reminder()`). */

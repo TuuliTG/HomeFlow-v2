@@ -1,6 +1,7 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-14 (routines: everyday chores as one-tap chips; folding away overdue tasks)
+- **Updated:** 2026-11-14 (routines: everyday chores as one-tap chips; no "Show completed" on the board; folding
+  away overdue tasks)
 
 ## Context
 
@@ -20,10 +21,10 @@ next one back rather than follow a fixed calendar.
   open in a new tab (`descriptionParts()` in `descriptionLinks.ts`) and wraps long ones so they fit and can be
   copied. Other schemes (`javascript:`, `mailto:`) stay plain text; the description is never rendered as HTML.
 - **Private tasks**: `is_private` (chosen when adding, never changed; the next occurrence keeps it). The select
-  policy shows a private task only to its creator, so the board, "Show completed" and live updates hide it from
+  policy shows a private task only to its creator, so the board and live updates hide it from
   the others, and every security definer function that acts on any open task skips other members' private ones.
   A private task is the creator's own to do: it is listed only in their My tasks (Me page), without picking it up,
-  and has no Pick up or Put back. The Shared tasks board and its "Show completed" leave out even the creator's
+  and has no Pick up or Put back. The Shared tasks board leaves out even the creator's
   own private tasks, and saving or deleting one returns to the Me page (Cancel on the task form goes back to the
   previous page). **Private tasks have no points** (`tasks_private_without_points`) and statistics count only
   shared tasks, both done and created (ADR 0006). A private task whose creator deletes their account or leaves
@@ -175,7 +176,6 @@ next one back rather than follow a fixed calendar.
   each of the next five days by date, Later and No due date, leaving out empty groups. Grouping is done in the app
   from the same sorted list, with the user's local date; the board has no calendar grid, which needs far more room
   on a phone (the Me page offers one as an optional view, below).
-  "Show completed" (`?completed=1`, so it survives a reload) adds the household's 30 most recently done shared tasks.
   A **Show** filter (`?show=`, one due date at a time, `taskFilter.ts`) narrows the board to tasks due **Today** or
   **This week** (the next seven days, so it ends where "Later" begins; both include overdue tasks, which still need
   doing), or with **No due date**; **All** is the default. **Available** (`?available=1`, nobody has picked them up)
@@ -186,15 +186,12 @@ next one back rather than follow a fixed calendar.
   where tapping the chosen one again shows everyone's again (the default, with none chosen; an "Everyone" chip
   confused). Children aren't offered, as they can't pick up adults' tasks and have their own list; a child or a
   member not in the household (any more) shows everyone's. It and **Available** exclude each
-  other, as together they would always show nothing: choosing one clears the other. It leaves "Show completed" as
-  it is, like the search. These choices
-  ("Show completed" on a child's board too), like the Me page's view (`?view=`), are remembered on the device (ADR
-  0002), so the nav link brings them back.
+  other, as together they would always show nothing: choosing one clears the other. These choices, like the Me
+  page's view (`?view=`), are remembered on the device (ADR 0002), so the nav link brings them back.
   A **search** above the filter (`?q=`, `searchTasks()`) narrows the board further to tasks whose title or
   description contains every word typed, ignoring case but keeping ä apart from a (different letters in Finnish and Swedish), so
   a family member can check whether a task already exists before adding it. It is done in the app on the tasks
-  already loaded, and isn't remembered on the device: a forgotten search would hide tasks unnoticed. It leaves the
-  completed tasks below as they are: they answer "what was done lately", not "does this task exist". A hidden
+  already loaded, and isn't remembered on the device: a forgotten search would hide tasks unnoticed. A hidden
   status region reads out how many tasks match while typing.
   The **Overdue** group's heading is a button that folds its tasks away (`?overdue=hidden`, on the board and the Me
   page alike, remembered on the device), still showing how many there are, so a backlog doesn't push today's tasks
@@ -290,9 +287,11 @@ next one back rather than follow a fixed calendar.
 
 ## Alternatives considered
 
+- A "Show completed" switch on the board listing the household's 30 most recently done tasks, with Add again and a
+  star: removed as unused. News shows what was done, the Me page lists one's own done tasks (undo, star), cards
+  have a star, and the New task form suggests earlier tasks.
 - Routines: every task repeating daily as a routine (no migration, but some daily tasks deserve a card); a long press
   on a chip to edit it, like favourites (a hidden gesture; the search already reaches the card).
-
 - Labels: one per task (a chore is often two kinds, e.g. Kitchen and Cleaning); a household labels table (renaming
   or removing an own label would be easier, but it's more to manage, and a label nobody uses any more drops out
   on its own); only free text (ready-made labels in each member's language keep statistics comparable).

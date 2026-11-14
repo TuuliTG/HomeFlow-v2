@@ -2,7 +2,6 @@ export const paths = {
   tasks: '/',
   newTask: '/tasks/new',
   /** New task with the details of the earlier task named `title`. */
-  addTaskAgain: (title: string) => `/tasks/new?again=${encodeURIComponent(title)}`,
   /** New task that goes in the user's timetable from `startsAt` (ISO timestamp), back on its `view` once added. */
   newTaskAt: (startsAt: string, view: string) =>
     `/tasks/new?at=${encodeURIComponent(startsAt)}&view=${view}`,

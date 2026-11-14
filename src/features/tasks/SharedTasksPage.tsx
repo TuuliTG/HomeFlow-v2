@@ -9,7 +9,6 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { FilterChoice } from '@/features/tasks/FilterChoice';
-import { HouseholdCompletedTasks } from '@/features/tasks/HouseholdCompletedTasks';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import type { HouseholdMember } from '@/features/tasks/helpersApi';
 import { PickerChoice } from '@/features/tasks/PickerChoice';
@@ -31,7 +30,6 @@ import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 import { useSearchParam } from '@/lib/useSearchParam';
 
-const SHOW_COMPLETED_PARAM = 'completed';
 const CHILDRENS_PARAM = 'children';
 const FILTER_PARAM = 'show';
 const AVAILABLE_PARAM = 'available';
@@ -47,12 +45,10 @@ export function SharedTasksPage() {
 
 /**
  * The board for adults: either the shared tasks adults do or the tasks for children, which adults only check and
- * edit, by due date, with a search, filters (for adults' tasks also by who has picked them up), and on request
- * the household's completed tasks.
+ * edit, by due date, with a search and filters (for adults' tasks also by who has picked them up).
  */
 function Board() {
   const user = useLoggedInUser();
-  const [showCompleted, setShowCompleted] = useSwitchParam(SHOW_COMPLETED_PARAM, user.id);
   const [childrens, setChildrens] = useSwitchParam(CHILDRENS_PARAM, user.id);
   const [due, setDue] = useDueFilterParam(user.id);
   const [availableOnly, setAvailableOnly] = useSwitchParam(AVAILABLE_PARAM, user.id);
@@ -96,7 +92,6 @@ function Board() {
             onChange={showPickedUpBy}
           />
         )}
-        <Switch label={t.board.showCompleted} checked={showCompleted} onChange={setShowCompleted} />
       </div>
       <TaskList
         filter={{ due, availableOnly }}
@@ -104,7 +99,6 @@ function Board() {
         search={search}
         childrens={childrens}
       />
-      {showCompleted && <HouseholdCompletedTasks />}
     </>
   );
 }
@@ -189,29 +183,6 @@ function SearchField({ search, onChange }: SearchFieldProps) {
         className={`${inputClassName} min-h-11 w-full pl-10`}
       />
     </div>
-  );
-}
-
-interface SwitchProps {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}
-
-function Switch({ label, checked, onChange }: SwitchProps) {
-  return (
-    <label className="text-ink-muted flex min-h-11 w-fit items-center gap-2 text-sm font-semibold">
-      <input
-        type="checkbox"
-        role="switch"
-        checked={checked}
-        onChange={(event) => {
-          onChange(event.target.checked);
-        }}
-        className="accent-brand-600 size-4"
-      />
-      {label}
-    </label>
   );
 }
 
