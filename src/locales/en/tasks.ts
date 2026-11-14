@@ -1,6 +1,5 @@
 /** The task board, task cards and the Me page. */
 export const tasks = {
-  eyebrow: 'Tasks',
   newTask: 'New task',
   board: {
     title: 'Shared tasks',
@@ -137,7 +136,6 @@ export const tasks = {
     },
   },
   me: {
-    eyebrow: 'Me',
     title: 'My tasks',
     pointsEarned: 'Points earned',
     pointsLoadFailed: "We couldn't load your points.",
@@ -159,7 +157,6 @@ export const tasks = {
   },
   /** The Me page for children: their tasks as big tiles, and tasks to pick. */
   child: {
-    eyebrow: 'Me',
     title: 'My stars',
     myTasks: 'My tasks',
     nothingToDo: 'Nothing to do yet.',
@@ -168,7 +165,6 @@ export const tasks = {
   },
   /** Saying who helped with a task the user did, and giving them bonus points. */
   helpers: {
-    eyebrow: 'Completed',
     title: 'Who helped?',
     description: (title: string, points: string) =>
       `Give whoever helped with ${title} bonus points. You still get all its ${points}.`,
@@ -189,7 +185,6 @@ export const tasks = {
   requests: {
     ask: 'Ask',
     askLabel: (title: string) => `Ask someone to do ${title}`,
-    eyebrow: 'Tasks',
     title: 'Ask someone',
     whoToAsk: 'Who to ask',
     send: 'Send request',

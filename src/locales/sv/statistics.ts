@@ -4,7 +4,6 @@ import { common } from '@/locales/sv/common';
 const tasksCount = (count: number) => (count === 1 ? '1 uppgift' : `${String(count)} uppgifter`);
 
 export const statistics: Messages['statistics'] = {
-  eyebrow: 'Statistik',
   title: 'Rättvisa och framsteg',
   period: 'Period',
   periods: { week: 'Den här veckan', month: 'Den här månaden', all: 'Hela tiden' },

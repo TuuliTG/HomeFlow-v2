@@ -2,7 +2,6 @@ import type { Messages } from '@/locales/en';
 import { common } from '@/locales/fi/common';
 
 export const rewards: Messages['rewards'] = {
-  eyebrow: 'Palkinnot',
   title: 'Palkinnot ja tavoitteet',
   newGoal: 'Uusi tavoite',
   loadFailed: 'Tavoitteita ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',

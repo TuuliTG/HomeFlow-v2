@@ -2,7 +2,6 @@ import { common } from '@/locales/en/common';
 
 /** Goals and the rewards they lead to. */
 export const rewards = {
-  eyebrow: 'Rewards',
   title: 'Rewards & goals',
   newGoal: 'New goal',
   loadFailed: "We couldn't load the goals. Check your connection and reload the page.",

@@ -1,7 +1,6 @@
 import type { Messages } from '@/locales/en';
 
 export const household: Messages['household'] = {
-  eyebrow: 'Kotitalous',
   yourHousehold: 'Kotitaloutesi',
   loadFailed: 'Kotitaloutta ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
   setUp: {

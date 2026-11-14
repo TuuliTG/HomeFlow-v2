@@ -2,7 +2,6 @@ import type { Messages } from '@/locales/en';
 import { common } from '@/locales/fi/common';
 
 export const news: Messages['news'] = {
-  eyebrow: 'Uutiset',
   title: 'Mitä perhe on tehnyt',
   loadFailed: 'Uutisia ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
   empty: 'Viimeisen viikon aikana ei ole vielä tehty yhteisiä tehtäviä.',

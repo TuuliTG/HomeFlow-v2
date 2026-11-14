@@ -2,7 +2,6 @@ import { common } from '@/locales/en/common';
 
 /** The News tab: done tasks, thumbs up and comments. */
 export const news = {
-  eyebrow: 'News',
   title: 'What the family has done',
   loadFailed: "We couldn't load the news. Check your connection and reload the page.",
   empty: 'No shared tasks done in the last week yet.',

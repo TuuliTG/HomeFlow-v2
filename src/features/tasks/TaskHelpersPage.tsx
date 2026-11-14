@@ -34,7 +34,6 @@ export function TaskHelpersPage() {
   return (
     <>
       <PageHeader
-        eyebrow={t.eyebrow}
         title={t.title}
         {...(task && { description: t.description(task.title, common.points(task.points ?? 0)) })}
       />

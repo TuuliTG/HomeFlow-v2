@@ -16,7 +16,7 @@ export function NewsPage() {
 
   return (
     <>
-      <PageHeader eyebrow={t.eyebrow} title={t.title} />
+      <PageHeader title={t.title} />
       <NewsBody news={news} userId={user.id} />
     </>
   );
