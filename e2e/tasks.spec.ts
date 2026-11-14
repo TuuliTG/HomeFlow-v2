@@ -72,7 +72,7 @@ test('family member can add a task for the children, kept apart from their own',
   await expect(task.getByText('For children')).toBeVisible();
   await expect(task.getByText('2 points')).toBeVisible();
   await expect(task.getByRole('button', { name: 'Mark done: Feed the cat' })).toHaveCount(0);
-  await lists.getByText('Adults').click();
+  await lists.getByText('Adults', { exact: true }).click();
   await expect(page.getByText('Feed the cat')).toBeHidden();
   await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
 });
