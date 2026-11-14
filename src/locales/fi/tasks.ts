@@ -52,6 +52,9 @@ export const tasks: Messages['tasks'] = {
     later: 'Myöhemmin',
     noDueDate: 'Ei määräpäivää',
   },
+  routines: {
+    heading: 'Rutiinit',
+  },
   repeat: (days) => {
     if (days === 1) return 'Joka päivä';
     if (days === 7) return 'Joka viikko';

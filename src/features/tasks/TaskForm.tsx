@@ -9,6 +9,7 @@ import {
   type TaskSuggestion,
 } from '@/features/tasks/task';
 import {
+  canBeRoutine,
   type FieldName,
   type FieldValues,
   fieldOf,
@@ -259,6 +260,11 @@ export function TaskForm({
         alreadyDone={
           shown.alreadyDone ? { checked: isDone, onChange: checkAlreadyDone } : undefined
         }
+        routine={{
+          offered: canBeRoutine({ isChild, isPrivate, forChildren, repeat: fields.repeat }),
+          checked: fields.isRoutine,
+          onChange: set('isRoutine'),
+        }}
       />
 
       {error && (

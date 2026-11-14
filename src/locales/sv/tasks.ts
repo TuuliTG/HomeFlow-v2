@@ -54,6 +54,9 @@ export const tasks: Messages['tasks'] = {
     later: 'Senare',
     noDueDate: 'Ingen förfallodag',
   },
+  routines: {
+    heading: 'Rutiner',
+  },
   repeat: (days) => {
     if (days === 1) return 'Varje dag';
     if (days === 2) return 'Varannan dag';

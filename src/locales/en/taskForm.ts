@@ -125,6 +125,7 @@ export const taskForm = {
   },
   dueDate: 'Due date',
   alreadyDone: 'Already done',
+  routine: 'Quick routine: mark it done with one tap on the board',
   errors: {
     titleRequired: 'Give the task a name.',
     titleTooLong: (max: number) => `Keep the name to ${String(max)} characters or fewer.`,

@@ -25,6 +25,7 @@ export const fetchTaskSuggestions: typeof suggestionsApi.fetchTaskSuggestions = 
       icon,
       labels,
       customLabels,
+      isRoutine,
     } = newest;
     return {
       suggestion: {
@@ -38,6 +39,7 @@ export const fetchTaskSuggestions: typeof suggestionsApi.fetchTaskSuggestions = 
         icon,
         labels,
         customLabels,
+        isRoutine,
       },
       timesAdded: added.length,
       isOpen: occurrences.some((task) => !task.completed),

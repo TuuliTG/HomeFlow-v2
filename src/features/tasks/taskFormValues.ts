@@ -37,6 +37,7 @@ export function fieldValues(
     assignedTo: task.assignedTo,
     labels: task.labels,
     customLabels: task.customLabels,
+    isRoutine: task.isRoutine,
   };
 }
 
@@ -55,6 +56,8 @@ export function taskInput(values: FieldValues, isChild: boolean) {
     icon: values.icon,
     labels: values.labels,
     customLabels: values.customLabels,
+    // The switch keeps its value while hidden, so turning repeating off and on again brings it back.
+    isRoutine: values.isRoutine && canBeRoutine({ ...values, isChild }),
     ...audience(values, isChild),
   };
 }
@@ -80,6 +83,21 @@ export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready 
     points: !isPrivate,
     alreadyDone: canBeDoneAlready && !isForChildren,
   };
+}
+
+interface RoutineState {
+  isChild: boolean;
+  isPrivate: boolean;
+  forChildren: boolean;
+  repeat: FieldValues['repeat'];
+}
+
+/**
+ * Whether the task can be a routine: the board shows routines among the adults' shared tasks, and only a
+ * repeating task can be one (`tasks_routine_repeats`).
+ */
+export function canBeRoutine({ isChild, isPrivate, forChildren, repeat }: RoutineState): boolean {
+  return !isChild && !isPrivate && !forChildren && repeatDays(repeat) !== null;
 }
 
 /** Who the task is for, as the field values say. */

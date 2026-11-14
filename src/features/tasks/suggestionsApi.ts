@@ -17,6 +17,7 @@ const suggestionRowsSchema = z.array(
     icon: taskIconSchema,
     labels: taskLabelsSchema,
     custom_labels: z.array(z.string()),
+    is_routine: z.boolean(),
     times_added: z.number(),
     is_open: z.boolean(),
   }),
@@ -37,12 +38,14 @@ export async function fetchTaskSuggestions(): Promise<TaskSuggestion[]> {
         is_private,
         for_children,
         custom_labels,
+        is_routine,
         times_added,
         is_open,
         ...task
       }) => ({
         ...task,
         customLabels: custom_labels,
+        isRoutine: is_routine,
         repeatEveryDays: repeat_every_days,
         isPrivate: is_private,
         forChildren: for_children,

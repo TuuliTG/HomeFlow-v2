@@ -24,6 +24,7 @@ const taskRowsSchema = z.array(
     assigned_to: z.string().nullable(),
     labels: taskLabelsSchema,
     custom_labels: z.array(z.string()),
+    is_routine: z.boolean(),
     task_images: z.array(z.object({ path: z.string(), position: z.number() })),
     /** The occurrence this one repeats; it is done, since completing it added this one. */
     previous: z
@@ -41,7 +42,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, assigned_to, labels, custom_labels, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, assigned_to, labels, custom_labels, is_routine, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -70,6 +71,7 @@ export async function fetchTasks(): Promise<Task[]> {
       for_children,
       assigned_to,
       custom_labels,
+      is_routine,
       task_images,
       previous,
       request,
@@ -78,6 +80,7 @@ export async function fetchTasks(): Promise<Task[]> {
       ...task,
       assignedTo: assigned_to,
       customLabels: custom_labels,
+      isRoutine: is_routine,
       images: task_images.toSorted((a, b) => a.position - b.position).map((image) => image.path),
       isPrivate: is_private,
       forChildren: for_children,
@@ -108,6 +111,7 @@ function taskRow({
   forChildren,
   assignedTo,
   customLabels,
+  isRoutine,
   ...task
 }: NewTask) {
   return {
@@ -118,6 +122,7 @@ function taskRow({
     for_children: forChildren,
     assigned_to: assignedTo,
     custom_labels: customLabels,
+    is_routine: isRoutine,
   };
 }
 
@@ -181,6 +186,7 @@ export async function updateTask(
     assignedTo,
     labels,
     customLabels,
+    isRoutine,
   }: NewTask,
 ): Promise<void> {
   const { error } = await getSupabaseClient().rpc('update_task', {
@@ -198,6 +204,7 @@ export async function updateTask(
     task_change_assignee: true,
     task_labels: labels,
     task_custom_labels: customLabels,
+    task_is_routine: isRoutine,
   });
   if (error) throw error;
 }
