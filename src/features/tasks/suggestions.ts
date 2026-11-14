@@ -16,14 +16,6 @@ export function matchingSuggestions(
     .slice(0, MATCHING_SUGGESTIONS_LIMIT);
 }
 
-/** The earlier task with exactly this name, if there is one. */
-export function findSuggestion(
-  suggestions: TaskSuggestion[],
-  title: string,
-): TaskSuggestion | undefined {
-  return suggestions.find((suggestion) => titleKey(suggestion.title) === titleKey(title));
-}
-
 /** The earlier tasks the household has starred (`favouriteKeys`, from `titleKey`), by name. */
 export function favouriteSuggestions(
   suggestions: TaskSuggestion[],

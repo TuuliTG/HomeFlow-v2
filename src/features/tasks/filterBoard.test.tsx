@@ -136,14 +136,14 @@ describe('filtering the board', () => {
     await screen.findByRole('listitem', { name: 'Dust' });
 
     await user.click(screen.getByRole('radio', { name: 'No due date' }));
-    await user.click(screen.getByRole('switch', { name: 'Show completed' }));
-    expect(router.state.location.search).toBe('?show=undated&completed=1');
+    await user.click(screen.getByRole('checkbox', { name: 'Available' }));
+    expect(router.state.location.search).toBe('?show=undated&available=1');
 
     await user.click(screen.getByRole('link', { name: 'Statistics' }));
     await user.click(await screen.findByRole('link', { name: 'Shared tasks' }));
     expect(router.state.location.search).toBe('');
     expect(await screen.findByRole('radio', { name: 'No due date' })).toBeChecked();
-    expect(screen.getByRole('switch', { name: 'Show completed' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Available' })).toBeChecked();
 
     await user.click(screen.getByRole('radio', { name: 'All' }));
     await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
@@ -179,14 +179,13 @@ describe('filtering the board', () => {
     expectShown(['Dust'], []);
   });
 
-  it('says when nothing matches, and is read from the address with "Show completed"', async () => {
+  it('says when nothing matches, and is read from the address', async () => {
     const anna = logInAsFamilyMember();
     addTask(anna.id, 'Dust');
-    renderAppAt('/?show=today&completed=1');
+    renderAppAt('/?show=today');
 
     expect(await screen.findByText('Nothing is due today.')).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Today' })).toBeChecked();
-    expect(screen.getByRole('switch', { name: 'Show completed' })).toBeChecked();
     expectShown([], ['Dust']);
   });
 

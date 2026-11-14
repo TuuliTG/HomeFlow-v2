@@ -413,23 +413,4 @@ describe('adding a task again', () => {
     await user.type(screen.getByLabelText('Task'), 'Take');
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
-
-  it('adds a completed task again from the board', async () => {
-    const anna = logInAsFamilyMember();
-    fakeTasksBackend.addTaskAs(anna.id, {
-      ...TRASH,
-      description: 'The bins are behind the garage',
-    });
-    fakeTasksBackend.completeTaskAs(anna.id, 'task:0', '2026-10-08');
-    const user = userEvent.setup();
-    renderAppAt('/?completed=1');
-
-    await user.click(await screen.findByRole('link', { name: 'Add again: Take out trash' }));
-
-    expect(await screen.findByLabelText('Task')).toHaveValue('Take out trash');
-    expect(screen.getByLabelText('Description (optional)')).toHaveValue(
-      'The bins are behind the garage',
-    );
-    expect(screen.getByLabelText('Points')).toHaveValue(1);
-  });
 });

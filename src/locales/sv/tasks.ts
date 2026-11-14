@@ -6,7 +6,6 @@ export const tasks: Messages['tasks'] = {
   newTask: 'Ny uppgift',
   board: {
     title: 'Gemensamma uppgifter',
-    showCompleted: 'Visa gjorda',
     lists: {
       legend: 'Vems uppgifter',
       adults: 'De vuxnas uppgifter',
@@ -117,17 +116,11 @@ export const tasks: Messages['tasks'] = {
   favouriteLabel: (title) => `Favorit: ${title}`,
   notSaved: 'Inte sparad',
   completed: {
-    heading: 'Gjorda',
-    loadFailed:
-      'Det gick inte att ladda de gjorda uppgifterna. Kontrollera anslutningen och ladda om sidan.',
-    empty: 'Inget gjort än.',
     doneBy: {
       you: 'Gjord av dig',
       someone: 'Gjord av någon',
       named: (name) => `Gjord av ${name}`,
     },
-    addAgain: 'Lägg till igen',
-    addAgainLabel: (title) => `Lägg till igen: ${title}`,
   },
   me: {
     eyebrow: 'Jag',

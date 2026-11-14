@@ -1,12 +1,6 @@
 import { z } from 'zod';
 
-import {
-  type CompletedTask,
-  HOUSEHOLD_COMPLETED_LIMIT,
-  type HouseholdCompletedTask,
-  type TaskHelper,
-  taskTypes,
-} from '@/features/tasks/task';
+import { type CompletedTask, type TaskHelper, taskTypes } from '@/features/tasks/task';
 import { fetchDisplayNames } from '@/features/tasks/displayNamesApi';
 import { getSupabaseClient } from '@/lib/supabase';
 
@@ -51,42 +45,5 @@ export async function fetchCompletedTasks(userId: string): Promise<CompletedTask
     ...task,
     completedAt: completed_at,
     helpers: helpersOf(task_helpers, names),
-  }));
-}
-
-const householdCompletedRowsSchema = z.array(
-  z.object({
-    id: z.string(),
-    title: z.string(),
-    type: z.enum(taskTypes),
-    points: z.number().nullable(),
-    completed_at: z.string(),
-    completed_by: z.string().nullable(),
-    task_helpers: helperRowsSchema,
-  }),
-);
-
-/** The household's most recently done shared tasks, newest first, with who did them and who helped. */
-export async function fetchHouseholdCompletedTasks(): Promise<HouseholdCompletedTask[]> {
-  const { data, error } = await getSupabaseClient()
-    .from('tasks')
-    .select('id, title, type, points, completed_at, completed_by, task_helpers(user_id, points)')
-    .not('completed_at', 'is', null)
-    .eq('is_private', false)
-    .order('completed_at', { ascending: false })
-    .limit(HOUSEHOLD_COMPLETED_LIMIT);
-  if (error) throw error;
-  const rows = householdCompletedRowsSchema.parse(data);
-  const peopleIds = rows.flatMap((row) => [
-    ...(row.completed_by ? [row.completed_by] : []),
-    ...row.task_helpers.map((helper) => helper.user_id),
-  ]);
-  const names = await fetchDisplayNames([...new Set(peopleIds)]);
-  return rows.map(({ completed_at, completed_by, task_helpers, ...task }) => ({
-    ...task,
-    completedAt: completed_at,
-    helpers: helpersOf(task_helpers, names),
-    completedBy: completed_by,
-    completerName: completed_by ? (names.get(completed_by) ?? null) : null,
   }));
 }

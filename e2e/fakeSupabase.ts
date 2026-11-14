@@ -402,20 +402,6 @@ export async function fakeSupabase(page: Page) {
         ),
       );
     }
-    // "Show completed" asks for the household's done shared tasks (`completed_at=not.is.null`), newest first.
-    if (new URL(request.url()).searchParams.get('completed_at') === 'not.is.null') {
-      const done = tasks.filter(
-        (task) =>
-          task.household_id === householdId && task.completed_at !== null && !task.is_private,
-      );
-      return reply(
-        route,
-        200,
-        done
-          .sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at)))
-          .map(withHelpers),
-      );
-    }
     // The Me screen asks for the user's completed tasks (`completed_by=eq.<id>`), newest first.
     const completedBy = new URL(request.url()).searchParams.get('completed_by');
     if (completedBy) {

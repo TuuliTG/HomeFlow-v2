@@ -4,7 +4,6 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { parseToDoView, startFromLink } from '@/features/tasks/schedule';
-import { findSuggestion, suggestionAsTask } from '@/features/tasks/suggestions';
 import { canDoTask, type NewTask } from '@/features/tasks/task';
 import {
   type DraftImage,
@@ -65,14 +64,9 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
   const setFavourite = useSetFavouriteTask(userId);
   const t = useMessages();
   const [searchParams] = useSearchParams();
-  /** The name of an earlier task to add again (`paths.addTaskAgain`). */
-  const againTitle = searchParams.get('again');
-  const again =
-    againTitle === null ? undefined : findSuggestion(suggestions.data ?? [], againTitle);
   /** When the task goes in the user's timetable, if they are adding it from there (`paths.newTaskAt`). */
   const startsAt = startFromLink(searchParams);
 
-  if (againTitle !== null && suggestions.isPending) return <LoadingMessage />;
   return (
     <>
       {startsAt !== null && (
@@ -84,7 +78,7 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
         </p>
       )}
       <TaskForm
-        prefill={again ? suggestionAsTask(again) : taskFromLink(searchParams)}
+        prefill={taskFromLink(searchParams)}
         suggestions={suggestions.data ?? []}
         favourites={{
           keys: suggestions.isSuccess ? favourites.data : undefined,

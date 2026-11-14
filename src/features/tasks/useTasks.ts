@@ -10,10 +10,7 @@ import {
   undoCompleteTask,
   updateTask,
 } from '@/features/tasks/api';
-import {
-  fetchCompletedTasks,
-  fetchHouseholdCompletedTasks,
-} from '@/features/tasks/completedTasksApi';
+import { fetchCompletedTasks } from '@/features/tasks/completedTasksApi';
 import { fetchFavouriteTasks, setFavouriteTask } from '@/features/tasks/favouritesApi';
 import { fetchImageUrls } from '@/features/tasks/imagesApi';
 import { fetchMembership } from '@/features/tasks/membershipApi';
@@ -192,14 +189,6 @@ export function useLastDoneTask(): { task: DoneTask; at: number } | undefined {
     }),
   });
   return done.at(-1);
-}
-
-/** The household's recently done tasks. */
-export function useHouseholdCompletedTasks(userId: string) {
-  return useQuery({
-    queryKey: [...tasksKey(userId), 'household-completed'],
-    queryFn: fetchHouseholdCompletedTasks,
-  });
 }
 
 /** The user's points from all the tasks they've done. Under `tasksKey`, so it refreshes with the board. */

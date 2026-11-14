@@ -4,7 +4,6 @@ export const tasks = {
   newTask: 'New task',
   board: {
     title: 'Shared tasks',
-    showCompleted: 'Show completed',
     /**
      * Which list the board shows adults: their own tasks, or the tasks for children, which adults only check
      * and edit; children do them. The legend is for screen readers.
@@ -127,16 +126,11 @@ export const tasks = {
   favouriteLabel: (title: string) => `Favourite: ${title}`,
   notSaved: 'Not saved',
   completed: {
-    heading: 'Completed',
-    loadFailed: "We couldn't load the completed tasks. Check your connection and reload the page.",
-    empty: 'Nothing done yet.',
     doneBy: {
       you: 'Done by you',
       someone: 'Done by someone',
       named: (name: string) => `Done by ${name}`,
     },
-    addAgain: 'Add again',
-    addAgainLabel: (title: string) => `Add again: ${title}`,
   },
   me: {
     eyebrow: 'Me',
