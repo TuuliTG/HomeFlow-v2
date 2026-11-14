@@ -197,6 +197,9 @@ next one back rather than follow a fixed calendar.
   already loaded, and isn't remembered on the device: a forgotten search would hide tasks unnoticed. It leaves the
   completed tasks below as they are: they answer "what was done lately", not "does this task exist". A hidden
   status region reads out how many tasks match while typing.
+  The **Overdue** group's heading is a button that folds its tasks away (`?overdue=hidden`, on the board and the Me
+  page alike, remembered on the device), still showing how many there are, so a backlog doesn't push today's tasks
+  off the screen. Unlike the search it is remembered: the count keeps the folded tasks from going unnoticed.
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
   long ago in the user's calendar days ("Last done by Ben, 3 days ago"), so the family sees who usually carries it
   and can take turns. It comes from `previous_task_id`, embedded as `previous_occurrence(...)`: PostgREST finds no
