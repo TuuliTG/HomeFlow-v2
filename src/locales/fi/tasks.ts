@@ -7,8 +7,8 @@ export const tasks: Messages['tasks'] = {
     showCompleted: 'Näytä tehdyt',
     lists: {
       legend: 'Kenen tehtävät',
-      adults: 'Aikuisten tehtävät',
-      children: 'Lasten tehtävät',
+      adults: 'Aikuiset',
+      children: 'Lapset',
     },
     noChildrens: 'Ei vielä lasten tehtäviä. Luo ensimmäinen!',
     show: 'Näytä',

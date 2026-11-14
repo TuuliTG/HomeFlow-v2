@@ -8,8 +8,8 @@ export const tasks: Messages['tasks'] = {
     showCompleted: 'Visa gjorda',
     lists: {
       legend: 'Vems uppgifter',
-      adults: 'De vuxnas uppgifter',
-      children: 'Barnens uppgifter',
+      adults: 'Vuxna',
+      children: 'Barn',
     },
     noChildrens: 'Inga uppgifter för barn än. Skapa den första!',
     show: 'Visa',
