@@ -4,7 +4,7 @@ import { CloseIcon, FilterIcon } from '@/components/ui/icons';
 import { FilterChoice } from '@/features/tasks/FilterChoice';
 import type { HouseholdMember } from '@/features/tasks/helpersApi';
 import { PickerChoice } from '@/features/tasks/PickerChoice';
-import { pickerName } from '@/features/tasks/pickerFilter';
+import { pickedUpByLabel } from '@/features/tasks/pickerFilter';
 import type { DueFilter } from '@/features/tasks/taskFilter';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -110,7 +110,7 @@ function ActiveFilters({
   if (picker !== null) {
     active.push({
       key: 'who',
-      label: pickerName(picker, currentUserId, messages),
+      label: pickedUpByLabel(picker, currentUserId, messages),
       turnOff: () => {
         onPickerChange(null);
       },

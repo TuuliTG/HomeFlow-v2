@@ -1,4 +1,3 @@
-import { filterLegendClassName } from '@/features/tasks/chipStyles';
 import { FilterChip } from '@/features/tasks/FilterChip';
 import type { HouseholdMember } from '@/features/tasks/helpersApi';
 import { pickerName } from '@/features/tasks/pickerFilter';
@@ -36,9 +35,9 @@ export function PickerChoice({
   ];
   return (
     <fieldset>
-      <legend className={filterLegendClassName}>{t.who}</legend>
+      <legend className="sr-only">{t.who}</legend>
       <div className="flex flex-wrap gap-2">
-        <FilterChip label={t.nobody} checked={availableOnly} onChange={onAvailableOnlyChange} />
+        <FilterChip label={t.available} checked={availableOnly} onChange={onAvailableOnlyChange} />
         {ordered.map((member) => (
           <FilterChip
             key={member.id}

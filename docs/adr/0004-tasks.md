@@ -185,16 +185,17 @@ next one back rather than follow a fixed calendar.
   not four rows of controls. While folded, each filter that is on shows as a chip with ✕ that turns it off, so a
   filter remembered from last time never hides tasks unnoticed; Statistics folds its filters into a `<details>`
   summary instead (ADR 0006), as it has no search to sit next to and a sentence reads better there. Unfolded there are
-  two groups of chips, each with at most one chosen and tapping the chosen one again turning it off (an "All" or
-  "Everyone" chip confused):
+  two rows of chips without visible headings (the chips speak for themselves; the groups are named for screen
+  readers), each with at most one chosen and tapping the chosen one again turning it off (an "All" or "Everyone"
+  chip confused). A chosen adult's folded chip says "Picked up by Ben", as on a task card, since a bare name or
+  "Picked up by: Available" read oddly:
   - **Due date** (`?show=`, `taskFilter.ts`): tasks due **Today** or **This week** (the next seven days, so it ends
     where "Later" begins; both include overdue tasks, which still need doing), or with **No due date**. None chosen
     shows all. Two due dates together would show nothing or the same as one.
-  - **Picked up by**: **Nobody** (`?available=1`; its chip says **Available** while folded, as "Picked up by:
-    Available" read oddly), then **You** and the other adults in
-    the order they joined (`?who=<user id>`, `pickerFilter.ts`). Only Nobody is offered to the only adult in the
+  - **Picked up by**: **Available** (`?available=1`, nobody has picked them up), then **You** and the other adults in
+    the order they joined (`?who=<user id>`, `pickerFilter.ts`). Only Available is offered to the only adult in the
     household and in the children's list, as children aren't offered (they can't pick up adults' tasks and have
-    their own list); a child or a member not in the household (any more) shows everyone's. Nobody and an adult
+    their own list); a child or a member not in the household (any more) shows everyone's. Available and an adult
     exclude each other, as together they would always show nothing, hence one group.
 
   The two groups combine, e.g. what is due today and still free. These choices, like the Me page's view (`?view=`),

@@ -15,7 +15,6 @@ export const tasks: Messages['tasks'] = {
     removeFilter: (filter) => `Ta bort filtret: ${filter}`,
     dueDate: 'Förfallodag',
     who: 'Tagen av',
-    nobody: 'Ingen',
     you: 'Du',
     search: 'Sök uppgifter',
     noMatches: (search) => `Inga uppgifter matchar ”${search}”.`,

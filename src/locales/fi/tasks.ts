@@ -14,7 +14,6 @@ export const tasks: Messages['tasks'] = {
     removeFilter: (filter) => `Poista suodatin: ${filter}`,
     dueDate: 'Määräpäivä',
     who: 'Varaaja',
-    nobody: 'Ei kukaan',
     you: 'Sinä',
     search: 'Hae tehtäviä',
     noMatches: (search) => `Hakua ”${search}” vastaavia tehtäviä ei löytynyt.`,

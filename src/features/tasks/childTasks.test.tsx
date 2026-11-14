@@ -58,7 +58,7 @@ describe('tasks for children', () => {
     await user.click(screen.getByRole('button', { name: 'Filters' }));
     const who = screen.getByRole('group', { name: 'Picked up by' });
     expect(within(who).getAllByRole('checkbox')).toHaveLength(1);
-    expect(within(who).getByRole('checkbox', { name: 'Nobody' })).toBeInTheDocument();
+    expect(within(who).getByRole('checkbox', { name: 'Available' })).toBeInTheDocument();
     expect(within(forChildren).getByText('For children')).toBeInTheDocument();
     expect(
       within(forChildren).getByRole('link', { name: 'Edit: Feed the cat' }),

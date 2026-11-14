@@ -245,7 +245,7 @@ function splitRoutines(tasks: Task[], isSearching: boolean): { routines: Task[];
 
 function EmptyMessage({ children }: { children: string }) {
   return (
-    <p className="border-line text-ink-muted rounded-2xl border-2 border-dashed p-6 text-center text-sm">
+    <p className="border-line text-ink-muted mt-3 rounded-2xl border-2 border-dashed p-6 text-center text-sm">
       {children}
     </p>
   );

@@ -33,6 +33,17 @@ export function nothingPickedUpMessage(
   return messages.tasks.board.noneFor(pickerName(picker, currentUserId, messages));
 }
 
+/** What the chip of the member chosen says while the board's filters are folded, as on a task card. */
+export function pickedUpByLabel(
+  member: HouseholdMember,
+  currentUserId: string,
+  { tasks }: Messages,
+): string {
+  const phrases = tasks.card.pickedUpBy;
+  if (member.id === currentUserId) return phrases.you;
+  return member.name === null ? phrases.someone : phrases.named(member.name);
+}
+
 /** What the board's filters call a member: you, or their name. */
 export function pickerName(
   member: HouseholdMember,

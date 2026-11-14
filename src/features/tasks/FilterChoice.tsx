@@ -1,4 +1,3 @@
-import { filterLegendClassName } from '@/features/tasks/chipStyles';
 import { FilterChip } from '@/features/tasks/FilterChip';
 import { type DueFilter, dueFilters } from '@/features/tasks/taskFilter';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -16,7 +15,7 @@ export function FilterChoice({ due, onChange }: FilterChoiceProps) {
   const t = useMessages().tasks.board;
   return (
     <fieldset>
-      <legend className={filterLegendClassName}>{t.dueDate}</legend>
+      <legend className="sr-only">{t.dueDate}</legend>
       <div className="flex flex-wrap gap-2">
         {dueFilters
           .filter((option) => option !== 'all')

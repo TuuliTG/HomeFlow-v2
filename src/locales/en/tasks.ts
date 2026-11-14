@@ -17,12 +17,10 @@ export const tasks = {
     filtersButton: 'Filters',
     /** The label of a chip that turns a filter off while the filters are folded. */
     removeFilter: (filter: string) => `Remove filter: ${filter}`,
-    /** The filter by due date. */
+    /** The filter by due date, for screen readers. */
     dueDate: 'Due date',
-    /** The filter by who has picked tasks up. */
+    /** The filter by who has picked tasks up, for screen readers; its chip says `card.pickedUpBy` while folded. */
     who: 'Picked up by',
-    /** The choice under "Picked up by" for the tasks nobody has picked up; a chip says `available` once chosen. */
-    nobody: 'Nobody',
     you: 'You',
     search: 'Search tasks',
     noMatches: (search: string) => `No tasks match “${search}”.`,
@@ -41,7 +39,7 @@ export const tasks = {
       week: 'Nothing is due this week.',
       undated: 'Every task has a due date.',
     },
-    /** Only the tasks nobody has picked up: the chip shown while the filters are folded. */
+    /** Only the tasks nobody has picked up; one of the choices in the filter by who has picked tasks up. */
     available: 'Available',
     /** What the board says when nothing is left to pick up within the filter. */
     emptyAvailable: {
