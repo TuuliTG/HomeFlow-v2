@@ -190,10 +190,11 @@ next one back rather than follow a fixed calendar.
   - **Due date** (`?show=`, `taskFilter.ts`): tasks due **Today** or **This week** (the next seven days, so it ends
     where "Later" begins; both include overdue tasks, which still need doing), or with **No due date**. None chosen
     shows all. Two due dates together would show nothing or the same as one.
-  - **Picked up by**: **Available** (`?available=1`, nobody has picked them up), then **You** and the other adults in
-    the order they joined (`?who=<user id>`, `pickerFilter.ts`). Only Available is offered to the only adult in the
+  - **Picked up by**: **Nobody** (`?available=1`; its chip says **Available** while folded, as "Picked up by:
+    Available" read oddly), then **You** and the other adults in
+    the order they joined (`?who=<user id>`, `pickerFilter.ts`). Only Nobody is offered to the only adult in the
     household and in the children's list, as children aren't offered (they can't pick up adults' tasks and have
-    their own list); a child or a member not in the household (any more) shows everyone's. Available and an adult
+    their own list); a child or a member not in the household (any more) shows everyone's. Nobody and an adult
     exclude each other, as together they would always show nothing, hence one group.
 
   The two groups combine, e.g. what is due today and still free. These choices, like the Me page's view (`?view=`),

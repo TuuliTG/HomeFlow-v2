@@ -21,6 +21,8 @@ export const tasks = {
     dueDate: 'Due date',
     /** The filter by who has picked tasks up. */
     who: 'Picked up by',
+    /** The choice under "Picked up by" for the tasks nobody has picked up; a chip says `available` once chosen. */
+    nobody: 'Nobody',
     you: 'You',
     search: 'Search tasks',
     noMatches: (search: string) => `No tasks match “${search}”.`,
@@ -39,7 +41,7 @@ export const tasks = {
       week: 'Nothing is due this week.',
       undated: 'Every task has a due date.',
     },
-    /** Only the tasks nobody has picked up; one of the choices in the filter by who has picked tasks up. */
+    /** Only the tasks nobody has picked up: the chip shown while the filters are folded. */
     available: 'Available',
     /** What the board says when nothing is left to pick up within the filter. */
     emptyAvailable: {

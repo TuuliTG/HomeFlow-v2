@@ -38,7 +38,7 @@ export function PickerChoice({
     <fieldset>
       <legend className={filterLegendClassName}>{t.who}</legend>
       <div className="flex flex-wrap gap-2">
-        <FilterChip label={t.available} checked={availableOnly} onChange={onAvailableOnlyChange} />
+        <FilterChip label={t.nobody} checked={availableOnly} onChange={onAvailableOnlyChange} />
         {ordered.map((member) => (
           <FilterChip
             key={member.id}

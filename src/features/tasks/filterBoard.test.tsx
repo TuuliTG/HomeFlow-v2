@@ -129,7 +129,7 @@ describe('filtering the board', () => {
     await screen.findByRole('listitem', { name: 'Vacuum' });
     await openFilters();
 
-    await user.click(screen.getByRole('checkbox', { name: 'Available' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Nobody' }));
 
     expectShown(['Water plants'], ['Vacuum', 'Book dentist', 'Buy a present']);
   });
@@ -147,7 +147,7 @@ describe('filtering the board', () => {
     await openFilters();
 
     await user.click(screen.getByRole('checkbox', { name: 'Today' }));
-    await user.click(screen.getByRole('checkbox', { name: 'Available' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Nobody' }));
     expectShown(['Cook'], ['Vacuum', 'Mop', 'Dust']);
     expect(screen.getByRole('checkbox', { name: 'Today' })).toBeChecked();
     expect(router.state.location.search).toBe('?show=today&available=1');
@@ -155,7 +155,7 @@ describe('filtering the board', () => {
     await user.click(screen.getByRole('checkbox', { name: 'This week' }));
     expectShown(['Cook', 'Mop'], ['Vacuum', 'Dust']);
 
-    await user.click(screen.getByRole('checkbox', { name: 'Available' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Nobody' }));
     expectShown(['Vacuum', 'Cook', 'Mop'], ['Dust']);
     expect(router.state.location.search).toBe('?show=week');
   });
@@ -169,7 +169,7 @@ describe('filtering the board', () => {
 
     expect(await screen.findByText('Everything due today has been picked up.')).toBeInTheDocument();
     await openFilters();
-    expect(screen.getByRole('checkbox', { name: 'Available' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Nobody' })).toBeChecked();
     expectShown([], ['Vacuum', 'Dust']);
   });
 
@@ -182,7 +182,7 @@ describe('filtering the board', () => {
     await openFilters();
 
     await user.click(screen.getByRole('checkbox', { name: 'No due date' }));
-    await user.click(screen.getByRole('checkbox', { name: 'Available' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Nobody' }));
     expect(router.state.location.search).toBe('?show=undated&available=1');
 
     await user.click(screen.getByRole('link', { name: 'Statistics' }));
@@ -191,7 +191,7 @@ describe('filtering the board', () => {
     await screen.findByRole('listitem', { name: 'Dust' });
     await openFilters();
     expect(screen.getByRole('checkbox', { name: 'No due date' })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'Available' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Nobody' })).toBeChecked();
 
     await user.click(screen.getByRole('checkbox', { name: 'No due date' }));
     await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
@@ -306,7 +306,7 @@ describe('filtering the board by who has picked tasks up', () => {
 
   function expectNobodyChosen(who: HTMLElement) {
     for (const choice of within(who).getAllByRole('checkbox')) {
-      if (choice.closest('label')?.textContent !== 'Available') expect(choice).not.toBeChecked();
+      if (choice.closest('label')?.textContent !== 'Nobody') expect(choice).not.toBeChecked();
     }
   }
 
@@ -356,13 +356,13 @@ describe('filtering the board by who has picked tasks up', () => {
     const who = screen.getByRole('group', { name: 'Picked up by' });
 
     await user.click(within(who).getByRole('checkbox', { name: 'Ben' }));
-    await user.click(screen.getByRole('checkbox', { name: 'Available' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Nobody' }));
     expectNobodyChosen(who);
     expectShown(['Dust'], ['Cook', 'Vacuum', 'Mop']);
     expect(router.state.location.search).toBe('?available=1');
 
     await user.click(within(who).getByRole('checkbox', { name: 'Mia' }));
-    expect(screen.getByRole('checkbox', { name: 'Available' })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Nobody' })).not.toBeChecked();
     expectShown(['Mop'], ['Cook', 'Vacuum', 'Dust']);
     expect(router.state.location.search).toMatch(/^\?who=[^&]+$/);
   });
@@ -397,7 +397,7 @@ describe('filtering the board by who has picked tasks up', () => {
     await openFilters();
 
     expect(offered(screen.getByRole('group', { name: 'Picked up by' }))).toEqual([
-      'Available',
+      'Nobody',
       'You',
       'Ben',
       'Mia',
@@ -423,7 +423,7 @@ describe('filtering the board by who has picked tasks up', () => {
 
     await screen.findByRole('listitem', { name: 'Dust' });
     await openFilters();
-    expect(offered(screen.getByRole('group', { name: 'Picked up by' }))).toEqual(['Available']);
+    expect(offered(screen.getByRole('group', { name: 'Picked up by' }))).toEqual(['Nobody']);
   });
 
   it('offers only the tasks nobody has picked up to someone alone in their household', async () => {
@@ -433,6 +433,6 @@ describe('filtering the board by who has picked tasks up', () => {
 
     await screen.findByRole('listitem', { name: 'Dust' });
     await openFilters();
-    expect(offered(screen.getByRole('group', { name: 'Picked up by' }))).toEqual(['Available']);
+    expect(offered(screen.getByRole('group', { name: 'Picked up by' }))).toEqual(['Nobody']);
   });
 });
