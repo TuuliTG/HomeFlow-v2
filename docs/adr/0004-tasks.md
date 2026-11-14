@@ -176,28 +176,34 @@ next one back rather than follow a fixed calendar.
   each of the next five days by date, Later and No due date, leaving out empty groups. Grouping is done in the app
   from the same sorted list, with the user's local date; the board has no calendar grid, which needs far more room
   on a phone (the Me page offers one as an optional view, below).
-  A **Show** filter (`?show=`, one due date at a time, `taskFilter.ts`) narrows the board to tasks due **Today** or
-  **This week** (the next seven days, so it ends where "Later" begins; both include overdue tasks, which still need
-  doing), or with **No due date**; **All** is the default. **Available** (`?available=1`, nobody has picked them up)
-  is a separate toggle that combines with it, e.g. what is due today and still free. The due dates stay one choice
-  because two of them together would show nothing or the same as one. A
-  **Picked up by** row (`?who=<user id>`, `pickerFilter.ts`; not shown to the only adult in the household) narrows
-  it further to the tasks one adult has picked up: **You**, then the other adults in the order they joined, as chips
-  where tapping the chosen one again shows everyone's again (the default, with none chosen; an "Everyone" chip
-  confused). Children aren't offered, as they can't pick up adults' tasks and have their own list; a child or a
-  member not in the household (any more) shows everyone's. It and **Available** exclude each
-  other, as together they would always show nothing: choosing one clears the other. These choices, like the Me
-  page's view (`?view=`), are remembered on the device (ADR 0002), so the nav link brings them back.
-  A **search** above the filter (`?q=`, `searchTasks()`) narrows the board further to tasks whose title or
-  description contains every word typed, ignoring case but keeping ä apart from a (different letters in Finnish and Swedish), so
-  a family member can check whether a task already exists before adding it. It is done in the app on the tasks
-  already loaded, and isn't remembered on the device: a forgotten search would hide tasks unnoticed. A hidden
-  status region reads out how many tasks match while typing.
+  A **search** (`?q=`, `searchTasks()`) narrows the board to tasks whose title or description contains every word
+  typed, ignoring case but keeping ä apart from a (different letters in Finnish and Swedish), so a family member can
+  check whether a task already exists before adding it. It is done in the app on the tasks already loaded, and isn't
+  remembered on the device: a forgotten search would hide tasks unnoticed. A hidden status region reads out how many
+  tasks match while typing.
+  The **filters** fold behind a button next to the search (`BoardFilters.tsx`), so the board starts with the tasks,
+  not four rows of controls. While folded, each filter that is on shows as a chip with ✕ that turns it off, so a
+  filter remembered from last time never hides tasks unnoticed; Statistics folds its filters into a `<details>`
+  summary instead (ADR 0006), as it has no search to sit next to and a sentence reads better there. Unfolded there are
+  two groups of chips, each with at most one chosen and tapping the chosen one again turning it off (an "All" or
+  "Everyone" chip confused):
+  - **Due date** (`?show=`, `taskFilter.ts`): tasks due **Today** or **This week** (the next seven days, so it ends
+    where "Later" begins; both include overdue tasks, which still need doing), or with **No due date**. None chosen
+    shows all. Two due dates together would show nothing or the same as one.
+  - **Picked up by**: **Available** (`?available=1`, nobody has picked them up), then **You** and the other adults in
+    the order they joined (`?who=<user id>`, `pickerFilter.ts`). Only Available is offered to the only adult in the
+    household and in the children's list, as children aren't offered (they can't pick up adults' tasks and have
+    their own list); a child or a member not in the household (any more) shows everyone's. Available and an adult
+    exclude each other, as together they would always show nothing, hence one group.
+
+  The two groups combine, e.g. what is due today and still free. These choices, like the Me page's view (`?view=`),
+  are remembered on the device (ADR 0002), so the nav link brings them back; whether the filters are unfolded isn't.
   Each due-date group's heading is a button that folds its tasks away (`?<group>=hidden`, on the board and the Me
   page alike, remembered on the device), still showing how many there are, e.g. so an overdue backlog doesn't push
   today's tasks off the screen. The group's key stays the same from day to day (`overdue`, `today`, `tomorrow`,
   the weekday of one of the next five days, `later`, `undated`), so a folded group stays folded. Unlike the search
   it is remembered: the count keeps the folded tasks from going unnoticed.
+
 - **Routines**: an everyday chore like emptying the dishwasher would fill the board as a card every day, so a
   repeating shared adults' task can be a **routine** (`is_routine`, a "Quick routine" check mark under Repeats;
   `tasks_routine_repeats` keeps it to repeating tasks, `update_task()` clears it when a task stops repeating, the
