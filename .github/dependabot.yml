@@ -8,6 +8,13 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # eslint-plugin-jsx-a11y 6.x only supports ESLint up to 9, so ESLint 10 can't be installed.
+      # Remove once the plugin supports the next ESLint major.
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: '@eslint/js'
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule:
