@@ -10,6 +10,7 @@ import {
   setMemberCanAddTasks,
   setMemberIsChild,
 } from '@/features/household/api';
+import { useAuth } from '@/lib/auth';
 
 const householdKey = (userId: string | undefined) => ['household', userId] as const;
 
@@ -80,6 +81,32 @@ export function useAddChild(householdId: string) {
 /** Makes a new sign-in code for a child who signs in with codes. */
 export function useNewChildSignInCode() {
   return useMutation({ mutationFn: newChildSignInCode });
+}
+
+interface ChildOnThisDevice {
+  childId: string;
+  displayName: string;
+  /** Signs the child in on this device when true, out of it when false. */
+  onThisDevice: boolean;
+}
+
+/**
+ * Signs a child who signs in with codes in on this device with a new code, e.g. a child without a device of
+ * their own, or out of it again. The account in use stays; the child is then switched to from the account
+ * menu (ADR 0003).
+ */
+export function useSetChildOnThisDevice() {
+  const { keepChildOnThisDevice, signOutOnThisDevice } = useAuth();
+  return useMutation({
+    mutationFn: async ({ childId, displayName, onThisDevice }: ChildOnThisDevice) => {
+      if (!onThisDevice) {
+        await signOutOnThisDevice(childId);
+        return;
+      }
+      const { code } = await newChildSignInCode(childId);
+      await keepChildOnThisDevice(code, displayName);
+    },
+  });
 }
 
 /** Lets a child add tasks, or stops them. */

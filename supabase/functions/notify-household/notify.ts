@@ -34,7 +34,7 @@ export interface TaskChange {
   kind: 'added' | 'completed';
 }
 
-export interface HouseholdMember {
+interface HouseholdMember {
   userId: string;
   isChild: boolean;
 }

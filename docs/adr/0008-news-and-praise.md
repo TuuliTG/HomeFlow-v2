@@ -1,6 +1,6 @@
 # 0008. News and praise
 
-- **Updated:** 2026-10-11
+- **Updated:** 2026-11-04 (notifications for thumbs up and comments)
 
 ## Context
 
@@ -29,7 +29,7 @@ Seeing what others in the family have done, and thanking them for it, is positiv
 ## Consequences
 
 - Undoing a task done (ADR 0004) keeps its likes and comments; they show again if it is marked done again.
-- No push notification for a thumbs up or comment yet; it would be another Edge Function (ADR 0005).
+- A thumbs up or comment notifies whoever did the task, its helpers and earlier commenters (`notify-praise`, ADR 0005).
 - Likes and comments on tasks older than a week stay stored but aren't shown.
 
 ## Alternatives considered

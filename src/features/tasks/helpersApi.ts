@@ -13,8 +13,8 @@ export interface HouseholdMember {
   isChild: boolean;
 }
 
-/** A helper's share of a task's points, as chosen by whoever marked it done. */
-export interface HelperShare {
+/** A helper's bonus points for a task, as chosen by whoever marked it done. */
+export interface HelperBonus {
   userId: string;
   points: number;
 }
@@ -39,9 +39,9 @@ export async function fetchHouseholdMembers(): Promise<HouseholdMember[]> {
 
 /**
  * Says who helped with a shared task the user marked done in the last week, replacing earlier helpers;
- * their shares come out of the task's points (`set_task_helpers()`).
+ * their bonus points come on top of the task's (`set_task_helpers()`).
  */
-export async function setTaskHelpers(taskId: string, helpers: HelperShare[]): Promise<void> {
+export async function setTaskHelpers(taskId: string, helpers: HelperBonus[]): Promise<void> {
   const { error } = await getSupabaseClient().rpc('set_task_helpers', {
     task_id: taskId,
     helpers: helpers.map(({ userId, points }) => ({ user_id: userId, points })),
@@ -64,7 +64,7 @@ const helpedRowsSchema = z.array(
 );
 
 /**
- * The tasks the user most recently helped someone else with, newest first, with their share of the
+ * The tasks the user most recently helped someone else with, newest first, with their bonus
  * points (`own_helped_tasks()`). A child sees here the adults-only tasks they helped with, and nowhere else.
  */
 export async function fetchHelpedTasks(): Promise<HelpedTask[]> {

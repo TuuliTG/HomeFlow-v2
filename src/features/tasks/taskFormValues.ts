@@ -1,4 +1,5 @@
 import { DEFAULT_POINTS, NEW_TASK_DEFAULTS, type NewTask } from '@/features/tasks/task';
+import { repeatDays, repeatFieldValue } from '@/features/tasks/taskRepeat';
 
 /**
  * A task's points as the field shows them. A shared task waiting for points starts empty, so an adult
@@ -7,6 +8,16 @@ import { DEFAULT_POINTS, NEW_TASK_DEFAULTS, type NewTask } from '@/features/task
 function pointsValue(task: NewTask): string {
   if (task.points !== null) return String(task.points);
   return task.isPrivate ? String(DEFAULT_POINTS) : '';
+}
+
+const fieldNames = ['title', 'description', 'points', 'repeatEveryDays', 'dueOn'] as const;
+
+/** The form's fields that can be named as the one to fix. */
+export type FieldName = (typeof fieldNames)[number];
+
+/** The field a `newTaskSchema` issue's path names; the title when it names none of them. */
+export function fieldOf(path: PropertyKey | undefined): FieldName {
+  return fieldNames.find((field) => field === path) ?? 'title';
 }
 
 /** The form's field values (strings, as inputs hold them) for a task, or for a new one. */
@@ -18,7 +29,7 @@ export function fieldValues(
     description: task.description ?? '',
     type: task.type,
     points: pointsValue(task),
-    repeat: task.repeatEveryDays === null ? '' : String(task.repeatEveryDays),
+    repeat: repeatFieldValue(task.repeatEveryDays),
     dueOn: task.dueOn ?? '',
     isPrivate: task.isPrivate,
     forChildren: task.forChildren,
@@ -38,13 +49,36 @@ export function taskInput(values: FieldValues, isChild: boolean) {
     type: values.type,
     // A private task earns nothing; a child's shared task waits for an adult to award its points.
     points: values.isPrivate || isChild ? null : values.points,
-    repeatEveryDays: values.repeat === '' ? null : Number(values.repeat),
+    repeatEveryDays: repeatDays(values.repeat),
     dueOn: values.dueOn === '' ? null : values.dueOn,
     description: values.description.trim() === '' ? null : values.description,
     icon: values.icon,
     labels: values.labels,
     customLabels: values.customLabels,
     ...audience(values, isChild),
+  };
+}
+
+interface FormState {
+  isChild: boolean;
+  isPrivate: boolean;
+  forChildren: boolean;
+  /** Whether the form offers to add the task as already done. */
+  canBeDoneAlready: boolean;
+}
+
+/**
+ * Which fields the form shows, as it changes to suit who the task is for. An adult's task for children
+ * (`isForChildren`) asks which children and the stars each earns, and is neither a type of work nor added as
+ * done, since adults don't do it.
+ */
+export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready }: FormState) {
+  const isForChildren = !isChild && !isPrivate && forChildren;
+  return {
+    isForChildren,
+    type: !isForChildren,
+    points: !isPrivate,
+    alreadyDone: canBeDoneAlready && !isForChildren,
   };
 }
 

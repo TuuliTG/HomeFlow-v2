@@ -22,7 +22,7 @@ export interface NewsComment {
   createdAt: string;
 }
 
-/** Someone who helped with a task, and their share of its points. */
+/** Someone who helped with a task, and the bonus points they earned. */
 interface NewsHelper {
   person: NewsPerson;
   points: number;
@@ -39,7 +39,7 @@ export interface NewsItem {
   /** ISO timestamp. */
   completedAt: string;
   doneBy: NewsPerson;
-  /** Their shares come out of the task's points; the rest is the doer's. */
+  /** Their bonus points come on top of the task's, which are all the doer's. */
   helpers: NewsHelper[];
   likedBy: NewsPerson[];
   /** Oldest first. */
@@ -73,10 +73,9 @@ function dayLabel(date: string, todayDate: string, t: Messages): string {
   return t.common.shortDate(fromIsoDate(date));
 }
 
-/** Who earned the item's points: the doer what the helpers didn't get, and each helper their share. */
+/** Who earned points with the item: the doer all the task's points, and each helper their bonus. */
 function creditsOf({ doneBy, helpers, points }: NewsItem): NewsHelper[] {
-  const helped = helpers.reduce((total, helper) => total + helper.points, 0);
-  return [{ person: doneBy, points: (points ?? 0) - helped }, ...helpers];
+  return [{ person: doneBy, points: points ?? 0 }, ...helpers];
 }
 
 /** All the points a member earned that day. */

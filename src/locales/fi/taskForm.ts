@@ -88,10 +88,15 @@ export const taskForm: Messages['taskForm'] = {
     tooMany: (max) => `Tehtävällä voi olla enintään ${String(max)} tunnistetta.`,
   },
   keepPrivate: 'Pidä yksityisenä',
-  forChildren: 'Lapset voivat tehdä sen',
+  whoFor: 'Kenelle tehtävä on?',
+  audiences: { adults: 'Aikuisille', children: 'Lapsille' },
+  whichChildren: 'Mille lapsille?',
+  whichChildrenHint:
+    'Jokainen valittu lapsi saa sen Minä-sivulleen. Jos et valitse ketään, kuka tahansa lapsi voi ottaa sen.',
   assignedTo: 'Kenen tehtävä se on?',
   anyChild: 'Kenen tahansa lapsen',
   points: 'Pisteet',
+  stars: 'Tähdet kullekin lapselle',
   images: {
     label: 'Kuvat (vapaaehtoinen)',
     add: 'Lisää kuva',
@@ -105,6 +110,13 @@ export const taskForm: Messages['taskForm'] = {
   },
   repeats: 'Toistuu',
   doesNotRepeat: 'Ei toistu',
+  customRepeat: 'Muu väli…',
+  repeatEvery: 'Toistoväli',
+  repeatUnit: 'Päivät vai viikot',
+  repeatUnits: {
+    days: (count) => (count === 1 ? 'päivä' : 'päivää'),
+    weeks: (count) => (count === 1 ? 'viikko' : 'viikkoa'),
+  },
   dueDate: 'Määräpäivä',
   alreadyDone: 'Jo tehty',
   errors: {
@@ -113,11 +125,10 @@ export const taskForm: Messages['taskForm'] = {
     descriptionTooLong: (max) => `Kuvauksessa saa olla enintään ${String(max)} merkkiä.`,
     pointsRange: 'Pisteiden pitää olla kokonaisluku 1–10.',
     invalidDueDate: 'Valitse kelvollinen määräpäivä.',
+    repeatRange: 'Valitse, kuinka usein tehtävä toistuu: 1–365 päivän välein.',
     onlySharedHavePoints: 'Vain yhteisillä tehtävillä on pisteitä.',
     checkDetails: 'Tarkista tehtävän tiedot.',
     saveFailed: 'Tehtävää ei voitu tallentaa. Yritä uudelleen.',
-    doneChoreForChild: (name: string) =>
-      `Lisätessäsi tehtävää voit merkitä tehdyksi vain omasi. Valitse ”Kenen tahansa lapsen” tai jätä ”Jo tehty” valitsematta, niin ${name} merkitsee sen tehdyksi.`,
   },
   reminder: {
     at: (day, time) => `Muistutus ${day} klo ${time}`,

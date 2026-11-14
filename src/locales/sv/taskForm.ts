@@ -89,10 +89,15 @@ export const taskForm: Messages['taskForm'] = {
     tooMany: (max) => `En uppgift kan ha högst ${String(max)} etiketter.`,
   },
   keepPrivate: 'Håll privat',
-  forChildren: 'Barn kan göra den',
+  whoFor: 'Vem är den för?',
+  audiences: { adults: 'Vuxna', children: 'Barn' },
+  whichChildren: 'Vilka barn?',
+  whichChildrenHint:
+    'Varje barn du väljer får den på sin Jag-sida. Välj ingen så kan vilket barn som helst ta den.',
   assignedTo: 'Vems syssla är det?',
   anyChild: 'Vilket barn som helst',
   points: 'Poäng',
+  stars: 'Stjärnor till varje barn',
   images: {
     label: 'Bilder (valfritt)',
     add: 'Lägg till bild',
@@ -106,6 +111,13 @@ export const taskForm: Messages['taskForm'] = {
   },
   repeats: 'Upprepas',
   doesNotRepeat: 'Upprepas inte',
+  customRepeat: 'Annat intervall…',
+  repeatEvery: 'Intervall',
+  repeatUnit: 'Dagar eller veckor',
+  repeatUnits: {
+    days: (count) => (count === 1 ? 'dag' : 'dagar'),
+    weeks: (count) => (count === 1 ? 'vecka' : 'veckor'),
+  },
   dueDate: 'Förfallodag',
   alreadyDone: 'Redan gjord',
   errors: {
@@ -114,11 +126,10 @@ export const taskForm: Messages['taskForm'] = {
     descriptionTooLong: (max) => `Beskrivningen får ha högst ${String(max)} tecken.`,
     pointsRange: 'Poängen måste vara ett heltal från 1 till 10.',
     invalidDueDate: 'Välj en giltig förfallodag.',
+    repeatRange: 'Välj hur ofta uppgiften upprepas: med 1–365 dagars mellanrum.',
     onlySharedHavePoints: 'Bara gemensamma uppgifter har poäng.',
     checkDetails: 'Kontrollera uppgiftens detaljer.',
     saveFailed: 'Det gick inte att spara uppgiften. Försök igen.',
-    doneChoreForChild: (name: string) =>
-      `Du kan bara markera dina egna uppgifter som gjorda när du lägger till dem. Välj ”Vilket barn som helst”, eller lämna ”Redan gjord” omarkerad så att ${name} kan markera den som gjord.`,
   },
   reminder: {
     at: (day, time) => `Påminnelse ${day} kl. ${time}`,

@@ -35,6 +35,14 @@ export const auth = {
     'unknown-child-code': "This code doesn't work. Ask an adult in your family for a new one.",
     other: "That didn't work. Try again in a moment.",
   },
+  switchAccount: {
+    menu: 'Accounts on this device',
+    to: (name: string) => `Switch to ${name}`,
+    continueAs: (name: string) => `Continue as ${name}`,
+    onThisDevice: 'Signed in on this device',
+    failed: (name: string) => `We couldn't switch to ${name}. Try again.`,
+    signedOut: (name: string) => `${name} is no longer signed in on this device.`,
+  },
   childCode: {
     open: 'Sign in with a child code',
     heading: 'Sign in with a child code',

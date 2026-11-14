@@ -26,7 +26,6 @@ test('family member can create a task and see it on the shared task board', asyn
   await page.getByLabel('Task', { exact: true }).fill('Water plants');
   await page.getByRole('radio', { name: 'Meta work' }).check();
   await page.getByLabel('Points').fill('5');
-  await page.getByRole('checkbox', { name: 'Children can do it' }).check();
   await page.getByRole('button', { name: 'Choose labels' }).click();
   await page.getByText('Garden and yard', { exact: true }).click();
   await expect(page.getByRole('checkbox', { name: 'Garden and yard' })).toBeChecked();
@@ -40,13 +39,42 @@ test('family member can create a task and see it on the shared task board', asyn
   const task = page.getByRole('listitem', { name: 'Water plants' });
   await expect(task).toBeVisible();
   await expect(task.getByText('5 points')).toBeVisible();
-  await expect(task.getByText('For children')).toBeVisible();
   await expect(task.getByText('Added by you')).toBeVisible();
   await expect(task.getByText('Garden and yard')).toBeVisible();
   await expect(task.getByText('Weekends')).toBeVisible();
 
   await page.reload();
   await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
+});
+
+test('family member can add a task for the children, kept apart from their own', async ({
+  page,
+}) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+
+  // The choice is a segmented control: its radios are hidden behind their labels.
+  await page.getByRole('group', { name: 'Who is it for?' }).getByText('Children').click();
+  await expect(page.getByRole('radio', { name: 'Children' })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Keep it private' })).toBeHidden();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on a task for children').toEqual([]);
+  await page.getByLabel('Task', { exact: true }).fill('Feed the cat');
+  await page.getByLabel('Stars for each child').fill('2');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  // The board opens on the children's tasks, one list at a time.
+  const lists = page.getByRole('group', { name: 'Whose tasks' });
+  await expect(lists.getByRole('radio', { name: "Children's tasks" })).toBeChecked();
+  const task = page.getByRole('listitem', { name: 'Feed the cat' });
+  await expect(task.getByText('For children')).toBeVisible();
+  await expect(task.getByText('2 points')).toBeVisible();
+  await expect(task.getByRole('button', { name: 'Mark done: Feed the cat' })).toHaveCount(0);
+  await lists.getByText("Adults' tasks").click();
+  await expect(page.getByText('Feed the cat')).toBeHidden();
+  await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
 });
 
 test('family member can attach a picture to a task and see it on the board', async ({ page }) => {
@@ -111,6 +139,7 @@ test('family member can add a task again from earlier tasks and favourites', asy
     'true',
   );
   await page.getByLabel('Task', { exact: true }).fill('');
+  await page.getByRole('button', { name: /^Favourites/ }).click();
   await page
     .getByRole('region', { name: 'Favourites' })
     .getByRole('button', { name: /Take out trash/ })
@@ -120,6 +149,7 @@ test('family member can add a task again from earlier tasks and favourites', asy
   ).toBeVisible();
 
   await page.getByLabel('Task', { exact: true }).fill('');
+  await page.getByRole('button', { name: /^Favourites/ }).click();
   await page
     .getByRole('region', { name: 'Favourites' })
     .getByRole('button', { name: /Take out trash/ })
@@ -156,6 +186,25 @@ test('family member can mark a repeating task done and see it come back', async 
   await expect(task.getByText('Due Thu 22 Oct')).toBeVisible();
   await expect(task.getByText('Last done by you, today')).toBeVisible();
   await expect(page.getByText('Was due Tue 6 Oct')).toBeHidden();
+});
+
+test('family member can repeat a task at a custom interval', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('Water the plants');
+  await page.getByLabel('Repeats').selectOption({ label: 'Custom…' });
+  await page.getByLabel('Every', { exact: true }).fill('3');
+  await page.getByLabel('Days or weeks').selectOption({ label: 'weeks' });
+  await page.screenshot({ path: test.info().outputPath('custom-repeat.png') });
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on the task form').toEqual([]);
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  const task = page.getByRole('listitem', { name: 'Water the plants' });
+  await expect(task.getByText('Every 3 weeks')).toBeVisible();
 });
 
 test('family member can pick up a task, find it on the Me screen and mark it done there', async ({
@@ -269,12 +318,15 @@ test('family member can show the tasks done in the household and star one', asyn
   await star.click();
   await expect(star).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByRole('button', { name: /^Favourites/ }).click();
   await expect(
     page.getByRole('region', { name: 'Favourites' }).getByRole('button', { name: /Vacuum/ }),
   ).toBeVisible();
 });
 
-test('family member can say who helped with a task and share its points', async ({ page }) => {
+test('family member can say who helped with a task and give them bonus points', async ({
+  page,
+}) => {
   await fakeSupabase(page);
   await logInAsNewUser(page);
   await page.getByLabel('Invite code').fill(EXISTING_HOUSEHOLD.inviteCode);
@@ -291,16 +343,16 @@ test('family member can say who helped with a task and share its points', async 
   expect(board.violations, 'a11y violations with the prompt').toEqual([]);
   await page.getByRole('link', { name: 'Who helped with Laundry?' }).click();
   await page.getByRole('checkbox', { name: 'Ben helped' }).check();
-  await page.getByRole('combobox', { name: 'Points for Ben' }).selectOption('1');
-  await expect(page.getByText('You keep 2 points.')).toBeVisible();
+  await expect(page.getByText('You keep all 3 points; bonuses come on top.')).toBeVisible();
+  await page.getByRole('combobox', { name: 'Bonus points for Ben' }).selectOption('3');
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations on the helpers page').toEqual([]);
   await page.getByRole('button', { name: 'Save' }).click();
 
   await expect(page).toHaveURL('/me');
   const completed = page.getByRole('list', { name: 'Completed tasks' });
-  await expect(completed.getByText('Helped by Ben (1 point)')).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Points earned' })).toContainText('2');
+  await expect(completed.getByText('Helped by Ben (3 points)')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Points earned' })).toContainText('3');
 });
 
 test('family member can ask another to do a task, and call it off', async ({ page }) => {

@@ -6,6 +6,12 @@ export const tasks: Messages['tasks'] = {
   board: {
     title: 'Yhteiset tehtävät',
     showCompleted: 'Näytä tehdyt',
+    lists: {
+      legend: 'Kenen tehtävät',
+      adults: 'Aikuisten tehtävät',
+      children: 'Lasten tehtävät',
+    },
+    noChildrens: 'Ei vielä lasten tehtäviä. Luo ensimmäinen!',
     show: 'Näytä',
     who: 'Varaaja',
     you: 'Sinä',
@@ -139,27 +145,19 @@ export const tasks: Messages['tasks'] = {
     title: 'Omat tähdet',
     myTasks: 'Omat tehtävät',
     nothingToDo: 'Ei vielä tehtäviä.',
-    pickOnBoard: 'Valitse tehtävä Yhteiset-sivulta',
-  },
-  childBoard: {
-    title: 'Tehtävät sinulle',
     free: 'Vapaana',
     nothingFree: 'Juuri nyt ei ole vapaita tehtäviä.',
-    yours: 'Sinun valitsemasi',
-    othersDoing: 'Muut tekevät',
-    doingIt: (name) => `${name} tekee tätä`,
   },
   helpers: {
     eyebrow: 'Tehdyt',
     title: 'Kuka auttoi?',
     description: (title, points) =>
-      `Jaa tehtävän ${title} pisteitä (${points}) auttaneille. Antamasi pisteet vähennetään omistasi.`,
+      `Anna tehtävässä ${title} auttaneille bonuspisteitä. Saat silti kaikki sen pisteet (${points}).`,
     whoHelped: 'Kuka auttoi?',
     whoHelpedLabel: (title) => `Kuka auttoi: ${title}?`,
     helped: (name) => `${name} auttoi`,
-    pointsFor: (name) => `Pisteet: ${name}`,
-    youKeep: (kept) => `Sinulle jää ${kept}.`,
-    tooMany: (points) => `Yhteensä enemmän kuin tehtävän pisteet (${points}).`,
+    bonusFor: (name) => `Bonuspisteet: ${name}`,
+    youKeep: (points) => `Pidät kaikki pisteet (${points}); bonukset tulevat niiden päälle.`,
     noOneElse: 'Kotitaloudessasi ei ole vielä muita.',
     unavailable:
       'Auttajat voi valita viikon ajan siitä, kun merkitsit pisteitä antavan yhteisen tehtävän tehdyksi.',

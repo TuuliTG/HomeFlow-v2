@@ -1,6 +1,7 @@
 // notify-household Edge Function (ADR 0005): a Database Webhook calls it for each new and changed task; it
 // tells the other household members' devices that a shared task was added or done. The logic lives in notify.ts.
 import { isAuthorized } from '../_shared/push.ts';
+import { displayNameOf, membersOf } from '../_shared/deno/household.ts';
 import { reportError } from '../_shared/deno/monitoring.ts';
 import {
   configureVapid,
@@ -8,12 +9,7 @@ import {
   pushDependencies,
   supabase,
 } from '../_shared/deno/webPush.ts';
-import {
-  type HouseholdMember,
-  type HouseholdTask,
-  notifyHousehold,
-  parseTaskChange,
-} from './notify.ts';
+import { type HouseholdTask, notifyHousehold, parseTaskChange } from './notify.ts';
 
 // Supabase's Edge Runtime keeps the function alive for promises handed to waitUntil.
 declare const EdgeRuntime: { waitUntil: (promise: Promise<unknown>) => void };
@@ -49,28 +45,6 @@ async function taskById(taskId: string): Promise<HouseholdTask | null> {
         assignedTo: row.assigned_to,
       }
     : null;
-}
-
-async function membersOf(householdId: string): Promise<HouseholdMember[]> {
-  const { data, error } = await supabase
-    .from('household_members')
-    .select('user_id, is_child')
-    .eq('household_id', householdId);
-  if (error) throw error;
-  return data.map((row: { user_id: string; is_child: boolean }) => ({
-    userId: row.user_id,
-    isChild: row.is_child,
-  }));
-}
-
-async function displayNameOf(userId: string): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('display_name')
-    .eq('id', userId)
-    .maybeSingle();
-  if (error) throw error;
-  return (data as { display_name: string } | null)?.display_name ?? null;
 }
 
 Deno.serve(async (request) => {

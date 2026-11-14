@@ -18,6 +18,13 @@ const profiles = new Map<string, Profile>();
 const listeners = new Set<(user: AuthUser | null) => void>();
 /** One-time sign-in codes of children without email → the child. */
 const childCodes = new Map<string, AuthUser>();
+/** Accounts whose sessions ended elsewhere, so their kept tokens no longer sign in. */
+const endedSessions = new Set<string>();
+
+/** User ids in fake tokens are the user's email after `user:`, so tokens lead back to the user. */
+function userWithId(userId: string): AuthUser {
+  return userFor(userId.replace(/^user:/, ''));
+}
 
 function userFor(email: string): AuthUser {
   return { id: `user:${email}`, email };
@@ -39,7 +46,14 @@ export const fakeAuthBackend = {
     profiles.clear();
     listeners.clear();
     childCodes.clear();
+    endedSessions.clear();
   },
+  /** Ends the user's sessions, as if they logged out everywhere: tokens kept for them stop working. */
+  endSessions(userId: string) {
+    endedSessions.add(userId);
+  },
+  /** Whether tokens kept for the user still sign in. */
+  hasSession: (userId: string) => !endedSessions.has(userId),
   /** Lets `code` sign in the child once (like `take_child_sign_in_code()`), replacing their earlier code. */
   setChildCode(child: AuthUser, code: string) {
     for (const [earlier, user] of childCodes) if (user.id === child.id) childCodes.delete(earlier);
@@ -94,7 +108,8 @@ export const createAccount: typeof authApi.createAccount = (email, password) => 
   return Promise.resolve();
 };
 
-export const signInWithChildCode: typeof authApi.signInWithChildCode = (code) => {
+/** Takes a child's one-time code, like the `child-sign-in` Edge Function. */
+function takeChildCode(code: string): Promise<AuthUser> {
   if (requestsFail) return Promise.reject(new Error('Network error'));
   const key = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   const child = childCodes.get(key);
@@ -102,8 +117,37 @@ export const signInWithChildCode: typeof authApi.signInWithChildCode = (code) =>
     return Promise.reject(new LoginError('unknown-child-code', 'Unknown, used or expired code'));
   }
   childCodes.delete(key);
-  setCurrentUser(child);
+  return Promise.resolve(child);
+}
+
+function tokensFor(user: AuthUser) {
+  return { userId: user.id, accessToken: `access:${user.id}`, refreshToken: `refresh:${user.id}` };
+}
+
+export const signInWithChildCode: typeof authApi.signInWithChildCode = async (code) => {
+  setCurrentUser(await takeChildCode(code));
+};
+
+export const childSessionFromCode: typeof authApi.childSessionFromCode = async (code) => {
+  const child = await takeChildCode(code);
+  endedSessions.delete(child.id);
+  return tokensFor(child);
+};
+
+export const endKeptSession: typeof authApi.endKeptSession = (tokens) => {
+  if (requestsFail) return Promise.reject(new Error('Network error'));
+  endedSessions.add(tokens.userId);
   return Promise.resolve();
+};
+
+export const currentSessionTokens: typeof authApi.currentSessionTokens = () =>
+  Promise.resolve(currentUser && tokensFor(currentUser));
+
+export const signInWithTokens: typeof authApi.signInWithTokens = (tokens) => {
+  if (requestsFail) return Promise.reject(new Error('Network error'));
+  if (endedSessions.has(tokens.userId)) return Promise.resolve(false);
+  setCurrentUser(userWithId(tokens.userId));
+  return Promise.resolve(true);
 };
 
 export const logOut: typeof authApi.logOut = () => {

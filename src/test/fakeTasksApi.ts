@@ -1,5 +1,5 @@
 import type * as tasksApi from '@/features/tasks/api';
-import type { NewTask } from '@/features/tasks/task';
+import { canDoTask, type NewTask } from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
@@ -88,17 +88,20 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
   );
 };
 
-export const addTask: typeof tasksApi.addTask = (task) =>
+/** Like the insert policy, for each task, and adding all or none. */
+export const addTasks: typeof tasksApi.addTasks = (newTasks) =>
   asCurrentUser((userId) => {
-    // Like the insert policy: a child adds tasks only when allowed, for children and without points.
-    if (
-      fakeHouseholdBackend.isChild(userId) &&
-      (!fakeHouseholdBackend.canAddTasks(userId) || !task.forChildren || task.points !== null)
-    ) {
-      throw new Error('A child adds tasks only when allowed, without points');
+    for (const task of newTasks) {
+      // A child adds tasks only when allowed, for children and without points.
+      if (
+        fakeHouseholdBackend.isChild(userId) &&
+        (!fakeHouseholdBackend.canAddTasks(userId) || !task.forChildren || task.points !== null)
+      ) {
+        throw new Error('A child adds tasks only when allowed, without points');
+      }
+      checkAssignee(userId, task);
     }
-    checkAssignee(userId, task);
-    return fakeTasksBackend.addTaskAs(userId, task);
+    return newTasks.map((task) => fakeTasksBackend.addTaskAs(userId, task));
   });
 
 export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) =>
@@ -159,6 +162,19 @@ export const putBackTask: typeof tasksApi.putBackTask = (taskId) =>
     deliver(task, { kind: 'changed' });
   });
 
+/**
+ * Who has the task picked up after an edit, like the triggers on tasks: a child the task is given to picks it
+ * up, and gives it back once it isn't; an adult gives back a task made one for children, and their reminder.
+ */
+function pickerAfterEdit(task: StoredTask, details: NewTask): string | null {
+  const holder = details.assignedTo !== task.assignedTo ? details.assignedTo : task.pickedUpBy;
+  if (holder === null || canDoTask({ ...task, ...details }, fakeHouseholdBackend.isChild(holder))) {
+    return holder;
+  }
+  fakeTasksBackend.clearReminderAs(holder, task.id);
+  return null;
+}
+
 export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
   asCurrentUser((userId) => {
     const task = changeableTaskOf(userId, taskId);
@@ -168,8 +184,7 @@ export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
     // it is.
     const assignedTo = isChild ? task.assignedTo : details.assignedTo;
     if (!isChild) checkAssignee(userId, { ...details, assignedTo });
-    // Like the trigger on tasks: a child the task is given to picks it up, and gives it back once it isn't.
-    const pickedUpBy = assignedTo !== task.assignedTo ? assignedTo : task.pickedUpBy;
+    const pickedUpBy = pickerAfterEdit(task, { ...details, assignedTo });
     if (pickedUpBy !== task.pickedUpBy) {
       fakeRequestsBackend.settle(taskId, pickedUpBy);
       if (task.pickedUpBy) fakeSchedulesBackend.clearScheduleAs(task.pickedUpBy, taskId);

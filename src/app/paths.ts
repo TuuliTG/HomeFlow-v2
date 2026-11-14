@@ -13,8 +13,14 @@ export const paths = {
   askForTask: (taskId: string) => `/tasks/${taskId}/ask`,
   /** Who helped with a task the user marked done. */
   taskHelpers: (taskId: string) => `/tasks/${taskId}/helpers`,
-  /** Where a task is listed: private tasks only on the Me page, shared ones on the board. */
-  taskList: (isPrivate: boolean) => (isPrivate ? '/me' : '/'),
+  /**
+   * Where a task is listed: private tasks only on the Me page, shared ones on the board, those for children
+   * in its list of children's tasks.
+   */
+  taskList: ({ isPrivate, forChildren }: { isPrivate: boolean; forChildren: boolean }) => {
+    if (isPrivate) return '/me';
+    return forChildren ? '/?children=1' : '/';
+  },
   me: '/me',
   news: '/news',
   rewards: '/rewards',

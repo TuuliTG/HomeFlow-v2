@@ -43,8 +43,14 @@ export const UNDO_WINDOW_MS = 60 * 60 * 1000;
  */
 export const HELPERS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** The most bonus points a helper can get for one task (`task_helpers`). */
+export const MAX_HELPER_BONUS = 10;
+
 /** How often a task can repeat, in days; offered as choices when creating a task. */
 export const repeatChoices = [1, 2, 3, 7, 14, 30] as const;
+
+/** The longest a task can go between repeats, in days: a year. */
+const MAX_REPEAT_DAYS = 365;
 
 /** Checks a task's details, explaining what to fix in the user's language. */
 export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
@@ -74,7 +80,12 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
         .max(MAX_POINTS, errors.pointsRange)
         .nullable(),
       /** Days after it is done that the task comes back; null for a one-off task. */
-      repeatEveryDays: z.number().int().min(1).max(365).nullable(),
+      repeatEveryDays: z
+        .number(errors.repeatRange)
+        .int(errors.repeatRange)
+        .min(1, errors.repeatRange)
+        .max(MAX_REPEAT_DAYS, errors.repeatRange)
+        .nullable(),
       /** Local date (YYYY-MM-DD) the task should be done by, if any. */
       dueOn: z.iso.date(errors.invalidDueDate).nullable(),
       /**
@@ -83,8 +94,8 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
        */
       isPrivate: z.boolean(),
       /**
-       * Whether children in the household see it and can do it; adults see every task. A child's own
-       * tasks are always for children.
+       * Whether it is the children's: they see it and do it, and adults only see, edit and delete it while
+       * shared (`private.can_do_task()`). A child's own tasks are always for children.
        */
       forChildren: z.boolean(),
       /** What the task's tile shows instead of its type's icon; null for none. */
@@ -172,7 +183,18 @@ export function canRequest(task: Task, userId: string): boolean {
 }
 
 /**
- * The other members the user could ask to do the task: everyone else for a task for children, only
+ * Whether a member can pick up and mark done the task (`private.can_do_task()`): a shared task for children
+ * is the children's only, so its stars always go to a child.
+ */
+export function canDoTask(
+  task: Pick<Task, 'forChildren' | 'isPrivate'>,
+  isChild: boolean,
+): boolean {
+  return isChild || task.isPrivate || !task.forChildren;
+}
+
+/**
+ * The other members the user could ask to do the task: the children for a task for children, the
  * adults for the others (`request_task()`).
  */
 export function membersToAsk<M extends { id: string; isChild: boolean }>(
@@ -180,7 +202,7 @@ export function membersToAsk<M extends { id: string; isChild: boolean }>(
   members: M[],
   userId: string,
 ): M[] {
-  return members.filter((member) => member.id !== userId && (task.forChildren || !member.isChild));
+  return members.filter((member) => member.id !== userId && member.isChild === task.forChildren);
 }
 
 export interface LastDone {
@@ -213,7 +235,7 @@ export interface TaskSuggestion extends Omit<NewTask, 'dueOn' | 'assignedTo'> {
   isOpen: boolean;
 }
 
-/** Someone who helped with a task, and their share of its points (`task_helpers`). */
+/** Someone who helped with a task, and the bonus points they earned (`task_helpers`). */
 export interface TaskHelper {
   userId: string;
   /** Their display name, if they have chosen one. */
@@ -230,14 +252,8 @@ export interface CompletedTask {
   points: number | null;
   /** When it was marked done (ISO timestamp). */
   completedAt: string;
-  /** Who helped; their shares come out of the task's points. */
+  /** Who helped; their bonus points come on top of the task's. */
   helpers: TaskHelper[];
-}
-
-/** The points the task earned whoever marked it done: what the helpers didn't get. */
-export function doersShare({ points, helpers }: CompletedTask): number | null {
-  if (points === null) return null;
-  return helpers.reduce((rest, helper) => rest - helper.points, points);
 }
 
 /**
@@ -253,7 +269,7 @@ export interface HelpedTask {
   id: string;
   title: string;
   type: TaskType;
-  /** The user's share of its points. */
+  /** The user's bonus points for helping. */
   points: number;
   /** When it was marked done (ISO timestamp). */
   completedAt: string;

@@ -34,7 +34,7 @@ together, and members want small personal goals of their own; both must make cle
   participant with that minimum each, even where those add up to more than the target.
 - **Progress is counted, not stored**: `private.goal_points(goal)` sums the points of shared tasks done from the
   goal's `created_at` until it was claimed, credited to its participants (its owner for a personal goal), helpers'
-  shares included (`private.task_credits`, ADR 0004). `household_goals()` (security
+  bonuses included (`private.task_credits`, ADR 0004). `household_goals()` (security
   invoker) returns the household's goals with their points, `reached`, `owner_name` and, for shared goals,
   `participants` (points and minimum each), open ones first (newest first), then claimed ones. The app shows `reached` rather than deciding
   itself, so the Claim button and `claim_goal_reward()` always agree. A shared goal's card shows each participant's

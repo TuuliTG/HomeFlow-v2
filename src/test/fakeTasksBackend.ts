@@ -1,5 +1,5 @@
 import type * as liveApi from '@/features/tasks/liveApi';
-import type { NewTask, TaskHelper } from '@/features/tasks/task';
+import { canDoTask, type NewTask, type TaskHelper } from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
@@ -18,7 +18,7 @@ export interface StoredTask extends NewTask {
   createdAt: string;
   /** Who marked it done and when (ISO timestamp); null while open. */
   completed: { by: string; at: string } | null;
-  /** Who helped whoever marked it done, and their shares of its points (`task_helpers`). */
+  /** Who helped whoever marked it done, and their bonus points (`task_helpers`). */
   helpers: { userId: string; points: number }[];
   /** Its pictures' file names, in order (`task_images`). */
   images: string[];
@@ -53,6 +53,11 @@ export function canSee(userId: string, task: StoredTask): boolean {
     ((task.forChildren && (task.assignedTo === null || task.assignedTo === userId)) ||
       !fakeHouseholdBackend.isChild(userId))
   );
+}
+
+/** Whether `userId` can pick up and mark done the task, like `private.can_do_task()`. */
+function canDo(userId: string, task: StoredTask): boolean {
+  return canDoTask(task, fakeHouseholdBackend.isChild(userId));
 }
 
 /** Whether `userId` is a child in the household, who can be given a task (`private.is_child_in_household()`). */
@@ -95,13 +100,12 @@ function addDays(isoDate: string, days: number): string {
 }
 
 /**
- * Who earned the points of a done shared task, like `private.task_credits`: the doer what the helpers
- * didn't get, and each helper their share. None for an open or private task.
+ * Who earned points with a done shared task, like `private.task_credits`: the doer all its points, and
+ * each helper their bonus. None for an open or private task.
  */
 export function creditsOf(task: StoredTask): Credit[] {
   if (!task.completed || task.isPrivate) return [];
-  const helped = task.helpers.reduce((total, helper) => total + helper.points, 0);
-  return [{ userId: task.completed.by, points: (task.points ?? 0) - helped }, ...task.helpers];
+  return [{ userId: task.completed.by, points: task.points ?? 0 }, ...task.helpers];
 }
 
 /** A task's helpers with their names, like the embedded `task_helpers`. */
@@ -185,6 +189,7 @@ export const fakeTasksBackend = {
   /** Picks up an open task for `userId`, like `pick_up_task()`, and delivers the change live. */
   pickUpTaskAs(userId: string, taskId: string) {
     const task = openTaskOf(userId, taskId);
+    if (!canDo(userId, task)) throw new Error('Only children pick up tasks for children');
     if (task.pickedUpBy === userId) return;
     if (task.pickedUpBy) throw new Error('Someone else has picked up this task');
     task.pickedUpBy = userId;
@@ -197,6 +202,7 @@ export const fakeTasksBackend = {
    */
   completeTaskAs(userId: string, taskId: string, completedOn: string) {
     const task = openTaskOf(userId, taskId);
+    if (!canDo(userId, task)) throw new Error('Only children mark tasks for children done');
     completions += 1;
     // A millisecond apart, so the newest completion sorts first.
     task.completed = { by: userId, at: new Date(Date.now() + completions).toISOString() };

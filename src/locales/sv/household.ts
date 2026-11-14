@@ -44,6 +44,10 @@ export const household: Messages['household'] = {
     newCode: 'Ny inloggningskod',
     newCodeFor: (name: string) => `Ny inloggningskod för ${name}`,
     newCodeFailed: 'Det gick inte att skapa en ny kod. Försök igen.',
+    onThisDevice: 'På den här enheten',
+    onThisDeviceFor: (name: string) => `${name} är inloggad på den här enheten`,
+    setOnThisDeviceFailed:
+      'Det gick inte att logga in eller ut barnet på den här enheten. Försök igen.',
   },
   family: {
     heading: 'Din familj',

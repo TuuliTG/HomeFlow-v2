@@ -7,6 +7,12 @@ export const tasks: Messages['tasks'] = {
   board: {
     title: 'Gemensamma uppgifter',
     showCompleted: 'Visa gjorda',
+    lists: {
+      legend: 'Vems uppgifter',
+      adults: 'De vuxnas uppgifter',
+      children: 'Barnens uppgifter',
+    },
+    noChildrens: 'Inga uppgifter för barn än. Skapa den första!',
     show: 'Visa',
     who: 'Tagen av',
     you: 'Du',
@@ -149,27 +155,19 @@ export const tasks: Messages['tasks'] = {
     title: 'Mina stjärnor',
     myTasks: 'Mina uppgifter',
     nothingToDo: 'Inget att göra än.',
-    pickOnBoard: 'Välj en uppgift under Gemensamma',
-  },
-  childBoard: {
-    title: 'Uppgifter för dig',
     free: 'Lediga att välja',
     nothingFree: 'Inga lediga uppgifter just nu.',
-    yours: 'Valda av dig',
-    othersDoing: 'Andra gör',
-    doingIt: (name) => `${name} gör den`,
   },
   helpers: {
     eyebrow: 'Gjorda',
     title: 'Vem hjälpte till?',
     description: (title, points) =>
-      `Dela ${points} för ${title} med dem som hjälpte till. Det du ger dras från dina poäng.`,
+      `Ge dem som hjälpte till med ${title} bonuspoäng. Du får ändå alla ${points}.`,
     whoHelped: 'Vem hjälpte till?',
     whoHelpedLabel: (title) => `Vem hjälpte till med ${title}?`,
     helped: (name) => `${name} hjälpte till`,
-    pointsFor: (name) => `Poäng för ${name}`,
-    youKeep: (kept) => `Du behåller ${kept}.`,
-    tooMany: (points) => `Tillsammans blir det mer än uppgiftens ${points}.`,
+    bonusFor: (name) => `Bonuspoäng för ${name}`,
+    youKeep: (points) => `Du behåller alla ${points}; bonusar kommer utöver.`,
     noOneElse: 'Ingen annan finns i ditt hushåll än.',
     unavailable:
       'Du kan ange vem som hjälpte till i en vecka efter att du markerat en gemensam uppgift med poäng som gjord.',

@@ -1,7 +1,4 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
-
-import { paths } from '@/app/paths';
 
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -21,8 +18,8 @@ interface ChildMePageProps {
 }
 
 /**
- * The Me page for a child: their goals, then their tasks as big tiles with icons and stars, with little
- * text, and what they have done.
+ * The Me page for a child, their only screen: their goals, then their tasks and the free tasks for children
+ * as big tiles with icons and stars, with little text, and what they have done.
  */
 export function ChildMePage({ goals }: ChildMePageProps) {
   const t = useMessages().tasks;
@@ -40,14 +37,14 @@ export function ChildMePage({ goals }: ChildMePageProps) {
           <h2 id="completed-heading" className={sectionHeadingClassName}>
             {t.me.completed}
           </h2>
-          <CompletedList />
+          <CompletedList asksWhoHelped={false} />
         </section>
       </div>
     </>
   );
 }
 
-/** The child's tasks, to mark done; they pick tasks on Shared tasks, like adults. */
+/** The child's tasks to mark done, then the free tasks for children (the only ones they see) to pick up. */
 function ChildTasks() {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
@@ -63,18 +60,19 @@ function ChildTasks() {
     );
   }
   return (
-    <TileSection
-      heading={t.child.myTasks}
-      empty={
-        <>
-          {t.child.nothingToDo}{' '}
-          <Link to={paths.tasks} className="text-brand-900 font-semibold underline">
-            {t.child.pickOnBoard}
-          </Link>
-        </>
-      }
-      tasks={tasks.data.filter((task) => isToDoBy(task, user.id))}
-      action="markDone"
-    />
+    <>
+      <TileSection
+        heading={t.child.myTasks}
+        empty={t.child.nothingToDo}
+        tasks={tasks.data.filter((task) => isToDoBy(task, user.id))}
+        action="markDone"
+      />
+      <TileSection
+        heading={t.child.free}
+        empty={t.child.nothingFree}
+        tasks={tasks.data.filter((task) => !task.isPrivate && task.pickedUpBy === null)}
+        action="pickUp"
+      />
+    </>
   );
 }

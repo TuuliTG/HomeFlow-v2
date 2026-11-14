@@ -40,7 +40,7 @@ describe('helpers api', () => {
     await expect(api.fetchHouseholdMembers()).rejects.toBe(failure);
   });
 
-  it('sets the helpers and their shares', async () => {
+  it('sets the helpers and their bonus points', async () => {
     client.rpc.mockResolvedValueOnce({ data: null, error: null });
 
     await api.setTaskHelpers('t1', [{ userId: 'u2', points: 2 }]);

@@ -2,6 +2,7 @@
 // and when the request is answered; it notifies the member asked or whoever asked. The logic lives in
 // notifyRequest.ts.
 import { isAuthorized } from '../_shared/push.ts';
+import { displayNameOf } from '../_shared/deno/household.ts';
 import { reportError } from '../_shared/deno/monitoring.ts';
 import {
   configureVapid,
@@ -35,16 +36,6 @@ async function requestById(requestId: string): Promise<TaskRequest | null> {
         answer: row.answer,
       }
     : null;
-}
-
-async function displayNameOf(userId: string): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('display_name')
-    .eq('id', userId)
-    .maybeSingle();
-  if (error) throw error;
-  return (data as { display_name: string } | null)?.display_name ?? null;
 }
 
 Deno.serve(async (request) => {

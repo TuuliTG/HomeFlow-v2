@@ -44,6 +44,10 @@ export const household: Messages['household'] = {
     newCode: 'Uusi kirjautumiskoodi',
     newCodeFor: (name: string) => `Uusi kirjautumiskoodi: ${name}`,
     newCodeFailed: 'Uutta koodia ei voitu tehdä. Yritä uudelleen.',
+    onThisDevice: 'Tällä laitteella',
+    onThisDeviceFor: (name: string) => `${name} on kirjautuneena tällä laitteella`,
+    setOnThisDeviceFailed:
+      'Lasta ei voitu kirjata sisään tai ulos tällä laitteella. Yritä uudelleen.',
   },
   family: {
     heading: 'Perheesi',
