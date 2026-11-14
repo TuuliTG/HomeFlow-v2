@@ -15,6 +15,7 @@
 - [ ] ADR for the topic updated for any architectural decision — or not needed
 - [ ] No outdated comments, dead code or unused exports left behind (`npm run knip`)
 - [ ] Refactoring needs handled (separate commit) or noted below
+- [ ] Simplicity round done for UI changes (`simplicity` skill) — or not needed
 - [ ] Security considered (input validation, RLS, no secrets)
 
 ## Notes / follow-ups

@@ -18,6 +18,7 @@ Report findings as **Blocking / Should fix / Nit**, each with file:line and a co
 - **Security** — `security` skill checklist; RLS for any new table.
 - **UX & a11y** — works at 390px wide and on desktop; labelled controls, roles, focus, contrast, touch targets;
   low-effort interactions (product brief requirement 3).
+- **Simplicity** — UI changes went through the simplicity round; nothing left that the screen doesn't need.
 - **Housekeeping** — README/AGENTS.md/ADR updated as needed; no stale comments, dead code, debug output.
 - **Commits & PR** — Conventional Commits, refactors separate, PR template filled in.
 
