@@ -5,7 +5,6 @@ export const tasks: Messages['tasks'] = {
   newTask: 'Uusi tehtävä',
   board: {
     title: 'Yhteiset tehtävät',
-    showCompleted: 'Näytä tehdyt',
     lists: {
       legend: 'Kenen tehtävät',
       adults: 'Aikuisten tehtävät',
@@ -116,12 +115,7 @@ export const tasks: Messages['tasks'] = {
   favouriteLabel: (title) => `Suosikki: ${title}`,
   notSaved: 'Ei tallennettu',
   completed: {
-    heading: 'Tehdyt',
-    loadFailed: 'Tehtyjä tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
-    empty: 'Mitään ei ole vielä tehty.',
     doneBy: { you: 'Tekijä: sinä', someone: 'Tekijä: joku', named: (name) => `Tekijä: ${name}` },
-    addAgain: 'Lisää uudelleen',
-    addAgainLabel: (title) => `Lisää uudelleen: ${title}`,
   },
   me: {
     eyebrow: 'Minä',

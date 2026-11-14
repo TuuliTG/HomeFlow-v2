@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  findSuggestion,
   MATCHING_SUGGESTIONS_LIMIT,
   matchingSuggestions,
   suggestionAsTask,
@@ -50,13 +49,6 @@ describe('matchingSuggestions', () => {
   it('lists only the first few matches', () => {
     const many = Array.from({ length: 8 }, (_, index) => suggestion(`Task ${String(index)}`));
     expect(matchingSuggestions(many, 'task')).toHaveLength(MATCHING_SUGGESTIONS_LIMIT);
-  });
-});
-
-describe('findSuggestion', () => {
-  it('finds the task with exactly that name, ignoring case and surrounding spaces', () => {
-    expect(findSuggestion(suggestions, ' vacuum ')?.title).toBe('Vacuum');
-    expect(findSuggestion(suggestions, 'Vac')).toBeUndefined();
   });
 });
 

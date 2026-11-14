@@ -31,33 +31,19 @@ describe('private tasks', () => {
     expect(within(task).getByText('Private')).toBeInTheDocument();
   });
 
-  it("don't show up on the shared tasks page, not even when done", async () => {
+  it("don't show up on the shared tasks page", async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
-    fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });
     fakeTasksBackend.addTaskAs(anna.id, {
       title: 'Buy a present',
       type: 'meta',
       points: null,
       isPrivate: true,
     });
-    fakeTasksBackend.addTaskAs(anna.id, {
-      title: 'Call the dentist',
-      type: 'meta',
-      points: null,
-      isPrivate: true,
-    });
-    fakeTasksBackend.completeTaskAs(anna.id, 'task:1', '2026-10-09');
-    fakeTasksBackend.completeTaskAs(anna.id, 'task:3', '2026-10-09');
-    const user = userEvent.setup();
     renderAppAt('/');
 
     await screen.findByRole('listitem', { name: 'Vacuum' });
     expect(screen.queryByText('Buy a present')).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('switch', { name: 'Show completed' }));
-    expect(await screen.findByText('Dust')).toBeInTheDocument();
-    expect(screen.queryByText('Call the dentist')).not.toBeInTheDocument();
   });
 
   it('go back to the Me page after editing', async () => {
