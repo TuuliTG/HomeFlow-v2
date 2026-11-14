@@ -29,12 +29,17 @@ async function fillInTask(user: UserEvent, title: string, points = '3') {
 
 /** The due-date groups under `level` headings, in order, with the titles of their tasks. */
 function tasksByGroup(level: 2 | 3) {
-  return screen.getAllByRole('heading', { level }).map(({ textContent: label }) => [
-    label,
-    within(screen.getByRole('region', { name: label }))
-      .getAllByRole('heading', { level: level + 1 })
-      .map((title) => title.textContent),
-  ]);
+  // A group is a region named by its heading's label; the Overdue heading also counts its tasks.
+  return screen.getAllByRole('heading', { level }).map((heading) => {
+    const group = heading.closest('section');
+    if (group === null) throw new Error('A group heading must be inside its section');
+    return [
+      document.getElementById(group.getAttribute('aria-labelledby') ?? '')?.textContent,
+      within(group)
+        .getAllByRole('heading', { level: level + 1 })
+        .map((title) => title.textContent),
+    ];
+  });
 }
 
 describe('task board', () => {

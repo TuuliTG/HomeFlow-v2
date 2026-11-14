@@ -181,6 +181,13 @@ test('family member can mark a repeating task done and see it come back', async 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations on the task board').toEqual([]);
 
+  const overdue = page.getByRole('button', { name: /^Overdue/ });
+  await overdue.click();
+  await expect(task).toBeHidden();
+  const folded = await new AxeBuilder({ page }).analyze();
+  expect(folded.violations, 'a11y violations with the overdue tasks folded').toEqual([]);
+  await overdue.click();
+
   await task.getByRole('button', { name: 'Mark done: Change bed linen' }).click();
 
   await expect(task.getByText('Due Thu 22 Oct')).toBeVisible();
