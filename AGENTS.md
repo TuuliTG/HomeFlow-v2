@@ -64,6 +64,8 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node 22 (≥ 22.22
 4. Run `npm run verify` (and `npm run e2e` when UI flows change). Fix, don't skip or weaken checks.
 5. **Simplicity round on every UI change**: run the **simplicity** skill (`ui-simplicity-reviewer` agent) and
    simplify until a round finds nothing more to remove, like the refactoring loop for code.
+   **Show the user screenshots of every UI change** (at ~390px wide, before and after where useful), or prototype
+   images before building a larger UI change, so they can see it instead of reading about it.
 6. Run the **housekeeping** skill: README, AGENTS.md, ADRs, stale comments, dead code, refactoring needs.
    Decisions go into the few topic ADRs in `docs/adr/` (update the matching one; see its README), kept short.
 7. Self-review with the **code-review** skill / `code-reviewer` agent, then push and open a PR using the template.

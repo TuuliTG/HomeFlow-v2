@@ -21,6 +21,8 @@ Follow these steps in order. Do not skip steps; say explicitly if one does not a
    Fix the cause; never weaken lint rules, types or thresholds to pass.
 7. **Simplicity** — For any change users can see, run the `simplicity` skill (`ui-simplicity-reviewer` agent)
    and repeat until nothing more can go.
+   Then show the user screenshots of the changed screens at ~390px wide (prototype images first for larger UI
+   changes), see `AGENTS.md`.
 8. **Housekeeping** — Run the `housekeeping` skill (docs, ADRs, stale comments, dead code, refactoring).
 9. **Review** — Run the `code-review` skill or delegate to the `code-reviewer` agent. Address findings.
 10. **PR** — Push the branch (`git push -u origin <branch>`) and open a PR filling in
