@@ -200,7 +200,7 @@ next one back rather than follow a fixed calendar.
   repeating shared adults' task can be a **routine** (`is_routine`, a "Quick routine" check mark under Repeats;
   `tasks_routine_repeats` keeps it to repeating tasks, `update_task()` clears it when a task stops repeating, the
   next occurrence and "add again" keep it). The board shows routines as small chips above the due dates
-  (`RoutineChips`) instead of cards: a due one is a button that marks it done with one tap (tinted when overdue, no
+  (`RoutineChips`) instead of cards: a due one is a button that marks it done with one tap (tinted a soft brand blue, not red, when overdue, no
   confirmation even if someone picked it up, since anyone may do a routine), and one done until its next due date
   is a quiet chip saying who did it. Like the Overdue group, the section folds away behind its heading
   (`?routines=hidden`, remembered on the device), which still counts the routines left to do. Celebrating and "Who helped?" follow as for a card; undo is in the completed

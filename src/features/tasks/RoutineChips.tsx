@@ -58,7 +58,7 @@ export function RoutineChips({ routines, currentUserId }: RoutineChipsProps) {
                 }}
                 className={`${chipClassName} ${
                   routine.dueOn !== null && routine.dueOn < todayDate
-                    ? 'border-overdue-600 bg-overdue-100 text-overdue-800'
+                    ? 'border-brand-600 bg-brand-100 text-brand-900 hover:bg-brand-200'
                     : 'border-brand-600 bg-surface text-ink hover:bg-brand-50'
                 } font-semibold disabled:opacity-60`}
               >
