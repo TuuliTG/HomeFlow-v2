@@ -27,8 +27,28 @@ export function usePickerFilter(userId: string) {
 export function nothingPickedUpMessage(
   picker: HouseholdMember,
   currentUserId: string,
+  messages: Messages,
+): string {
+  if (picker.id === currentUserId) return messages.tasks.board.noneForYou;
+  return messages.tasks.board.noneFor(pickerName(picker, currentUserId, messages));
+}
+
+/** What the chip of the member chosen says while the board's filters are folded, as on a task card. */
+export function pickedUpByLabel(
+  member: HouseholdMember,
+  currentUserId: string,
+  { tasks }: Messages,
+): string {
+  const phrases = tasks.card.pickedUpBy;
+  if (member.id === currentUserId) return phrases.you;
+  return member.name === null ? phrases.someone : phrases.named(member.name);
+}
+
+/** What the board's filters call a member: you, or their name. */
+export function pickerName(
+  member: HouseholdMember,
+  currentUserId: string,
   { common, tasks }: Messages,
 ): string {
-  if (picker.id === currentUserId) return tasks.board.noneForYou;
-  return tasks.board.noneFor(picker.name ?? common.someone);
+  return member.id === currentUserId ? tasks.board.you : (member.name ?? common.someone);
 }

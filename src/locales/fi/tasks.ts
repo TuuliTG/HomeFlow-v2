@@ -10,7 +10,9 @@ export const tasks: Messages['tasks'] = {
       children: 'Lapset',
     },
     noChildrens: 'Ei vielä lasten tehtäviä. Luo ensimmäinen!',
-    show: 'Näytä',
+    filtersButton: 'Suodattimet',
+    removeFilter: (filter) => `Poista suodatin: ${filter}`,
+    dueDate: 'Määräpäivä',
     who: 'Varaaja',
     you: 'Sinä',
     search: 'Hae tehtäviä',
@@ -18,7 +20,6 @@ export const tasks: Messages['tasks'] = {
     matches: (count) => (count === 1 ? '1 tehtävä löytyi' : `${String(count)} tehtävää löytyi`),
     loadFailed: 'Tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
     filters: {
-      all: 'Kaikki',
       today: 'Tänään',
       week: 'Tällä viikolla',
       undated: 'Ei määräpäivää',

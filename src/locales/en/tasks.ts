@@ -13,8 +13,13 @@ export const tasks = {
       children: 'Children',
     },
     noChildrens: 'No tasks for children yet. Create the first one!',
-    show: 'Show',
-    /** The filter by who has picked tasks up. */
+    /** The board's filters, behind a button next to the search. */
+    filtersButton: 'Filters',
+    /** The label of a chip that turns a filter off while the filters are folded. */
+    removeFilter: (filter: string) => `Remove filter: ${filter}`,
+    /** The filter by due date, for screen readers. */
+    dueDate: 'Due date',
+    /** The filter by who has picked tasks up, for screen readers; its chip says `card.pickedUpBy` while folded. */
     who: 'Picked up by',
     you: 'You',
     search: 'Search tasks',
@@ -23,7 +28,6 @@ export const tasks = {
     matches: (count: number) => (count === 1 ? '1 task found' : `${String(count)} tasks found`),
     loadFailed: "We couldn't load the tasks. Check your connection and reload the page.",
     filters: {
-      all: 'All',
       today: 'Today',
       week: 'This week',
       undated: 'No due date',
@@ -35,7 +39,7 @@ export const tasks = {
       week: 'Nothing is due this week.',
       undated: 'Every task has a due date.',
     },
-    /** Only the tasks nobody has picked up; combines with the filters above. */
+    /** Only the tasks nobody has picked up; one of the choices in the filter by who has picked tasks up. */
     available: 'Available',
     /** What the board says when nothing is left to pick up within the filter. */
     emptyAvailable: {

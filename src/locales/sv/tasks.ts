@@ -11,7 +11,9 @@ export const tasks: Messages['tasks'] = {
       children: 'Barn',
     },
     noChildrens: 'Inga uppgifter för barn än. Skapa den första!',
-    show: 'Visa',
+    filtersButton: 'Filter',
+    removeFilter: (filter) => `Ta bort filtret: ${filter}`,
+    dueDate: 'Förfallodag',
     who: 'Tagen av',
     you: 'Du',
     search: 'Sök uppgifter',
@@ -20,7 +22,6 @@ export const tasks: Messages['tasks'] = {
       count === 1 ? '1 uppgift hittades' : `${String(count)} uppgifter hittades`,
     loadFailed: 'Det gick inte att ladda uppgifterna. Kontrollera anslutningen och ladda om sidan.',
     filters: {
-      all: 'Alla',
       today: 'I dag',
       week: 'Den här veckan',
       undated: 'Ingen förfallodag',
