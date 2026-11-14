@@ -35,7 +35,7 @@ next one back rather than follow a fixed calendar.
   child" (its points), and has no type, "Keep it private" or "Already done". **A shared task for children is the
   children's only**: parents wanted the children's chores kept apart from their own, so its stars always go to a
   child, and adults keep their own tasks (e.g. their own "Empty the dishwasher" with other points). Adults see,
-  edit and delete them on the board's "Children's tasks" list, chosen instead of "Adults' tasks" at its top
+  edit and delete them on the board's "Children" list, chosen instead of "Adults" at its top
   (`?children=1`, where saving one opens; one list at a time, as showing both under a tick box was misleading;
   search and due filters apply to either, the filter by who picked a task up only to adults' tasks), and can ask a
   child to do one, but can't pick one up, be asked to do one or mark one done: a trigger
