@@ -22,7 +22,6 @@ export const tasks: Messages['tasks'] = {
       count === 1 ? '1 uppgift hittades' : `${String(count)} uppgifter hittades`,
     loadFailed: 'Det gick inte att ladda uppgifterna. Kontrollera anslutningen och ladda om sidan.',
     filters: {
-      all: 'Alla',
       today: 'I dag',
       week: 'Den här veckan',
       undated: 'Ingen förfallodag',

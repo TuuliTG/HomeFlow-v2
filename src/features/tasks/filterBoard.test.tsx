@@ -21,6 +21,11 @@ function expectShown(shown: string[], hidden: string[]) {
   }
 }
 
+function expectNoDueDateChosen() {
+  const due = screen.getByRole('group', { name: 'Due date' });
+  for (const choice of within(due).getAllByRole('checkbox')) expect(choice).not.toBeChecked();
+}
+
 /** The filters are folded behind a button next to the search. */
 async function openFilters() {
   await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
@@ -47,7 +52,7 @@ describe('filtering the board', () => {
 
     const filters = screen.getByRole('button', { name: 'Filters' });
     expect(filters).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('radio', { name: 'Today' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'Today' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Remove filter: Available' }));
     expect(router.state.location.search).toBe('?show=today');
@@ -56,7 +61,7 @@ describe('filtering the board', () => {
 
     await user.click(filters);
     expect(filters).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('radio', { name: 'Today' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Today' })).toBeChecked();
     expect(screen.queryByRole('button', { name: /^Remove filter/ })).not.toBeInTheDocument();
 
     await user.click(filters);
@@ -74,11 +79,11 @@ describe('filtering the board', () => {
 
     await screen.findByRole('listitem', { name: 'Vacuum' });
     await openFilters();
-    expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+    expectNoDueDateChosen();
     expectShown(['Vacuum', 'Dust'], []);
   });
 
-  it("shows today's tasks, this week's or those without a due date", async () => {
+  it("shows today's tasks, this week's or those without a due date, and all again", async () => {
     const anna = logInAsFamilyMember();
     addTask(anna.id, 'Vacuum', '2026-10-06');
     addTask(anna.id, 'Cook', '2026-10-08');
@@ -90,16 +95,17 @@ describe('filtering the board', () => {
     await screen.findByRole('listitem', { name: 'Vacuum' });
     await openFilters();
 
-    await user.click(screen.getByRole('radio', { name: 'Today' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Today' }));
     expectShown(['Vacuum', 'Cook'], ['Mop', 'Change bed linen', 'Dust']);
 
-    await user.click(screen.getByRole('radio', { name: 'This week' }));
+    await user.click(screen.getByRole('checkbox', { name: 'This week' }));
     expectShown(['Vacuum', 'Cook', 'Mop'], ['Change bed linen', 'Dust']);
 
-    await user.click(screen.getByRole('radio', { name: 'No due date' }));
+    await user.click(screen.getByRole('checkbox', { name: 'No due date' }));
     expectShown(['Dust'], ['Vacuum', 'Cook', 'Mop', 'Change bed linen']);
 
-    await user.click(screen.getByRole('radio', { name: 'All' }));
+    await user.click(screen.getByRole('checkbox', { name: 'No due date' }));
+    expectNoDueDateChosen();
     expectShown(['Vacuum', 'Cook', 'Mop', 'Change bed linen', 'Dust'], []);
   });
 
@@ -140,13 +146,13 @@ describe('filtering the board', () => {
     await screen.findByRole('listitem', { name: 'Vacuum' });
     await openFilters();
 
-    await user.click(screen.getByRole('radio', { name: 'Today' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Today' }));
     await user.click(screen.getByRole('checkbox', { name: 'Available' }));
     expectShown(['Cook'], ['Vacuum', 'Mop', 'Dust']);
-    expect(screen.getByRole('radio', { name: 'Today' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Today' })).toBeChecked();
     expect(router.state.location.search).toBe('?show=today&available=1');
 
-    await user.click(screen.getByRole('radio', { name: 'This week' }));
+    await user.click(screen.getByRole('checkbox', { name: 'This week' }));
     expectShown(['Cook', 'Mop'], ['Vacuum', 'Dust']);
 
     await user.click(screen.getByRole('checkbox', { name: 'Available' }));
@@ -175,7 +181,7 @@ describe('filtering the board', () => {
     await screen.findByRole('listitem', { name: 'Dust' });
     await openFilters();
 
-    await user.click(screen.getByRole('radio', { name: 'No due date' }));
+    await user.click(screen.getByRole('checkbox', { name: 'No due date' }));
     await user.click(screen.getByRole('checkbox', { name: 'Available' }));
     expect(router.state.location.search).toBe('?show=undated&available=1');
 
@@ -184,12 +190,12 @@ describe('filtering the board', () => {
     expect(router.state.location.search).toBe('');
     await screen.findByRole('listitem', { name: 'Dust' });
     await openFilters();
-    expect(screen.getByRole('radio', { name: 'No due date' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'No due date' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Available' })).toBeChecked();
 
-    await user.click(screen.getByRole('radio', { name: 'All' }));
+    await user.click(screen.getByRole('checkbox', { name: 'No due date' }));
     await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
-    expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+    expectNoDueDateChosen();
   });
 
   it('remembers the choice for each family member on a shared device', async () => {
@@ -201,7 +207,7 @@ describe('filtering the board', () => {
 
     await screen.findByRole('listitem', { name: 'Dust' });
     await openFilters();
-    expect(screen.getByRole('radio', { name: 'No due date' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'No due date' })).toBeChecked();
   });
 
   it('still filters when this device cannot remember the choice', async () => {
@@ -218,7 +224,7 @@ describe('filtering the board', () => {
     await screen.findByRole('listitem', { name: 'Dust' });
     await openFilters();
 
-    await user.click(screen.getByRole('radio', { name: 'No due date' }));
+    await user.click(screen.getByRole('checkbox', { name: 'No due date' }));
     expect(router.state.location.search).toBe('?show=undated');
     expectShown(['Dust'], []);
   });
@@ -230,7 +236,7 @@ describe('filtering the board', () => {
 
     expect(await screen.findByText('Nothing is due today.')).toBeInTheDocument();
     await openFilters();
-    expect(screen.getByRole('radio', { name: 'Today' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Today' })).toBeChecked();
     expectShown([], ['Dust']);
   });
 
@@ -242,14 +248,15 @@ describe('filtering the board', () => {
     const user = userEvent.setup();
     const { router } = renderAppAt('/');
     await screen.findByRole('listitem', { name: 'Vacuum' });
-    await openFilters();
 
+    // The search shows while the filters are folded.
     await user.type(screen.getByRole('searchbox', { name: 'Search tasks' }), 'dish');
     expectShown(['Wash the dishes', 'Empty the dishwasher'], ['Vacuum']);
     expect(router.state.location.search).toBe('?q=dish');
     expect(screen.getByText('2 tasks found')).toHaveAttribute('role', 'status');
 
-    await user.click(screen.getByRole('radio', { name: 'Today' }));
+    await openFilters();
+    await user.click(screen.getByRole('checkbox', { name: 'Today' }));
     expectShown(['Wash the dishes'], ['Empty the dishwasher', 'Vacuum']);
 
     await user.type(screen.getByRole('searchbox', { name: 'Search tasks' }), 'es window');
@@ -267,7 +274,6 @@ describe('filtering the board', () => {
     renderAppAt('/?q=vacuum');
 
     await screen.findByRole('listitem', { name: 'Vacuum' });
-    await openFilters();
     expect(screen.getByRole('searchbox', { name: 'Search tasks' })).toHaveValue('vacuum');
     expectShown(['Vacuum'], ['Wash the dishes']);
   });
@@ -337,7 +343,7 @@ describe('filtering the board by who has picked tasks up', () => {
     await screen.findByRole('listitem', { name: 'Mop' });
     await openFilters();
     expectShown(['Mop'], ['Cook', 'Vacuum', 'Dust']);
-    await user.click(screen.getByRole('radio', { name: 'Today' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Today' }));
     expect(screen.getByText('Mia has no tasks picked up here.')).toBeInTheDocument();
   });
 
@@ -364,11 +370,13 @@ describe('filtering the board by who has picked tasks up', () => {
   it('shows the family member chosen as a chip that turns the filter off', async () => {
     const { ben } = familyWithTasks();
     const user = userEvent.setup();
-    renderAppAt(`/?who=${ben.id}`);
+    const { router } = renderAppAt(`/?who=${ben.id}`);
     await screen.findByRole('listitem', { name: 'Vacuum' });
 
     await user.click(screen.getByRole('button', { name: 'Remove filter: Ben' }));
     expectShown(['Cook', 'Vacuum', 'Mop', 'Dust'], []);
+    expect(router.state.location.search).toBe('');
+    expect(screen.getByRole('button', { name: 'Filters' })).toHaveFocus();
   });
 
   it("shows everyone's tasks for someone who isn't in the household", async () => {

@@ -27,10 +27,10 @@ export function usePickerFilter(userId: string) {
 export function nothingPickedUpMessage(
   picker: HouseholdMember,
   currentUserId: string,
-  { common, tasks }: Messages,
+  messages: Messages,
 ): string {
-  if (picker.id === currentUserId) return tasks.board.noneForYou;
-  return tasks.board.noneFor(picker.name ?? common.someone);
+  if (picker.id === currentUserId) return messages.tasks.board.noneForYou;
+  return messages.tasks.board.noneFor(pickerName(picker, currentUserId, messages));
 }
 
 /** What the board's filters call a member: you, or their name. */

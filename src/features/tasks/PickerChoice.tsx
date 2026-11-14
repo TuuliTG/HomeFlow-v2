@@ -1,4 +1,5 @@
-import { chipClassName, filterLegendClassName } from '@/features/tasks/chipStyles';
+import { filterLegendClassName } from '@/features/tasks/chipStyles';
+import { FilterChip } from '@/features/tasks/FilterChip';
 import type { HouseholdMember } from '@/features/tasks/helpersApi';
 import { pickerName } from '@/features/tasks/pickerFilter';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -37,9 +38,9 @@ export function PickerChoice({
     <fieldset>
       <legend className={filterLegendClassName}>{t.who}</legend>
       <div className="flex flex-wrap gap-2">
-        <Chip label={t.available} checked={availableOnly} onChange={onAvailableOnlyChange} />
+        <FilterChip label={t.available} checked={availableOnly} onChange={onAvailableOnlyChange} />
         {ordered.map((member) => (
-          <Chip
+          <FilterChip
             key={member.id}
             label={pickerName(member, currentUserId, messages)}
             checked={picker?.id === member.id}
@@ -50,27 +51,5 @@ export function PickerChoice({
         ))}
       </div>
     </fieldset>
-  );
-}
-
-interface ChipProps {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}
-
-function Chip({ label, checked, onChange }: ChipProps) {
-  return (
-    <label className={chipClassName}>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => {
-          onChange(event.target.checked);
-        }}
-        className="sr-only"
-      />
-      {label}
-    </label>
   );
 }

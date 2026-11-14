@@ -20,7 +20,6 @@ export const tasks: Messages['tasks'] = {
     matches: (count) => (count === 1 ? '1 tehtävä löytyi' : `${String(count)} tehtävää löytyi`),
     loadFailed: 'Tehtäviä ei voitu ladata. Tarkista yhteys ja lataa sivu uudelleen.',
     filters: {
-      all: 'Kaikki',
       today: 'Tänään',
       week: 'Tällä viikolla',
       undated: 'Ei määräpäivää',

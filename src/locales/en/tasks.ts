@@ -15,6 +15,7 @@ export const tasks = {
     noChildrens: 'No tasks for children yet. Create the first one!',
     /** The board's filters, behind a button next to the search. */
     filtersButton: 'Filters',
+    /** The label of a chip that turns a filter off while the filters are folded. */
     removeFilter: (filter: string) => `Remove filter: ${filter}`,
     /** The filter by due date. */
     dueDate: 'Due date',
@@ -27,7 +28,6 @@ export const tasks = {
     matches: (count: number) => (count === 1 ? '1 task found' : `${String(count)} tasks found`),
     loadFailed: "We couldn't load the tasks. Check your connection and reload the page.",
     filters: {
-      all: 'All',
       today: 'Today',
       week: 'This week',
       undated: 'No due date',

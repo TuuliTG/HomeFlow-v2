@@ -1,4 +1,4 @@
-import { type ReactNode, useId, useState } from 'react';
+import { type ReactNode, useId, useRef, useState } from 'react';
 
 import { CloseIcon, FilterIcon } from '@/components/ui/icons';
 import { FilterChoice } from '@/features/tasks/FilterChoice';
@@ -29,12 +29,14 @@ interface BoardFiltersProps {
 export function BoardFilters({ children, ...filters }: BoardFiltersProps) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
+  const button = useRef<HTMLButtonElement>(null);
   const t = useMessages().tasks.board;
   return (
     <>
       <div className="flex gap-2">
         <div className="min-w-0 flex-1">{children}</div>
         <button
+          ref={button}
           type="button"
           aria-label={t.filtersButton}
           aria-expanded={open}
@@ -58,12 +60,20 @@ export function BoardFilters({ children, ...filters }: BoardFiltersProps) {
           onAvailableOnlyChange={filters.onAvailableOnlyChange}
         />
       </div>
-      {!open && <ActiveFilters {...filters} />}
+      {!open && (
+        <ActiveFilters
+          {...filters}
+          // The chip goes away, so keep the focus nearby rather than lose it.
+          onTurnedOff={() => button.current?.focus()}
+        />
+      )}
     </>
   );
 }
 
-type ActiveFiltersProps = Omit<BoardFiltersProps, 'children' | 'members'>;
+type ActiveFiltersProps = Omit<BoardFiltersProps, 'children' | 'members'> & {
+  onTurnedOff: () => void;
+};
 
 /** A chip for each filter that is on, which turns it off. */
 function ActiveFilters({
@@ -74,51 +84,51 @@ function ActiveFilters({
   onAvailableOnlyChange,
   picker,
   onPickerChange,
+  onTurnedOff,
 }: ActiveFiltersProps) {
   const messages = useMessages();
   const t = messages.tasks.board;
-  const active = [
-    ...(due === 'all'
-      ? []
-      : [
-          {
-            label: t.filters[due],
-            turnOff: () => {
-              onDueChange('all');
-            },
-          },
-        ]),
-    ...(availableOnly
-      ? [
-          {
-            label: t.available,
-            turnOff: () => {
-              onAvailableOnlyChange(false);
-            },
-          },
-        ]
-      : []),
-    ...(picker === null
-      ? []
-      : [
-          {
-            label: pickerName(picker, currentUserId, messages),
-            turnOff: () => {
-              onPickerChange(null);
-            },
-          },
-        ]),
-  ];
+  const active: { key: string; label: string; turnOff: () => void }[] = [];
+  if (due !== 'all') {
+    active.push({
+      key: 'due',
+      label: t.filters[due],
+      turnOff: () => {
+        onDueChange('all');
+      },
+    });
+  }
+  if (availableOnly) {
+    active.push({
+      key: 'available',
+      label: t.available,
+      turnOff: () => {
+        onAvailableOnlyChange(false);
+      },
+    });
+  }
+  if (picker !== null) {
+    active.push({
+      key: 'who',
+      label: pickerName(picker, currentUserId, messages),
+      turnOff: () => {
+        onPickerChange(null);
+      },
+    });
+  }
   if (active.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-2">
-      {active.map(({ label, turnOff }) => (
+      {active.map(({ key, label, turnOff }) => (
         <button
-          key={label}
+          key={key}
           type="button"
           aria-label={t.removeFilter(label)}
-          onClick={turnOff}
-          className="bg-brand-900 shadow-card flex min-h-11 items-center gap-1 rounded-full pr-3 pl-4 text-sm font-bold text-white"
+          onClick={() => {
+            turnOff();
+            onTurnedOff();
+          }}
+          className="bg-brand-900 flex min-h-11 items-center gap-1 rounded-full pr-3 pl-4 text-sm font-bold text-white"
         >
           {label}
           <CloseIcon className="size-4" />
