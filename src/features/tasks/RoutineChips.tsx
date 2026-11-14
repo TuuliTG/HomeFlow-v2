@@ -56,11 +56,7 @@ export function RoutineChips({ routines, currentUserId }: RoutineChipsProps) {
                 onClick={() => {
                   completeTask.mutate(routine);
                 }}
-                className={`${chipClassName} ${
-                  routine.dueOn !== null && routine.dueOn < todayDate
-                    ? 'border-overdue-600 bg-overdue-100 text-overdue-800'
-                    : 'border-brand-600 bg-surface text-ink hover:bg-brand-50'
-                } font-semibold disabled:opacity-60`}
+                className={`${chipClassName} border-brand-600 bg-surface text-ink hover:bg-brand-50 font-semibold disabled:opacity-60`}
               >
                 <ChipTitle routine={routine} />
               </button>
