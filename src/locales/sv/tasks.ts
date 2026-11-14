@@ -7,8 +7,8 @@ export const tasks: Messages['tasks'] = {
     title: 'Gemensamma uppgifter',
     lists: {
       legend: 'Vems uppgifter',
-      adults: 'De vuxnas uppgifter',
-      children: 'Barnens uppgifter',
+      adults: 'Vuxna',
+      children: 'Barn',
     },
     noChildrens: 'Inga uppgifter för barn än. Skapa den första!',
     show: 'Visa',

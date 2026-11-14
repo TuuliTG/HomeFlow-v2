@@ -9,8 +9,8 @@ export const tasks = {
      */
     lists: {
       legend: 'Whose tasks',
-      adults: "Adults' tasks",
-      children: "Children's tasks",
+      adults: 'Adults',
+      children: 'Children',
     },
     noChildrens: 'No tasks for children yet. Create the first one!',
     show: 'Show',
