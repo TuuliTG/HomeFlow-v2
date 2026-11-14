@@ -22,16 +22,30 @@ export function dueStatus(dueOn: string, todayDate: string): DueStatus {
 /** The last day, counted from today, that gets a group of its own; anything after is "Later". */
 export const LAST_DAY_SHOWN_ONE_BY_ONE = 6;
 
-function dueGroupLabel(dueOn: string | null, todayDate: string, t: Messages): string {
-  if (dueOn === null) return t.tasks.dueGroups.noDueDate;
-  if (dueOn < todayDate) return t.tasks.dueGroups.overdue;
-  if (dueOn === todayDate) return t.common.today;
-  if (dueOn === addDays(todayDate, 1)) return t.common.tomorrow;
-  if (dueOn > addDays(todayDate, LAST_DAY_SHOWN_ONE_BY_ONE)) return t.tasks.dueGroups.later;
-  return t.common.shortDate(fromIsoDate(dueOn));
+const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+
+function dueGroupKeyAndLabel(
+  dueOn: string | null,
+  todayDate: string,
+  t: Messages,
+): Pick<DueGroup<unknown>, 'key' | 'label'> {
+  if (dueOn === null) return { key: 'undated', label: t.tasks.dueGroups.noDueDate };
+  if (dueOn < todayDate) return { key: 'overdue', label: t.tasks.dueGroups.overdue };
+  if (dueOn === todayDate) return { key: 'today', label: t.common.today };
+  if (dueOn === addDays(todayDate, 1)) return { key: 'tomorrow', label: t.common.tomorrow };
+  if (dueOn > addDays(todayDate, LAST_DAY_SHOWN_ONE_BY_ONE)) {
+    return { key: 'later', label: t.tasks.dueGroups.later };
+  }
+  const date = fromIsoDate(dueOn);
+  return { key: WEEKDAY_KEYS[date.getDay()] ?? dueOn, label: t.common.shortDate(date) };
 }
 
 export interface DueGroup<T> {
+  /**
+   * Names the group whatever the language and stays the same from one day to the next: `overdue`, `today`,
+   * `tomorrow`, the weekday of one of the next five days (`fri`), `later` or `undated`.
+   */
+  key: string;
   /** "Overdue", "Today", "Tomorrow", one of the next five days ("Fri 9 Oct"), "Later" or "No due date". */
   label: string;
   /** Tasks without a due date count as upcoming. */
@@ -50,11 +64,12 @@ export function groupByDueDate<T extends { dueOn: string | null }>(
 ): DueGroup<T>[] {
   const groups: DueGroup<T>[] = [];
   for (const item of items) {
-    const label = dueGroupLabel(item.dueOn, todayDate, t);
+    const { key, label } = dueGroupKeyAndLabel(item.dueOn, todayDate, t);
     const last = groups.at(-1);
-    if (last?.label === label) last.items.push(item);
+    if (last?.key === key) last.items.push(item);
     else
       groups.push({
+        key,
         label,
         status: item.dueOn === null ? 'upcoming' : dueStatus(item.dueOn, todayDate),
         items: [item],

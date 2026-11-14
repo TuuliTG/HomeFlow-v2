@@ -49,6 +49,18 @@ describe('groupByDueDate', () => {
     ]);
   });
 
+  it('names each group the same way whatever the language and the day', () => {
+    expect(
+      groupByDueDate(
+        ['2026-10-06', TODAY, '2026-10-08', '2026-10-09', '2026-10-14', null].map((dueOn) => ({
+          dueOn,
+        })),
+        TODAY,
+        en,
+      ).map((group) => group.key),
+    ).toEqual(['overdue', 'today', 'tomorrow', 'fri', 'later', 'undated']);
+  });
+
   it('tells whether each group is overdue, due today or later', () => {
     expect(
       groupByDueDate(

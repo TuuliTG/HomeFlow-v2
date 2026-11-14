@@ -18,78 +18,61 @@ interface DueTaskGroupsProps {
 
 /**
  * Tasks under headings for when they are due: Overdue, Today, Tomorrow, the next five days by date, Later
- * and No due date. The overdue tasks can be folded away, so a backlog doesn't push today's off the screen.
+ * and No due date. Each group folds away behind its heading, e.g. so a backlog doesn't push today's tasks off
+ * the screen; the folded groups are kept in the address and remembered on this device by the group's key.
  */
 export function DueTaskGroups({ tasks, currentUserId, headingLevel }: DueTaskGroupsProps) {
   const t = useMessages();
-  const [overdueHidden, setOverdueHidden] = useFoldedParam('overdue', currentUserId);
   return (
     <div className="flex flex-col gap-6 pt-2">
       {groupByDueDate(tasks, today(), t).map((group) => (
         <DueTaskGroup
-          key={group.label}
+          key={group.key}
           group={group}
           currentUserId={currentUserId}
           headingLevel={headingLevel}
-          {...(group.status === 'overdue' && {
-            folded: overdueHidden,
-            onFoldedChange: setOverdueHidden,
-          })}
         />
       ))}
     </div>
   );
 }
 
-const headingClassNames: Record<DueStatus, { text: string; dot: string }> = {
-  overdue: { text: 'text-overdue-800', dot: 'bg-overdue-600' },
-  today: { text: 'text-due-today-800', dot: 'bg-due-today-500' },
-  upcoming: { text: 'text-ink-muted', dot: 'bg-ink-muted/60' },
+const headingClassNames: Record<DueStatus, { text: string; dot: string; count: string }> = {
+  overdue: { text: 'text-overdue-800', dot: 'bg-overdue-600', count: 'bg-overdue-100' },
+  today: { text: 'text-due-today-800', dot: 'bg-due-today-500', count: 'bg-due-today-100' },
+  upcoming: { text: 'text-ink-muted', dot: 'bg-ink-muted/60', count: 'bg-line' },
 };
 
 interface DueTaskGroupProps extends Omit<DueTaskGroupsProps, 'tasks'> {
   group: DueGroup<Task>;
-  /** Whether the tasks are folded away; only groups given `onFoldedChange` can be. */
-  folded?: boolean;
-  onFoldedChange?: (folded: boolean) => void;
 }
 
 function DueTaskGroup({
-  group: { label, status, items: tasks },
+  group: { key, label, status, items: tasks },
   currentUserId,
   headingLevel,
-  folded = false,
-  onFoldedChange,
 }: DueTaskGroupProps) {
   const labelId = useId();
   const listId = useId();
+  const [folded, setFolded] = useFoldedParam(key, currentUserId);
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
-  const { text, dot } = headingClassNames[status];
-  const title = (
-    <>
-      <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${dot}`} />
-      <span id={labelId}>{label}</span>
-    </>
-  );
+  const { text, dot, count } = headingClassNames[status];
 
   return (
     <section aria-labelledby={labelId} className="flex flex-col gap-3">
       <Heading
         className={`flex items-center gap-2 text-sm font-extrabold tracking-wide uppercase ${text}`}
       >
-        {onFoldedChange === undefined ? (
-          title
-        ) : (
-          <FoldButton
-            folded={folded}
-            onFoldedChange={onFoldedChange}
-            controls={listId}
-            count={tasks.length}
-            countClassName="bg-overdue-100"
-          >
-            {title}
-          </FoldButton>
-        )}
+        <FoldButton
+          folded={folded}
+          onFoldedChange={setFolded}
+          controls={listId}
+          count={tasks.length}
+          countClassName={count}
+        >
+          <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${dot}`} />
+          <span id={labelId}>{label}</span>
+        </FoldButton>
       </Heading>
       <ul id={listId} hidden={folded} className="flex flex-col gap-3">
         {tasks.map((task) => (
