@@ -47,6 +47,9 @@ Vitest + Testing Library · Playwright · deployed on Vercel. Node 22 (≥ 22.22
   `text-ink-muted`, `brand-*`, `meta-*`, `danger-*`, `notice-*`…, ADR 0002), never Tailwind's own palette
   (`slate-*`, `red-*`, `bg-white`, `bg-[#…]`); `src/themeTokens.test.ts` fails on those. `text-white` on a filled
   colour is fine. Need a new colour? Add a token.
+- Simple, minimalistic UI, always: as few words, borders and controls as the task needs. Prefer an icon with an
+  accessible label (`aria-label`) over a text button when the icon is clear (e.g. a plus to add), and leave out
+  decoration that carries no meaning.
 - Mobile first: design for ~390px wide, then enhance with `md:` breakpoints. Accessible by default (roles, labels, contrast).
 - Import with the `@/` alias. Add dependencies with `npm install <pkg>` (exact versions are saved automatically).
 
