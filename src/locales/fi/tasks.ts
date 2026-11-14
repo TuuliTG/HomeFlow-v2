@@ -1,7 +1,6 @@
 import type { Messages } from '@/locales/en';
 
 export const tasks: Messages['tasks'] = {
-  eyebrow: 'Tehtävät',
   newTask: 'Uusi tehtävä',
   board: {
     title: 'Yhteiset tehtävät',
@@ -124,7 +123,6 @@ export const tasks: Messages['tasks'] = {
     addAgainLabel: (title) => `Lisää uudelleen: ${title}`,
   },
   me: {
-    eyebrow: 'Minä',
     title: 'Omat tehtävät',
     pointsEarned: 'Ansaitut pisteet',
     pointsLoadFailed: 'Pisteitäsi ei voitu ladata.',
@@ -144,7 +142,6 @@ export const tasks: Messages['tasks'] = {
     youHelped: (name) => `${name} teki, sinä autoit`,
   },
   child: {
-    eyebrow: 'Minä',
     title: 'Omat tähdet',
     myTasks: 'Omat tehtävät',
     nothingToDo: 'Ei vielä tehtäviä.',
@@ -152,7 +149,6 @@ export const tasks: Messages['tasks'] = {
     nothingFree: 'Juuri nyt ei ole vapaita tehtäviä.',
   },
   helpers: {
-    eyebrow: 'Tehdyt',
     title: 'Kuka auttoi?',
     description: (title, points) =>
       `Anna tehtävässä ${title} auttaneille bonuspisteitä. Saat silti kaikki sen pisteet (${points}).`,
@@ -172,7 +168,6 @@ export const tasks: Messages['tasks'] = {
   requests: {
     ask: 'Pyydä',
     askLabel: (title) => `Pyydä jotakuta tekemään: ${title}`,
-    eyebrow: 'Tehtävät',
     title: 'Pyydä tekijää',
     whoToAsk: 'Keneltä pyydetään',
     send: 'Lähetä pyyntö',

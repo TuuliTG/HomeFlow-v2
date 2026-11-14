@@ -77,7 +77,7 @@ export function StatisticsPage() {
 
   return (
     <>
-      <PageHeader eyebrow={t.eyebrow} title={t.title} />
+      <PageHeader title={t.title} />
       <div className="mb-3">
         <SegmentedChoice
           legend={t.period}

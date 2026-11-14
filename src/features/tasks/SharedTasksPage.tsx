@@ -74,7 +74,7 @@ function Board() {
   return (
     <>
       <div className="flex items-start justify-between gap-4">
-        <PageHeader eyebrow={t.eyebrow} title={t.board.title} />
+        <PageHeader title={t.board.title} />
         <NewTaskLink />
       </div>
       <PointsToAward />

@@ -2,7 +2,6 @@ import type { Messages } from '@/locales/en';
 import { common, possessive } from '@/locales/sv/common';
 
 export const rewards: Messages['rewards'] = {
-  eyebrow: 'Belöningar',
   title: 'Belöningar och mål',
   newGoal: 'Nytt mål',
   loadFailed: 'Det gick inte att ladda målen. Kontrollera anslutningen och ladda om sidan.',

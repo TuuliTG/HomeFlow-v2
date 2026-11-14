@@ -24,7 +24,7 @@ export function EditTaskPage() {
 
   return (
     <>
-      <PageHeader eyebrow={t.tasks.eyebrow} title={t.taskForm.edit.title} />
+      <PageHeader title={t.taskForm.edit.title} />
       <ImagesNotSavedNotice />
       {task && !membership.isPending ? (
         <EditTask task={task} userId={user.id} isChild={isChild} />

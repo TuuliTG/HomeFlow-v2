@@ -1,6 +1,5 @@
 /** Setting up, joining and showing the household. */
 export const household = {
-  eyebrow: 'Household',
   yourHousehold: 'Your household',
   loadFailed: "We couldn't load your household. Check your connection and reload the page.",
   setUp: {

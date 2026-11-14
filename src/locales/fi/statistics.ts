@@ -4,7 +4,6 @@ import { common } from '@/locales/fi/common';
 const tasksCount = (count: number) => (count === 1 ? '1 tehtävä' : `${String(count)} tehtävää`);
 
 export const statistics: Messages['statistics'] = {
-  eyebrow: 'Tilastot',
   title: 'Reiluus ja edistyminen',
   period: 'Ajanjakso',
   periods: { week: 'Tämä viikko', month: 'Tämä kuukausi', all: 'Koko ajalta' },
