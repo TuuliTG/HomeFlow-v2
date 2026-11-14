@@ -1,7 +1,7 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-14 (routines: everyday chores as one-tap chips; no "Show completed" on the board; folding
-  away overdue tasks)
+- **Updated:** 2026-11-14 (routines: everyday chores as one-tap chips; no "Show completed" on the board; folding away
+  each due-date group)
 
 ## Context
 
@@ -193,16 +193,18 @@ next one back rather than follow a fixed calendar.
   a family member can check whether a task already exists before adding it. It is done in the app on the tasks
   already loaded, and isn't remembered on the device: a forgotten search would hide tasks unnoticed. A hidden
   status region reads out how many tasks match while typing.
-  The **Overdue** group's heading is a button that folds its tasks away (`?overdue=hidden`, on the board and the Me
-  page alike, remembered on the device), still showing how many there are, so a backlog doesn't push today's tasks
-  off the screen. Unlike the search it is remembered: the count keeps the folded tasks from going unnoticed.
+  Each due-date group's heading is a button that folds its tasks away (`?<group>=hidden`, on the board and the Me
+  page alike, remembered on the device), still showing how many there are, e.g. so an overdue backlog doesn't push
+  today's tasks off the screen. The group's key stays the same from day to day (`overdue`, `today`, `tomorrow`,
+  the weekday of one of the next five days, `later`, `undated`), so a folded group stays folded. Unlike the search
+  it is remembered: the count keeps the folded tasks from going unnoticed.
 - **Routines**: an everyday chore like emptying the dishwasher would fill the board as a card every day, so a
   repeating shared adults' task can be a **routine** (`is_routine`, a "Quick routine" check mark under Repeats;
   `tasks_routine_repeats` keeps it to repeating tasks, `update_task()` clears it when a task stops repeating, the
   next occurrence and "add again" keep it). The board shows routines as small chips above the due dates
   (`RoutineChips`) instead of cards: a due one is a button that marks it done with one tap (it looks the same when overdue, since a routine is never alarming; no
   confirmation even if someone picked it up, since anyone may do a routine), and one done until its next due date
-  is a quiet chip saying who did it. Like the Overdue group, the section folds away behind its heading
+  is a quiet chip saying who did it. Like the due-date groups, the section folds away behind its heading
   (`?routines=hidden`, remembered on the device), which still counts the routines left to do. Celebrating and "Who helped?" follow as for a card; undo is in the completed
   list as for any task. A search shows routines as ordinary cards, which is how one is found to edit it. We chose an
   explicit check mark over treating every daily task as a routine, because some daily tasks deserve a card.
