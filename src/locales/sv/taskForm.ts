@@ -88,7 +88,7 @@ export const taskForm: Messages['taskForm'] = {
     add: 'Lägg till',
     tooMany: (max) => `En uppgift kan ha högst ${String(max)} etiketter.`,
   },
-  keepPrivate: 'Håll privat',
+  privateTask: 'Privat',
   whoFor: 'Vem är den för?',
   audiences: { adults: 'Vuxna', children: 'Barn' },
   whichChildren: 'Vilka barn?',

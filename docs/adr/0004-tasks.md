@@ -28,11 +28,12 @@ next one back rather than follow a fixed calendar.
   own private tasks, and saving or deleting one returns to the Me page (Cancel on the task form goes back to the
   previous page). **Private tasks have no points** (`tasks_private_without_points`) and statistics count only
   shared tasks, both done and created (ADR 0006). A private task whose creator deletes their account or leaves
-  stays hidden from everyone.
+  stays hidden from everyone. On the form a "Private" toggle button comes first and, when pressed, hides what a
+  private task doesn't need: who it is for, its type and points. Its type is kept but never shown, also when editing.
 - **Tasks for children**: `for_children` (default false: adults only), chosen first on the task form by adults
   ("Who is it for? Adults / Children", not offered for their private tasks) and changeable when editing; the next
   occurrence keeps it. The form changes to suit: a task for children asks which children and "Stars for each
-  child" (its points), and has no type, "Keep it private" or "Already done". **A shared task for children is the
+  child" (its points), and has no type or "Already done". **A shared task for children is the
   children's only**: parents wanted the children's chores kept apart from their own, so its stars always go to a
   child, and adults keep their own tasks (e.g. their own "Empty the dishwasher" with other points). Adults see,
   edit and delete them on the board's "Children" list, chosen instead of "Adults" at its top

@@ -58,7 +58,6 @@ test('family member can add a task for the children, kept apart from their own',
   // The choice is a segmented control: its radios are hidden behind their labels.
   await page.getByRole('group', { name: 'Who is it for?' }).getByText('Children').click();
   await expect(page.getByRole('radio', { name: 'Children' })).toBeChecked();
-  await expect(page.getByRole('checkbox', { name: 'Keep it private' })).toBeHidden();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations on a task for children').toEqual([]);
   await page.getByLabel('Task', { exact: true }).fill('Feed the cat');

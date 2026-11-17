@@ -15,15 +15,16 @@ function addBen() {
 }
 
 describe('private tasks', () => {
-  it('can be added with a check mark and are marked private on the Me page', async () => {
+  it('can be added with a button and are marked private on the Me page', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    const privateBox = await screen.findByRole('checkbox', { name: 'Keep it private' });
-    expect(privateBox).not.toBeChecked();
+    const privateButton = await screen.findByRole('button', { name: 'Private' });
+    expect(privateButton).toHaveAttribute('aria-pressed', 'false');
     await user.type(screen.getByLabelText('Task'), 'Buy a birthday present');
-    await user.click(privateBox);
+    await user.click(privateButton);
+    expect(privateButton).toHaveAttribute('aria-pressed', 'true');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     expect(await screen.findByRole('heading', { level: 1, name: 'My tasks' })).toBeInTheDocument();
@@ -70,7 +71,7 @@ describe('private tasks', () => {
 
     await user.click(await screen.findByRole('link', { name: 'New task' }));
     await user.type(await screen.findByLabelText('Task'), 'Buy a birthday present');
-    await user.click(screen.getByRole('checkbox', { name: 'Keep it private' }));
+    await user.click(screen.getByRole('button', { name: 'Private' }));
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     const toDo = await screen.findByRole('region', { name: 'To do' });
@@ -92,6 +93,26 @@ describe('private tasks', () => {
     expect(screen.queryByText('Buy a birthday present')).not.toBeInTheDocument();
   });
 
+  it("hide what a private task doesn't need: who it is for, its type and points", async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    const privateButton = await screen.findByRole('button', { name: 'Private' });
+    await user.click(screen.getByRole('radio', { name: 'Children' }));
+    await user.click(privateButton);
+
+    expect(screen.queryByRole('group', { name: 'Who is it for?' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Type' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Points|Stars/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Task')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Already done' })).toBeInTheDocument();
+
+    await user.click(privateButton);
+    expect(screen.getByRole('radio', { name: 'Children' })).toBeChecked();
+    expect(screen.getByLabelText('Stars for each child')).toBeInTheDocument();
+  });
+
   it('have no points', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
@@ -99,7 +120,7 @@ describe('private tasks', () => {
 
     await user.type(await screen.findByLabelText('Task'), 'Buy a birthday present');
     expect(screen.getByLabelText('Points')).toBeInTheDocument();
-    await user.click(screen.getByRole('checkbox', { name: 'Keep it private' }));
+    await user.click(screen.getByRole('button', { name: 'Private' }));
     expect(screen.queryByLabelText('Points')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
@@ -109,6 +130,7 @@ describe('private tasks', () => {
     await user.click(screen.getByRole('link', { name: 'Edit: Buy a birthday present' }));
     expect(await screen.findByLabelText('Task')).toHaveValue('Buy a birthday present');
     expect(screen.queryByLabelText('Points')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Type' })).not.toBeInTheDocument();
   });
 
   it("don't add to the points of whoever does them", async () => {

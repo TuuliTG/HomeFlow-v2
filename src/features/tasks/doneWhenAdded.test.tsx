@@ -80,7 +80,7 @@ describe('adding a task that is already done', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await user.click(await screen.findByRole('checkbox', { name: 'Keep it private' }));
+    await user.click(await screen.findByRole('button', { name: 'Private' }));
     await addDoneTask(user, 'Book the dentist');
 
     const completed = await screen.findByRole('list', { name: 'Completed tasks' });

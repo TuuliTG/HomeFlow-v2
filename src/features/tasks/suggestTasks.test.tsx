@@ -376,7 +376,7 @@ describe('adding a task again', () => {
     ]);
     await user.click(button);
 
-    expect(screen.getByRole('checkbox', { name: 'Keep it private' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Private' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByLabelText('Points')).not.toBeInTheDocument();
   });
 

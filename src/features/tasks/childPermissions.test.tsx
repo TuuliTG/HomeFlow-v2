@@ -73,7 +73,7 @@ describe('what children may do with tasks', () => {
     renderAppAt('/tasks/new');
 
     await user.type(await screen.findByLabelText('Task'), 'Read my book');
-    await user.click(screen.getByRole('checkbox', { name: 'Keep it private' }));
+    await user.click(screen.getByRole('button', { name: 'Private' }));
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     // Back on their Me page, where it is theirs to do.

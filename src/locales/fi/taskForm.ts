@@ -87,7 +87,7 @@ export const taskForm: Messages['taskForm'] = {
     add: 'Lisää',
     tooMany: (max) => `Tehtävällä voi olla enintään ${String(max)} tunnistetta.`,
   },
-  keepPrivate: 'Pidä yksityisenä',
+  privateTask: 'Yksityinen',
   whoFor: 'Kenelle tehtävä on?',
   audiences: { adults: 'Aikuisille', children: 'Lapsille' },
   whichChildren: 'Mille lapsille?',
