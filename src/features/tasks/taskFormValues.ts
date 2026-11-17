@@ -73,7 +73,7 @@ interface FormState {
 /**
  * Which fields the form shows, as it changes to suit who the task is for. An adult's task for children
  * (`isForChildren`) asks which children and the stars each earns, and is neither a type of work nor added as
- * done, since adults don't do it. A private task counts for no one, so it has neither a type nor points.
+ * done, since adults don't do it. A private task counts for no one, so it has neither a type nor points, and is added to do.
  */
 export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready }: FormState) {
   const isForChildren = !isChild && !isPrivate && forChildren;
@@ -81,7 +81,7 @@ export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready 
     isForChildren,
     type: !isForChildren && !isPrivate,
     points: !isPrivate,
-    alreadyDone: canBeDoneAlready && !isForChildren,
+    alreadyDone: canBeDoneAlready && !isForChildren && !isPrivate,
   };
 }
 

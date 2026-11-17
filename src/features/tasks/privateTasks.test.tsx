@@ -93,7 +93,7 @@ describe('private tasks', () => {
     expect(screen.queryByText('Buy a birthday present')).not.toBeInTheDocument();
   });
 
-  it("hide what a private task doesn't need: who it is for, its type and points", async () => {
+  it("hide what a private task doesn't need: who it is for, its type, points and already done", async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
@@ -106,7 +106,7 @@ describe('private tasks', () => {
     expect(screen.queryByRole('group', { name: 'Type' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Points|Stars/)).not.toBeInTheDocument();
     expect(screen.getByLabelText('Task')).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'Already done' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'Already done' })).not.toBeInTheDocument();
 
     await user.click(privateButton);
     expect(screen.getByRole('radio', { name: 'Children' })).toBeChecked();

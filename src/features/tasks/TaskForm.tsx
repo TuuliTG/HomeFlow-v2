@@ -167,7 +167,11 @@ export function TaskForm({
       showInvalid(issue?.path[0], issue?.message);
       return;
     }
-    const options = { isDone, alsoFor: parsed.data.assignedTo === null ? [] : alsoFor };
+    // The check mark keeps its value while hidden, so it counts only while shown.
+    const options = {
+      isDone: isDone && shown.alreadyDone,
+      alsoFor: parsed.data.assignedTo === null ? [] : alsoFor,
+    };
     onSave(parsed.data, images, options).catch(() => {
       setError({ field: null, message: t.taskForm.errors.saveFailed });
     });
