@@ -89,13 +89,12 @@ describe('tasks for children', () => {
 
     const whoFor = await screen.findByRole('group', { name: 'Who is it for?' });
     expect(within(whoFor).getByRole('radio', { name: 'Adults' })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'Keep it private' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Already done' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Type' })).toBeInTheDocument();
     await user.click(within(whoFor).getByRole('radio', { name: 'Children' }));
 
-    // Adults don't do it, so it is neither private, a type of their work, nor added as done.
-    expect(screen.queryByRole('checkbox', { name: 'Keep it private' })).not.toBeInTheDocument();
+    // Adults don't do it, so it is neither a type of their work nor added as done; it can still be made private.
+    expect(screen.getByRole('button', { name: 'Private' })).toBeInTheDocument();
     expect(screen.queryByRole('checkbox', { name: 'Already done' })).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Type' })).not.toBeInTheDocument();
     const stars = screen.getByLabelText('Stars for each child');
@@ -119,7 +118,7 @@ describe('tasks for children', () => {
 
     await user.click(await screen.findByRole('radio', { name: 'Children' }));
     await user.click(screen.getByRole('radio', { name: 'Adults' }));
-    await user.click(screen.getByRole('checkbox', { name: 'Keep it private' }));
+    await user.click(screen.getByRole('button', { name: 'Private' }));
     await user.type(screen.getByLabelText('Task'), 'Buy a present');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 

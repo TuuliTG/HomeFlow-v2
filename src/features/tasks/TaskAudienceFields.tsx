@@ -1,4 +1,4 @@
-import { CheckboxField } from '@/features/tasks/CheckboxField';
+import { LockIcon } from '@/components/ui/icons';
 import { TaskAudienceChoice } from '@/features/tasks/TaskAudienceChoice';
 import { TaskChildrenField } from '@/features/tasks/TaskChildrenField';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -19,8 +19,9 @@ interface TaskAudienceFieldsProps {
 }
 
 /**
- * Who the task is for, at the top of the form: an adult chooses the adults, and whether to keep the task
- * private, or the children, and which of them (ADR 0004). A private task being edited stays the creator's.
+ * Who the task is for, at the top of the form: a new task can be made private first, which leaves nothing
+ * more to choose; otherwise an adult chooses the adults or the children, and which of them (ADR 0004). A
+ * private task being edited stays the creator's.
  */
 export function TaskAudienceFields({
   isNew,
@@ -33,30 +34,43 @@ export function TaskAudienceFields({
   onChildIdsChange,
   currentUserId,
 }: TaskAudienceFieldsProps) {
-  const t = useMessages().taskForm;
-  const keepPrivate = isNew && (
-    <CheckboxField
-      name="isPrivate"
-      label={t.keepPrivate}
-      checked={isPrivate}
-      onChange={onPrivateChange}
-    />
-  );
-  if (isChild) return keepPrivate;
-  if (isPrivate && !isNew) return null;
+  const privateToggle = isNew && <PrivateToggle pressed={isPrivate} onChange={onPrivateChange} />;
+  if (isChild || isPrivate) return privateToggle;
   return (
     <>
+      {privateToggle}
       <TaskAudienceChoice forChildren={forChildren} onChange={onForChildrenChange} />
-      {forChildren ? (
+      {forChildren && (
         <TaskChildrenField
           currentUserId={currentUserId}
           canChooseSeveral={isNew}
           value={childIds}
           onChange={onChildIdsChange}
         />
-      ) : (
-        keepPrivate
       )}
     </>
+  );
+}
+
+interface PrivateToggleProps {
+  pressed: boolean;
+  onChange: (pressed: boolean) => void;
+}
+
+/** Makes a new task private, for its creator alone, or shared again. */
+function PrivateToggle({ pressed, onChange }: PrivateToggleProps) {
+  const t = useMessages().taskForm;
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={() => {
+        onChange(!pressed);
+      }}
+      className="border-line-strong bg-surface text-ink hover:bg-brand-50 aria-pressed:border-brand-600 aria-pressed:bg-brand-50 aria-pressed:text-brand-900 focus-visible:outline-brand-600 flex min-h-11 items-center gap-2 self-start rounded-full border px-4 text-sm font-medium focus-visible:outline-2"
+    >
+      <LockIcon className="size-4" />
+      {t.privateTask}
+    </button>
   );
 }

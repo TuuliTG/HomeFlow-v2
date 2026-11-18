@@ -88,7 +88,7 @@ export const taskForm = {
     add: 'Add',
     tooMany: (max: number) => `A task can have up to ${String(max)} labels.`,
   },
-  keepPrivate: 'Keep it private',
+  privateTask: 'Private',
   /** Adults choose first who the task is for; the form changes to suit. */
   whoFor: 'Who is it for?',
   audiences: { adults: 'Adults', children: 'Children' },

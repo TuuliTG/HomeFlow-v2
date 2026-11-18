@@ -75,16 +75,22 @@ describe('adding a task that is already done', () => {
     expect(tasks.at(-1)).toMatchObject({ forChildren: true, completed: null });
   });
 
-  it('works for private tasks too', async () => {
+  it("isn't offered for a private task, which is added to do even if checked before", async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await user.click(await screen.findByRole('checkbox', { name: 'Keep it private' }));
-    await addDoneTask(user, 'Book the dentist');
+    await user.type(await screen.findByLabelText('Task'), 'Book the dentist');
+    await user.click(screen.getByRole('checkbox', { name: 'Already done' }));
+    await user.click(screen.getByRole('button', { name: 'Private' }));
+    expect(screen.queryByRole('checkbox', { name: 'Already done' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    const completed = await screen.findByRole('list', { name: 'Completed tasks' });
-    expect(await within(completed).findByText('Book the dentist')).toBeInTheDocument();
+    const toDo = await screen.findByRole('region', { name: 'To do' });
+    expect(
+      await within(toDo).findByRole('listitem', { name: 'Book the dentist' }),
+    ).toBeInTheDocument();
+    expect(tasks.at(-1)).toMatchObject({ isPrivate: true, completed: null });
   });
 
   it('keeps the task to do if marking it done fails, so it can be marked done later', async () => {
