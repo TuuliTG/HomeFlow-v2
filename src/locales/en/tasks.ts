@@ -89,7 +89,7 @@ export const tasks = {
     /** A task an adult gave to one child. */
     onlyFor: (name: string) => `Only for ${name}`,
     waitingForPoints: 'Waiting for points',
-    /** A shared task with 0 points, which counts for nobody. */
+    /** A suggested shared task with 0 points, which counts for nobody. */
     noPoints: 'No points',
     addedBy: {
       you: 'Added by you',

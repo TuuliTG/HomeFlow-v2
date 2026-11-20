@@ -8,7 +8,7 @@ import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
-const HINT = "Without points, it isn't counted in statistics.";
+const HINT = 'Not counted in statistics.';
 
 function addBen() {
   const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
@@ -31,8 +31,7 @@ describe('shared tasks without points', () => {
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     const task = await screen.findByRole('listitem', { name: 'Dentist on Thursday' });
-    expect(within(task).getByText('No points')).toBeInTheDocument();
-    expect(within(task).queryByText('0 points')).not.toBeInTheDocument();
+    expect(task).not.toHaveTextContent('point');
   });
 
   it('count for nobody in statistics, done or created', async () => {
