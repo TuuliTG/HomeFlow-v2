@@ -2,7 +2,7 @@
 -- Anna (an adult) and Ben (a child who may add tasks) share a household.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(9);
+select plan(8);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -52,14 +52,9 @@ select throws_ok(
   'P0002', null,
   'nobody is credited for helping with a task with 0 points'
 );
-select throws_ok(
+select lives_ok(
   format('select public.award_task_points(%L, 0::smallint)', current_setting('test.tidy')),
-  '22023', null,
-  'an adult awards a child''s task at least a point'
-);
-select is(
-  (select points from public.tasks where id = current_setting('test.tidy')::uuid), null,
-  'the child''s task still waits for points'
+  'an adult can decide a child''s task earns no points'
 );
 
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
@@ -71,8 +66,8 @@ select throws_ok(
 select results_eq(
   $$ select created from public.household_statistics(null)
      where user_id = '22222222-2222-2222-2222-222222222222' $$,
-  $$ values (1) $$,
-  'a child''s task waiting for points still counts as created'
+  $$ values (0) $$,
+  'a child''s task awarded no points counts for nobody'
 );
 
 select * from finish();

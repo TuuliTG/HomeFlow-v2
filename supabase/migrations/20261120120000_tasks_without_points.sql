@@ -1,5 +1,5 @@
 -- Shared tasks without points, e.g. reminders like "Dentist on Thursday" (ADR 0004): an adult gives a shared task 0
--- points. Such a task earns nothing and counts for nobody: statistics leave it out of both tasks done and tasks
+-- points (also when awarding or editing a child's task). Such a task earns nothing and counts for nobody: statistics leave it out of both tasks done and tasks
 -- created, goals and totals add nothing for it, and no one can be credited for helping with it. Null points still
 -- mean a private task, or a child's shared task waiting for an adult to award its points.
 alter table public.tasks
@@ -66,32 +66,6 @@ as $$
   order by m.joined_at, m.user_id;
 $$;
 
--- As before (20261011140000_child_permissions.sql), but an adult awards at least 1 point: 0 would make a child's
--- task one that counts for nobody.
-create or replace function public.award_task_points(task_id uuid, points smallint)
-returns void
-language plpgsql
-security definer
-set search_path = ''
-as $$
-begin
-  if private.adult_household_id(auth.uid()) is null then
-    raise exception 'Only an adult in the household can award points' using errcode = '42501';
-  end if;
-  if points is null or points < 1 then
-    raise exception 'Choose the points to award' using errcode = '22023';
-  end if;
-  update public.tasks t set points = award_task_points.points
-    where t.id = award_task_points.task_id
-      and private.can_see_task(t)
-      and not t.is_private
-      and t.points is null;
-  if not found then
-    raise exception 'No task waiting for points with this id in your household' using errcode = 'P0002';
-  end if;
-end;
-$$;
-
 -- As before (20261108120000_helper_bonus_points.sql), but only a task with points can be shared, not one with 0 points.
 create or replace function public.set_task_helpers(task_id uuid, helpers jsonb)
 returns void
@@ -118,7 +92,7 @@ begin
       and t.points > 0
     for update;
   if done.id is null then
-    raise exception 'You have not marked this task done in the last week' using errcode = 'P0002';
+    raise exception 'You have not marked this task with points done in the last week' using errcode = 'P0002';
   end if;
   if exists (
     select 1 from jsonb_to_recordset(set_task_helpers.helpers) as h (user_id uuid, points integer)

@@ -11,7 +11,7 @@ next one back rather than follow a fixed calendar.
 ## Decisions
 
 - `tasks` belong to a household: title, optional description (≤ 500 characters), type (`physical`/`meta`),
-  points (1–10), `created_by` (from the default, never the client), optional `due_on`, `repeat_every_days`
+  points (0–10; 0 counts for nobody), `created_by` (from the default, never the client), optional `due_on`, `repeat_every_days`
   (1–365), `completed_at`/`completed_by` and `previous_task_id`. New tasks default to the creator's household.
 - **Repeat intervals**: the form offers ready-made intervals (`repeatChoices`) and "Custom…", every so many
   days or weeks (`taskRepeat.ts`); the database stores days only, so a custom interval of whole weeks shows in
@@ -157,8 +157,8 @@ next one back rather than follow a fixed calendar.
   "Dentist on Thursday". It counts for nobody: `private.task_credits` leaves it out, so it adds no points or tasks
   done to statistics, goals or totals; `household_statistics()` doesn't count it as created; News (`fetchNews()`)
   leaves it out; and nobody can be credited for helping (`set_task_helpers()`). Null points keep their meaning
-  (private, or a child's task waiting for points), so 0 is the explicit "none" rather than a new column, and
-  `award_task_points()` awards at least 1. On the form a muted hint under the field appears at 0; the card simply
+  (private, or a child's task waiting for points), so 0 is the explicit "none" rather than a new column. An adult
+  may also award or edit a child's task to 0: what it's worth is theirs to decide. On the form a muted hint under the field appears at 0; the card simply
   shows no points badge, with no extra tag. Not called "reminder" in the app: that word already names reminders.
 - **Points**: the Me screen shows the user's total points, summed when read (`own_total_points()`), not stored.
   Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).

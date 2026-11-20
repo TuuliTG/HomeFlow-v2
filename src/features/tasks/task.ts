@@ -20,7 +20,7 @@ export function titleKey(title: string): string {
   return title.trim().toLowerCase();
 }
 
-/** The points a shared task can earn, and what a new one starts with. */
+/** The fewest points the Waiting for points list offers to award a child's task. */
 export const MIN_POINTS = 1;
 /** The points of a shared task without points, which earns nothing and counts for nobody (ADR 0004). */
 export const NO_POINTS = 0;

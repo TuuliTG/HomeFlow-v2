@@ -2,7 +2,7 @@ import { type ReactNode, useId } from 'react';
 
 import { CheckIcon, StarIcon } from '@/components/ui/icons';
 import { emptyClassName, sectionHeadingClassName } from '@/features/tasks/meStyles';
-import { NO_POINTS, type Task } from '@/features/tasks/task';
+import { isWithoutPoints, type Task } from '@/features/tasks/task';
 import { EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
 import { useCompleteTask, usePickUpTask } from '@/features/tasks/useTasks';
@@ -124,7 +124,7 @@ function PointsAsStars({ task }: { task: Task }) {
       </p>
     );
   }
-  if (task.points === NO_POINTS) return null;
+  if (isWithoutPoints(task)) return null;
   return (
     <span role="img" aria-label={common.points(task.points)} className="flex flex-wrap gap-0.5">
       {Array.from({ length: task.points }, (_, index) => (
