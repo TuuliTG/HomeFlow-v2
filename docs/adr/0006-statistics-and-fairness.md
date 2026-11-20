@@ -1,6 +1,6 @@
 # 0006. Statistics and fairness
 
-- **Updated:** 2026-10-11
+- **Updated:** 2026-11-20 (tasks without points count for nobody)
 
 ## Context
 
@@ -16,7 +16,8 @@ history grows past what one API request returns.
   (`completed_at >= since`), also those they helped with, and the points those earned (their credits in
   `private.task_credits`, ADR 0004), how many of those were meta work tasks (`meta_done`, `meta_points`; physical
   work is the rest), and the shared tasks they _created_ (`created_at >= since`), all in their current household;
-  `since` null means all time. Totals aren't cut short by the 1000-row API limit. Private tasks never count; people
+  `since` null means all time. Totals aren't cut short by the 1000-row API limit. Private tasks and shared tasks with
+  0 points (ADR 0004) never count, neither done nor created; people
   who left the household aren't listed.
 - **Periods** are local calendar periods up to now: _This week_ (from Monday), _This month_ (from the 1st) and _All
   time_, computed in the browser (`periodStart()` in `src/features/statistics/statistics.ts`) and kept in the address

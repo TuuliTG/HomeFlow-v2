@@ -13,7 +13,7 @@ import { type Credit, requestsFailing, tasks } from '@/test/fakeTasksBackend';
 /** Whether `userId` marked the task done in the last week and it is shared, with points. */
 function canChooseHelpersOf(userId: string, taskId: string): boolean {
   const task = tasks.find((candidate) => candidate.id === taskId);
-  if (task?.completed?.by !== userId || task.isPrivate || task.points === null) return false;
+  if (task?.completed?.by !== userId || task.isPrivate || (task.points ?? 0) === 0) return false;
   return Date.now() - new Date(task.completed.at).getTime() < HELPERS_WINDOW_MS;
 }
 

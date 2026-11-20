@@ -101,10 +101,10 @@ function addDays(isoDate: string, days: number): string {
 
 /**
  * Who earned points with a done shared task, like `private.task_credits`: the doer all its points, and
- * each helper their bonus. None for an open or private task.
+ * each helper their bonus. None for an open or private task, or one with 0 points.
  */
 export function creditsOf(task: StoredTask): Credit[] {
-  if (!task.completed || task.isPrivate) return [];
+  if (!task.completed || task.isPrivate || task.points === 0) return [];
   return [{ userId: task.completed.by, points: task.points ?? 0 }, ...task.helpers];
 }
 

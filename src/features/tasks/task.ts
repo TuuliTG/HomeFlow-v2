@@ -20,8 +20,11 @@ export function titleKey(title: string): string {
   return title.trim().toLowerCase();
 }
 
-/** The points a shared task can earn, and what a new one starts with. */
+/** The fewest points the Waiting for points list offers to award a child's task. */
 export const MIN_POINTS = 1;
+/** The points of a shared task without points, which earns nothing and counts for nobody (ADR 0004). */
+export const NO_POINTS = 0;
+/** The most points a task can earn, and what a new one starts with. */
 export const MAX_POINTS = 10;
 export const DEFAULT_POINTS = 3;
 
@@ -68,12 +71,12 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
       type: z.enum(taskTypes),
       /**
        * Null for a private task, which earns none, and for a child's shared task until an adult awards
-       * its points.
+       * its points; `NO_POINTS` for a shared task that counts for nobody.
        */
       points: z.coerce
-        .number()
+        .number(errors.pointsRange)
         .int(errors.pointsRange)
-        .min(MIN_POINTS, errors.pointsRange)
+        .min(NO_POINTS, errors.pointsRange)
         .max(MAX_POINTS, errors.pointsRange)
         .nullable(),
       /** Days after it is done that the task comes back; null for a one-off task. */
@@ -264,7 +267,10 @@ export interface CompletedTask {
  * the last week (`set_task_helpers()` has the final say).
  */
 export function canChooseHelpers(task: CompletedTask, now: number): boolean {
-  return task.points !== null && now - new Date(task.completedAt).getTime() < HELPERS_WINDOW_MS;
+  return (
+    earnedPoints(task.points) !== null &&
+    now - new Date(task.completedAt).getTime() < HELPERS_WINDOW_MS
+  );
 }
 
 /** A task the user helped someone else with (`own_helped_tasks()`), maybe one they can't otherwise see. */
@@ -282,7 +288,17 @@ export interface HelpedTask {
 
 /** Whether to ask who helped right after marking the task done: only a shared task with points can be shared. */
 export function canAskWhoHelped(task: Pick<Task, 'points' | 'isPrivate'>): boolean {
-  return task.points !== null && !task.isPrivate;
+  return earnedPoints(task.points) !== null && !task.isPrivate;
+}
+
+/** The points a task earns; null for a private one, one with 0 points or one waiting for points. */
+export function earnedPoints(points: number | null): number | null {
+  return points === NO_POINTS ? null : points;
+}
+
+/** Whether the task is a shared one with 0 points, which counts for nobody, e.g. a reminder (ADR 0004). */
+export function isWithoutPoints(task: Pick<Task, 'points' | 'isPrivate'>): boolean {
+  return !task.isPrivate && task.points === NO_POINTS;
 }
 
 /** When the user wants to be reminded of a task that is theirs to do (`set_task_reminder()`). */

@@ -74,6 +74,7 @@ export const tasks: Messages['tasks'] = {
     forChildren: 'Lapsille',
     onlyFor: (name) => `Vain: ${name}`,
     waitingForPoints: 'Odottaa pisteitä',
+    noPoints: 'Ei pisteitä',
     addedBy: {
       you: 'Lisääjä: sinä',
       someone: 'Lisääjä: joku',

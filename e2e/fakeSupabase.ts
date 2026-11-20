@@ -243,9 +243,12 @@ export async function fakeSupabase(page: Page) {
     return { ...task, task_helpers: helpers.get(task.id) ?? [] };
   }
 
-  /** Like private.task_credits: the doer gets the task's points, each helper their bonus. */
+  /**
+   * Like private.task_credits: the doer gets the task's points, each helper their bonus. A task with 0
+   * points credits no one.
+   */
   function creditsOf(task: TaskRow): { user_id: string | null; points: number }[] {
-    if (task.completed_at === null || task.is_private) return [];
+    if (task.completed_at === null || task.is_private || task.points === 0) return [];
     return [
       { user_id: task.completed_by, points: task.points ?? 0 },
       ...(helpers.get(task.id) ?? []),
@@ -379,6 +382,8 @@ export async function fakeSupabase(page: Page) {
         (task) =>
           task.household_id === householdId &&
           !task.is_private &&
+          // Like `or=(points.is.null,points.gt.0)`: a task with 0 points isn't news.
+          task.points !== 0 &&
           task.completed_at !== null &&
           task.completed_at >= since,
       );
@@ -471,7 +476,7 @@ export async function fakeSupabase(page: Page) {
     const task = tasks.find(
       (candidate) => candidate.id === task_id && candidate.completed_by === user.id,
     );
-    if (task?.points === undefined || task.points === null) {
+    if (task?.points === undefined || task.points === null || task.points === 0) {
       return reply(route, 400, { code: 'P0002', message: 'No task of yours done this week' });
     }
     if (bonuses.some((bonus) => bonus.points < 1 || bonus.points > 10)) {
@@ -698,7 +703,7 @@ export async function fakeSupabase(page: Page) {
     const inPeriod = (timestamp: string | null) =>
       timestamp !== null && (since === null || timestamp >= since);
     const shared = tasks.filter(
-      (task) => task.household_id === ownHousehold?.id && !task.is_private,
+      (task) => task.household_id === ownHousehold?.id && !task.is_private && task.points !== 0,
     );
     const userIds = ownHousehold ? (members.get(ownHousehold.id) ?? []) : [];
     return reply(

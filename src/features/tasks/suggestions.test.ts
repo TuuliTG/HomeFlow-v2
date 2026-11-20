@@ -93,6 +93,7 @@ describe('suggestionAsTask', () => {
     expect(suggestionPointsLabel(suggestion('Tidy my room', { points: null }), en)).toBe(
       'Waiting for points',
     );
+    expect(suggestionPointsLabel(suggestion('Dentist', { points: 0 }), en)).toBe('No points');
   });
 
   it('keeps a private task private and without points', () => {

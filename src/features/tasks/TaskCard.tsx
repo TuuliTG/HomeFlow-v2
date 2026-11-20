@@ -3,7 +3,7 @@ import { type ReactNode, useCallback, useId, useState } from 'react';
 import { StarIcon } from '@/components/ui/icons';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
 import { descriptionParts } from '@/features/tasks/descriptionLinks';
-import { canDoTask, isToDoBy, type Task } from '@/features/tasks/task';
+import { canDoTask, earnedPoints, isToDoBy, type Task } from '@/features/tasks/task';
 import { AskLink, EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskImages } from '@/features/tasks/TaskImages';
@@ -40,6 +40,7 @@ export function TaskCard({
   const titleId = useId();
   const t = useMessages();
   const isPanel = Root === 'section';
+  const points = earnedPoints(task.points);
   const focusWhenOpened = useCallback((element: HTMLElement | null) => {
     element?.focus();
   }, []);
@@ -60,10 +61,10 @@ export function TaskCard({
           titleLevel={titleLevel}
         />
         <div className="-mt-2 -mr-2 ml-auto flex shrink-0 items-center gap-1">
-          {task.points !== null && (
+          {points !== null && (
             <span className="bg-points-100 text-points-800 flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-extrabold whitespace-nowrap">
               <StarIcon className="size-4 fill-current" />
-              {t.common.points(task.points)}
+              {t.common.points(points)}
             </span>
           )}
           <TaskFavouriteStar title={task.title} currentUserId={currentUserId} />

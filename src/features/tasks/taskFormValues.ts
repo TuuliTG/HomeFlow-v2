@@ -43,13 +43,18 @@ export function fieldValues(
 
 export type FieldValues = ReturnType<typeof fieldValues>;
 
+function pointsInput(points: string): number {
+  return points.trim() === '' ? Number.NaN : Number(points);
+}
+
 /** The task the field values describe, for `newTaskSchema` to check. */
 export function taskInput(values: FieldValues, isChild: boolean) {
   return {
     title: values.title,
     type: values.type,
-    // A private task earns nothing; a child's shared task waits for an adult to award its points.
-    points: values.isPrivate || isChild ? null : values.points,
+    // A private task earns nothing; a child's shared task waits for an adult to award its points. An empty
+    // field is no number rather than 0, which would make a task without points.
+    points: values.isPrivate || isChild ? null : pointsInput(values.points),
     repeatEveryDays: repeatDays(values.repeat),
     dueOn: values.dueOn === '' ? null : values.dueOn,
     description: values.description.trim() === '' ? null : values.description,

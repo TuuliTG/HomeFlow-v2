@@ -53,7 +53,8 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
 
 /**
  * The shared tasks done in the user's household since `since`, newest first, with who helped, who liked
- * them and their comments, oldest first. Row Level Security limits tasks, likes and comments to the household.
+ * them and their comments, oldest first. Tasks with 0 points count for nobody, so they aren't news. Row Level
+ * Security limits tasks, likes and comments to the household.
  */
 export async function fetchNews(since: Date): Promise<NewsItem[]> {
   const { data, error } = await getSupabaseClient()
@@ -62,6 +63,7 @@ export async function fetchNews(since: Date): Promise<NewsItem[]> {
       'id, title, type, icon, points, completed_at, completed_by, task_helpers(user_id, points), task_likes(user_id), task_comments(id, author_id, body, created_at)',
     )
     .eq('is_private', false)
+    .or('points.is.null,points.gt.0')
     .gte('completed_at', since.toISOString())
     .order('completed_at', { ascending: false })
     .order('created_at', { referencedTable: 'task_comments', ascending: true });

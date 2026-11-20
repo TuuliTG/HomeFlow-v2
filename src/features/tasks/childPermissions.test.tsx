@@ -159,7 +159,7 @@ describe('what a child sees of tasks they may not change', () => {
     expect(await screen.findByLabelText('Stars for each child')).toHaveValue(null);
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'Points must be a whole number from 1 to 10.',
+      'Points must be a whole number from 0 to 10.',
     );
   });
 });

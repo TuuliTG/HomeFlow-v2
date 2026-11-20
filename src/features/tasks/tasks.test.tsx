@@ -8,7 +8,7 @@ import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
-const POINTS_ERROR = 'Points must be a whole number from 1 to 10.';
+const POINTS_ERROR = 'Points must be a whole number from 0 to 10.';
 
 /** Wednesday 8 October 2026, midday where the test runs. */
 function setToday() {
@@ -200,7 +200,7 @@ describe('creating a task', () => {
 
   it.each([
     { case: 'an empty name', title: '   ', points: '3', message: 'Give the task a name.' },
-    { case: 'too few points', title: 'Dishes', points: '0', message: POINTS_ERROR },
+    { case: 'too few points', title: 'Dishes', points: '-1', message: POINTS_ERROR },
     { case: 'too many points', title: 'Dishes', points: '11', message: POINTS_ERROR },
     { case: 'fractional points', title: 'Dishes', points: '2.5', message: POINTS_ERROR },
   ])('refuses to create a task with $case', async ({ title, points, message }) => {

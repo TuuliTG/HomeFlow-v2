@@ -1,4 +1,9 @@
-import { type NewTask, type TaskSuggestion, titleKey } from '@/features/tasks/task';
+import {
+  isWithoutPoints,
+  type NewTask,
+  type TaskSuggestion,
+  titleKey,
+} from '@/features/tasks/task';
 import type { Messages } from '@/lib/i18n/i18n';
 
 /** How many matching tasks are listed while the user types a name. */
@@ -61,8 +66,13 @@ export function suggestionAsTask({
   };
 }
 
-/** "1 point", "3 points", "Private" for a private task, or "Waiting for points" for a child's task. */
-export function suggestionPointsLabel({ points, isPrivate }: TaskSuggestion, t: Messages): string {
+/**
+ * "1 point", "3 points", "Private" for a private task, "No points" for one with 0 points, or "Waiting for
+ * points" for a child's task.
+ */
+export function suggestionPointsLabel(suggestion: TaskSuggestion, t: Messages): string {
+  const { points, isPrivate } = suggestion;
   if (isPrivate) return t.taskForm.private;
+  if (isWithoutPoints(suggestion)) return t.tasks.card.noPoints;
   return points === null ? t.tasks.card.waitingForPoints : t.common.points(points);
 }
