@@ -101,6 +101,8 @@ export const taskForm = {
   points: 'Points',
   /** The points of a task for children, which each child earns for doing it. */
   stars: 'Stars for each child',
+  /** Shown under the points when they are 0: such a shared task counts for nobody (ADR 0004). */
+  noPointsHint: "Without points, it isn't counted in statistics.",
   images: {
     label: 'Pictures (optional)',
     add: 'Add a picture',
@@ -131,7 +133,7 @@ export const taskForm = {
     titleTooLong: (max: number) => `Keep the name to ${String(max)} characters or fewer.`,
     descriptionTooLong: (max: number) =>
       `Keep the description to ${String(max)} characters or fewer.`,
-    pointsRange: 'Points must be a whole number from 1 to 10.',
+    pointsRange: 'Points must be a whole number from 0 to 10.',
     invalidDueDate: 'Pick a valid due date.',
     repeatRange: 'Choose how often it repeats: every 1 to 365 days.',
     onlySharedHavePoints: 'Only shared tasks have points.',

@@ -67,6 +67,7 @@ export const fetchNews: typeof newsApi.fetchNews = (since) => {
   return Promise.resolve(
     tasks
       .filter(isDoneShared)
+      .filter((task) => task.points !== 0)
       .filter((task) => new Date(task.completed.at) >= since)
       .sort((a, b) => b.completed.at.localeCompare(a.completed.at))
       .map((task) => ({

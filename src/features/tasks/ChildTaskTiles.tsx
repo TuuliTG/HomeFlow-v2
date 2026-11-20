@@ -2,7 +2,7 @@ import { type ReactNode, useId } from 'react';
 
 import { CheckIcon, StarIcon } from '@/components/ui/icons';
 import { emptyClassName, sectionHeadingClassName } from '@/features/tasks/meStyles';
-import type { Task } from '@/features/tasks/task';
+import { NO_POINTS, type Task } from '@/features/tasks/task';
 import { EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
 import { useCompleteTask, usePickUpTask } from '@/features/tasks/useTasks';
@@ -113,7 +113,7 @@ function TaskTile({ task, action, note }: TaskTileProps) {
 
 /**
  * One star per point, named in words. A private task earns none, and a child's own shared task waits for an
- * adult to choose its points.
+ * adult to choose its points. A task with 0 points shows nothing.
  */
 function PointsAsStars({ task }: { task: Task }) {
   const { common, tasks } = useMessages();
@@ -124,6 +124,7 @@ function PointsAsStars({ task }: { task: Task }) {
       </p>
     );
   }
+  if (task.points === NO_POINTS) return null;
   return (
     <span role="img" aria-label={common.points(task.points)} className="flex flex-wrap gap-0.5">
       {Array.from({ length: task.points }, (_, index) => (

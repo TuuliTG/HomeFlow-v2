@@ -7,6 +7,7 @@ const supabase = vi.hoisted(() => {
     select: vi.fn(),
     eq: vi.fn(),
     gte: vi.fn(),
+    or: vi.fn(),
     order: vi.fn(),
     in: vi.fn(),
     insert: vi.fn(),
@@ -48,10 +49,11 @@ describe('news api', () => {
     query.select.mockReturnValue(query);
     query.eq.mockReturnValue(query);
     query.gte.mockReturnValue(query);
+    query.or.mockReturnValue(query);
     query.delete.mockReturnValue(query);
   });
 
-  it('reads shared tasks done since the start, with helpers, likes and comments and everyone named', async () => {
+  it('reads shared tasks done since the start, leaving out reminders, with helpers, likes and comments and everyone named', async () => {
     respondWithNews({ data: [row], error: null });
     query.in.mockResolvedValue({
       data: [
@@ -91,6 +93,7 @@ describe('news api', () => {
     ]);
     expect(client.from).toHaveBeenCalledWith('tasks');
     expect(query.eq).toHaveBeenCalledWith('is_private', false);
+    expect(query.or).toHaveBeenCalledWith('points.is.null,points.gt.0');
     expect(query.gte).toHaveBeenCalledWith('completed_at', '2026-10-04T00:00:00.000Z');
     expect(query.in).toHaveBeenCalledWith('id', ['u2', 'u3', 'u1']);
   });

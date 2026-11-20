@@ -7,6 +7,7 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { emptyClassName } from '@/features/tasks/meStyles';
 import {
   canChooseHelpers,
+  earnedPoints,
   type CompletedTask,
   type HelpedTask,
   UNDO_WINDOW_MS,
@@ -110,6 +111,7 @@ function CompletedItem({ task, userId, asksWhoHelped }: CompletedItemProps) {
   // Checked when the item appears; the database has the final say.
   const [now] = useState(Date.now);
   const canUndo = now - new Date(task.completedAt).getTime() < UNDO_WINDOW_MS;
+  const points = earnedPoints(task.points);
 
   return (
     <li className="flex flex-col gap-1 px-4 py-3 text-sm">
@@ -119,7 +121,7 @@ function CompletedItem({ task, userId, asksWhoHelped }: CompletedItemProps) {
           <span className="text-ink font-semibold">{task.title}</span>
           <span className="text-ink-muted">
             {t.doneOn(common.shortDate(new Date(task.completedAt)))}
-            {task.points !== null && ` · ${common.points(task.points)}`}
+            {points !== null && ` · ${common.points(points)}`}
           </span>
           <TaskHelpersLine helpers={task.helpers} />
           {asksWhoHelped && canChooseHelpers(task, now) && (

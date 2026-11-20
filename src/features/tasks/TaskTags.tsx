@@ -1,4 +1,4 @@
-import type { Task } from '@/features/tasks/task';
+import { earnedPoints, type Task } from '@/features/tasks/task';
 import { TaskDueDate } from '@/features/tasks/TaskDueDate';
 import { labelNames } from '@/features/tasks/taskLabelChoices';
 import { type Messages, useMessages } from '@/lib/i18n/i18n';
@@ -8,6 +8,15 @@ const tagClassName = 'w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold';
 interface Tag {
   label: string;
   className: string;
+}
+
+/** Why a shared task shows no points: a child's waits for an adult to award them, or it has none. */
+function pointsTag(task: Task, t: Messages): Tag | false {
+  if (task.isPrivate || earnedPoints(task.points) !== null) return false;
+  return {
+    label: task.points === null ? t.tasks.card.waitingForPoints : t.tasks.card.noPoints,
+    className: 'bg-points-100 text-points-800',
+  };
 }
 
 /** The tags a task's card shows: its type, then whatever else applies to it, then its labels. */
@@ -27,11 +36,7 @@ function tagsOf(task: Task, t: Messages): Tag[] {
             : t.tasks.card.onlyFor(task.pickerName ?? t.common.someone),
         className: 'bg-done-100 text-done-800',
       },
-    shared &&
-      task.points === null && {
-        label: t.tasks.card.waitingForPoints,
-        className: 'bg-points-100 text-points-800',
-      },
+    pointsTag(task, t),
     task.repeatEveryDays !== null && {
       label: t.tasks.repeat(task.repeatEveryDays),
       className: 'bg-info-100 text-info-800',

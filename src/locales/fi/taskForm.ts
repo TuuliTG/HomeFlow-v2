@@ -97,6 +97,7 @@ export const taskForm: Messages['taskForm'] = {
   anyChild: 'Kenen tahansa lapsen',
   points: 'Pisteet',
   stars: 'Tähdet kullekin lapselle',
+  noPointsHint: 'Ilman pisteitä sitä ei lasketa tilastoihin.',
   images: {
     label: 'Kuvat (vapaaehtoinen)',
     add: 'Lisää kuva',
@@ -124,7 +125,7 @@ export const taskForm: Messages['taskForm'] = {
     titleRequired: 'Anna tehtävälle nimi.',
     titleTooLong: (max) => `Nimessä saa olla enintään ${String(max)} merkkiä.`,
     descriptionTooLong: (max) => `Kuvauksessa saa olla enintään ${String(max)} merkkiä.`,
-    pointsRange: 'Pisteiden pitää olla kokonaisluku 1–10.',
+    pointsRange: 'Pisteiden pitää olla kokonaisluku 0–10.',
     invalidDueDate: 'Valitse kelvollinen määräpäivä.',
     repeatRange: 'Valitse, kuinka usein tehtävä toistuu: 1–365 päivän välein.',
     onlySharedHavePoints: 'Vain yhteisillä tehtävillä on pisteitä.',

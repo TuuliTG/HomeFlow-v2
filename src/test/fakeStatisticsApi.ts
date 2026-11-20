@@ -6,13 +6,15 @@ import { creditsOf, requestsFailing, tasks } from '@/test/fakeTasksBackend';
 /**
  * In-memory stand-in for `@/features/statistics/api`, installed for every unit test in `setup.ts`.
  * Counts the tasks in `fakeTasksBackend` like `household_statistics()`: the logged-in user's household
- * only, shared tasks only, crediting helpers their bonus points.
+ * only, shared tasks with points (or waiting for them) only, crediting helpers their bonus points.
  */
 export const fetchContributions: typeof statisticsApi.fetchContributions = (since) => {
   const user = fakeAuthBackend.currentUser();
   if (requestsFailing() || !user) return Promise.reject(new Error('Network error'));
   const householdId = fakeHouseholdBackend.householdIdOf(user.id);
-  const shared = tasks.filter((task) => task.householdId === householdId && !task.isPrivate);
+  const shared = tasks.filter(
+    (task) => task.householdId === householdId && !task.isPrivate && task.points !== 0,
+  );
   const inPeriod = (timestamp: string) => since === null || new Date(timestamp) >= since;
   const memberIds = householdId ? fakeHouseholdBackend.memberIdsOf(householdId) : [];
   return Promise.resolve(
