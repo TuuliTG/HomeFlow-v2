@@ -24,6 +24,7 @@ export function titleKey(title: string): string {
 export const MIN_POINTS = 1;
 /** The points of a shared task without points, which earns nothing and counts for nobody (ADR 0004). */
 export const NO_POINTS = 0;
+/** The most points a task can earn, and what a new one starts with. */
 export const MAX_POINTS = 10;
 export const DEFAULT_POINTS = 3;
 
