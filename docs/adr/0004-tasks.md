@@ -1,7 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-14 (routines: everyday chores as one-tap chips; no "Show completed" on the board; folding away
-  each due-date group)
+- **Updated:** 2026-11-20 (shared tasks without points, e.g. reminders)
 
 ## Context
 
@@ -154,6 +153,13 @@ next one back rather than follow a fixed calendar.
   they don't see who is doing the other tasks. Shared tasks, News, Rewards and Statistics, and the goal forms, send
   a child to their Me page (`SharedTasksPage`, `src/app/AdultsOnly`), where their jars show their goals' progress. Children's screens carry no hints or explanations. Adults' screens are unchanged. Points are still called points, as
   elsewhere.
+- **Tasks without points**: an adult can give a shared task 0 points (`points` is 0–10), e.g. for a reminder like
+  "Dentist on Thursday". It counts for nobody: `private.task_credits` leaves it out, so it adds no points or tasks
+  done to statistics, goals or totals; `household_statistics()` doesn't count it as created; News (`fetchNews()`)
+  leaves it out; and nobody can be credited for helping (`set_task_helpers()`). Null points keep their meaning
+  (private, or a child's task waiting for points), so 0 is the explicit "none" rather than a new column, and
+  `award_task_points()` awards at least 1. On the form a muted hint under the field appears at 0; the card simply
+  shows no points badge, with no extra tag. Not called "reminder" in the app: that word already names reminders.
 - **Points**: the Me screen shows the user's total points, summed when read (`own_total_points()`), not stored.
   Adding tasks earns nothing yet. Points also count towards goals (ADR 0007).
 - **Helping**: an adult who marked a shared task with points done can say, for a week (as long as it is in the News),
