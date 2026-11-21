@@ -60,7 +60,7 @@ export function TaskTimingFields({ always, ...schedule }: TaskTimingFieldsProps)
 const dailyLimitChoices = Array.from({ length: MAX_DAILY_LIMIT }, (_, index) => index + 1);
 
 /** How many times a day an always task earns its points, or no limit (an empty value). */
-function DailyLimitField({
+export function DailyLimitField({
   value,
   onChange,
 }: {
@@ -91,7 +91,7 @@ function DailyLimitField({
 }
 
 /** Whether it is done already, how often it repeats, when it is due and whether it is a routine. */
-function ScheduleFields({
+export function ScheduleFields({
   repeat,
   onRepeatChange,
   repeatCountRef,
