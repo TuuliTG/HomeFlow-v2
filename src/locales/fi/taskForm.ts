@@ -53,7 +53,7 @@ export const taskForm: Messages['taskForm'] = {
   },
   defaultPoints: {
     heading: 'Uudet tehtävät',
-    label: 'Pisteet',
+    label: 'Tehtävien oletuspistemäärä',
   },
   suggestedTasks: 'Ehdotetut tehtävät',
   onTheBoard: 'Listalla · ',
