@@ -33,8 +33,8 @@ next one back rather than follow a fixed calendar.
 - **Tasks for children**: `for_children` (default false: adults only), chosen first on the task form by adults
   ("Who is it for? Adults / Children", not offered for their private tasks) and changeable when editing; the next
   occurrence keeps it. The form changes to suit: a task for children asks which children and "Stars for each
-  child" (its points), and has no type or "Already done". **A shared task for children is the
-  children's only**: parents wanted the children's chores kept apart from their own, so its stars always go to a
+  child" (its points), and has no type, labels (any chosen before are dropped) or "Already done". **A shared task
+  for children is the children's only**: parents wanted the children's chores kept apart from their own, so its stars always go to a
   child, and adults keep their own tasks (e.g. their own "Empty the dishwasher" with other points). Adults see,
   edit and delete them on the board's "Children" list, chosen instead of "Adults" at its top
   (`?children=1`, where saving one opens; one list at a time, as showing both under a tick box was misleading;
@@ -82,10 +82,10 @@ next one back rather than follow a fixed calendar.
   or someone other than the member asked picks it up, and an accepted one once they give it back; the member asked
   picking the task up accepts it. Answering and cancelling lock the task before the request, like picking up, so they
   can't deadlock. Each function touches the task row, so live updates carry requests too.
-- **Chores for one child**: an adult can give a task for children to one child in the household ("Which children?"
-  on the New task form, "Whose chore is it?" when editing, shown for a task for children when the household has
-  children; `assigned_to`, only for
-  a shared task for children, `tasks_assigned_only_for_children`). Parents asked for this: some chores are one child's
+- **Chores for one child**: an adult can give a task for children to one child in the household (tick boxes with
+  the children's names on the New task form, at least one ticked and a family's only child ticked already; "Whose
+  chore is it?" with "Any child" when editing; shown for a task for children when the household has children;
+  `assigned_to`, only for a shared task for children, `tasks_assigned_only_for_children`). Parents asked for this: some chores are one child's
   job, so asking and waiting for a yes doesn't fit. A trigger (`private.pick_up_for_assignee()`) picks it up for the
   child, also from whoever had it, so it is on their Me page with no new list, and puts it back for any child when an
   adult clears it. Requests and schedules are settled as for any change of hands; those triggers also fire on
