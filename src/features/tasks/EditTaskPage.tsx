@@ -44,14 +44,14 @@ export function EditTaskPage() {
 }
 
 /**
- * Where to go after saving or deleting: back to a child's tasks (`ChildTasksPage`) when it opened the form with
+ * Where to go after saving or deleting: back to a child's page (`paths.member`) when it opened the form with
  * `{ returnToChild }` in its state, else to the list the task is on. Only an id, so it can't lead elsewhere.
  */
 function useReturnTo(): string | null {
   const state: unknown = useLocation().state;
   if (typeof state !== 'object' || state === null || !('returnToChild' in state)) return null;
   const { returnToChild } = state;
-  return typeof returnToChild === 'string' ? paths.childTasks(returnToChild) : null;
+  return typeof returnToChild === 'string' ? paths.member(returnToChild) : null;
 }
 
 /**

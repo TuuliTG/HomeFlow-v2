@@ -9,7 +9,7 @@ import { useAddTask, useMembership } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
-/** Adds a task for one child from their page (`ChildTasksPage`), and goes back there. */
+/** Adds a task for one child from their page (`paths.member`), and goes back there. */
 export function NewChildTaskPage() {
   const { childId = '' } = useParams();
   const user = useLoggedInUser();
@@ -36,11 +36,11 @@ export function NewChildTaskPage() {
       <ChildTaskForm
         childId={childId}
         currentUserId={user.id}
-        cancelTo={paths.childTasks(childId)}
+        cancelTo={paths.member(childId)}
         isSaving={addTask.isPending}
         onSave={async (task) => {
           await addTask.mutateAsync({ task, images: [], householdId, alsoFor: [] });
-          await navigate(paths.childTasks(childId));
+          await navigate(paths.member(childId));
         }}
       />
     </>

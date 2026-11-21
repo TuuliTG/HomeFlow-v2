@@ -133,7 +133,6 @@ export const tasks: Messages['tasks'] = {
     youHelped: (name) => `${name} teki, sinä autoit`,
   },
   childTasks: {
-    title: (name) => `${name}: tehtävät`,
     add: (name) => `Lisää tehtävä: ${name}`,
     newTitle: (name) => `Uusi tehtävä: ${name}`,
     kindLegend: 'Tehtävän tyyppi',

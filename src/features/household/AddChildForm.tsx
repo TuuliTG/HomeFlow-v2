@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { PlusIcon } from '@/components/ui/icons';
 import { SingleFieldForm } from '@/components/ui/SingleFieldForm';
 import type { SignInCode } from '@/features/household/household';
 import { useAddChild } from '@/features/household/useHousehold';
@@ -12,8 +13,12 @@ interface AddChildFormProps {
   onAdded: (childName: string, signInCode: SignInCode) => void;
 }
 
-/** An adult adds a child without email, who then signs in with a one-time code (ADR 0003). */
+/**
+ * An adult adds a child without email, who then signs in with a one-time code (ADR 0003). An occasional task, so
+ * it waits behind one quiet row until opened.
+ */
 export function AddChildForm({ householdId, onAdded }: AddChildFormProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const addChild = useAddChild(householdId);
   const t = useMessages().household.addChild;
@@ -35,6 +40,20 @@ export function AddChildForm({ householdId, onAdded }: AddChildFormProps) {
     });
   }
 
+  if (!isOpen) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setIsOpen(true);
+        }}
+        className="bg-surface shadow-card text-brand-700 hover:bg-brand-50 flex min-h-14 items-center gap-2 rounded-2xl px-4 text-left font-semibold"
+      >
+        <PlusIcon className="size-5 shrink-0" strokeWidth={2.4} />
+        {t.heading}
+      </button>
+    );
+  }
   return (
     <section aria-labelledby="add-child" className="flex flex-col gap-3">
       <h2 id="add-child" className="text-ink font-semibold">

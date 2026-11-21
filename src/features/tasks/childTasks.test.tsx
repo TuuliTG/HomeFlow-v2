@@ -75,7 +75,7 @@ describe('tasks for children', () => {
 
     // The child's page opens, where it shows.
     expect(await screen.findByRole('link', { name: /Tidy the toys/ })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe(`/children/${ben.id}/tasks`);
+    expect(router.state.location.pathname).toBe(`/household/members/${ben.id}`);
     expect(tasks.at(-1)).toMatchObject({
       title: 'Tidy the toys',
       forChildren: true,
@@ -166,7 +166,7 @@ describe('tasks for children', () => {
       assignedTo: ben.id,
     });
     const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks`);
+    renderAppAt(`/household/members/${ben.id}`);
 
     await user.click(await screen.findByRole('link', { name: /Feed the cat/ }));
     expect(await screen.findByRole('radio', { name: 'Custom' })).toBeChecked();
@@ -174,9 +174,7 @@ describe('tasks for children', () => {
     await user.click(screen.getByRole('radio', { name: '3 stars' }));
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-    expect(
-      await screen.findByRole('heading', { level: 1, name: "Ben's tasks" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
     expect(tasks[0]).toMatchObject({ points: 3, forChildren: true, assignedTo: ben.id });
   });
 

@@ -50,6 +50,7 @@ test('family member can create a task and see it on the shared task board', asyn
 test("family member can add a task for a child, kept on the child's page", async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
+  await page.getByRole('button', { name: 'Add a child without email' }).click();
   await page.getByLabel("Child's name").fill('Ben');
   await page.getByRole('button', { name: 'Add child' }).click();
   await expect(page.getByRole('region', { name: "Ben's sign-in code" })).toBeVisible();
@@ -69,7 +70,7 @@ test("family member can add a task for a child, kept on the child's page", async
   await page.getByRole('button', { name: 'Create task' }).click();
 
   // Ben, the only child, was chosen already, and his page opens with the task.
-  await expect(page.getByRole('heading', { level: 1, name: "Ben's tasks" })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Ben' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Feed the cat/ })).toBeVisible();
   await page.getByRole('link', { name: 'Shared tasks' }).click();
   await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();

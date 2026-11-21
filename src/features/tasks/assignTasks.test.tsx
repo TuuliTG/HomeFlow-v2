@@ -39,9 +39,7 @@ describe('giving a task to one child', () => {
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     // Ben's page opens, where it shows.
-    expect(
-      await screen.findByRole('heading', { level: 1, name: "Ben's tasks" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Make your bed/ })).toBeInTheDocument();
     expect(tasks.at(-1)).toMatchObject({ assignedTo: ben.id, pickedUpBy: ben.id });
   });
@@ -162,9 +160,7 @@ describe('giving a task to one child', () => {
     await user.selectOptions(whose, 'Dora');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-    expect(
-      await screen.findByRole('heading', { level: 1, name: "Dora's tasks" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Dora' })).toBeInTheDocument();
     expect(tasks.find((candidate) => candidate.id === id)).toMatchObject({
       assignedTo: dora.id,
       pickedUpBy: dora.id,

@@ -1,6 +1,6 @@
 # 0006. Statistics and fairness
 
-- **Updated:** 2026-11-22 (always tasks count as created once)
+- **Updated:** 2026-11-21 (always tasks count as created once)
 
 ## Context
 
