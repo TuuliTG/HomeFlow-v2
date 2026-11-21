@@ -194,4 +194,31 @@ describe("a child's tasks", () => {
     expect(await screen.findByText('Copied to Dora.')).toBeInTheDocument();
     expect(tasks.filter((task) => task.assignedTo === dora.id)).toHaveLength(1);
   });
+
+  it('open an always task in the same form as a new one', async () => {
+    const { anna, ben } = family();
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    const user = userEvent.setup();
+    renderAppAt(`/children/${ben.id}/tasks`);
+
+    await user.click(await screen.findByRole('link', { name: /Make the bed/ }));
+
+    expect(await screen.findByRole('radio', { name: 'Always' })).toBeChecked();
+    expect(screen.getByLabelText('Whose chore is it?')).toHaveDisplayValue('Ben');
+    expect(screen.getByLabelText('Times a day')).toHaveValue(1);
+    expect(screen.getByRole('switch', { name: 'No limit' })).not.toBeChecked();
+  });
+
+  it('ask for a number of times a day unless there is no limit', async () => {
+    const { ben } = family();
+    const user = userEvent.setup();
+    renderAppAt(`/children/${ben.id}/tasks/new`);
+
+    await user.type(await screen.findByRole('combobox', { name: 'Task' }), 'Brush teeth');
+    await user.clear(screen.getByLabelText('Times a day'));
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose 1 to 10 times a day, or no limit.');
+    expect(screen.getByLabelText('Times a day')).toHaveFocus();
+  });
 });

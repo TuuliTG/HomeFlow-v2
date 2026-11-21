@@ -35,6 +35,8 @@ export function NewChildTaskPage() {
       <PageHeader title={t.tasks.childTasks.newTitle(child.name ?? t.common.someone)} />
       <ChildTaskForm
         childId={childId}
+        currentUserId={user.id}
+        cancelTo={paths.childTasks(childId)}
         isSaving={addTask.isPending}
         onSave={async (task) => {
           await addTask.mutateAsync({ task, images: [], householdId, alsoFor: [] });

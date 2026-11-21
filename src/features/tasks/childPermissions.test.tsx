@@ -156,7 +156,7 @@ describe('what a child sees of tasks they may not change', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/task:1/edit');
 
-    expect(await screen.findByLabelText('Stars for each child')).toHaveValue(null);
+    expect(await screen.findByLabelText('Stars')).toHaveValue(null);
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Points must be a whole number from 0 to 10.',

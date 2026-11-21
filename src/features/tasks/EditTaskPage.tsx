@@ -4,9 +4,10 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { canChange, type Task } from '@/features/tasks/task';
+import { ChildTaskForm } from '@/features/tasks/ChildTaskForm';
+import { canChange, type NewTask, type Task } from '@/features/tasks/task';
 import { TaskForm } from '@/features/tasks/TaskForm';
-import { isImagesNotSavedState } from '@/features/tasks/taskImages';
+import { type DraftImage, isImagesNotSavedState, savedImages } from '@/features/tasks/taskImages';
 import { useDeleteTask, useMembership, useTasks, useUpdateTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -53,6 +54,14 @@ function useReturnTo(): string | null {
   return typeof returnToChild === 'string' ? paths.childTasks(returnToChild) : null;
 }
 
+/**
+ * Whether an adult is editing a task for children, which has the same form as adding one for a child (keeping its
+ * description and pictures as they are); other tasks, and a child's edits, have the full form.
+ */
+function isChildrensTask(task: Task, isChild: boolean): boolean {
+  return !isChild && task.forChildren && !task.isPrivate;
+}
+
 /** After a new task was added without its pictures (`imagesNotSavedState`), asks to add them again. */
 function ImagesNotSavedNotice() {
   const t = useMessages().taskForm.edit;
@@ -73,26 +82,39 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
   const returnTo = useReturnTo();
   const t = useMessages();
 
+  async function save(changed: NewTask, images: DraftImage[]) {
+    await updateTask.mutateAsync({
+      taskId: task.id,
+      task: changed,
+      images,
+      householdId,
+      before: imagesBefore,
+    });
+    await navigate(returnTo ?? paths.taskList(changed), { replace: returnTo !== null });
+  }
+
   return (
     <div className="flex flex-col gap-8">
-      <TaskForm
-        initial={task}
-        initialImages={imagesBefore}
-        isChild={isChild}
-        currentUserId={userId}
-        submitLabel={t.taskForm.edit.submit}
-        isSaving={updateTask.isPending}
-        onSave={async (changed, images) => {
-          await updateTask.mutateAsync({
-            taskId: task.id,
-            task: changed,
-            images,
-            householdId,
-            before: imagesBefore,
-          });
-          await navigate(returnTo ?? paths.taskList(changed), { replace: returnTo !== null });
-        }}
-      />
+      {isChildrensTask(task, isChild) ? (
+        <ChildTaskForm
+          initial={task}
+          childId={task.assignedTo}
+          currentUserId={userId}
+          isSaving={updateTask.isPending}
+          cancelTo={returnTo ?? paths.taskList(task)}
+          onSave={(changed) => save(changed, savedImages(imagesBefore))}
+        />
+      ) : (
+        <TaskForm
+          initial={task}
+          initialImages={imagesBefore}
+          isChild={isChild}
+          currentUserId={userId}
+          submitLabel={t.taskForm.edit.submit}
+          isSaving={updateTask.isPending}
+          onSave={save}
+        />
+      )}
       <DeleteTask task={task} userId={userId} />
     </div>
   );
