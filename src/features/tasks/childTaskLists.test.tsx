@@ -118,27 +118,6 @@ describe("a child's tasks", () => {
     expect(screen.getByRole('link', { name: /Make your bed/ })).toBeInTheDocument();
   });
 
-  it('copy to another child, only those they lack', async () => {
-    const { anna, ben, dora } = family();
-    give(anna.id, ben.id, { title: 'Make the bed' });
-    give(anna.id, ben.id, { title: 'Brush teeth' });
-    give(anna.id, dora.id, { title: 'Brush teeth' });
-    const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks`);
-
-    await user.click(await screen.findByRole('button', { name: 'Copy to Dora' }));
-
-    expect(await screen.findByText('Copied to Dora.')).toHaveAttribute('role', 'status');
-    expect(screen.queryByRole('button', { name: 'Copy to Dora' })).not.toBeInTheDocument();
-    const doras = tasks.filter((task) => task.assignedTo === dora.id);
-    expect(doras.map((task) => task.title).toSorted()).toEqual(['Brush teeth', 'Make the bed']);
-    expect(doras.find((task) => task.title === 'Make the bed')).toMatchObject({
-      isAlways: true,
-      dailyLimit: 1,
-      pickedUpBy: dora.id,
-    });
-  });
-
   it('are set up by adults only', async () => {
     const { ben } = family();
     fakeAuthBackend.logInAs('ben@example.com', 'Ben');
@@ -169,32 +148,6 @@ describe("a child's tasks", () => {
     expect(await screen.findByText('This child is not in your family.')).toBeInTheDocument();
   });
 
-  it('say when copying fails', async () => {
-    const { anna, ben } = family();
-    give(anna.id, ben.id, { title: 'Make the bed' });
-    const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks`);
-
-    const copy = await screen.findByRole('button', { name: 'Copy to Dora' });
-    fakeTasksBackend.failRequests();
-    await user.click(copy);
-
-    expect(await screen.findByText("We couldn't copy the tasks. Try again.")).toBeInTheDocument();
-  });
-
-  it('copy a name the child has twice only once', async () => {
-    const { anna, ben, dora } = family();
-    give(anna.id, ben.id, { title: 'Brush teeth' });
-    give(anna.id, ben.id, { title: 'Brush teeth' });
-    const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks`);
-
-    await user.click(await screen.findByRole('button', { name: 'Copy to Dora' }));
-
-    expect(await screen.findByText('Copied to Dora.')).toBeInTheDocument();
-    expect(tasks.filter((task) => task.assignedTo === dora.id)).toHaveLength(1);
-  });
-
   it('open an always task in the same form as a new one', async () => {
     const { anna, ben } = family();
     give(anna.id, ben.id, { title: 'Make the bed' });
@@ -220,5 +173,71 @@ describe("a child's tasks", () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Choose 1 to 10 times a day, or no limit.');
     expect(screen.getByLabelText('Times a day')).toHaveFocus();
+  });
+
+  it('copy the tasks chosen to another child, those they lack ticked to begin with', async () => {
+    const { anna, ben, dora } = family();
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    give(anna.id, ben.id, { title: 'Brush teeth' });
+    give(anna.id, ben.id, { title: 'Read a book' });
+    give(anna.id, dora.id, { title: 'Brush teeth' });
+    const user = userEvent.setup();
+    renderAppAt(`/children/${ben.id}/tasks`);
+
+    await user.click(await screen.findByRole('link', { name: 'Copy to Dora' }));
+    expect(await screen.findByRole('heading', { name: 'Copy to Dora' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Make the bed/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /Brush teeth/ })).toBeDisabled();
+    expect(screen.getByText('Dora has it already')).toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: /Read a book/ }));
+    await user.click(screen.getByRole('button', { name: 'Copy 1 task' }));
+
+    expect(await screen.findByText('Copied to Dora.')).toHaveAttribute('role', 'status');
+    expect(screen.getByRole('heading', { name: "Ben's tasks" })).toBeInTheDocument();
+    const doras = tasks.filter((task) => task.assignedTo === dora.id);
+    expect(doras.map((task) => task.title).toSorted()).toEqual(['Brush teeth', 'Make the bed']);
+    expect(doras.find((task) => task.title === 'Make the bed')).toMatchObject({
+      isAlways: true,
+      dailyLimit: 1,
+      pickedUpBy: dora.id,
+    });
+  });
+
+  it('offer no copying to a child who has all the tasks', async () => {
+    const { anna, ben, dora } = family();
+    give(anna.id, ben.id, { title: 'Brush teeth' });
+    give(anna.id, dora.id, { title: 'Brush teeth' });
+    renderAppAt(`/children/${ben.id}/tasks`);
+
+    expect(await screen.findByRole('link', { name: /Brush teeth/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Copy to Dora' })).not.toBeInTheDocument();
+  });
+
+  it('copy nothing until a task is chosen, and say when copying fails', async () => {
+    const { anna, ben, dora } = family();
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    const user = userEvent.setup();
+    renderAppAt(`/children/${ben.id}/tasks/copy/${dora.id}`);
+
+    await user.click(await screen.findByRole('checkbox', { name: /Make the bed/ }));
+    expect(screen.getByRole('button', { name: 'Copy 0 tasks' })).toBeDisabled();
+    await user.click(screen.getByRole('checkbox', { name: /Make the bed/ }));
+    fakeTasksBackend.failRequests();
+    await user.click(screen.getByRole('button', { name: 'Copy 1 task' }));
+
+    expect(await screen.findByText("We couldn't copy the tasks. Try again.")).toBeInTheDocument();
+  });
+
+  it('copy a name the child has twice only once', async () => {
+    const { anna, ben, dora } = family();
+    give(anna.id, ben.id, { title: 'Brush teeth' });
+    give(anna.id, ben.id, { title: 'Brush teeth' });
+    const user = userEvent.setup();
+    renderAppAt(`/children/${ben.id}/tasks/copy/${dora.id}`);
+
+    await user.click(await screen.findByRole('button', { name: 'Copy 1 task' }));
+
+    expect(await screen.findByText('Copied to Dora.')).toBeInTheDocument();
+    expect(tasks.filter((task) => task.assignedTo === dora.id)).toHaveLength(1);
   });
 });

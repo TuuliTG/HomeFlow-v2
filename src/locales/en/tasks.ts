@@ -181,6 +181,10 @@ export const tasks = {
     copyTo: (name: string) => `Copy to ${name}`,
     copied: (name: string) => `Copied to ${name}.`,
     copyFailed: "We couldn't copy the tasks. Try again.",
+    /** Ticked tasks are copied; one the other child has under the same name already can't be. */
+    alreadyHas: (name: string) => `${name} has it already`,
+    copySubmit: (count: number) => (count === 1 ? 'Copy 1 task' : `Copy ${String(count)} tasks`),
+    pickToCopy: 'Tasks to copy',
   },
   child: {
     title: 'My stars',

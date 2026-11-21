@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { AddLink } from '@/components/ui/AddLink';
@@ -10,7 +10,7 @@ import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
 import { childTaskList, scheduleOf, tasksToCopy } from '@/features/tasks/childTasks';
 import type { Task } from '@/features/tasks/task';
 import { useHouseholdMembers } from '@/features/tasks/useHelpers';
-import { useCopyTasks, useTasks } from '@/features/tasks/useTasks';
+import { useTasks } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -121,44 +121,39 @@ interface CopyToProps {
   others: { id: string; name: string | null }[];
 }
 
-/** A button for each other child, giving them the tasks they don't have yet; left out when there are none. */
+/**
+ * A link for each other child who lacks some of the tasks, to choose which to copy to them, and what was copied
+ * last (`copiedTo` in the location's state); left out when there is neither.
+ */
 function CopyTo({ tasks, fromChildId, others }: CopyToProps) {
-  const user = useLoggedInUser();
-  const copyTasks = useCopyTasks(user.id);
   const { common, tasks: t } = useMessages();
-  const copied = copyTasks.isSuccess
-    ? others.find((o) => o.id === copyTasks.variables.childId)
-    : undefined;
-  const withTasks = others
-    .map((other) => ({ ...other, toCopy: tasksToCopy(tasks, fromChildId, other.id) }))
-    .filter((other) => other.toCopy.length > 0);
+  const copiedTo = useCopiedTo();
+  const copied = others.find((other) => other.id === copiedTo);
+  const withTasks = others.filter((other) => tasksToCopy(tasks, fromChildId, other.id).length > 0);
   if (withTasks.length === 0 && !copied) return null;
   return (
     <div className="flex flex-col items-start gap-2">
       {withTasks.map((other) => (
-        <button
+        <Link
           key={other.id}
-          type="button"
-          disabled={copyTasks.isPending}
-          onClick={() => {
-            copyTasks.reset();
-            copyTasks.mutate({ tasks: other.toCopy, childId: other.id });
-          }}
-          className="text-brand-600 min-h-11 text-sm font-medium underline disabled:opacity-60"
+          to={paths.copyChildTasks(fromChildId, other.id)}
+          className="text-brand-600 flex min-h-11 items-center text-sm font-medium underline"
         >
           {t.childTasks.copyTo(other.name ?? common.someone)}
-        </button>
+        </Link>
       ))}
       {copied && (
         <p role="status" className="text-done-800 text-sm">
           {t.childTasks.copied(copied.name ?? common.someone)}
         </p>
       )}
-      {copyTasks.isError && (
-        <p role="alert" className="text-danger-700 text-sm">
-          {t.childTasks.copyFailed}
-        </p>
-      )}
     </div>
   );
+}
+
+/** The child the tasks were just copied to (`CopyChildTasksPage`), if any. */
+function useCopiedTo(): string | null {
+  const state: unknown = useLocation().state;
+  if (typeof state !== 'object' || state === null || !('copiedTo' in state)) return null;
+  return typeof state.copiedTo === 'string' ? state.copiedTo : null;
 }

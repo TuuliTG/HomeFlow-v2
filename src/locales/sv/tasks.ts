@@ -162,6 +162,10 @@ export const tasks: Messages['tasks'] = {
     copyTo: (name) => `Kopiera till ${name}`,
     copied: (name) => `Kopierat till ${name}.`,
     copyFailed: 'Vi kunde inte kopiera uppgifterna. Försök igen.',
+    alreadyHas: (name) => `${name} har den redan`,
+    copySubmit: (count) =>
+      count === 1 ? 'Kopiera 1 uppgift' : `Kopiera ${String(count)} uppgifter`,
+    pickToCopy: 'Uppgifter att kopiera',
   },
   child: {
     title: 'Mina stjärnor',

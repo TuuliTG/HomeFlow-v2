@@ -21,6 +21,7 @@ import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { SharedTasksPage } from '@/features/tasks/SharedTasksPage';
 import { ChildTasksPage } from '@/features/tasks/ChildTasksPage';
+import { CopyChildTasksPage } from '@/features/tasks/CopyChildTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
 import { EditTaskPage } from '@/features/tasks/EditTaskPage';
 import { NewChildTaskPage } from '@/features/tasks/NewChildTaskPage';
@@ -71,6 +72,10 @@ export const routes: RouteObject[] = [
                   { path: paths.statistics, element: <StatisticsPage /> },
                   { path: paths.childTasks(':childId'), element: <ChildTasksPage /> },
                   { path: paths.newChildTask(':childId'), element: <NewChildTaskPage /> },
+                  {
+                    path: paths.copyChildTasks(':childId', ':toChildId'),
+                    element: <CopyChildTasksPage />,
+                  },
                 ],
               },
               { path: paths.household, element: <HouseholdPage /> },

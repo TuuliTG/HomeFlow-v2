@@ -153,6 +153,9 @@ export const tasks: Messages['tasks'] = {
     copyTo: (name) => `Kopioi: ${name}`,
     copied: (name) => `Kopioitu: ${name}.`,
     copyFailed: 'Emme voineet kopioida tehtäviä. Yritä uudelleen.',
+    alreadyHas: (name) => `On jo: ${name}`,
+    copySubmit: (count) => (count === 1 ? 'Kopioi 1 tehtävä' : `Kopioi ${String(count)} tehtävää`),
+    pickToCopy: 'Kopioitavat tehtävät',
   },
   child: {
     title: 'Omat tähdet',
