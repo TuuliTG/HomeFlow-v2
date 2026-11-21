@@ -2,7 +2,7 @@
 -- limit. Run with `npm run db:test` (needs Docker). Anna (adult) and Ben (child) share a household.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(16);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -108,6 +108,20 @@ select is(
   'the daily limit starts again the next day'
 );
 
+-- Undoing a time done takes its copy away and reopens the one done.
+select public.undo_complete_task(current_setting('test.teeth2')::uuid);
+select results_eq(
+  $$ select count(*)::integer, bool_and(completed_at is null) from public.tasks
+     where title = 'Brush teeth' and completed_at is null $$,
+  $$ values (1, true) $$,
+  'undoing an always task done removes its fresh copy'
+);
+select is(
+  (select completed_at from public.tasks where id = current_setting('test.teeth2')::uuid),
+  null,
+  'undoing an always task done reopens it'
+);
+
 -- Anna turns the limit off.
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.update_task(
@@ -118,6 +132,23 @@ select results_eq(
   $$ select is_always, daily_limit from public.tasks where id = current_setting('test.bed3')::uuid $$,
   $$ values (true, null::smallint) $$,
   'an adult can turn an always task''s limit off'
+);
+
+select is(
+  (select created from public.household_statistics(null)
+     where user_id = '11111111-1111-1111-1111-111111111111'),
+  2,
+  'the fresh copies of an always task do not count as created'
+);
+select public.update_task(
+  current_setting('test.bed3')::uuid, 'Make your bed', null, 'physical', 1::smallint, null, 1::smallint, true, null,
+  null, false, null, null, null, false, null
+);
+select results_eq(
+  $$ select is_always, daily_limit, repeat_every_days from public.tasks
+     where id = current_setting('test.bed3')::uuid $$,
+  $$ values (false, null::smallint, 1::smallint) $$,
+  'an adult can make an always task an ordinary repeating one'
 );
 
 select * from finish();

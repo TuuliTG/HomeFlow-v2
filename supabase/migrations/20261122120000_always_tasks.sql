@@ -151,12 +151,12 @@ begin
     end if;
     insert into public.tasks
       (household_id, title, description, type, points, created_by, previous_task_id, for_children, icon,
-       assigned_to, is_always, daily_limit, times_done, times_done_on)
+       assigned_to, labels, custom_labels, is_always, daily_limit, times_done, times_done_on)
     values
       (done.household_id, done.title, done.description, done.type, done.points, done.created_by, done.id,
        done.for_children, done.icon,
        case when private.is_child_in_household(done.assigned_to, done.household_id) then done.assigned_to end,
-       true, done.daily_limit,
+       done.labels, done.custom_labels, true, done.daily_limit,
        case when done.times_done_on = completed_on then done.times_done + 1 else 1 end, completed_on)
     returning id into next_id;
   elsif done.repeat_every_days is not null then
@@ -178,4 +178,53 @@ begin
   end if;
   return next_id;
 end;
+$$;
+
+-- household_statistics() as before (20261120120000_tasks_without_points.sql), but the fresh copies of an always task
+-- don't count as created: adding it once is the planning, and copies can come many times a day.
+create or replace function public.household_statistics(since timestamptz)
+returns table (
+  user_id uuid,
+  display_name text,
+  is_child boolean,
+  done integer,
+  points integer,
+  created integer,
+  meta_done integer,
+  meta_points integer
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    m.user_id,
+    p.display_name,
+    m.is_child,
+    credits.done,
+    coalesce(credits.points, 0),
+    (
+      select count(*)::integer from public.tasks t
+      where t.household_id = m.household_id and t.created_by = m.user_id and not t.is_private
+        and t.points is distinct from 0
+        and not (t.is_always and t.previous_task_id is not null)
+        and t.created_at >= coalesce(household_statistics.since, '-infinity')
+    ),
+    credits.meta_done,
+    coalesce(credits.meta_points, 0)
+  from public.household_members m
+  left join public.profiles p on p.id = m.user_id
+  cross join lateral (
+    select
+      count(*)::integer as done,
+      sum(c.points)::integer as points,
+      (count(*) filter (where c.type = 'meta'))::integer as meta_done,
+      (sum(c.points) filter (where c.type = 'meta'))::integer as meta_points
+    from private.task_credits c
+    where c.household_id = m.household_id and c.user_id = m.user_id
+      and c.completed_at >= coalesce(household_statistics.since, '-infinity')
+  ) credits
+  where m.household_id = (select private.current_household_id())
+  order by m.joined_at, m.user_id;
 $$;
