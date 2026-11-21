@@ -16,7 +16,10 @@ interface TaskChildrenFieldProps {
   errorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
 }
 
-/** Whose chore a task for children is: a new task's chosen children's, or an edited task's child's (ADR 0004). */
+/**
+ * Whose chore a task for children is: a new task's chosen children's, or an edited task's child's (ADR 0004).
+ * Asked only when the family has more than one child.
+ */
 export function TaskChildrenField({
   currentUserId,
   canChooseSeveral,
@@ -27,7 +30,8 @@ export function TaskChildrenField({
 }: TaskChildrenFieldProps) {
   const children = useHouseholdChildren(currentUserId);
   const { common, taskForm: t } = useMessages();
-  if (children.length === 0) return null;
+  // A family's only child is chosen already (`useChildChoice`), so there is nothing to ask.
+  if (children.length <= 1) return null;
 
   if (!canChooseSeveral) {
     return (

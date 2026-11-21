@@ -3,10 +3,6 @@ export const tasks = {
   newTask: 'New task',
   board: {
     title: 'Shared tasks',
-    /**
-     * Which list the board shows adults: their own tasks, or the tasks for children, which adults only check
-     * and edit; children do them. The legend is for screen readers.
-     */
     /** The board's filters, behind a button next to the search. */
     filtersButton: 'Filters',
     /** The label of a chip that turns a filter off while the filters are folded. */

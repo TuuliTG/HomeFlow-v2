@@ -94,15 +94,14 @@ describe('giving a task to one child', () => {
     expect(tasks).toHaveLength(0);
   });
 
-  it('chooses the only child of the family already', async () => {
+  it('gives the task to the only child of the family without asking', async () => {
     const anna = logInAsFamilyMember();
     const ben = addChildToFamily();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
     await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    const which = await screen.findByRole('group', { name: 'Which children?' });
-    expect(within(which).getByRole('checkbox', { name: 'Ben' })).toBeChecked();
+    expect(screen.queryByRole('group', { name: 'Which children?' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Task'), 'Make your bed');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
