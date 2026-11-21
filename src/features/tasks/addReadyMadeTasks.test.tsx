@@ -171,7 +171,7 @@ describe('ready-made tasks', () => {
     const user = userEvent.setup();
     renderAppAt('/settings');
 
-    const defaultPoints = await screen.findByRole('combobox', { name: 'Points' });
+    const defaultPoints = await screen.findByRole('combobox', { name: 'Default points for tasks' });
     expect(defaultPoints).toHaveValue('3');
     await user.selectOptions(defaultPoints, '5');
     await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
@@ -192,6 +192,8 @@ describe('ready-made tasks', () => {
     renderAppAt('/settings');
 
     await screen.findByRole('heading', { name: 'Language' });
-    expect(screen.queryByRole('combobox', { name: 'Points' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('combobox', { name: 'Default points for tasks' }),
+    ).not.toBeInTheDocument();
   });
 });
