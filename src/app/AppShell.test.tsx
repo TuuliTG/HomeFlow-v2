@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { renderAppAt } from '@/test/renderWithRouter';
-import { logInAsFamilyMember } from '@/test/session';
+import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
 describe('AppShell', () => {
   beforeEach(() => {
@@ -22,6 +22,23 @@ describe('AppShell', () => {
       'aria-current',
       'page',
     );
+  });
+
+  it("leads to the Family page from the family's initials and name", async () => {
+    for (const name of ['Mia', 'Ben', 'Dora']) addChildToFamily(name);
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    const family = await screen.findByRole('link', { name: 'The Virtanens' });
+    // Anna and Mia, then "+2" for Ben and Dora; the initials are only decoration.
+    await within(family).findByText('+2');
+    expect(within(family).getByText('A')).toBeInTheDocument();
+    expect(within(family).getByText('M')).toBeInTheDocument();
+    await user.click(family);
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'The Virtanens' }),
+    ).toBeInTheDocument();
   });
 
   it.each([

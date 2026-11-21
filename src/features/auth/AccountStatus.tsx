@@ -9,8 +9,8 @@ const logOutStyle =
   'border-line-strong text-ink hover:bg-surface shrink-0 rounded-xl border px-3 py-1.5 font-medium';
 
 /**
- * Shows who is logged in, with a log-out button. With other accounts signed in on this device, both are in
- * a menu under the name, with switching to each of them.
+ * Shows who is logged in (on wider screens), with a log-out button. With other accounts signed in on this device,
+ * both are in a menu under the name, with switching to each of them.
  */
 export function AccountStatus() {
   const user = useLoggedInUser();
@@ -34,7 +34,8 @@ export function AccountStatus() {
   if (otherAccounts.length === 0 && !switcher.failure) {
     return (
       <div className="flex min-w-0 items-center gap-3 text-sm">
-        {name}
+        {/* On phones the family's pill needs the room. */}
+        <span className="hidden md:contents">{name}</span>
         {logOutButton}
       </div>
     );
