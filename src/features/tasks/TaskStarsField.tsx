@@ -11,7 +11,7 @@ interface TaskStarsFieldProps {
   onChange: (points: string) => void;
   /** The first star, focused when the stars need choosing. */
   inputRef: Ref<HTMLInputElement>;
-  errorProps: { 'aria-describedby': string | undefined };
+  errorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
 }
 
 /**
@@ -21,12 +21,15 @@ interface TaskStarsFieldProps {
 export function TaskStarsField({ value, onChange, inputRef, errorProps }: TaskStarsFieldProps) {
   const t = useMessages().taskForm;
   const name = useId();
+  const labelId = useId();
   // More points than stars (from the default points, say) are saved as the most stars too.
   const stars = value.trim() === '' ? null : Math.min(Number(value), MAX_CHILD_STARS);
 
   return (
-    <fieldset aria-describedby={errorProps['aria-describedby']}>
-      <legend className="text-ink mb-1 text-sm font-medium">{t.stars}</legend>
+    <div role="radiogroup" aria-labelledby={labelId} {...errorProps}>
+      <p id={labelId} className="text-ink mb-1 text-sm font-medium">
+        {t.stars}
+      </p>
       <div className="-ml-1.5 flex">
         {STAR_CHOICES.map((count) => (
           <label key={count} className="relative cursor-pointer p-1.5">
@@ -52,6 +55,6 @@ export function TaskStarsField({ value, onChange, inputRef, errorProps }: TaskSt
           </label>
         ))}
       </div>
-    </fieldset>
+    </div>
   );
 }

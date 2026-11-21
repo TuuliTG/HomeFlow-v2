@@ -62,7 +62,7 @@ test('family member can add a task for the children, kept apart from their own',
   expect(results.violations, 'a11y violations on a task for children').toEqual([]);
   await page.getByLabel('Task', { exact: true }).fill('Feed the cat');
   // The stars are hidden radios behind their star icons.
-  const stars = page.getByRole('group', { name: 'Stars for each child' });
+  const stars = page.getByRole('radiogroup', { name: 'Stars for each child' });
   await stars.locator('label').nth(1).click();
   await expect(stars.getByRole('radio', { name: '2 stars' })).toBeChecked();
   await page.getByRole('button', { name: 'Create task' }).click();

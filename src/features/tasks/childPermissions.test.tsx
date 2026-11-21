@@ -156,10 +156,11 @@ describe('what a child sees of tasks they may not change', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/task:1/edit');
 
-    const stars = await screen.findByRole('group', { name: 'Stars for each child' });
+    const stars = await screen.findByRole('radiogroup', { name: 'Stars for each child' });
     expect(within(stars).queryByRole('radio', { checked: true })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Choose the stars for each child.');
+    expect(stars).toHaveAttribute('aria-invalid', 'true');
     expect(within(stars).getByRole('radio', { name: '1 star' })).toHaveFocus();
   });
 });

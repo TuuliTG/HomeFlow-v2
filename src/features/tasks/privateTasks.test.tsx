@@ -105,13 +105,15 @@ describe('private tasks', () => {
     expect(screen.queryByRole('group', { name: 'Who is it for?' })).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Type' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Points')).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: 'Stars for each child' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('radiogroup', { name: 'Stars for each child' }),
+    ).not.toBeInTheDocument();
     expect(screen.getByLabelText('Task')).toBeInTheDocument();
     expect(screen.queryByRole('checkbox', { name: 'Already done' })).not.toBeInTheDocument();
 
     await user.click(privateButton);
     expect(screen.getByRole('radio', { name: 'Children' })).toBeChecked();
-    expect(screen.getByRole('group', { name: 'Stars for each child' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Stars for each child' })).toBeInTheDocument();
   });
 
   it('have no points', async () => {

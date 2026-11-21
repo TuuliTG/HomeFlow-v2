@@ -115,7 +115,7 @@ describe('tasks for children', () => {
     renderAppAt('/tasks/new');
 
     await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    const stars = screen.getByRole('group', { name: 'Stars for each child' });
+    const stars = screen.getByRole('radiogroup', { name: 'Stars for each child' });
     expect(within(stars).getAllByRole('radio')).toHaveLength(5);
     await user.click(within(stars).getByRole('radio', { name: '2 stars' }));
     expect(within(stars).getByRole('radio', { name: '2 stars' })).toBeChecked();
