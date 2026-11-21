@@ -52,9 +52,13 @@ describe('always tasks', () => {
     // An always task is never due and never repeats.
     expect(screen.queryByLabelText('Repeats')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Due date')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Times a day')).toHaveValue(1);
-    await user.clear(screen.getByLabelText('Times a day'));
-    await user.type(screen.getByLabelText('Times a day'), '2');
+    expect(screen.getByLabelText('Times a day, at most')).toHaveValue(1);
+    await user.click(screen.getByRole('button', { name: 'One fewer' }));
+    expect(screen.getByLabelText('Times a day, at most')).toHaveValue(1);
+    await user.click(screen.getByRole('button', { name: 'One more' }));
+    await user.click(screen.getByRole('button', { name: 'One more' }));
+    await user.click(screen.getByRole('button', { name: 'One fewer' }));
+    expect(screen.getByLabelText('Times a day, at most')).toHaveValue(2);
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     // Ben's page opens, where it shows.
@@ -81,11 +85,31 @@ describe('always tasks', () => {
     await user.type(screen.getByLabelText('Task'), 'Tidy toys');
     await user.click(screen.getByRole('checkbox', { name: /^Always there/ }));
     await user.click(screen.getByRole('switch', { name: 'No limit' }));
-    expect(screen.getByLabelText('Times a day')).toBeDisabled();
+    expect(screen.getByLabelText('Times a day, at most')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'One more' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     expect(await screen.findByRole('link', { name: /Tidy toys/ })).toHaveTextContent('No limit');
     expect(tasks.at(-1)).toMatchObject({ isAlways: true, dailyLimit: null });
+  });
+
+  it('go up to 10 times a day', async () => {
+    logInAsFamilyMember();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(ben.id, true);
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.click(await screen.findByRole('radio', { name: 'Children' }));
+    await user.click(screen.getByRole('checkbox', { name: /^Always there/ }));
+    await user.clear(screen.getByLabelText('Times a day, at most'));
+    await user.type(screen.getByLabelText('Times a day, at most'), '10');
+
+    await user.click(screen.getByRole('button', { name: 'One more' }));
+    expect(screen.getByLabelText('Times a day, at most')).toHaveValue(10);
+    await user.click(screen.getByRole('button', { name: 'One fewer' }));
+    expect(screen.getByLabelText('Times a day, at most')).toHaveValue(9);
   });
 
   it("are not offered for adults' tasks", async () => {

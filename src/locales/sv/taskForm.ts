@@ -152,9 +152,9 @@ export const taskForm: Messages['taskForm'] = {
   alreadyDone: 'Redan gjord',
   routine: 'Snabb rutin: markera den som klar med ett tryck på tavlan',
   always: 'Alltid där: kommer tillbaka när den är gjord',
-  dailyLimit: 'Gånger om dagen',
-  dailyLimitBefore: 'Kan göras högst',
-  dailyLimitAfter: 'gånger om dagen',
+  dailyLimit: 'Högst antal gånger om dagen',
+  dailyLimitFewer: 'En gång färre',
+  dailyLimitMore: 'En gång fler',
   noLimit: 'Ingen gräns',
   errors: {
     dailyLimitRange: (max) => `Välj 1–${String(max)} gånger om dagen eller ingen gräns.`,
