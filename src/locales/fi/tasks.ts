@@ -65,8 +65,6 @@ export const tasks: Messages['tasks'] = {
   },
   card: {
     private: 'Yksityinen',
-    forChildren: 'Lapsille',
-    onlyFor: (name) => `Vain: ${name}`,
     always: (dailyLimit) =>
       dailyLimit === null ? 'Aina' : `Aina · ${String(dailyLimit)}× päivässä`,
     waitingForPoints: 'Odottaa pisteitä',

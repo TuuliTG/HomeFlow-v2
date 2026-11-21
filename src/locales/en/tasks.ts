@@ -79,9 +79,6 @@ export const tasks = {
   },
   card: {
     private: 'Private',
-    forChildren: 'For children',
-    /** A task an adult gave to one child. */
-    onlyFor: (name: string) => `Only for ${name}`,
     /** An always task, with how many times a day it earns its points; null for no limit. */
     always: (dailyLimit: number | null) =>
       dailyLimit === null ? 'Always' : `Always · ${String(dailyLimit)}× a day`,

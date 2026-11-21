@@ -69,8 +69,6 @@ export const tasks: Messages['tasks'] = {
   },
   card: {
     private: 'Privat',
-    forChildren: 'För barn',
-    onlyFor: (name) => `Bara för ${name}`,
     always: (dailyLimit) =>
       dailyLimit === null ? 'Alltid' : `Alltid · ${String(dailyLimit)}× om dagen`,
     waitingForPoints: 'Väntar på poäng',
