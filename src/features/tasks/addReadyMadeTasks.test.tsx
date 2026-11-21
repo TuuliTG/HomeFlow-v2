@@ -61,7 +61,7 @@ describe('ready-made tasks', () => {
     await user.click(screen.getByRole('button', { name: 'Tidy your room' }));
 
     expect(screen.getByLabelText('Task')).toHaveValue('Tidy your room');
-    expect(screen.getByLabelText('Stars for each child')).toHaveValue(1);
+    expect(screen.getByRole('radio', { name: '1 star' })).toBeChecked();
   });
 
   it('keeps the child chosen, and what was typed, when a ready-made task is picked', async () => {

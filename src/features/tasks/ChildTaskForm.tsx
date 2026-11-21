@@ -2,15 +2,15 @@ import { type SyntheticEvent, useId, useRef, useState } from 'react';
 
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
 import { useReadyMadeTasks } from '@/features/tasks/readyMadeTasks';
-import { type NewTask, newTaskSchema } from '@/features/tasks/task';
+import type { NewTask } from '@/features/tasks/task';
 import { TaskChildrenField } from '@/features/tasks/TaskChildrenField';
 import { TaskFormButtons } from '@/features/tasks/TaskFormButtons';
 import {
+  checkTask,
   type FieldName,
   fieldOf,
   type FieldValues,
   fieldValues,
-  taskInput,
   withReadyMadeTask,
 } from '@/features/tasks/taskFormValues';
 import { TaskIconField } from '@/features/tasks/TaskIconField';
@@ -85,11 +85,10 @@ export function ChildTaskForm({
       setError({ field: 'children', message: t.taskForm.errors.childRequired });
       return;
     }
-    const parsed = newTaskSchema(t).safeParse(taskInput({ ...fields, assignedTo }, false));
+    const parsed = checkTask({ ...fields, assignedTo }, false, t);
     if (!parsed.success) {
-      const [issue] = parsed.error.issues;
-      const field = fieldOf(issue?.path[0]);
-      setError({ field, message: issue?.message ?? t.taskForm.errors.checkDetails });
+      const field = fieldOf(parsed.path);
+      setError({ field, message: parsed.message ?? t.taskForm.errors.checkDetails });
       fieldRefs[field].current?.focus();
       return;
     }

@@ -26,6 +26,8 @@ export const MIN_POINTS = 1;
 export const NO_POINTS = 0;
 /** The most points a task can earn. */
 export const MAX_POINTS = 10;
+/** The most stars an adult can pick for a task for children, from a row of stars. */
+export const MAX_CHILD_STARS = 5;
 /** What a new task starts with until the user chooses their own default in the settings. */
 export const DEFAULT_POINTS = 3;
 
