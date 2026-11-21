@@ -1,4 +1,4 @@
-import { type SyntheticEvent, useId, useRef, useState } from 'react';
+import { type SyntheticEvent, useId, useState } from 'react';
 
 import { paths } from '@/app/paths';
 import { CancelLink } from '@/components/ui/CancelLink';
@@ -11,7 +11,6 @@ import {
 import {
   canBeRoutine,
   type FieldName,
-  type FieldValues,
   fieldOf,
   fieldValues,
   type SaveOptions,
@@ -32,6 +31,7 @@ import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleF
 import { TaskTimingFields } from '@/features/tasks/TaskTimingFields';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 import { useChildChoice } from '@/features/tasks/useChildChoice';
+import { useTaskFieldRefs, useTaskFormFields } from '@/features/tasks/useTaskFormFields';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface FormError {
@@ -83,7 +83,7 @@ export function TaskForm({
   onSave,
 }: TaskFormProps) {
   const [initialValues] = useState(() => fieldValues(initial ?? prefill, defaultPoints));
-  const [fields, setFields] = useState(initialValues);
+  const { fields, setFields, change, set } = useTaskFormFields(initialValues);
   const { isPrivate, forChildren } = fields;
   const shown = shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready });
   const children = useChildChoice(currentUserId, {
@@ -104,34 +104,11 @@ export function TaskForm({
   const [error, setError] = useState<FormError | null>(null);
   const t = useMessages();
   const errorId = useId();
-  const titleRef = useRef<HTMLInputElement>(null);
-  const pointsRef = useRef<HTMLInputElement>(null);
-  const repeatCountRef = useRef<HTMLInputElement>(null);
-  const dueOnRef = useRef<HTMLInputElement>(null);
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
-  const fieldRefs = {
-    title: titleRef,
-    description: descriptionRef,
-    points: pointsRef,
-    repeatEveryDays: repeatCountRef,
-    dueOn: dueOnRef,
-  };
+  const fieldRefs = useTaskFieldRefs();
 
   function errorPropsFor(field: FieldName | 'children') {
     const hasError = error?.field === field;
     return { 'aria-invalid': hasError, 'aria-describedby': hasError ? errorId : undefined };
-  }
-
-  /** Changes some of the fields, e.g. `change({ dueOn: '' })`. */
-  function change(changed: Partial<FieldValues>) {
-    setFields((current) => ({ ...current, ...changed }));
-  }
-
-  /** Changes one field, e.g. `set('title')` as the title field's `onChange`. */
-  function set<K extends keyof FieldValues>(key: K) {
-    return (value: FieldValues[K]) => {
-      setFields((current) => ({ ...current, [key]: value }));
-    };
   }
 
   /** Fills in an earlier task's details, or a ready-made task's while keeping who it is for (and the rest). */
@@ -223,14 +200,14 @@ export function TaskForm({
         readyMade={readyMade}
         onPick={fillIn}
         favourites={favourites}
-        inputRef={titleRef}
+        inputRef={fieldRefs.title}
         errorProps={errorPropsFor('title')}
       />
 
       <TaskDescriptionField
         value={fields.description}
         onChange={set('description')}
-        textareaRef={descriptionRef}
+        textareaRef={fieldRefs.description}
         errorProps={errorPropsFor('description')}
       />
 
@@ -265,7 +242,7 @@ export function TaskForm({
           forChildren={shown.isForChildren}
           value={fields.points}
           onChange={set('points')}
-          inputRef={pointsRef}
+          inputRef={fieldRefs.points}
           errorProps={errorPropsFor('points')}
         />
       )}
@@ -273,11 +250,11 @@ export function TaskForm({
       <TaskTimingFields
         repeat={fields.repeat}
         onRepeatChange={set('repeat')}
-        repeatCountRef={repeatCountRef}
+        repeatCountRef={fieldRefs.repeatEveryDays}
         repeatCountErrorProps={errorPropsFor('repeatEveryDays')}
         dueOn={fields.dueOn}
         onDueOnChange={set('dueOn')}
-        dueOnRef={dueOnRef}
+        dueOnRef={fieldRefs.dueOn}
         dueOnErrorProps={errorPropsFor('dueOn')}
         alreadyDone={{
           offered: shown.alreadyDone,
