@@ -131,6 +131,8 @@ export const taskForm = {
   points: 'Points',
   /** The points of a task for children, which each child earns for doing it. */
   stars: 'Stars for each child',
+  /** "1 star", "3 stars": a star to pick in the stars of a task for children. */
+  starCount: (count: number) => (count === 1 ? '1 star' : `${String(count)} stars`),
   /** Shown under the points when they are 0: such a shared task counts for nobody (ADR 0004). */
   noPointsHint: 'Not counted in statistics.',
   images: {
@@ -167,6 +169,8 @@ export const taskForm = {
     descriptionTooLong: (max: number) =>
       `Keep the description to ${String(max)} characters or fewer.`,
     pointsRange: 'Points must be a whole number from 0 to 10.',
+    /** A task for children has no stars picked yet (a child's own task, waiting for an adult's). */
+    starsRequired: 'Choose the stars for each child.',
     invalidDueDate: 'Pick a valid due date.',
     repeatRange: 'Choose how often it repeats: every 1 to 365 days.',
     onlySharedHavePoints: 'Only shared tasks have points.',

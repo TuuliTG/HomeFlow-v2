@@ -54,8 +54,7 @@ describe('giving a task to one child', () => {
     await user.click(within(which).getByRole('checkbox', { name: 'Ben' }));
     await user.click(within(which).getByRole('checkbox', { name: 'Dora' }));
     await user.type(screen.getByLabelText('Task'), 'Empty the dishwasher');
-    await user.clear(screen.getByLabelText('Stars for each child'));
-    await user.type(screen.getByLabelText('Stars for each child'), '2');
+    await user.click(screen.getByRole('radio', { name: '2 stars' }));
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     const copies = await screen.findAllByRole('listitem', { name: 'Empty the dishwasher' });

@@ -61,7 +61,10 @@ test('family member can add a task for the children, kept apart from their own',
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations on a task for children').toEqual([]);
   await page.getByLabel('Task', { exact: true }).fill('Feed the cat');
-  await page.getByLabel('Stars for each child').fill('2');
+  // The stars are hidden radios behind their star icons.
+  const stars = page.getByRole('radiogroup', { name: 'Stars for each child' });
+  await stars.locator('label').nth(1).click();
+  await expect(stars.getByRole('radio', { name: '2 stars' })).toBeChecked();
   await page.getByRole('button', { name: 'Create task' }).click();
 
   // The board opens on the children's tasks, one list at a time.

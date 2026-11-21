@@ -1,13 +1,14 @@
 import { type Ref, useId } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
+import { TaskStarsField } from '@/features/tasks/TaskStarsField';
 import { MAX_POINTS, NO_POINTS } from '@/features/tasks/task';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskPointsFieldProps {
   /** A child doesn't choose the points of their task: an adult awards them (ADR 0004). */
   isChild: boolean;
-  /** An adult's task for children earns each child who does it these points, shown as stars. */
+  /** An adult's task for children earns each child who does it these points, picked as stars. */
   forChildren: boolean;
   value: string;
   onChange: (points: string) => void;
@@ -17,6 +18,7 @@ interface TaskPointsFieldProps {
 
 /**
  * The points a shared task earns, 0 for one that counts for nobody; none for a child, whose task an adult awards points to.
+ * A task for children earns stars instead.
  */
 export function TaskPointsField({
   isChild,
@@ -29,13 +31,23 @@ export function TaskPointsField({
   const t = useMessages().taskForm;
   const hintId = useId();
   if (isChild) return null;
+  if (forChildren) {
+    return (
+      <TaskStarsField
+        value={value}
+        onChange={onChange}
+        inputRef={inputRef}
+        errorProps={errorProps}
+      />
+    );
+  }
   const isWithoutPoints = value.trim() !== '' && Number(value) === NO_POINTS;
   const describedBy = [errorProps['aria-describedby'], isWithoutPoints && hintId]
     .filter(Boolean)
     .join(' ');
   return (
     <label className="text-ink flex flex-col gap-1 text-sm font-medium">
-      {forChildren ? t.stars : t.points}
+      {t.points}
       <input
         type="number"
         name="points"

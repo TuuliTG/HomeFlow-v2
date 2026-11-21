@@ -126,6 +126,7 @@ export const taskForm: Messages['taskForm'] = {
   anyChild: 'Vilket barn som helst',
   points: 'Poäng',
   stars: 'Stjärnor till varje barn',
+  starCount: (count: number) => (count === 1 ? '1 stjärna' : `${String(count)} stjärnor`),
   noPointsHint: 'Räknas inte i statistiken.',
   images: {
     label: 'Bilder (valfritt)',
@@ -158,6 +159,7 @@ export const taskForm: Messages['taskForm'] = {
     titleTooLong: (max) => `Namnet får ha högst ${String(max)} tecken.`,
     descriptionTooLong: (max) => `Beskrivningen får ha högst ${String(max)} tecken.`,
     pointsRange: 'Poängen måste vara ett heltal från 0 till 10.',
+    starsRequired: 'Välj stjärnor till varje barn.',
     invalidDueDate: 'Välj en giltig förfallodag.',
     repeatRange: 'Välj hur ofta uppgiften upprepas: med 1–365 dagars mellanrum.',
     onlySharedHavePoints: 'Bara gemensamma uppgifter har poäng.',

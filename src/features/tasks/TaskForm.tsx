@@ -1,14 +1,14 @@
 import { type SyntheticEvent, useId, useState } from 'react';
 
-import { type NewTask, newTaskSchema, type TaskSuggestion } from '@/features/tasks/task';
+import { type NewTask, type TaskSuggestion } from '@/features/tasks/task';
 import {
   canBeRoutine,
+  checkTask,
   type FieldName,
   fieldOf,
   fieldValues,
   type SaveOptions,
   shownFields,
-  taskInput,
   withReadyMadeTask,
 } from '@/features/tasks/taskFormValues';
 import { TaskDescriptionField } from '@/features/tasks/TaskDescriptionField';
@@ -155,10 +155,9 @@ export function TaskForm({
       return;
     }
     const [assignedTo = null, ...alsoFor] = children.childIds;
-    const parsed = newTaskSchema(t).safeParse(taskInput({ ...fields, assignedTo }, isChild));
+    const parsed = checkTask({ ...fields, assignedTo }, isChild, t);
     if (!parsed.success) {
-      const [issue] = parsed.error.issues;
-      showInvalid(issue?.path[0], issue?.message);
+      showInvalid(parsed.path, parsed.message);
       return;
     }
     // The check mark keeps its value while hidden, so it counts only while shown.
