@@ -1,6 +1,7 @@
-import type { Ref } from 'react';
+import { type ReactNode, type Ref, useId } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
+import { MinusIcon, PlusIcon } from '@/components/ui/icons';
 import { Switch } from '@/components/ui/Switch';
 import { CheckboxField } from '@/features/tasks/CheckboxField';
 import { MAX_DAILY_LIMIT } from '@/features/tasks/task';
@@ -72,43 +73,100 @@ interface DailyLimitFieldProps {
 }
 
 /**
- * "Can be done at most [n] times a day", how many times a day an always task earns its points, with a "No limit"
- * switch beside it; the number keeps its value while switched off.
+ * How many times a day an always task earns its points: a labelled number between "one fewer" and "one more"
+ * buttons that stay within 1 to the most, with a "No limit" switch beside it; the number keeps its value while
+ * switched off.
  */
 export function DailyLimitField({ value, onChange, inputRef, errorProps }: DailyLimitFieldProps) {
   const t = useMessages().taskForm;
+  const id = useId();
+  const times = Number.parseInt(value.times, 10);
+  const step = (by: number) => {
+    const next = Number.isNaN(times) ? 1 : Math.min(Math.max(times + by, 1), MAX_DAILY_LIMIT);
+    onChange({ ...value, times: String(next) });
+  };
   return (
-    <div className="flex items-center justify-between gap-3">
-      <p
-        className={`text-ink flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium ${value.noLimit ? 'opacity-50' : ''}`}
-      >
-        {t.dailyLimitBefore}
-        <input
-          type="number"
-          name="dailyLimit"
-          ref={inputRef}
-          {...errorProps}
-          aria-label={t.dailyLimit}
-          inputMode="numeric"
-          min={1}
-          max={MAX_DAILY_LIMIT}
-          disabled={value.noLimit}
-          value={value.times}
-          onChange={(event) => {
-            onChange({ ...value, times: event.target.value });
+    <div>
+      <label htmlFor={id} className="text-ink mb-2 block text-sm font-medium">
+        {t.dailyLimit}
+      </label>
+      <div className="flex items-center justify-between gap-3">
+        <div
+          className={`border-line-strong bg-surface has-[input:focus]:border-brand-600 has-[input:focus]:ring-brand-600 flex items-center rounded-xl border has-[input:focus]:ring-1 ${value.noLimit ? 'opacity-50' : ''}`}
+        >
+          <StepButton
+            label={t.dailyLimitFewer}
+            disabled={value.noLimit}
+            onClick={() => {
+              step(-1);
+            }}
+          >
+            <MinusIcon className="size-5" />
+          </StepButton>
+          <input
+            id={id}
+            type="number"
+            name="dailyLimit"
+            ref={inputRef}
+            {...errorProps}
+            inputMode="numeric"
+            min={1}
+            max={MAX_DAILY_LIMIT}
+            disabled={value.noLimit}
+            value={value.times}
+            onChange={(event) => {
+              onChange({ ...value, times: event.target.value });
+            }}
+            className="text-ink w-10 [appearance:textfield] bg-transparent text-center text-base focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          />
+          <StepButton
+            label={t.dailyLimitMore}
+            disabled={value.noLimit}
+            onClick={() => {
+              step(1);
+            }}
+          >
+            <PlusIcon className="size-5" />
+          </StepButton>
+          {/* A screen reader hears only the button's name, so the number it changed is read out here. */}
+          <span aria-live="polite" className="sr-only">
+            {value.times}
+          </span>
+        </div>
+        <Switch
+          label={t.noLimit}
+          checked={value.noLimit}
+          onChange={(noLimit) => {
+            onChange({ ...value, noLimit });
           }}
-          className={`${inputClassName} w-16 text-center`}
         />
-        {t.dailyLimitAfter}
-      </p>
-      <Switch
-        label={t.noLimit}
-        checked={value.noLimit}
-        onChange={(noLimit) => {
-          onChange({ ...value, noLimit });
-        }}
-      />
+      </div>
     </div>
+  );
+}
+
+/** An icon button at either end of the daily limit's number. */
+function StepButton({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="text-brand-700 focus-visible:outline-brand-600 flex size-11 items-center justify-center rounded-xl focus-visible:outline-2"
+    >
+      {children}
+    </button>
   );
 }
 
