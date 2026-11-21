@@ -1,4 +1,4 @@
-/** One colour per member, by the order they joined, so a member keeps theirs on every screen. */
+/** One colour per member, by the order they joined. */
 const avatarClassNames = [
   'bg-avatar-1',
   'bg-avatar-2',

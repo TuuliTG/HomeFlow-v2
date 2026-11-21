@@ -171,7 +171,7 @@ export const tasks = {
     copySubmit: (count: number) => (count === 1 ? 'Copy 1 task' : `Copy ${String(count)} tasks`),
     pickToCopy: 'Tasks to copy',
   },
-  /** The Me page for children: their tasks as big tiles, and tasks to pick. */
+  /** The Me page for children: their tasks as big tiles. */
   child: {
     title: 'My stars',
     myTasks: 'My tasks',

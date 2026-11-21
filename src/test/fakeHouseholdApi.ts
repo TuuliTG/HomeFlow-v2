@@ -84,14 +84,12 @@ export const fakeHouseholdBackend = {
     }
     children.delete(userId);
     // Like the trigger on household_members: the open tasks given to a new adult go, the done ones are no longer
-    // theirs, and they give back the other open shared tasks for children.
+    // theirs.
     const isOpenChore = (task: (typeof tasks)[number]) =>
       task.assignedTo === userId && task.completed === null;
     tasks.splice(0, tasks.length, ...tasks.filter((task) => !isOpenChore(task)));
     for (const task of tasks) {
       if (task.assignedTo === userId) task.assignedTo = null;
-      const isChildrens = task.forChildren && !task.isPrivate && task.completed === null;
-      if (isChildrens && task.pickedUpBy === userId) task.pickedUpBy = null;
     }
   },
   isChild: (userId: string) => children.has(userId),

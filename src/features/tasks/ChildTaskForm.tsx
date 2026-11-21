@@ -28,7 +28,7 @@ const CHILD_TASK_STARS = 1;
 interface ChildTaskFormProps {
   /** The task being edited; a new one is always there to begin with. */
   initial?: NewTask;
-  /** The child it is for: a new task's from their page, or the edited task's (null for any child). */
+  /** The child it is for: a new task's from their page, or the edited task's (null only for a task done before every task for children was a child's). */
   childId: string | null;
   currentUserId: string;
   isSaving: boolean;

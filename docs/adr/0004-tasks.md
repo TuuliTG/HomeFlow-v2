@@ -88,8 +88,8 @@ next one back rather than follow a fixed calendar.
   `tasks_assigned_only_for_children`): tick boxes with the children's names on the New task form, at least one
   ticked and a family's only child ticked already, and "Whose chore is it?" when editing. Parents first asked for
   some chores to be one child's; once each child had their own page of tasks, a task for any child had no place left,
-  so there are no such tasks (the migration gave each to the child who had it or was asked, else a copy to each
-  child, and removed those of families without children). A child's own shared task is theirs
+  so there are no such tasks (the migration gave each to the child who had it, was asked and didn't decline, or added
+  it, else a copy to each child, which also counts as created; it removed those of families without children). A child's own shared task is theirs
   (`private.give_childs_task_to_them()`), and a task made adults-only is no longer given to anyone (`update_task()`).
   A trigger (`private.pick_up_for_assignee()`) picks it up for the child, also from whoever had it, so it is on their
   Me page with no new list. Requests and schedules are settled as for any change of hands; those triggers also fire on
@@ -102,7 +102,9 @@ next one back rather than follow a fixed calendar.
   household (`private.is_child_in_household()`, insert policy). The next occurrence goes to the same child. A child
   who becomes an adult, or is removed (`remove_child()`), takes their open chores with them: they go, as nobody else
   was meant to do them; done ones stay, no longer given to them, so undoing one can't reopen it given to an adult
-  (a trigger on `household_members`; such an undo is refused).
+  (a trigger on `household_members`; such an undo is refused, while a child undoing one given to nobody gets it,
+  `undo_complete_task()`). Deleting a child's login any other way fails while they have open chores, as
+  `assigned_to`'s `on delete set null` would leave them given to nobody.
 - **Chores for several children**: choosing more than one child adds **one copy for each** (`addTasks()`, one
   insert, so all or none, sharing the pictures), each given to its child. Each child marks their own copy done and
   earns its stars, so two children doing it together both get the full stars; a copy a child didn't do stays on

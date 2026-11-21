@@ -36,10 +36,7 @@ export function useChildChoice(
     reset: (taskAssignedTo: string | null) => {
       setChosen(childIdsOf(taskAssignedTo));
     },
-    /**
-     * Whether a task for children still needs a child chosen, unless the children are loading, when there is
-     * nothing to choose from yet.
-     */
-    isMissing: isForChildren && childIds.length === 0 && children.length > 0,
+    /** Whether a task for children still needs a child chosen: every one is a child's (ADR 0004). */
+    isMissing: isForChildren && childIds.length === 0,
   };
 }

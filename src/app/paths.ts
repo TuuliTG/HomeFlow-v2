@@ -13,8 +13,8 @@ export const paths = {
   /** Who helped with a task the user marked done. */
   taskHelpers: (taskId: string) => `/tasks/${taskId}/helpers`,
   /**
-   * Where a task is listed: private tasks only on the Me page, a child's on their page of tasks, the others on the
-   * board (which sends a child to their Me page).
+   * Where a task is listed: private tasks only on the Me page, a child's on their member page, the others on the
+   * board. Both of the last are adults' pages, which send a child to their Me page.
    */
   taskList: ({
     isPrivate,

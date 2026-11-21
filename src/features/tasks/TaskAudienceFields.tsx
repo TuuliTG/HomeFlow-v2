@@ -15,7 +15,7 @@ interface TaskAudienceFieldsProps {
   onPrivateChange: (isPrivate: boolean) => void;
   forChildren: boolean;
   onForChildrenChange: (forChildren: boolean) => void;
-  /** The children whose chore it is; none for any child. */
+  /** The children whose chore it is; none until chosen. */
   childIds: string[];
   onChildIdsChange: (childIds: string[]) => void;
   /** The first child's tick box, focused when none is ticked. */
