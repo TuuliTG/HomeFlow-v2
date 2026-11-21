@@ -163,7 +163,7 @@ describe('what a child sees of tasks they may not change', () => {
     const stars = await screen.findByRole('radiogroup', { name: 'Stars' });
     expect(within(stars).queryByRole('radio', { checked: true })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Choose the stars for each child.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose the stars.');
     expect(stars).toHaveAttribute('aria-invalid', 'true');
     expect(within(stars).getByRole('radio', { name: '1 star' })).toHaveFocus();
   });

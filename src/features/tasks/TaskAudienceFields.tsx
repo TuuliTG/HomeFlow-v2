@@ -1,13 +1,10 @@
-import type { RefObject } from 'react';
-
 import { LockIcon } from '@/components/ui/icons';
 import { TaskAudienceChoice } from '@/features/tasks/TaskAudienceChoice';
-import { TaskChildrenField } from '@/features/tasks/TaskChildrenField';
 import { useHouseholdChildren } from '@/features/tasks/useHelpers';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskAudienceFieldsProps {
-  /** Only a new task can be made private, or added for several children. */
+  /** Only a new task can be made private. */
   isNew: boolean;
   /** A child's tasks are always for children, so they are only asked whether to keep one private. */
   isChild: boolean;
@@ -15,19 +12,14 @@ interface TaskAudienceFieldsProps {
   onPrivateChange: (isPrivate: boolean) => void;
   forChildren: boolean;
   onForChildrenChange: (forChildren: boolean) => void;
-  /** The children whose chore it is; none until chosen. */
-  childIds: string[];
-  onChildIdsChange: (childIds: string[]) => void;
-  /** The first child's tick box, focused when none is ticked. */
-  firstChildRef: RefObject<HTMLInputElement | null>;
-  childErrorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
   currentUserId: string;
 }
 
 /**
  * Who the task is for, at the top of the form: a new task can be made private first, which leaves nothing
- * more to choose; otherwise an adult chooses the adults or the children, and which of them (ADR 0004), once the
- * family has children. A private task being edited stays the creator's.
+ * more to choose; otherwise an adult in a family with children chooses the adults or the children (ADR 0004; not
+ * when editing),
+ * and a task for the children can't be private. A private task being edited stays the creator's.
  */
 export function TaskAudienceFields({
   isNew,
@@ -36,29 +28,15 @@ export function TaskAudienceFields({
   onPrivateChange,
   forChildren,
   onForChildrenChange,
-  childIds,
-  onChildIdsChange,
-  firstChildRef,
-  childErrorProps,
   currentUserId,
 }: TaskAudienceFieldsProps) {
-  const children = useHouseholdChildren(currentUserId);
+  const hasChildren = useHouseholdChildren(currentUserId).length > 0;
   const privateToggle = isNew && <PrivateToggle pressed={isPrivate} onChange={onPrivateChange} />;
-  if (isChild || isPrivate || (children.length === 0 && !forChildren)) return privateToggle;
+  if (isChild || isPrivate || !hasChildren || !isNew) return privateToggle;
   return (
     <>
-      {privateToggle}
+      {!forChildren && privateToggle}
       <TaskAudienceChoice forChildren={forChildren} onChange={onForChildrenChange} />
-      {forChildren && (
-        <TaskChildrenField
-          currentUserId={currentUserId}
-          canChooseSeveral={isNew}
-          value={childIds}
-          onChange={onChildIdsChange}
-          firstRef={firstChildRef}
-          errorProps={childErrorProps}
-        />
-      )}
     </>
   );
 }

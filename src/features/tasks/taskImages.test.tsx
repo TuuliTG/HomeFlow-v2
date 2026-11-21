@@ -7,7 +7,7 @@ import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeImagesBackend, setTaskImages, uploadTaskImage } from '@/test/fakeImagesApi';
 import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
-import { logInAsFamilyMember } from '@/test/session';
+import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
 // jsdom can't decode pictures; a file named *.heic stands for one the browser can't read.
 vi.mock('@/features/tasks/shrinkImage', () => ({
@@ -64,6 +64,27 @@ describe('pictures on tasks', () => {
     expect(pictures).toHaveLength(2);
     expect(pictures[0]).toHaveAttribute('href', `https://images.test/${folder}/picture-1.jpg`);
     expect(pictures[0]).toHaveAttribute('target', '_blank');
+  });
+
+  it("attaches a description and pictures to a task added from a child's page", async () => {
+    logInAsFamilyMember();
+    const ben = addChildToFamily();
+    const user = userEvent.setup();
+    renderAppAt(`/household/members/${ben.id}/new-task`);
+
+    await user.type(await screen.findByRole('combobox', { name: 'Task' }), 'Tidy the desk');
+    await user.type(screen.getByLabelText('Description (optional)'), 'Books on the shelf');
+    await user.upload(screen.getByLabelText('Add a picture'), photo('desk.jpg'));
+    expect(await screen.findByRole('img', { name: 'Picture 1' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
+    expect(tasks.at(-1)).toMatchObject({
+      title: 'Tidy the desk',
+      description: 'Books on the shelf',
+      assignedTo: ben.id,
+    });
+    expect(fakeImagesBackend.files()).toContain(`${folder}/picture-1.jpg`);
   });
 
   it('lets another member see the pictures of a shared task', async () => {

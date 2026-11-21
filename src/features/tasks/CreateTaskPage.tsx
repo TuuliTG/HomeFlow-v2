@@ -139,14 +139,13 @@ function useSaveNewTask(userId: string, isChild: boolean, householdId: string | 
     await navigate(paths.meAs(parseToDoView(searchParams.get('view'))));
   }
 
-  async function save(task: NewTask, images: DraftImage[], { isDone, alsoFor }: SaveOptions) {
+  async function save(task: NewTask, images: DraftImage[], { isDone }: SaveOptions) {
     let taskId: string;
     try {
       taskId = await addTask.mutateAsync({
         task,
         images,
         householdId: householdId ?? '',
-        alsoFor,
       });
     } catch (error) {
       if (!(error instanceof ImagesNotSavedError)) throw error;

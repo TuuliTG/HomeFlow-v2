@@ -57,19 +57,21 @@ test("family member can add a task for a child, kept on the child's page", async
   await page.getByRole('link', { name: 'Shared tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
 
-  // The choice is a segmented control: its radios are hidden behind their labels.
+  // The choice is a segmented control: its radios are hidden behind their labels. With one child, their own
+  // form opens at once.
   await page.getByRole('group', { name: 'Who is it for?' }).getByText('Children').click();
-  await expect(page.getByRole('radio', { name: 'Children' })).toBeChecked();
+  await expect(page.getByRole('heading', { level: 1, name: 'New task for Ben' })).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations, 'a11y violations on a task for children').toEqual([]);
+  expect(results.violations, "a11y violations on a child's new task").toEqual([]);
+  await page.getByRole('group', { name: 'Kind of task' }).getByText('Custom').click();
   await page.getByLabel('Task', { exact: true }).fill('Feed the cat');
   // The stars are hidden radios behind their star icons.
-  const stars = page.getByRole('radiogroup', { name: 'Stars for each child' });
+  const stars = page.getByRole('radiogroup', { name: 'Stars' });
   await stars.locator('label').nth(1).click();
   await expect(stars.getByRole('radio', { name: '2 stars' })).toBeChecked();
   await page.getByRole('button', { name: 'Create task' }).click();
 
-  // Ben, the only child, was chosen already, and his page opens with the task.
+  // Ben's page opens with the task.
   await expect(page.getByRole('heading', { level: 1, name: 'Ben' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Feed the cat/ })).toBeVisible();
   await page.getByRole('link', { name: 'Shared tasks' }).click();

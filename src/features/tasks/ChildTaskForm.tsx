@@ -4,6 +4,7 @@ import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
 import { useReadyMadeTasks } from '@/features/tasks/readyMadeTasks';
 import type { NewTask } from '@/features/tasks/task';
 import { TaskChildrenField } from '@/features/tasks/TaskChildrenField';
+import { TaskDescriptionField } from '@/features/tasks/TaskDescriptionField';
 import { TaskFormButtons } from '@/features/tasks/TaskFormButtons';
 import {
   checkTask,
@@ -14,6 +15,8 @@ import {
   withReadyMadeTask,
 } from '@/features/tasks/taskFormValues';
 import { TaskIconField } from '@/features/tasks/TaskIconField';
+import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
+import { TaskImagesField } from '@/features/tasks/TaskImagesField';
 import { TaskPointsField } from '@/features/tasks/TaskPointsField';
 import { DailyLimitField, ScheduleFields } from '@/features/tasks/TaskTimingFields';
 import { TaskTitleField } from '@/features/tasks/TaskTitleField';
@@ -28,25 +31,32 @@ const CHILD_TASK_STARS = 1;
 interface ChildTaskFormProps {
   /** The task being edited; a new one is always there to begin with. */
   initial?: NewTask;
-  /** The child it is for: a new task's from their page, or the edited task's (null only for a task done before every task for children was a child's). */
+  /** The pictures of the task being edited, by file name. */
+  initialImages?: string[];
+  /**
+   * The child it is for: a new task's from their page, or the edited task's (null only for a task done before every
+   * task for children was a child's).
+   */
   childId: string | null;
   currentUserId: string;
   isSaving: boolean;
   /** Where Cancel goes when the form was opened directly. */
   cancelTo: string;
-  /** Saves the task; a rejection shows "We couldn't save the task." */
-  onSave: (task: NewTask) => Promise<void>;
+  /** Saves the task and its pictures; a rejection shows "We couldn't save the task." */
+  onSave: (task: NewTask, images: DraftImage[]) => Promise<void>;
 }
 
 type FormError = { field: FieldName | 'children' | null; message: string } | null;
 
 /**
  * The form for a task for children, adding one for a child from their page or editing one (ADR 0004): always there
- * (with how many times a day it earns stars) or custom (when it repeats and is due), then its name, icon and stars.
+ * (with how many times a day it earns stars) or custom (when it repeats and is due), then its name, description,
+ * pictures, icon and stars.
  * A new task's child is already known; editing asks whose it is.
  */
 export function ChildTaskForm({
   initial,
+  initialImages = [],
   childId,
   currentUserId,
   isSaving,
@@ -67,11 +77,13 @@ export function ChildTaskForm({
     defaultPoints: CHILD_TASK_STARS,
     earlier: [],
   });
+  const [images, setImages] = useState(() => savedImages(initialImages));
+  const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [error, setError] = useState<FormError>(null);
   const t = useMessages();
   const errorId = useId();
   const fieldRefs = useTaskFieldRefs();
-  const childRef = useRef<HTMLInputElement>(null);
+  const childRef = useRef<HTMLSelectElement>(null);
 
   function errorPropsFor(field: FieldName | 'children') {
     const hasError = error?.field === field;
@@ -83,6 +95,7 @@ export function ChildTaskForm({
     // Every task for children is one child's (ADR 0004).
     if (assignedTo === null) {
       setError({ field: 'children', message: t.taskForm.errors.childRequired });
+      childRef.current?.focus();
       return;
     }
     const parsed = checkTask({ ...fields, assignedTo }, false, t);
@@ -92,7 +105,7 @@ export function ChildTaskForm({
       fieldRefs[field].current?.focus();
       return;
     }
-    onSave(parsed.data).catch(() => {
+    onSave(parsed.data, images).catch(() => {
       setError({ field: null, message: t.taskForm.errors.saveFailed });
     });
   }
@@ -118,12 +131,9 @@ export function ChildTaskForm({
       {initial && (
         <TaskChildrenField
           currentUserId={currentUserId}
-          canChooseSeveral={false}
-          value={assignedTo === null ? [] : [assignedTo]}
-          onChange={([chosen = null]) => {
-            setAssignedTo(chosen);
-          }}
-          firstRef={childRef}
+          value={assignedTo}
+          onChange={setAssignedTo}
+          selectRef={childRef}
           errorProps={errorPropsFor('children')}
         />
       )}
@@ -138,11 +148,25 @@ export function ChildTaskForm({
         inputRef={fieldRefs.title}
         errorProps={errorPropsFor('title')}
       />
+      <TaskDescriptionField
+        value={fields.description}
+        onChange={set('description')}
+        textareaRef={fieldRefs.description}
+        errorProps={errorPropsFor('description')}
+      />
+      <TaskImagesField
+        images={images}
+        onChange={(changed) => {
+          setImages(changed);
+          setError(null);
+        }}
+        onPreparingChange={setIsPreparingImages}
+        currentUserId={currentUserId}
+      />
       <TaskIconField value={fields.icon} onChange={set('icon')} />
       <TaskPointsField
         isChild={false}
         forChildren
-        label={t.taskForm.starsForOne}
         value={fields.points}
         onChange={set('points')}
         inputRef={fieldRefs.points}
@@ -161,7 +185,7 @@ export function ChildTaskForm({
       )}
       <TaskFormButtons
         submitLabel={initial ? t.taskForm.edit.submit : t.taskForm.create.submit}
-        disabled={isSaving}
+        disabled={isSaving || isPreparingImages}
         initial={initial}
         cancelTo={cancelTo}
       />

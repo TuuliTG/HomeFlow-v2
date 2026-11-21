@@ -53,11 +53,18 @@ describe('tasks for children', () => {
     expect(screen.queryByRole('radio', { name: 'Children' })).not.toBeInTheDocument();
   });
 
-  it('are chosen first when an adult adds a task, for adults by default, and change the form', async () => {
+  it('are chosen first when an adult adds a task, for adults by default, then a child', async () => {
     logInAsFamilyMember();
-    const ben = addChildToFamily();
+    for (const [email, name] of [
+      ['ben@example.com', 'Ben'],
+      ['dora@example.com', 'Dora'],
+    ] as const) {
+      const child = fakeAuthBackend.addProfile(email, name);
+      fakeHouseholdBackend.addMember(child.id, 'The Virtanens');
+      fakeHouseholdBackend.setChild(child.id, true);
+    }
     const user = userEvent.setup();
-    const { router } = renderAppAt('/tasks/new');
+    renderAppAt('/tasks/new');
 
     const whoFor = await screen.findByRole('group', { name: 'Who is it for?' });
     expect(within(whoFor).getByRole('radio', { name: 'Adults' })).toBeChecked();
@@ -65,33 +72,20 @@ describe('tasks for children', () => {
     expect(screen.getByRole('group', { name: 'Type' })).toBeInTheDocument();
     await user.click(within(whoFor).getByRole('radio', { name: 'Children' }));
 
-    // Adults don't do it, so it is neither a type of their work nor added as done; it can still be made private.
-    expect(screen.getByRole('button', { name: 'Private' })).toBeInTheDocument();
-    expect(screen.queryByRole('checkbox', { name: 'Already done' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: 'Type' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('radio', { name: '2 stars' }));
-    await user.type(screen.getByLabelText('Task'), 'Tidy the toys');
-    await user.click(screen.getByRole('button', { name: 'Create task' }));
-
-    // The child's page opens, where it shows.
-    expect(await screen.findByRole('link', { name: /Tidy the toys/ })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe(`/household/members/${ben.id}`);
-    expect(tasks.at(-1)).toMatchObject({
-      title: 'Tidy the toys',
-      forChildren: true,
-      points: 2,
-      assignedTo: ben.id,
-    });
+    // The child's own form adds it, so the rest of this one makes way, and it can't be private.
+    expect(await screen.findByRole('list', { name: 'Whose task?' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Private' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Task')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create task' })).not.toBeInTheDocument();
   });
 
   it('are worth the stars an adult picks, from none to five, without a hint', async () => {
     logInAsFamilyMember();
-    addChildToFamily();
+    const ben = addChildToFamily();
     const user = userEvent.setup();
-    renderAppAt('/tasks/new');
+    renderAppAt(`/household/members/${ben.id}/new-task`);
 
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    const stars = screen.getByRole('radiogroup', { name: 'Stars for each child' });
+    const stars = await screen.findByRole('radiogroup', { name: 'Stars' });
     expect(within(stars).getAllByRole('radio')).toHaveLength(5);
     await user.click(within(stars).getByRole('radio', { name: '2 stars' }));
     expect(within(stars).getByRole('radio', { name: '2 stars' })).toBeChecked();
@@ -102,23 +96,8 @@ describe('tasks for children', () => {
 
     await user.type(screen.getByLabelText('Task'), 'Water the plants');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
-    await screen.findByRole('link', { name: /Water the plants/ });
+    await screen.findByRole('heading', { level: 1, name: 'Ben' });
     expect(tasks.at(-1)).toMatchObject({ points: 0, forChildren: true });
-  });
-
-  it('start with at most five stars, whatever the default points', async () => {
-    const anna = logInAsFamilyMember();
-    localStorage.setItem(`homeflow:default-points:${anna.id}`, '8');
-    addChildToFamily();
-    const user = userEvent.setup();
-    renderAppAt('/tasks/new');
-
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    expect(screen.getByRole('radio', { name: '5 stars' })).toBeChecked();
-    await user.type(screen.getByLabelText('Task'), 'Water the plants');
-    await user.click(screen.getByRole('button', { name: 'Create task' }));
-    await screen.findByRole('link', { name: /Water the plants/ });
-    expect(tasks.at(-1)).toMatchObject({ points: 5 });
   });
 
   it("aren't asked about for an adult's private task, which stays theirs alone", async () => {
@@ -127,9 +106,7 @@ describe('tasks for children', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    await user.click(screen.getByRole('radio', { name: 'Adults' }));
-    await user.click(screen.getByRole('button', { name: 'Private' }));
+    await user.click(await screen.findByRole('button', { name: 'Private' }));
     await user.type(screen.getByLabelText('Task'), 'Buy a present');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 

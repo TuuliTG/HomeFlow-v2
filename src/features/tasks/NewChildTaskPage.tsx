@@ -4,12 +4,16 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ChildTaskForm } from '@/features/tasks/ChildTaskForm';
+import { ImagesNotSavedError, imagesNotSavedState } from '@/features/tasks/taskImages';
 import { useHouseholdMembers } from '@/features/tasks/useHelpers';
 import { useAddTask, useMembership } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
-/** Adds a task for one child from their page (`paths.member`), and goes back there. */
+/**
+ * Adds a task for one child, from their page (`paths.member`) or the board's New task form (`ChildPicker`), and
+ * opens their page, where it is listed.
+ */
 export function NewChildTaskPage() {
   const { childId = '' } = useParams();
   const user = useLoggedInUser();
@@ -17,6 +21,7 @@ export function NewChildTaskPage() {
   const householdId = useMembership(user.id).data?.householdId ?? '';
   const addTask = useAddTask(user.id);
   const navigate = useNavigate();
+  const returnTo = paths.member(childId);
   const t = useMessages();
 
   if (members.data === undefined) {
@@ -36,11 +41,18 @@ export function NewChildTaskPage() {
       <ChildTaskForm
         childId={childId}
         currentUserId={user.id}
-        cancelTo={paths.member(childId)}
+        cancelTo={returnTo}
         isSaving={addTask.isPending}
-        onSave={async (task) => {
-          await addTask.mutateAsync({ task, images: [], householdId, alsoFor: [] });
-          await navigate(paths.member(childId));
+        onSave={async (task, images) => {
+          try {
+            await addTask.mutateAsync({ task, images, householdId });
+          } catch (error) {
+            if (!(error instanceof ImagesNotSavedError)) throw error;
+            // The task was added: adding its pictures again on the edit page doesn't add it twice.
+            await navigate(paths.editTask(error.taskId), { state: imagesNotSavedState });
+            return;
+          }
+          await navigate(returnTo);
         }}
       />
     </>
