@@ -31,10 +31,12 @@ next one back rather than follow a fixed calendar.
   private task doesn't need: who it is for, its type, points and "Already done". Its type is kept but never
   shown, also when editing.
 - **Tasks for children**: `for_children` (default false: adults only), chosen first on the task form by adults
-  ("Who is it for? Adults / Children", not offered for their private tasks) and changeable when editing; the next
-  occurrence keeps it. The form changes to suit: a task for children asks which children and "Stars for each
-  child" (its points, picked 0–5 by tapping a row of five stars; tapping the last filled one again clears them, and
-  more points, e.g. from the default points, come down to five), and has no type, labels (any chosen before, or saved earlier, are dropped) or "Already done". **A shared task
+  ("Who is it for? Adults / Children", not offered for their private tasks); the next occurrence keeps it. Choosing
+  Children shows the household's children instead of the rest of the form (`ChildPicker`, an only child's opening at
+  once), and each opens that child's own form (`ChildTaskForm`, below), which returns to the board's children's
+  tasks (`fromBoardState`): parents found two forms for the same task confusing, so there is one. Its "Stars" are the
+  points, picked 0–5 by tapping a row of five stars (tapping the last filled one again clears them); it has no type,
+  labels or "Already done", and the board's form offers no earlier tasks for children to add again. **A shared task
   for children is the children's only**: parents wanted the children's chores kept apart from their own, so its stars always go to a
   child, and adults keep their own tasks (e.g. their own "Empty the dishwasher" with other points). Adults see,
   edit and delete them on the board's "Children" list, chosen instead of "Adults" at its top
@@ -83,9 +85,8 @@ next one back rather than follow a fixed calendar.
   or someone other than the member asked picks it up, and an accepted one once they give it back; the member asked
   picking the task up accepts it. Answering and cancelling lock the task before the request, like picking up, so they
   can't deadlock. Each function touches the task row, so live updates carry requests too.
-- **Chores for one child**: an adult can give a task for children to one child in the household (tick boxes with
-  the children's names on the New task form, at least one ticked and a family's only child ticked already; "Whose
-  chore is it?" with "Any child" when editing; shown for a task for children when the household has children;
+- **Chores for one child**: an adult gives a new task for children to one child in the household (the child's form;
+  "Whose chore is it?" with "Any child" when editing, shown when the household has children;
   `assigned_to`, only for a shared task for children, `tasks_assigned_only_for_children`). Parents asked for this: some chores are one child's
   job, so asking and waiting for a yes doesn't fit. A trigger (`private.pick_up_for_assignee()`) picks it up for the
   child, also from whoever had it, so it is on their Me page with no new list, and puts it back for any child when an
@@ -101,13 +102,10 @@ next one back rather than follow a fixed calendar.
   one; a child who becomes an adult gives their chores back, no longer given to them, done ones included so
   undoing one can't reopen it given to or held by an adult (a trigger on `household_members`, and
   `private.check_task_doer()` on undo).
-- **Chores for several children**: choosing more than one child adds **one copy for each** (`addTasks()`, one
-  insert, so all or none, sharing the pictures), each given to its child. Each child marks their own copy done and
-  earns its stars, so two children doing it together both get the full stars; a copy a child didn't do stays on
-  their Me page until they do or an adult deletes it. Copies are separate tasks: editing or repeating one leaves
-  the others, which keeps everything else (picking up, reminders, repeats, statistics) as for one child's chore. A
-  shared task done once by both was the alternative, but would credit a child for a sibling's work. Adding a task again from earlier
-  tasks doesn't copy the child.
+- **Chores for several children**: there is no adding one task for several children at once: giving each their
+  own copy (one insert, all or none) was dropped with the board form's tick boxes, as "Copy to Mia" on a child's
+  page (below) does the same. Copies are separate tasks, so two children doing a chore together both earn its full
+  stars, and nobody is credited for a sibling's work.
 - **Fixing mistakes**: any adult, and a child for their own tasks, can edit (`update_task()`) or delete
   (`delete_task()`) an open task; done tasks
   stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
@@ -227,7 +225,7 @@ next one back rather than follow a fixed calendar.
   explicit check mark over treating every daily task as a routine, because some daily tasks deserve a card.
 - **Always tasks**: parents wanted a child's everyday chores (brushing teeth, making the bed) always on the child's
   Me page without setting due dates or repeats. An adult's shared task for children can be an **always task**
-  (`is_always`, an "Always there" check mark that hides Repeats and Due date; `tasks_always_for_children` keeps it
+  (`is_always`, "Always" on the child's form, which hides Repeats and Due date; `tasks_always_for_children` keeps it
   to shared tasks for children without a repeat or due date; the insert policy and `update_task()` let only adults
   set it, a child's edit keeps it, and their form then shows no repeat or due date). It is one child's: the form
   asks for a child, as a pause and limit shared by several children would let one child's tap block another's (one
@@ -236,7 +234,7 @@ next one back rather than follow a fixed calendar.
   next occurrence, given to the same child, with its labels and pictures), so goals, News, undo and points done work
   as for any task; only its first row counts as created (ADR 0006). To stop
   double taps it can be done again only **2 minutes** after the previous copy was done (`ALWAYS_TASK_PAUSE_MS`), and
-  at most `daily_limit` times a day (1–10, null for no limit; the form says "Can be done at most [1] times a day" with a "No limit" switch beside it, which keeps the number while on). Each copy
+  at most `daily_limit` times a day (1–10, null for no limit; the form has "Times a day, at most" with a − [1] + stepper and a "No limit" switch beside it, which keeps the number while on). Each copy
   carries `times_done`/`times_done_on` (the doer's local date), so the limit costs no walk back through the copies.
   As `complete_task()` accepts the doer's date within a day of the server's, the limit is a parent's soft limit,
   not a hard one; the pause holds either way.
@@ -248,8 +246,9 @@ next one back rather than follow a fixed calendar.
   their row on the family page (ADR 0003), lists them (`ChildTaskList`): the child's open tasks given to them, the always ones by name
   and then the custom ones (`childTaskList()`), each a row with when it comes up ("1× a day", "Every week · Mon 23
   Nov") and its stars, opening the edit form, which returns there (the child's id in the link's state, `returnToChild`: an id, not a path, so it can't lead off the app). Its plus opens a short form (`ChildTaskForm`): Always or Custom, then name (with the ready-made
-  children's tasks), icon and stars (one to begin with), then "Times a day" or Repeats and Due date; who it is for
-  isn't asked. It is the same task as the board's form makes, so nothing else changes; an adult editing any shared task for children gets this form too (with whose it is, keeping its description and pictures), so a children's task can no longer be made an adults' one by editing. "Copy to Mia", shown for each other child who lacks some of the tasks, opens a page of tick boxes (`CopyChildTasksPage`): the tasks Mia lacks under the same name start ticked (each name once, `tasksToCopy()`), those she has can't be ticked, and "Copy 3 tasks" adds the chosen ones in one insert and returns with "Copied to Mia." Copies come without pictures, since only whoever uploaded a picture can attach it
+  children's tasks), description, pictures, icon and stars (one to begin with), then "Times a day" or Repeats and
+  Due date; who it is for isn't asked. It is the only form for adding an adult's task for children (the board's form
+  leads here); an adult editing any shared task for children gets this form too (with whose it is), so a children's task can no longer be made an adults' one by editing. "Copy to Mia", shown for each other child who lacks some of the tasks, opens a page of tick boxes (`CopyChildTasksPage`): the tasks Mia lacks under the same name start ticked (each name once, `tasksToCopy()`), those she has can't be ticked, and "Copy 3 tasks" adds the chosen ones in one insert and returns with "Copied to Mia." Copies come without pictures, since only whoever uploaded a picture can attach it
   (`set_task_images()`).
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
   long ago in the user's calendar days ("Last done by Ben, 3 days ago"), so the family sees who usually carries it
