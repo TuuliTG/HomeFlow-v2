@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-20 (shared tasks without points, e.g. reminders)
+- **Updated:** 2026-11-21 (ready-made tasks and default points)
 
 ## Context
 
@@ -241,6 +241,18 @@ next one back rather than follow a fixed calendar.
   with the newest occurrence's details, most often added first (repeats a task adds itself don't count). Typing a
   name lists the matching ones; picking one fills in the form without a due date. There is no templates table:
   deleted tasks drop out on their own, and labels can later filter the same list.
+- **Ready-made tasks**: so a new family needn't type every chore, the New task form offers everyday chores
+  (`readyMadeTasks.ts`) to fill it in from and adjust: folded away under "Ready-made tasks" next to the favourites
+  (leaving out ones starred there), and listed after the household's earlier tasks while typing a name (unless it
+  has its own of the same name). They are the app's, not the household's: each has a name in every language
+  (`taskForm.readyMade.titles`), a type, an icon and labels, and the list follows who the task is for, adults'
+  chores (including meta work such as planning the shopping) or children's (their own things and simple help, no
+  cooking or shopping). An adults' one starts with the user's default points and a children's with one star, to
+  change before saving or later. Nothing is added to the board by itself, so nobody is credited with creating
+  tasks they didn't plan, and a list in the code needs no table or migration.
+- **Default points**: an adult chooses in the settings ("New tasks") the points their new tasks start with, 0–10
+  (3 until chosen). It is remembered on the device per user, like the language (`defaultPoints.ts`), as it only
+  prefills a form; children don't choose points, so they don't see it.
 - **Adding a task done already**: an "Already done" check mark on the New task form (not when adding from the
   timetable, which plans a task to do) adds the task and then marks it done with `complete_task()` as the user,
   so it is credited, celebrated and repeats exactly like one marked done from its card; it then has no due date
