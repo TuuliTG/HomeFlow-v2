@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-22 (always tasks for children)
+- **Updated:** 2026-11-22 (always tasks for children, and setting up a child's tasks)
 
 ## Context
 
@@ -243,6 +243,17 @@ next one back rather than follow a fixed calendar.
   rest of the day once the limit is reached (it refreshes when the pause ends, at midnight and after a refused tap); always tiles come after the child's other tasks, by name, so a done
   one keeps its place. The adults' card shows "Always · 1× a day". We chose copies over one row with a separate
   completions table, which would have needed every report of done tasks to change.
+- **Setting up a child's tasks**: parents wanted one place per child for their chores. The Family page's
+  "Tasks" link under each child (adults only, `ChildTasksLink`) opens `ChildTasksPage`
+  (`/children/:childId/tasks`, behind `AdultsOnly`): the child's open tasks given to them, the always ones by name
+  and then the custom ones (`childTaskList()`), each a row with when it comes up ("1× a day", "Every week · Mon 23
+  Nov") and its stars, opening the edit form, which returns there (`returnTo` in the link's state, only an in-app
+  path). Its plus opens a short form (`ChildTaskForm`): Always or Custom, then name (with the ready-made
+  children's tasks), icon and stars (one to begin with), then "Times a day" or Repeats and Due date; who it is for
+  isn't asked. It is the same task as the board's form makes, so nothing else changes. "Copy to Mia" gives each
+  other child a copy of the tasks they don't have under the same name (`tasksToCopy()`, one insert), so a second
+  tap adds nothing twice. Copies come without pictures, since only whoever uploaded a picture can attach it
+  (`set_task_images()`).
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
   long ago in the user's calendar days ("Last done by Ben, 3 days ago"), so the family sees who usually carries it
   and can take turns. It comes from `previous_task_id`, embedded as `previous_occurrence(...)`: PostgREST finds no
