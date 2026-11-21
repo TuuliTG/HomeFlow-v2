@@ -158,7 +158,7 @@ describe("a child's tasks", () => {
 
     expect(await screen.findByRole('radio', { name: 'Always' })).toBeChecked();
     expect(screen.getByLabelText('Whose chore is it?')).toHaveDisplayValue('Ben');
-    expect(screen.getByLabelText('Times a day')).toHaveValue(1);
+    expect(screen.getByLabelText('Times a day, at most')).toHaveValue(1);
     expect(screen.getByRole('switch', { name: 'No limit' })).not.toBeChecked();
   });
 
@@ -168,11 +168,11 @@ describe("a child's tasks", () => {
     renderAppAt(`/household/members/${ben.id}/new-task`);
 
     await user.type(await screen.findByRole('combobox', { name: 'Task' }), 'Brush teeth');
-    await user.clear(screen.getByLabelText('Times a day'));
+    await user.clear(screen.getByLabelText('Times a day, at most'));
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('Choose 1 to 10 times a day, or no limit.');
-    expect(screen.getByLabelText('Times a day')).toHaveFocus();
+    expect(screen.getByLabelText('Times a day, at most')).toHaveFocus();
   });
 
   it('copy the tasks chosen to another child, those they lack ticked to begin with', async () => {

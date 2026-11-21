@@ -152,9 +152,9 @@ export const taskForm: Messages['taskForm'] = {
   alreadyDone: 'Jo tehty',
   routine: 'Pikarutiini: merkitse tehdyksi yhdellä napautuksella taululla',
   always: 'Aina näkyvissä: palaa tehtyään',
-  dailyLimit: 'Kertaa päivässä',
-  dailyLimitBefore: 'Tehtävän voi tehdä enintään',
-  dailyLimitAfter: 'kertaa päivässä',
+  dailyLimit: 'Kertaa päivässä enintään',
+  dailyLimitFewer: 'Yksi vähemmän',
+  dailyLimitMore: 'Yksi enemmän',
   noLimit: 'Ei rajaa',
   errors: {
     dailyLimitRange: (max) => `Valitse 1–${String(max)} kertaa päivässä tai ei rajaa.`,
