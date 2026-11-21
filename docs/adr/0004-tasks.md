@@ -248,10 +248,11 @@ next one back rather than follow a fixed calendar.
   (`taskForm.readyMade.titles`), a type, an icon and labels, and the list follows who the task is for, adults'
   chores (including meta work such as planning the shopping) or children's (their own things and simple help, no
   cooking or shopping). An adults' one starts with the user's default points and a children's with one star, to
-  change before saving or later. Nothing is added to the board by itself, so nobody is credited with creating
+  change before saving or later. Picking one fills in its name, type, icon, labels and points, keeping who the
+  task is for (and which children) and whatever else was filled in. Nothing is added to the board by itself, so nobody is credited with creating
   tasks they didn't plan, and a list in the code needs no table or migration.
 - **Default points**: an adult chooses in the settings ("New tasks") the points their new tasks start with, 0–10
-  (3 until chosen). It is remembered on the device per user, like the language (`defaultPoints.ts`), as it only
+  (3 until chosen). It is remembered on the device for each user, in localStorage like the language (`defaultPoints.ts`), as it only
   prefills a form; children don't choose points, so they don't see it.
 - **Adding a task done already**: an "Already done" check mark on the New task form (not when adding from the
   timetable, which plans a task to do) adds the task and then marks it done with `complete_task()` as the user,

@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
@@ -63,6 +63,36 @@ describe('ready-made tasks', () => {
     expect(screen.getByLabelText('Stars for each child')).toHaveValue(1);
   });
 
+  it('keeps the child chosen, and what was typed, when a ready-made task is picked', async () => {
+    logInAsFamilyMember();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(ben.id, true);
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.click(await screen.findByRole('radio', { name: 'Children' }));
+    const which = await screen.findByRole('group', { name: 'Which children?' });
+    await user.click(within(which).getByRole('checkbox', { name: 'Ben' }));
+    await user.type(screen.getByLabelText('Description (optional)'), 'Before Saturday');
+    await openReadyMade(user);
+    await user.click(screen.getByRole('button', { name: 'Make your bed' }));
+
+    expect(within(which).getByRole('checkbox', { name: 'Ben' })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+    await waitFor(() => {
+      expect(tasks).toMatchObject([
+        {
+          title: 'Make your bed',
+          description: 'Before Saturday',
+          points: 1,
+          forChildren: true,
+          assignedTo: ben.id,
+        },
+      ]);
+    });
+  });
+
   it("offers a child who may add tasks the children's chores", async () => {
     const anna = fakeAuthBackend.addAccount('anna@example.com', 'Anna');
     fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
@@ -117,6 +147,17 @@ describe('ready-made tasks', () => {
     await openReadyMade(user);
     expect(isOffered('Vacuum')).toBe(false);
     expect(isOffered('Do the laundry')).toBe(true);
+  });
+
+  it('keeps offering a starred ready-made task the household has never added', async () => {
+    const anna = logInAsFamilyMember();
+    fakeFavouritesBackend.setFavouriteAs(anna.id, 'vacuum', true);
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await screen.findByRole('button', { name: /^Favourites/ });
+    await openReadyMade(user);
+    expect(isOffered('Vacuum')).toBe(true);
   });
 
   it('starts new tasks with the default points chosen in the settings', async () => {

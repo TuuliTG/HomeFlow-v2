@@ -57,7 +57,7 @@ export function TaskTitleField({
   const listId = useId();
   const [isListOpen, setIsListOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  /** The earlier task picked to add again, until the name is changed. */
+  /** The earlier or ready-made task picked, until the name is changed. */
   const [picked, setPicked] = useState<TaskSuggestion | null>(null);
   const matches = isListOpen
     ? matchingSuggestions(withReadyMade(suggestions, readyMade), value)
@@ -153,14 +153,15 @@ interface StartingPointsProps {
 
 /** Before a name is typed: the household's favourites and the ready-made tasks, to fill in the form from. */
 function StartingPoints({ suggestions, readyMade, favourites, onPick }: StartingPointsProps) {
-  // A starred chore is among the favourites already.
-  const favouriteKeys = new Set(favourites?.keys);
+  const shownFavourites = favourites?.keys && favouriteSuggestions(suggestions, favourites.keys);
+  // A starred chore shown among the favourites isn't offered twice.
+  const favouriteKeys = new Set(shownFavourites?.map((task) => titleKey(task.title)));
   const notFavourite = readyMade.filter((task) => !favouriteKeys.has(titleKey(task.title)));
   return (
     <>
-      {favourites?.keys && (
+      {favourites && shownFavourites && (
         <FavouriteTaskList
-          suggestions={favouriteSuggestions(suggestions, favourites.keys)}
+          suggestions={shownFavourites}
           onPick={onPick}
           onRemove={(title) => {
             favourites.onChange(title, false);
@@ -198,7 +199,7 @@ interface SuggestionListProps {
   onPick: (suggestion: TaskSuggestion) => void;
 }
 
-/** Earlier tasks matching the name being typed, below the input. */
+/** Earlier and ready-made tasks matching the name being typed, below the input. */
 function SuggestionList({ id, matches, activeIndex, optionId, onPick }: SuggestionListProps) {
   const t = useMessages();
   return (

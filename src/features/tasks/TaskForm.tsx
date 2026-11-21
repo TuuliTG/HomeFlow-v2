@@ -12,11 +12,14 @@ import {
   canBeRoutine,
   childIdsOf,
   type FieldName,
+  type FormError,
   type FieldValues,
   fieldOf,
   fieldValues,
+  type SaveOptions,
   shownFields,
   taskInput,
+  withReadyMadeTask,
 } from '@/features/tasks/taskFormValues';
 import { TaskDescriptionField } from '@/features/tasks/TaskDescriptionField';
 import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
@@ -31,12 +34,6 @@ import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleF
 import { TaskTimingFields } from '@/features/tasks/TaskTimingFields';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 import { useMessages } from '@/lib/i18n/i18n';
-
-interface FormError {
-  /** The field to fix, or null when saving failed. */
-  field: FieldName | null;
-  message: string;
-}
 
 interface TaskFormProps {
   /** The task being edited; a new task starts empty and can be made private. */
@@ -63,15 +60,6 @@ interface TaskFormProps {
    * children to add a copy for; a rejection shows "We couldn't save the task."
    */
   onSave: (task: NewTask, images: DraftImage[], options: SaveOptions) => Promise<void>;
-}
-
-export interface SaveOptions {
-  isDone: boolean;
-  /**
-   * Further children to add the same task for, one copy each, when an adult adds a task for several
-   * children; the task itself is the first child's.
-   */
-  alsoFor: string[];
 }
 
 /** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
@@ -128,11 +116,16 @@ export function TaskForm({
     };
   }
 
+  /** Fills in an earlier task's details, or a ready-made task's while keeping who it is for (and the rest). */
   function fillIn(suggestion: TaskSuggestion) {
+    setError(null);
+    if (readyMade.includes(suggestion)) {
+      setFields((current) => withReadyMadeTask(current, suggestion));
+      return;
+    }
     const values = fieldValues(suggestionAsTask(suggestion), defaultPoints);
     setFields(values);
     setChildIds(childIdsOf(values.assignedTo));
-    setError(null);
   }
 
   /** A task done already has no due date. */

@@ -1,4 +1,9 @@
-import { DEFAULT_POINTS, NEW_TASK_DEFAULTS, type NewTask } from '@/features/tasks/task';
+import {
+  DEFAULT_POINTS,
+  NEW_TASK_DEFAULTS,
+  type NewTask,
+  type TaskSuggestion,
+} from '@/features/tasks/task';
 import { repeatDays, repeatFieldValue } from '@/features/tasks/taskRepeat';
 
 /**
@@ -14,6 +19,13 @@ const fieldNames = ['title', 'description', 'points', 'repeatEveryDays', 'dueOn'
 
 /** The form's fields that can be named as the one to fix. */
 export type FieldName = (typeof fieldNames)[number];
+
+/** What the form says is wrong. */
+export interface FormError {
+  /** The field to fix, or null when saving failed. */
+  field: FieldName | null;
+  message: string;
+}
 
 /** The field a `newTaskSchema` issue's path names; the title when it names none of them. */
 export function fieldOf(path: PropertyKey | undefined): FieldName {
@@ -50,6 +62,32 @@ export function fieldValues(task?: NewTask, defaultPoints = DEFAULT_POINTS) {
 }
 
 export type FieldValues = ReturnType<typeof fieldValues>;
+
+/** What saving a new task does besides adding it. */
+export interface SaveOptions {
+  isDone: boolean;
+  /**
+   * Further children to add the same task for, one copy each, when an adult adds a task for several
+   * children; the task itself is the first child's.
+   */
+  alsoFor: string[];
+}
+
+/**
+ * The form with a ready-made task's name and details, keeping who it is for (and which children), and the
+ * description, timing or pictures already filled in. A private task keeps having no points.
+ */
+export function withReadyMadeTask(values: FieldValues, task: TaskSuggestion): FieldValues {
+  const { title, type, icon, labels, points } = task;
+  return {
+    ...values,
+    title,
+    type,
+    icon,
+    labels,
+    points: points === null ? values.points : String(points),
+  };
+}
 
 /** The children a task for children is given to, as the form holds them: none for any child. */
 export function childIdsOf(assignedTo: string | null): string[] {
