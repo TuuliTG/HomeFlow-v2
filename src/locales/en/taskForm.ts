@@ -131,6 +131,8 @@ export const taskForm = {
   points: 'Points',
   /** The points of a task for children, which each child earns for doing it. */
   stars: 'Stars for each child',
+  /** "1 star", "3 stars": a star to pick in the stars of a task for children. */
+  starCount: (count: number) => (count === 1 ? '1 star' : `${String(count)} stars`),
   /** Shown under the points when they are 0: such a shared task counts for nobody (ADR 0004). */
   noPointsHint: 'Not counted in statistics.',
   images: {

@@ -125,6 +125,7 @@ export const taskForm: Messages['taskForm'] = {
   anyChild: 'Kenen tahansa lapsen',
   points: 'Pisteet',
   stars: 'Tähdet kullekin lapselle',
+  starCount: (count: number) => (count === 1 ? '1 tähti' : `${String(count)} tähteä`),
   noPointsHint: 'Ei lasketa tilastoihin.',
   images: {
     label: 'Kuvat (vapaaehtoinen)',

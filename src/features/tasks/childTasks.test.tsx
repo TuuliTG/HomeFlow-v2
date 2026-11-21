@@ -97,9 +97,7 @@ describe('tasks for children', () => {
     expect(screen.getByRole('button', { name: 'Private' })).toBeInTheDocument();
     expect(screen.queryByRole('checkbox', { name: 'Already done' })).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Type' })).not.toBeInTheDocument();
-    const stars = screen.getByLabelText('Stars for each child');
-    await user.clear(stars);
-    await user.type(stars, '2');
+    await user.click(screen.getByRole('radio', { name: '2 stars' }));
     await user.type(screen.getByLabelText('Task'), 'Tidy the toys');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
@@ -109,6 +107,41 @@ describe('tasks for children', () => {
     expect(within(task).getByText('For children')).toBeInTheDocument();
     expect(router.state.location.search).toBe('?children=1');
     expect(tasks.at(-1)).toMatchObject({ title: 'Tidy the toys', forChildren: true, points: 2 });
+  });
+
+  it('are worth the stars an adult picks, from none to five, without a hint', async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.click(await screen.findByRole('radio', { name: 'Children' }));
+    const stars = screen.getByRole('group', { name: 'Stars for each child' });
+    expect(within(stars).getAllByRole('radio')).toHaveLength(5);
+    await user.click(within(stars).getByRole('radio', { name: '2 stars' }));
+    expect(within(stars).getByRole('radio', { name: '2 stars' })).toBeChecked();
+    // Picking the same star again leaves none.
+    await user.click(within(stars).getByRole('radio', { name: '2 stars' }));
+    expect(within(stars).queryByRole('radio', { checked: true })).not.toBeInTheDocument();
+    expect(screen.queryByText('Not counted in statistics.')).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Task'), 'Water the plants');
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+    await screen.findByRole('listitem', { name: 'Water the plants' });
+    expect(tasks.at(-1)).toMatchObject({ points: 0, forChildren: true });
+  });
+
+  it('start with at most five stars, whatever the default points', async () => {
+    const anna = logInAsFamilyMember();
+    localStorage.setItem(`homeflow:default-points:${anna.id}`, '8');
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.click(await screen.findByRole('radio', { name: 'Children' }));
+    expect(screen.getByRole('radio', { name: '5 stars' })).toBeChecked();
+    await user.type(screen.getByLabelText('Task'), 'Water the plants');
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+    await screen.findByRole('listitem', { name: 'Water the plants' });
+    expect(tasks.at(-1)).toMatchObject({ points: 5 });
   });
 
   it("aren't asked about for an adult's private task, which stays theirs alone", async () => {

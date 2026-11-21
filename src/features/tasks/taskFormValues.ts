@@ -1,5 +1,6 @@
 import {
   DEFAULT_POINTS,
+  MAX_CHILD_STARS,
   NEW_TASK_DEFAULTS,
   type NewTask,
   type TaskSuggestion,
@@ -84,8 +85,10 @@ export function withReadyMadeTask(values: FieldValues, task: TaskSuggestion): Fi
   };
 }
 
-function pointsInput(points: string): number {
-  return points.trim() === '' ? Number.NaN : Number(points);
+/** A task for children's points are picked as stars, so more points than stars come down to the most stars. */
+function pointsInput({ points, forChildren }: FieldValues): number {
+  if (points.trim() === '') return Number.NaN;
+  return forChildren ? Math.min(Number(points), MAX_CHILD_STARS) : Number(points);
 }
 
 /** The task the field values describe, for `newTaskSchema` to check. */
@@ -95,7 +98,7 @@ export function taskInput(values: FieldValues, isChild: boolean) {
     type: values.type,
     // A private task earns nothing; a child's shared task waits for an adult to award its points. An empty
     // field is no number rather than 0, which would make a task without points.
-    points: values.isPrivate || isChild ? null : pointsInput(values.points),
+    points: values.isPrivate || isChild ? null : pointsInput(values),
     ...timingOf(values, isChild),
     description: values.description.trim() === '' ? null : values.description,
     icon: values.icon,
