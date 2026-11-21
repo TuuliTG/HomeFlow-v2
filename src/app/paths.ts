@@ -20,6 +20,9 @@ export const paths = {
     if (isPrivate) return '/me';
     return forChildren ? '/?children=1' : '/';
   },
+  /** An adult's page of one child's own tasks, to set them up (ADR 0004). */
+  childTasks: (childId: string) => `/children/${childId}/tasks`,
+  newChildTask: (childId: string) => `/children/${childId}/tasks/new`,
   me: '/me',
   news: '/news',
   rewards: '/rewards',

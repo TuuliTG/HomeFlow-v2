@@ -51,6 +51,8 @@ export const household: Messages['household'] = {
     confirmRemove: (name: string) => `Ta bort ${name} med poäng och historik?`,
     yesRemove: 'Ja, ta bort',
     removeFailed: 'Vi kunde inte ta bort barnet. Försök igen.',
+    tasks: 'Uppgifter',
+    tasksFor: (name) => `${name}s uppgifter`,
   },
   family: {
     heading: 'Din familj',

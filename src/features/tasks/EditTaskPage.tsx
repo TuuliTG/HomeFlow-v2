@@ -42,6 +42,18 @@ export function EditTaskPage() {
   );
 }
 
+/**
+ * Where to go after saving or deleting: back to the page that opened the form with a `returnTo` in its state (a
+ * child's tasks, `ChildTasksPage`), else to the list the task is on.
+ */
+function useReturnTo(): string | null {
+  const state: unknown = useLocation().state;
+  if (typeof state !== 'object' || state === null || !('returnTo' in state)) return null;
+  const { returnTo } = state;
+  // Only a path in the app: never another site.
+  return typeof returnTo === 'string' && /^\/(?!\/)/.test(returnTo) ? returnTo : null;
+}
+
 /** After a new task was added without its pictures (`imagesNotSavedState`), asks to add them again. */
 function ImagesNotSavedNotice() {
   const t = useMessages().taskForm.edit;
@@ -59,6 +71,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
   // The pictures the form opened with: live updates may change the task's meanwhile.
   const [imagesBefore] = useState(task.images);
   const navigate = useNavigate();
+  const returnTo = useReturnTo();
   const t = useMessages();
 
   return (
@@ -78,7 +91,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
             householdId,
             before: imagesBefore,
           });
-          await navigate(paths.taskList(changed));
+          await navigate(returnTo ?? paths.taskList(changed));
         }}
       />
       <DeleteTask task={task} userId={userId} />
@@ -90,6 +103,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
 function DeleteTask({ task, userId }: { task: Task; userId: string }) {
   const deleteTask = useDeleteTask(userId);
   const navigate = useNavigate();
+  const returnTo = useReturnTo();
   const [isConfirming, setIsConfirming] = useState(false);
   const { common, taskForm } = useMessages();
   const t = taskForm.edit;
@@ -126,7 +140,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
             // Not mutate()'s onSuccess: the refetch after deleting removes the task, which unmounts
             // this form before that callback would run. A failure shows through isError.
             deleteTask.mutateAsync(task).then(
-              () => navigate(paths.taskList(task)),
+              () => navigate(returnTo ?? paths.taskList(task)),
               () => undefined,
             );
           }}

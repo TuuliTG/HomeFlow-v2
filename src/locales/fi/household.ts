@@ -51,6 +51,8 @@ export const household: Messages['household'] = {
     confirmRemove: (name: string) => `Poistetaanko ${name} pisteineen ja historioineen?`,
     yesRemove: 'Kyllä, poista',
     removeFailed: 'Lapsen poistaminen ei onnistunut. Yritä uudelleen.',
+    tasks: 'Tehtävät',
+    tasksFor: (name) => `${name}: tehtävät`,
   },
   family: {
     heading: 'Perheesi',

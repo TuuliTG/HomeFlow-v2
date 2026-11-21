@@ -49,6 +49,8 @@ export const household = {
     confirmRemove: (name: string) => `Remove ${name} with their points and history?`,
     yesRemove: 'Yes, remove',
     removeFailed: "We couldn't remove the child. Try again.",
+    tasks: 'Tasks',
+    tasksFor: (name: string) => `${name}'s tasks`,
   },
   family: {
     heading: 'Your family',

@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { TrashIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
+import { ChildTasksLink } from '@/features/household/ChildTasksLink';
 import { ConfirmRemoveChild } from '@/features/household/ConfirmRemoveChild';
 import type { HouseholdMember, SignInCode } from '@/features/household/household';
 import { SavingCheckbox } from '@/components/ui/SavingCheckbox';
@@ -160,7 +161,7 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
   const { common, household } = useMessages();
   const t = household.members;
   const name = member.displayName ?? common.newMember;
-  const { newCode, remove } = actions;
+  const { newCode, remove, setIsChild } = actions;
   const [isConfirmingRemove, setIsConfirmingRemove] = useState(false);
   return (
     <li className="text-ink flex flex-wrap items-center justify-between gap-3 px-4 py-3">
@@ -182,6 +183,7 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
             </button>
           )}
         </span>
+        <ChildTasksLink member={member} name={name} canSetUp={setIsChild !== undefined} />
         {newCode && (
           <button
             type="button"
