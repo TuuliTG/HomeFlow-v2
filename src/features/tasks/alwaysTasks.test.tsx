@@ -57,7 +57,7 @@ describe('always tasks', () => {
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     const task = await screen.findByRole('listitem', { name: 'Brush teeth' });
-    expect(within(task).getByText('Always · 2 times a day')).toBeInTheDocument();
+    expect(within(task).getByText('Always · 2× a day')).toBeInTheDocument();
     expect(tasks.at(-1)).toMatchObject({
       createdBy: anna.id,
       assignedTo: ben.id,

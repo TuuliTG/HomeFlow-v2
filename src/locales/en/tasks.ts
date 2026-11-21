@@ -89,12 +89,8 @@ export const tasks = {
     /** A task an adult gave to one child. */
     onlyFor: (name: string) => `Only for ${name}`,
     /** An always task, with how many times a day it earns its points; null for no limit. */
-    always: (dailyLimit: number | null) => {
-      if (dailyLimit === null) return 'Always';
-      return dailyLimit === 1
-        ? 'Always · once a day'
-        : `Always · ${String(dailyLimit)} times a day`;
-    },
+    always: (dailyLimit: number | null) =>
+      dailyLimit === null ? 'Always' : `Always · ${String(dailyLimit)}× a day`,
     waitingForPoints: 'Waiting for points',
     /** A suggested shared task with 0 points, which counts for nobody. */
     noPoints: 'No points',

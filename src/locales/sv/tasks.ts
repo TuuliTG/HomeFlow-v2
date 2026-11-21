@@ -77,12 +77,8 @@ export const tasks: Messages['tasks'] = {
     private: 'Privat',
     forChildren: 'För barn',
     onlyFor: (name) => `Bara för ${name}`,
-    always: (dailyLimit) => {
-      if (dailyLimit === null) return 'Alltid';
-      return dailyLimit === 1
-        ? 'Alltid · en gång om dagen'
-        : `Alltid · ${String(dailyLimit)} gånger om dagen`;
-    },
+    always: (dailyLimit) =>
+      dailyLimit === null ? 'Alltid' : `Alltid · ${String(dailyLimit)}× om dagen`,
     waitingForPoints: 'Väntar på poäng',
     noPoints: 'Inga poäng',
     addedBy: {

@@ -73,12 +73,8 @@ export const tasks: Messages['tasks'] = {
     private: 'Yksityinen',
     forChildren: 'Lapsille',
     onlyFor: (name) => `Vain: ${name}`,
-    always: (dailyLimit) => {
-      if (dailyLimit === null) return 'Aina';
-      return dailyLimit === 1
-        ? 'Aina · kerran päivässä'
-        : `Aina · ${String(dailyLimit)} kertaa päivässä`;
-    },
+    always: (dailyLimit) =>
+      dailyLimit === null ? 'Aina' : `Aina · ${String(dailyLimit)}× päivässä`,
     waitingForPoints: 'Odottaa pisteitä',
     noPoints: 'Ei pisteitä',
     addedBy: {
