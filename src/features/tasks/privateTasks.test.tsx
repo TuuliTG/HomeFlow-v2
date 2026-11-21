@@ -95,11 +95,12 @@ describe('private tasks', () => {
 
   it("hide what a private task doesn't need: who it is for, its type, points and already done", async () => {
     logInAsFamilyMember();
+    fakeHouseholdBackend.setChild(addBen().id, true);
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    const privateButton = await screen.findByRole('button', { name: 'Private' });
-    await user.click(screen.getByRole('radio', { name: 'Children' }));
+    await screen.findByRole('group', { name: 'Who is it for?' });
+    const privateButton = screen.getByRole('button', { name: 'Private' });
     await user.click(privateButton);
 
     expect(screen.queryByRole('group', { name: 'Who is it for?' })).not.toBeInTheDocument();
@@ -109,8 +110,10 @@ describe('private tasks', () => {
     expect(screen.queryByRole('checkbox', { name: 'Already done' })).not.toBeInTheDocument();
 
     await user.click(privateButton);
-    expect(screen.getByRole('radio', { name: 'Children' })).toBeChecked();
-    expect(screen.queryByLabelText('Task')).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Adults' })).toBeChecked();
+    // A task for the children can't be private, so the button makes way while they are chosen.
+    await user.click(screen.getByRole('radio', { name: 'Children' }));
+    expect(screen.queryByRole('button', { name: 'Private' })).not.toBeInTheDocument();
   });
 
   it('have no points', async () => {

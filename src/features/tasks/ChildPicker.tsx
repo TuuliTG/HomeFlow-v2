@@ -9,7 +9,7 @@ import { useMessages } from '@/lib/i18n/i18n';
 
 /**
  * The children an adult adding a task for the children chooses from: each child's name opens their own form
- * (`paths.newChildTask`), and an only child's opens at once (ADR 0004).
+ * (`paths.newChildTask`), and an only child's opens at once (ADR 0004). Only offered when there are children.
  */
 export function ChildPicker({ currentUserId }: { currentUserId: string }) {
   const members = useHouseholdMembers(currentUserId);
@@ -27,9 +27,6 @@ export function ChildPicker({ currentUserId }: { currentUserId: string }) {
   const [onlyChild] = children;
   if (children.length === 1 && onlyChild) {
     return <Navigate to={paths.newChildTask(onlyChild.id)} state={fromBoardState} replace />;
-  }
-  if (children.length === 0) {
-    return <p className="text-ink-muted text-sm">{t.taskForm.noChildren}</p>;
   }
   return (
     <ul aria-label={t.taskForm.whichChild} className="flex flex-col gap-2">

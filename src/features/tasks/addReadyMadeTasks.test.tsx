@@ -175,8 +175,6 @@ describe('ready-made tasks', () => {
     await user.click(await screen.findByRole('link', { name: 'New task' }));
 
     expect(await screen.findByLabelText('Points')).toHaveValue(5);
-    await user.click(screen.getByRole('radio', { name: 'Children' }));
-    await user.click(screen.getByRole('radio', { name: 'Adults' }));
     await openReadyMade(user);
     await user.click(screen.getByRole('button', { name: 'Vacuum' }));
     expect(screen.getByLabelText('Points')).toHaveValue(5);

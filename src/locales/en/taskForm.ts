@@ -126,7 +126,6 @@ export const taskForm = {
   audiences: { adults: 'Adults', children: 'Children' },
   /** Adding a task for children: names the list of children to add it for, each opening their own form. */
   whichChild: 'Whose task?',
-  noChildren: 'There are no children in the family yet.',
   assignedTo: 'Whose chore is it?',
   anyChild: 'Any child',
   points: 'Points',

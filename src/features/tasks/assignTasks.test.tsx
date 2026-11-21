@@ -163,12 +163,24 @@ describe('giving a task to one child', () => {
     });
   });
 
-  it('says so when the household has no children', async () => {
+  it("isn't offered without children in the household", async () => {
     logInAsFamilyMember();
-    const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    expect(await screen.findByText('There are no children in the family yet.')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Task')).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Who is it for?' })).not.toBeInTheDocument();
+  });
+
+  it("isn't offered when editing an adults' task", async () => {
+    const { anna } = family();
+    const id = fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Pay the bills',
+      type: 'meta',
+      points: 3,
+    });
+    renderAppAt(`/tasks/${id}/edit`);
+
+    expect(await screen.findByLabelText('Task')).toHaveValue('Pay the bills');
+    expect(screen.queryByRole('group', { name: 'Who is it for?' })).not.toBeInTheDocument();
   });
 });

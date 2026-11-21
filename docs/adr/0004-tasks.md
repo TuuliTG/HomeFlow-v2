@@ -31,7 +31,9 @@ next one back rather than follow a fixed calendar.
   private task doesn't need: who it is for, its type, points and "Already done". Its type is kept but never
   shown, also when editing.
 - **Tasks for children**: `for_children` (default false: adults only), chosen first on the task form by adults
-  ("Who is it for? Adults / Children", not offered for their private tasks); the next occurrence keeps it. Choosing
+  ("Who is it for? Adults / Children", only on a new shared task in a family with children; the Private button
+  makes way while Children is chosen, and editing can't move a task between the two); the next occurrence keeps
+  it. Choosing
   Children shows the household's children instead of the rest of the form (`ChildPicker`, an only child's opening at
   once), and each opens that child's own form (`ChildTaskForm`, below), which returns to the board's children's
   tasks (`fromBoardState`): parents found two forms for the same task confusing, so there is one. Its "Stars" are the

@@ -121,7 +121,6 @@ export const taskForm: Messages['taskForm'] = {
   whoFor: 'Kenelle tehtävä on?',
   audiences: { adults: 'Aikuisille', children: 'Lapsille' },
   whichChild: 'Kenen tehtävä?',
-  noChildren: 'Perheessä ei ole vielä lapsia.',
   assignedTo: 'Kenen tehtävä se on?',
   anyChild: 'Kenen tahansa lapsen',
   points: 'Pisteet',

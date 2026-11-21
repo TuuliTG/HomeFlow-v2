@@ -84,6 +84,14 @@ describe('tasks for children', () => {
 
   it('are chosen first when an adult adds a task, for adults by default, then a child', async () => {
     logInAsFamilyMember();
+    for (const [email, name] of [
+      ['ben@example.com', 'Ben'],
+      ['dora@example.com', 'Dora'],
+    ] as const) {
+      const child = fakeAuthBackend.addProfile(email, name);
+      fakeHouseholdBackend.addMember(child.id, 'The Virtanens');
+      fakeHouseholdBackend.setChild(child.id, true);
+    }
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
@@ -93,8 +101,9 @@ describe('tasks for children', () => {
     expect(screen.getByRole('group', { name: 'Type' })).toBeInTheDocument();
     await user.click(within(whoFor).getByRole('radio', { name: 'Children' }));
 
-    // The child's own form adds it, so the rest of this one makes way; it can still be made private.
-    expect(screen.getByRole('button', { name: 'Private' })).toBeInTheDocument();
+    // The child's own form adds it, so the rest of this one makes way, and it can't be private.
+    expect(await screen.findByRole('list', { name: 'Whose task?' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Private' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Task')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Create task' })).not.toBeInTheDocument();
   });
@@ -127,9 +136,7 @@ describe('tasks for children', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    await user.click(screen.getByRole('radio', { name: 'Adults' }));
-    await user.click(screen.getByRole('button', { name: 'Private' }));
+    await user.click(await screen.findByRole('button', { name: 'Private' }));
     await user.type(screen.getByLabelText('Task'), 'Buy a present');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 

@@ -1,5 +1,6 @@
 import { LockIcon } from '@/components/ui/icons';
 import { TaskAudienceChoice } from '@/features/tasks/TaskAudienceChoice';
+import { useHouseholdChildren } from '@/features/tasks/useHelpers';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskAudienceFieldsProps {
@@ -11,12 +12,14 @@ interface TaskAudienceFieldsProps {
   onPrivateChange: (isPrivate: boolean) => void;
   forChildren: boolean;
   onForChildrenChange: (forChildren: boolean) => void;
+  currentUserId: string;
 }
 
 /**
  * Who the task is for, at the top of the form: a new task can be made private first, which leaves nothing
- * more to choose; otherwise an adult chooses the adults or the children (ADR 0004). A
- * private task being edited stays the creator's.
+ * more to choose; otherwise an adult in a family with children chooses the adults or the children (ADR 0004; not
+ * when editing),
+ * and a task for the children can't be private. A private task being edited stays the creator's.
  */
 export function TaskAudienceFields({
   isNew,
@@ -25,12 +28,14 @@ export function TaskAudienceFields({
   onPrivateChange,
   forChildren,
   onForChildrenChange,
+  currentUserId,
 }: TaskAudienceFieldsProps) {
+  const hasChildren = useHouseholdChildren(currentUserId).length > 0;
   const privateToggle = isNew && <PrivateToggle pressed={isPrivate} onChange={onPrivateChange} />;
-  if (isChild || isPrivate) return privateToggle;
+  if (isChild || isPrivate || !hasChildren || !isNew) return privateToggle;
   return (
     <>
-      {privateToggle}
+      {!forChildren && privateToggle}
       <TaskAudienceChoice forChildren={forChildren} onChange={onForChildrenChange} />
     </>
   );

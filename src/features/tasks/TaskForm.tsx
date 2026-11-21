@@ -168,6 +168,7 @@ export function TaskForm({
         onPrivateChange={set('isPrivate')}
         forChildren={shown.isForChildren}
         onForChildrenChange={set('forChildren')}
+        currentUserId={currentUserId}
       />
       {shown.isForChildren ? (
         <ChildPicker currentUserId={currentUserId} />
