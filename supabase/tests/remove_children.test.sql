@@ -2,7 +2,7 @@
 -- to her household; Dan is a child there with his own email; Carol has her own household.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -15,19 +15,23 @@ set local request.jwt.claims = '{"sub": "33333333-3333-3333-3333-333333333333", 
 select public.create_household('Carol''s flat');
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.create_household('The Smiths');
-insert into public.tasks (title, type, points, for_children) values ('Feed the cat', 'physical', 2, true);
-insert into public.tasks (title, type, points, for_children) values ('Empty the dishwasher', 'physical', 1, true);
+insert into public.tasks (title, type, points) values ('Feed the cat', 'physical', 2);
 
 set local role service_role;
 select * from public.add_child('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'Ben');
 reset role;
 insert into public.household_members (household_id, user_id, is_child)
   select household_id, '44444444-4444-4444-4444-444444444444', true from public.tasks where title = 'Feed the cat';
--- Ben was given the dishwasher and has done it, has picked up the cat and keeps a private task.
-update public.tasks set assigned_to = '22222222-2222-2222-2222-222222222222',
-    picked_up_by = '22222222-2222-2222-2222-222222222222', picked_up_at = now(),
-    completed_at = now(), completed_by = '22222222-2222-2222-2222-222222222222'
-  where title = 'Empty the dishwasher';
+-- Ben was given the dishwasher and has done it, is given the bins, has picked up the cat (before he was a child)
+-- and keeps a private task.
+insert into public.tasks
+  (household_id, title, type, points, created_by, for_children, assigned_to, completed_at, completed_by)
+  select household_id, 'Empty the dishwasher', 'physical', 1, created_by, true,
+    '22222222-2222-2222-2222-222222222222', now(), '22222222-2222-2222-2222-222222222222'
+  from public.tasks where title = 'Feed the cat';
+insert into public.tasks (household_id, title, type, points, created_by, for_children, assigned_to)
+  select household_id, 'Take out the bins', 'physical', 1, created_by, true, '22222222-2222-2222-2222-222222222222'
+  from public.tasks where title = 'Feed the cat';
 update public.tasks set picked_up_by = '22222222-2222-2222-2222-222222222222', picked_up_at = now()
   where title = 'Feed the cat';
 insert into public.tasks (household_id, title, type, is_private, for_children, created_by)
@@ -77,6 +81,10 @@ select is_empty(
 select is_empty(
   $$ select 1 from public.tasks where title = 'Ben''s homework' $$,
   'the child''s private tasks go'
+);
+select is_empty(
+  $$ select 1 from public.tasks where title = 'Take out the bins' $$,
+  'the child''s open chores go'
 );
 select results_eq(
   $$ select picked_up_by, picked_up_at from public.tasks where title = 'Feed the cat' $$,

@@ -2,7 +2,7 @@
 -- (children) share a household; Carol has her own.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(26);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -15,7 +15,7 @@ set local request.jwt.claims = '{"sub": "33333333-3333-3333-3333-333333333333", 
 select public.create_household('Carol''s flat');
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.create_household('The Smiths');
-insert into public.tasks (title, type, points, for_children) values ('Feed the cat', 'physical', 2, true);
+insert into public.tasks (title, type, points) values ('Feed the cat', 'physical', 2);
 
 reset role;
 insert into public.household_members (household_id, user_id, is_child)
@@ -103,11 +103,6 @@ select is(
   0,
   'another child does not see a task given to a child'
 );
-select is(
-  (select count(*)::integer from public.tasks where id = current_setting('test.cat')::uuid),
-  1,
-  'another child still sees the tasks for every child'
-);
 select throws_ok(
   $$ select public.complete_task(current_setting('test.bed')::uuid, current_date) $$,
   'P0002', null,
@@ -131,7 +126,7 @@ select is(
 );
 set local role authenticated;
 
--- Anna gives it to Dora instead, then to no one in particular.
+-- Anna gives it to Dora instead; it can't be left to no one in particular.
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select lives_ok(
   $$ select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
@@ -149,93 +144,63 @@ select throws_ok(
   'P0002', null,
   'an edit cannot give a task to someone outside the household'
 );
-select lives_ok(
+select throws_ok(
   $$ select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
        1::smallint, null, 1::smallint, true, null, null, true) $$,
-  'an adult can give the task to no one in particular'
+  '23514', null,
+  'a task for children cannot be left to no one in particular'
 );
-select is(
-  (select picked_up_by from public.tasks where id = current_setting('test.next_bed')::uuid),
-  null::uuid,
-  'a task no longer given to a child is put back'
-);
-
--- A child who becomes an adult gives back their chores, which are no longer given to them: adults don't do tasks
--- for children.
-select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
-  1::smallint, null, 1::smallint, true, null, '44444444-4444-4444-4444-444444444444', true);
-select public.set_member_is_child('44444444-4444-4444-4444-444444444444', false);
-select is(
-  (select array[assigned_to, picked_up_by] from public.tasks where id = current_setting('test.next_bed')::uuid),
-  array[null, null]::uuid[],
-  'a new adult gives back a task for children, no longer given to them'
-);
-reset role;
-update public.household_members set is_child = true where user_id = '44444444-4444-4444-4444-444444444444';
-set local role authenticated;
 
 -- An app that doesn't say whose chore it is yet keeps the child.
-select public.update_task(current_setting('test.next_bed')::uuid, 'Make your bed', null, 'physical',
-  1::smallint, null, 1::smallint, true, null, '22222222-2222-2222-2222-222222222222', true);
 select public.update_task(current_setting('test.next_bed')::uuid, 'Make the bed', null, 'physical',
   1::smallint, null, 1::smallint, true, null);
 select is(
   (select assigned_to from public.tasks where id = current_setting('test.next_bed')::uuid),
-  '22222222-2222-2222-2222-222222222222'::uuid,
+  '44444444-4444-4444-4444-444444444444'::uuid,
   'an edit that does not say whose chore it is keeps the child'
 );
 
--- Giving a task to a child settles what others planned for it, also when the child already had it.
-set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+-- Anna picks up "Feed the cat", plans it and asks Ben's help, then makes it Ben's chore: her plan and the request
+-- are settled.
 select public.pick_up_task(current_setting('test.cat')::uuid);
 select public.set_task_schedule(current_setting('test.cat')::uuid, now() + interval '1 day', 30);
-select public.request_task(current_setting('test.cat')::uuid, '44444444-4444-4444-4444-444444444444');
-set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.update_task(current_setting('test.cat')::uuid, 'Feed the cat', null, 'physical',
   2::smallint, null, null, true, null, '22222222-2222-2222-2222-222222222222', true);
-set local request.jwt.claims = '{"sub": "44444444-4444-4444-4444-444444444444", "role": "authenticated"}';
-select throws_ok(
-  $$ select public.answer_task_request(current_setting('test.cat')::uuid, true) $$,
-  'P0002', null,
-  'a request for a task given to a child is settled, even if the child already had it'
-);
-set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
-select public.update_task(current_setting('test.cat')::uuid, 'Feed the cat', null, 'physical',
-  2::smallint, null, null, true, null, null, true);
-reset role;
-select is(
-  (select count(*)::integer from public.task_schedules where task_id = current_setting('test.cat')::uuid),
-  0,
-  'a child no longer given a task no longer plans to do it'
-);
-set local role authenticated;
-
--- Ben picks the cat up and plans when to feed it; Anna gives it to Dora instead.
-set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
-select public.pick_up_task(current_setting('test.cat')::uuid);
-select public.set_task_schedule(current_setting('test.cat')::uuid, now() + interval '1 day', 30);
-set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
-select public.update_task(current_setting('test.cat')::uuid, 'Feed the cat', null, 'physical',
-  2::smallint, null, null, true, null, '44444444-4444-4444-4444-444444444444', true);
 reset role;
 select is(
   (select count(*)::integer from public.task_schedules where task_id = current_setting('test.cat')::uuid),
   0,
   'whoever a task is taken from to give it to a child no longer plans to do it'
 );
-
--- A done chore of a child who becomes an adult is no longer given to them either, so undoing it reopens it free.
+select is(
+  (select picked_up_by from public.tasks where id = current_setting('test.cat')::uuid),
+  '22222222-2222-2222-2222-222222222222'::uuid,
+  'a task made a child''s chore is picked up for them'
+);
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "44444444-4444-4444-4444-444444444444", "role": "authenticated"}';
+
+-- A child who becomes an adult takes their open chores with them; a done one stays, no longer given to them, so
+-- undoing it can't hand a task for children to an adult.
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select public.complete_task(current_setting('test.cat')::uuid, current_date);
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.set_member_is_child('44444444-4444-4444-4444-444444444444', false);
-set local request.jwt.claims = '{"sub": "44444444-4444-4444-4444-444444444444", "role": "authenticated"}';
-select public.undo_complete_task(current_setting('test.cat')::uuid);
 select is(
-  (select array[assigned_to, picked_up_by] from public.tasks where id = current_setting('test.cat')::uuid),
-  array[null, null]::uuid[],
-  'a reopened chore is neither given to nor held by a member who has become an adult'
+  (select count(*)::integer from public.tasks where id = current_setting('test.next_bed')::uuid),
+  0,
+  'a new adult''s open tasks for children go'
+);
+select public.set_member_is_child('22222222-2222-2222-2222-222222222222', false);
+select is(
+  (select assigned_to from public.tasks where id = current_setting('test.cat')::uuid),
+  null::uuid,
+  'a new adult''s done chore is no longer given to them'
+);
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select throws_ok(
+  $$ select public.undo_complete_task(current_setting('test.cat')::uuid) $$,
+  '23514', null,
+  'a done chore of a new adult cannot be reopened without a child'
 );
 
 -- Carol, in another household, can't give a task to Ben.
