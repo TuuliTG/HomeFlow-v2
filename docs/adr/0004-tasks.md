@@ -235,7 +235,7 @@ next one back rather than follow a fixed calendar.
   next occurrence, given to the same child, with its labels and pictures), so goals, News, undo and points done work
   as for any task; only its first row counts as created (ADR 0006). To stop
   double taps it can be done again only **2 minutes** after the previous copy was done (`ALWAYS_TASK_PAUSE_MS`), and
-  at most `daily_limit` times a day (1–10, null for no limit; the form offers "Times a day", 1 by default). Each copy
+  at most `daily_limit` times a day (1–10, null for no limit; the form says "Can be done at most [1] times a day" with a "No limit" switch beside it, which keeps the number while on). Each copy
   carries `times_done`/`times_done_on` (the doer's local date), so the limit costs no walk back through the copies.
   As `complete_task()` accepts the doer's date within a day of the server's, the limit is a parent's soft limit,
   not a hard one; the pause holds either way.
@@ -249,7 +249,7 @@ next one back rather than follow a fixed calendar.
   and then the custom ones (`childTaskList()`), each a row with when it comes up ("1× a day", "Every week · Mon 23
   Nov") and its stars, opening the edit form, which returns there (the child's id in the link's state, `returnToChild`: an id, not a path, so it can't lead off the app). Its plus opens a short form (`ChildTaskForm`): Always or Custom, then name (with the ready-made
   children's tasks), icon and stars (one to begin with), then "Times a day" or Repeats and Due date; who it is for
-  isn't asked. It is the same task as the board's form makes, so nothing else changes. "Copy to Mia" gives each
+  isn't asked. It is the same task as the board's form makes, so nothing else changes; an adult editing any shared task for children gets this form too (with whose it is, keeping its description and pictures), so a children's task can no longer be made an adults' one by editing. "Copy to Mia" gives each
   other child a copy of the tasks they don't have under the same name (each name once; `tasksToCopy()`, one insert), so a second
   tap adds nothing twice. Copies come without pictures, since only whoever uploaded a picture can attach it
   (`set_task_images()`).
