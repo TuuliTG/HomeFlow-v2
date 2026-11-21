@@ -32,16 +32,22 @@ function tagsOf(task: Task, t: Messages): Tag[] {
         label: t.tasks.card.waitingForPoints,
         className: 'bg-points-100 text-points-800',
       },
-    task.repeatEveryDays !== null && {
-      label: t.tasks.repeat(task.repeatEveryDays),
-      className: 'bg-info-100 text-info-800',
-    },
+    timingTag(task, t),
   ];
   const labels = labelNames(task, t).map((label) => ({
     label,
     className: 'border-line-strong text-ink-muted border',
   }));
   return [...tags.filter((tag): tag is Tag => tag !== false), ...labels];
+}
+
+/** How often the task comes back: always, or every so many days; none for a one-off task. */
+function timingTag(task: Task, t: Messages): Tag | false {
+  const className = 'bg-info-100 text-info-800';
+  if (task.isAlways) return { label: t.tasks.card.always(task.dailyLimit), className };
+  return (
+    task.repeatEveryDays !== null && { label: t.tasks.repeat(task.repeatEveryDays), className }
+  );
 }
 
 /** When the task is due, then its tags. */

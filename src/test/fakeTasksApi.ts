@@ -59,6 +59,9 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           labels,
           customLabels,
           isRoutine,
+          isAlways,
+          dailyLimit,
+          timesDone,
           createdBy,
           pickedUpBy,
           previousTaskId,
@@ -78,6 +81,9 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           labels: [...labels],
           customLabels: [...customLabels],
           isRoutine,
+          isAlways,
+          dailyLimit,
+          timesDone: { ...timesDone },
           createdBy,
           creatorName: fakeAuthBackend.displayNameOf(createdBy),
           pickedUpBy,
@@ -102,6 +108,10 @@ export const addTasks: typeof tasksApi.addTasks = (newTasks) =>
         throw new Error('A child adds tasks only when allowed, without points');
       }
       checkAssignee(userId, task);
+      // Only adults add always tasks, and only for children (`tasks_always_for_children`).
+      if (task.isAlways && (fakeHouseholdBackend.isChild(userId) || !task.forChildren)) {
+        throw new Error('Only adults add always tasks, for children');
+      }
     }
     return newTasks.map((task) => fakeTasksBackend.addTaskAs(userId, task));
   });
@@ -196,6 +206,9 @@ export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
       points: isChild ? null : details.points,
       assignedTo,
       pickedUpBy,
+      // Like update_task(): a child's edit keeps whether it is an always task.
+      isAlways: isChild ? task.isAlways : details.isAlways,
+      dailyLimit: isChild ? task.dailyLimit : details.dailyLimit,
     });
     deliver(task, { kind: 'changed' });
   });

@@ -158,6 +158,9 @@ export const taskForm = {
   dueDate: 'Due date',
   alreadyDone: 'Already done',
   routine: 'Quick routine: mark it done with one tap on the board',
+  always: 'Always there: comes back after it is done',
+  dailyLimit: 'Times a day',
+  noLimit: 'No limit',
   errors: {
     titleRequired: 'Give the task a name.',
     titleTooLong: (max: number) => `Keep the name to ${String(max)} characters or fewer.`,

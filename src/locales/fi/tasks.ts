@@ -73,6 +73,8 @@ export const tasks: Messages['tasks'] = {
     private: 'Yksityinen',
     forChildren: 'Lapsille',
     onlyFor: (name) => `Vain: ${name}`,
+    always: (dailyLimit) =>
+      dailyLimit === null ? 'Aina' : `Aina · ${String(dailyLimit)}× päivässä`,
     waitingForPoints: 'Odottaa pisteitä',
     noPoints: 'Ei pisteitä',
     addedBy: {
@@ -103,6 +105,7 @@ export const tasks: Messages['tasks'] = {
     pickUp: 'Varaa',
     putBack: 'Peru varaus',
     markDone: 'Merkitse tehdyksi',
+    doneForNow: 'Tehty',
     failures: {
       complete: 'Tehtävää ei voitu merkitä tehdyksi. Yritä uudelleen.',
       pickUp: 'Tehtävää ei voitu varata. Joku on ehkä ehtinyt ensin.',

@@ -77,6 +77,19 @@
   --animate-confetti-fall: confetti-fall 2000ms ease-in both;
   --animate-reward-pop: reward-pop 3000ms ease-out both;
 
+  /* An always task's pause running out (ChildTaskTiles): its ring drains, taking an inline duration. */
+  --animate-ring-drain: ring-drain linear both;
+
+  /* Drains a ring of circumference 100 (`pathLength`) drawn with `stroke-dasharray: 100`. */
+  @keyframes ring-drain {
+    from {
+      stroke-dashoffset: 0;
+    }
+    to {
+      stroke-dashoffset: 100;
+    }
+  }
+
   /* A star flies from the centre to (--star-x, --star-y), spinning and fading. */
   @keyframes star-burst {
     from {

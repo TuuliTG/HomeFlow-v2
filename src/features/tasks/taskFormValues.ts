@@ -51,7 +51,19 @@ export function fieldValues(task?: NewTask, defaultPoints = DEFAULT_POINTS) {
     labels: task.labels,
     customLabels: task.customLabels,
     isRoutine: task.isRoutine,
+    isAlways: task.isAlways,
+    // An empty value is no limit; a task that isn't an always task yet starts at once a day.
+    dailyLimit: dailyLimitValue(task),
   };
+}
+
+/** Once a day, what a new always task allows unless the adult chooses otherwise. */
+const DEFAULT_DAILY_LIMIT = '1';
+
+/** The "Times a day" field's value: the task's limit, empty for none, or the default if it isn't an always task. */
+function dailyLimitValue({ isAlways, dailyLimit }: NewTask): string {
+  if (!isAlways) return DEFAULT_DAILY_LIMIT;
+  return dailyLimit === null ? '' : String(dailyLimit);
 }
 
 export type FieldValues = ReturnType<typeof fieldValues>;
@@ -84,8 +96,7 @@ export function taskInput(values: FieldValues, isChild: boolean) {
     // A private task earns nothing; a child's shared task waits for an adult to award its points. An empty
     // field is no number rather than 0, which would make a task without points.
     points: values.isPrivate || isChild ? null : pointsInput(values.points),
-    repeatEveryDays: repeatDays(values.repeat),
-    dueOn: values.dueOn === '' ? null : values.dueOn,
+    ...timingOf(values, isChild),
     description: values.description.trim() === '' ? null : values.description,
     icon: values.icon,
     ...labelsOf(values, isChild),
@@ -111,6 +122,7 @@ interface FormState {
   forChildren: boolean;
   /** Whether the form offers to add the task as already done. */
   canBeDoneAlready: boolean;
+  isAlways: boolean;
 }
 
 /**
@@ -118,7 +130,13 @@ interface FormState {
  * (`isForChildren`) asks which children and the stars each earns, and has neither a type of work nor labels,
  * nor is it added as done, since adults don't do it. A private task counts for no one, so it has neither a type nor points, and is added to do.
  */
-export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready }: FormState) {
+export function shownFields({
+  isChild,
+  isPrivate,
+  forChildren,
+  canBeDoneAlready,
+  isAlways,
+}: FormState) {
   const isForChildren = !isChild && !isPrivate && forChildren;
   return {
     isForChildren,
@@ -128,6 +146,11 @@ export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready 
     labels: !isForChildren,
     points: !isPrivate,
     alreadyDone: canBeDoneAlready && !isForChildren && !isPrivate,
+    /**
+     * Whether it is an always task, which has no repeat or due date to choose: an adult's task for children, or
+     * a child editing one (they can't change it).
+     */
+    isAlways: isAlways && (isForChildren || isChild),
   };
 }
 
@@ -144,6 +167,28 @@ interface RoutineState {
  */
 export function canBeRoutine({ isChild, isPrivate, forChildren, repeat }: RoutineState): boolean {
   return !isChild && !isPrivate && !forChildren && repeatDays(repeat) !== null;
+}
+
+/**
+ * When the task is to be done. Only an adult's task for children can be an always task
+ * (`tasks_always_for_children`), which is never due and never repeats, but has a daily limit; the fields keep their
+ * values while hidden, so turning it off brings them back.
+ */
+function timingOf(values: FieldValues, isChild: boolean) {
+  const isAlways = values.isAlways && isSharedWithChildren(values, isChild);
+  return isAlways
+    ? {
+        isAlways,
+        repeatEveryDays: null,
+        dueOn: null,
+        dailyLimit: values.dailyLimit === '' ? null : Number(values.dailyLimit),
+      }
+    : {
+        isAlways,
+        repeatEveryDays: repeatDays(values.repeat),
+        dueOn: values.dueOn === '' ? null : values.dueOn,
+        dailyLimit: null,
+      };
 }
 
 /** Whether an adult shares the task with the children; their private task is theirs alone. */

@@ -88,6 +88,9 @@ export const tasks = {
     forChildren: 'For children',
     /** A task an adult gave to one child. */
     onlyFor: (name: string) => `Only for ${name}`,
+    /** An always task, with how many times a day it earns its points; null for no limit. */
+    always: (dailyLimit: number | null) =>
+      dailyLimit === null ? 'Always' : `Always · ${String(dailyLimit)}× a day`,
     waitingForPoints: 'Waiting for points',
     /** A suggested shared task with 0 points, which counts for nobody. */
     noPoints: 'No points',
@@ -122,6 +125,8 @@ export const tasks = {
     pickUp: 'Pick up',
     putBack: 'Put back',
     markDone: 'Mark done',
+    /** An always task done just now, or as often as it may be today. */
+    doneForNow: 'Done',
     failures: {
       complete: "We couldn't mark the task done. Try again.",
       pickUp: "We couldn't pick up the task. Someone may have taken it first.",

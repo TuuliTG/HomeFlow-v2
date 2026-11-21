@@ -13,6 +13,8 @@ interface ChildChoiceOptions {
   isForChildren: boolean;
   /** The child the task starts out given to, if any. */
   assignedTo: string | null;
+  /** An always task is one child's, also when edited (ADR 0004). */
+  isAlways: boolean;
 }
 
 /**
@@ -21,7 +23,7 @@ interface ChildChoiceOptions {
  */
 export function useChildChoice(
   currentUserId: string,
-  { isNew, isForChildren, assignedTo }: ChildChoiceOptions,
+  { isNew, isForChildren, assignedTo, isAlways }: ChildChoiceOptions,
 ) {
   const children = useHouseholdChildren(currentUserId);
   const [chosen, setChosen] = useState(() => childIdsOf(assignedTo));
@@ -38,9 +40,10 @@ export function useChildChoice(
       setChosen(childIdsOf(taskAssignedTo));
     },
     /**
-     * Whether a new task for children still needs a child chosen; not without children to choose, nor while
-     * they load, when the tick boxes aren't shown yet.
+     * Whether a task for children still needs a child chosen: a new one, unless there are no children to choose
+     * or they are loading, when the tick boxes aren't shown yet; and an always task, which is one child's.
      */
-    isMissing: isForChildren && isNew && children.length > 0 && childIds.length === 0,
+    isMissing:
+      isForChildren && childIds.length === 0 && ((isNew && children.length > 0) || isAlways),
   };
 }

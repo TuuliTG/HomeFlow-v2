@@ -77,6 +77,8 @@ export const tasks: Messages['tasks'] = {
     private: 'Privat',
     forChildren: 'För barn',
     onlyFor: (name) => `Bara för ${name}`,
+    always: (dailyLimit) =>
+      dailyLimit === null ? 'Alltid' : `Alltid · ${String(dailyLimit)}× om dagen`,
     waitingForPoints: 'Väntar på poäng',
     noPoints: 'Inga poäng',
     addedBy: {
@@ -107,6 +109,7 @@ export const tasks: Messages['tasks'] = {
     pickUp: 'Ta',
     putBack: 'Lämna tillbaka',
     markDone: 'Markera som gjord',
+    doneForNow: 'Gjord',
     failures: {
       complete: 'Det gick inte att markera uppgiften som gjord. Försök igen.',
       pickUp: 'Det gick inte att ta uppgiften. Någon kan ha hunnit före.',

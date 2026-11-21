@@ -25,6 +25,8 @@ describe('taskFromLink', () => {
       labels: [],
       customLabels: [],
       isRoutine: false,
+      isAlways: false,
+      dailyLimit: null,
     });
   });
 

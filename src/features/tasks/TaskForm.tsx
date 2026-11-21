@@ -1,13 +1,6 @@
 import { type SyntheticEvent, useId, useState } from 'react';
 
-import { paths } from '@/app/paths';
-import { CancelLink } from '@/components/ui/CancelLink';
-import {
-  NEW_TASK_DEFAULTS,
-  type NewTask,
-  newTaskSchema,
-  type TaskSuggestion,
-} from '@/features/tasks/task';
+import { type NewTask, newTaskSchema, type TaskSuggestion } from '@/features/tasks/task';
 import {
   canBeRoutine,
   type FieldName,
@@ -19,6 +12,7 @@ import {
   withReadyMadeTask,
 } from '@/features/tasks/taskFormValues';
 import { TaskDescriptionField } from '@/features/tasks/TaskDescriptionField';
+import { TaskFormButtons } from '@/features/tasks/TaskFormButtons';
 import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
 import { TaskIconField } from '@/features/tasks/TaskIconField';
 import { TaskImagesField } from '@/features/tasks/TaskImagesField';
@@ -85,11 +79,18 @@ export function TaskForm({
   const [initialValues] = useState(() => fieldValues(initial ?? prefill, defaultPoints));
   const { fields, setFields, change, set } = useTaskFormFields(initialValues);
   const { isPrivate, forChildren } = fields;
-  const shown = shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready });
+  const shown = shownFields({
+    isChild,
+    isPrivate,
+    forChildren,
+    canBeDoneAlready,
+    isAlways: fields.isAlways,
+  });
   const children = useChildChoice(currentUserId, {
     isNew: !initial,
     isForChildren: shown.isForChildren,
     assignedTo: initialValues.assignedTo,
+    isAlways: fields.isAlways,
   });
   const readyMade = useReadyMadeTasks({
     isNew: !initial,
@@ -266,6 +267,13 @@ export function TaskForm({
           checked: fields.isRoutine,
           onChange: set('isRoutine'),
         }}
+        always={{
+          offered: shown.isForChildren,
+          checked: shown.isAlways,
+          onChange: set('isAlways'),
+          dailyLimit: fields.dailyLimit,
+          onDailyLimitChange: set('dailyLimit'),
+        }}
       />
 
       {error && (
@@ -274,16 +282,11 @@ export function TaskForm({
         </p>
       )}
 
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={isSaving || isPreparingImages}
-          className="bg-brand-700 hover:bg-brand-900 flex-1 rounded-xl px-4 py-2.5 font-bold text-white disabled:opacity-60"
-        >
-          {submitLabel}
-        </button>
-        <CancelLink fallback={paths.taskList(initial ?? NEW_TASK_DEFAULTS)} />
-      </div>
+      <TaskFormButtons
+        submitLabel={submitLabel}
+        disabled={isSaving || isPreparingImages}
+        initial={initial}
+      />
     </form>
   );
 }

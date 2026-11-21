@@ -47,6 +47,12 @@ export const HELPERS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 /** The most bonus points a helper can get for one task (`task_helpers`). */
 export const MAX_HELPER_BONUS = 10;
 
+/** How long an always task rests after it is done before it can be done again; `complete_task()` enforces it. */
+export const ALWAYS_TASK_PAUSE_MS = 2 * 60 * 1000;
+
+/** The most times a day an always task can be done (`tasks_daily_limit`). */
+export const MAX_DAILY_LIMIT = 10;
+
 /** How often a task can repeat, in days; offered as choices when creating a task. */
 export const repeatChoices = [1, 2, 3, 7, 14, 30] as const;
 
@@ -115,6 +121,13 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
        * one tap rather than as a card (ADR 0004). Only a repeating task can be one.
        */
       isRoutine: z.boolean(),
+      /**
+       * A chore always on the children's Me page, without a due date or a repeat: done, it comes back after a
+       * short pause (ADR 0004). Only an adult's shared task for children can be one.
+       */
+      isAlways: z.boolean(),
+      /** How many times a day an always task earns its points; null for no limit and for other tasks. */
+      dailyLimit: z.number().int().min(1).max(MAX_DAILY_LIMIT).nullable(),
     })
     .refine((task) => !task.isPrivate || task.points === null, {
       path: ['points'],
@@ -139,6 +152,8 @@ export const NEW_TASK_DEFAULTS: Readonly<Omit<NewTask, 'title' | 'description' |
   labels: [],
   customLabels: [],
   isRoutine: false,
+  isAlways: false,
+  dailyLimit: null,
 };
 
 export interface Task extends NewTask {
@@ -160,6 +175,30 @@ export interface Task extends NewTask {
   lastDone: LastDone | null;
   /** A member's request that another do it (`task_requests`), if any. */
   request: TaskRequest | null;
+  /** For an always task: how many times it was done on `on`, a local date (null if never), before this copy. */
+  timesDone: { count: number; on: string | null };
+}
+
+/** Whether an always task can be done now, rests for a moment after being done, or is done for today. */
+export type AlwaysTaskState =
+  { kind: 'ready' } | { kind: 'resting'; until: number } | { kind: 'doneForToday' };
+
+/**
+ * Where an always task stands at `now` on the local date `today`: done as often as its limit allows today, or
+ * resting for `ALWAYS_TASK_PAUSE_MS` after it was last done (`complete_task()`). Other tasks are always ready.
+ */
+export function alwaysTaskState(
+  task: Pick<Task, 'isAlways' | 'dailyLimit' | 'timesDone' | 'lastDone'>,
+  now: number,
+  today: string,
+): AlwaysTaskState {
+  if (!task.isAlways) return { kind: 'ready' };
+  const { dailyLimit, timesDone, lastDone } = task;
+  if (dailyLimit !== null && timesDone.on === today && timesDone.count >= dailyLimit) {
+    return { kind: 'doneForToday' };
+  }
+  const until = lastDone ? new Date(lastDone.at).getTime() + ALWAYS_TASK_PAUSE_MS : 0;
+  return until > now ? { kind: 'resting', until } : { kind: 'ready' };
 }
 
 /**
@@ -235,7 +274,10 @@ export function canChange(task: Task, userId: string, isChild: boolean): boolean
 }
 
 /** A task the household has added before, to add again with the same details (`task_suggestions()`). */
-export interface TaskSuggestion extends Omit<NewTask, 'dueOn' | 'assignedTo'> {
+export interface TaskSuggestion extends Omit<
+  NewTask,
+  'dueOn' | 'assignedTo' | 'isAlways' | 'dailyLimit'
+> {
   /** How many times members have added it; repeats a task adds itself don't count. */
   timesAdded: number;
   /** Whether it is on the board now, not yet done. */

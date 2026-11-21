@@ -46,6 +46,12 @@ interface TaskRow {
   labels: string[];
   custom_labels: string[];
   is_routine: boolean;
+  /** A child's chore always on their Me page, with how many times a day it earns points (null: no limit). */
+  is_always: boolean;
+  daily_limit: number | null;
+  /** How many times the always task was done on `times_done_on` before this copy. */
+  times_done: number;
+  times_done_on: string | null;
   created_at: string;
   completed_at: string | null;
   completed_by: string | null;
@@ -133,6 +139,10 @@ export async function fakeSupabase(page: Page) {
       labels: [],
       custom_labels: [],
       is_routine: false,
+      is_always: false,
+      daily_limit: null,
+      times_done: 0,
+      times_done_on: null,
       created_at: new Date().toISOString(),
       completed_at: null,
       completed_by: null,
@@ -346,6 +356,8 @@ export async function fakeSupabase(page: Page) {
     | 'labels'
     | 'custom_labels'
     | 'is_routine'
+    | 'is_always'
+    | 'daily_limit'
   >;
 
   async function tasksEndpoint(route: Route) {
@@ -363,6 +375,8 @@ export async function fakeSupabase(page: Page) {
           created_by: user.id,
           // Like the trigger on tasks: a task given to a child is picked up for them.
           picked_up_by: task.assigned_to,
+          times_done: 0,
+          times_done_on: null,
           created_at: new Date().toISOString(),
           completed_at: null,
           completed_by: null,
@@ -552,6 +566,8 @@ export async function fakeSupabase(page: Page) {
       task_labels: string[];
       task_custom_labels: string[];
       task_is_routine: boolean;
+      task_is_always: boolean;
+      task_daily_limit: number | null;
     };
     const task = ownOpenTask(body.task_id);
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
@@ -567,6 +583,8 @@ export async function fakeSupabase(page: Page) {
       labels: body.task_labels,
       custom_labels: body.task_custom_labels,
       is_routine: body.task_is_routine,
+      is_always: body.task_is_always,
+      daily_limit: body.task_daily_limit,
       ...(body.task_assigned_to !== task.assigned_to && { picked_up_by: body.task_assigned_to }),
     });
     return reply(route, 204);

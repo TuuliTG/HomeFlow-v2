@@ -149,6 +149,9 @@ export const taskForm: Messages['taskForm'] = {
   dueDate: 'Määräpäivä',
   alreadyDone: 'Jo tehty',
   routine: 'Pikarutiini: merkitse tehdyksi yhdellä napautuksella taululla',
+  always: 'Aina näkyvissä: palaa tehtyään',
+  dailyLimit: 'Kertaa päivässä',
+  noLimit: 'Ei rajaa',
   errors: {
     titleRequired: 'Anna tehtävälle nimi.',
     titleTooLong: (max) => `Nimessä saa olla enintään ${String(max)} merkkiä.`,
