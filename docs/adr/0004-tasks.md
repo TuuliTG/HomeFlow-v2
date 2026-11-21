@@ -33,7 +33,7 @@ next one back rather than follow a fixed calendar.
 - **Tasks for children**: `for_children` (default false: adults only), chosen first on the task form by adults
   ("Who is it for? Adults / Children", not offered for their private tasks) and changeable when editing; the next
   occurrence keeps it. The form changes to suit: a task for children asks which children and "Stars for each
-  child" (its points), and has no type, labels (any chosen before are dropped) or "Already done". **A shared task
+  child" (its points), and has no type, labels (any chosen before, or saved earlier, are dropped) or "Already done". **A shared task
   for children is the children's only**: parents wanted the children's chores kept apart from their own, so its stars always go to a
   child, and adults keep their own tasks (e.g. their own "Empty the dishwasher" with other points). Adults see,
   edit and delete them on the board's "Children" list, chosen instead of "Adults" at its top

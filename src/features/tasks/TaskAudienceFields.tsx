@@ -1,3 +1,5 @@
+import type { RefObject } from 'react';
+
 import { LockIcon } from '@/components/ui/icons';
 import { TaskAudienceChoice } from '@/features/tasks/TaskAudienceChoice';
 import { TaskChildrenField } from '@/features/tasks/TaskChildrenField';
@@ -15,6 +17,9 @@ interface TaskAudienceFieldsProps {
   /** The children whose chore it is; none for any child. */
   childIds: string[];
   onChildIdsChange: (childIds: string[]) => void;
+  /** The first child's tick box, focused when none is ticked. */
+  firstChildRef: RefObject<HTMLInputElement | null>;
+  childErrorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
   currentUserId: string;
 }
 
@@ -32,6 +37,8 @@ export function TaskAudienceFields({
   onForChildrenChange,
   childIds,
   onChildIdsChange,
+  firstChildRef,
+  childErrorProps,
   currentUserId,
 }: TaskAudienceFieldsProps) {
   const privateToggle = isNew && <PrivateToggle pressed={isPrivate} onChange={onPrivateChange} />;
@@ -46,6 +53,8 @@ export function TaskAudienceFields({
           canChooseSeveral={isNew}
           value={childIds}
           onChange={onChildIdsChange}
+          firstRef={firstChildRef}
+          errorProps={childErrorProps}
         />
       )}
     </>

@@ -89,6 +89,11 @@ describe('giving a task to one child', () => {
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Choose at least one child.');
+    const ben = screen.getByRole('checkbox', { name: 'Ben' });
+    expect(ben).toHaveFocus();
+    expect(ben).toBeInvalid();
+    await user.click(ben);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(tasks).toHaveLength(0);
   });
 

@@ -66,6 +66,16 @@ export function taskInput(values: FieldValues, isChild: boolean) {
   };
 }
 
+/** What the form says about a task it saves besides the task itself. */
+export interface SaveOptions {
+  isDone: boolean;
+  /**
+   * Further children to add the same task for, one copy each, when an adult adds a task for several
+   * children; the task itself is the first child's.
+   */
+  alsoFor: string[];
+}
+
 interface FormState {
   isChild: boolean;
   isPrivate: boolean;

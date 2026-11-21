@@ -1,3 +1,5 @@
+import type { RefObject } from 'react';
+
 import { inputClassName } from '@/components/ui/formStyles';
 import { useHouseholdChildren } from '@/features/tasks/useHelpers';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -9,6 +11,9 @@ interface TaskChildrenFieldProps {
   /** The children whose chore it is; none for any child, which only an edited task can be. */
   value: string[];
   onChange: (childIds: string[]) => void;
+  /** The first tick box, focused when none is ticked. */
+  firstRef: RefObject<HTMLInputElement | null>;
+  errorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
 }
 
 /**
@@ -20,6 +25,8 @@ export function TaskChildrenField({
   canChooseSeveral,
   value,
   onChange,
+  firstRef,
+  errorProps,
 }: TaskChildrenFieldProps) {
   const children = useHouseholdChildren(currentUserId);
   const { common, taskForm: t } = useMessages();
@@ -49,12 +56,14 @@ export function TaskChildrenField({
   }
   return (
     <fieldset aria-label={t.whichChildren} className="flex flex-col gap-1">
-      {children.map((child) => (
+      {children.map((child, index) => (
         <label
           key={child.id}
           className="text-ink flex min-h-11 items-center gap-3 text-base font-medium"
         >
           <input
+            ref={index === 0 ? firstRef : undefined}
+            {...errorProps}
             type="checkbox"
             name="children"
             value={child.id}

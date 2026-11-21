@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { useHouseholdChildren } from '@/features/tasks/useHelpers';
 
@@ -25,16 +25,22 @@ export function useChildChoice(
 ) {
   const children = useHouseholdChildren(currentUserId);
   const [chosen, setChosen] = useState(() => childIdsOf(assignedTo));
+  const firstRef = useRef<HTMLInputElement>(null);
   const [onlyChild] = children.length === 1 ? children : [];
   const childIds = chosen ?? (isNew && onlyChild ? [onlyChild.id] : []);
   return {
     childIds,
     setChildIds: setChosen,
+    /** The first child's tick box, to focus when none is ticked. */
+    firstRef,
     /** Starts again from the child a task, e.g. a suggestion filled in, is given to. */
     reset: (taskAssignedTo: string | null) => {
       setChosen(childIdsOf(taskAssignedTo));
     },
-    /** Whether a new task for children still needs a child chosen; not without children to choose. */
+    /**
+     * Whether a new task for children still needs a child chosen; not without children to choose, nor while
+     * they load, when the tick boxes aren't shown yet.
+     */
     isMissing: isForChildren && isNew && children.length > 0 && childIds.length === 0,
   };
 }

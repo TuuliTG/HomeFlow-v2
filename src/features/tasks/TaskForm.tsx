@@ -14,6 +14,7 @@ import {
   type FieldValues,
   fieldOf,
   fieldValues,
+  type SaveOptions,
   shownFields,
   taskInput,
 } from '@/features/tasks/taskFormValues';
@@ -33,7 +34,7 @@ import { useMessages } from '@/lib/i18n/i18n';
 
 interface FormError {
   /** The field to fix, or null when saving failed. */
-  field: FieldName | null;
+  field: FieldName | 'children' | null;
   message: string;
 }
 
@@ -60,15 +61,6 @@ interface TaskFormProps {
    * children to add a copy for; a rejection shows "We couldn't save the task."
    */
   onSave: (task: NewTask, images: DraftImage[], options: SaveOptions) => Promise<void>;
-}
-
-export interface SaveOptions {
-  isDone: boolean;
-  /**
-   * Further children to add the same task for, one copy each, when an adult adds a task for several
-   * children; the task itself is the first child's.
-   */
-  alsoFor: string[];
 }
 
 /** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
@@ -113,7 +105,7 @@ export function TaskForm({
     dueOn: dueOnRef,
   };
 
-  function errorPropsFor(field: FieldName) {
+  function errorPropsFor(field: FieldName | 'children') {
     const hasError = error?.field === field;
     return { 'aria-invalid': hasError, 'aria-describedby': hasError ? errorId : undefined };
   }
@@ -163,7 +155,8 @@ export function TaskForm({
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     if (children.isMissing) {
-      setError({ field: null, message: t.taskForm.errors.childRequired });
+      setError({ field: 'children', message: t.taskForm.errors.childRequired });
+      children.firstRef.current?.focus();
       return;
     }
     const [assignedTo = null, ...alsoFor] = children.childIds;
@@ -201,6 +194,8 @@ export function TaskForm({
         onForChildrenChange={chooseAudience}
         childIds={children.childIds}
         onChildIdsChange={children.setChildIds}
+        firstChildRef={children.firstRef}
+        childErrorProps={errorPropsFor('children')}
         currentUserId={currentUserId}
       />
 
