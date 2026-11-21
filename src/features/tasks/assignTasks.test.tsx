@@ -34,7 +34,7 @@ describe('giving a task to one child', () => {
     expect(screen.queryByRole('group', { name: 'Which children?' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: 'Children' }));
     const which = await screen.findByRole('group', { name: 'Which children?' });
-    expect(which).toHaveAccessibleDescription(/Choose none and any child can pick it up/);
+    expect(within(which).getByRole('checkbox', { name: 'Ben' })).not.toBeChecked();
     await user.click(within(which).getByRole('checkbox', { name: 'Ben' }));
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
@@ -76,6 +76,38 @@ describe('giving a task to one child', () => {
       { userId: ben.id, points: 2 },
       { userId: dora.id, points: 2 },
     ]);
+  });
+
+  it('needs at least one child chosen', async () => {
+    family();
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.click(await screen.findByRole('radio', { name: 'Children' }));
+    await screen.findByRole('group', { name: 'Which children?' });
+    await user.type(screen.getByLabelText('Task'), 'Make your bed');
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Choose at least one child.');
+    expect(tasks).toHaveLength(0);
+  });
+
+  it('chooses the only child of the family already', async () => {
+    const anna = logInAsFamilyMember();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(ben.id, true);
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.click(await screen.findByRole('radio', { name: 'Children' }));
+    const which = await screen.findByRole('group', { name: 'Which children?' });
+    expect(within(which).getByRole('checkbox', { name: 'Ben' })).toBeChecked();
+    await user.type(screen.getByLabelText('Task'), 'Make your bed');
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    await screen.findByRole('listitem', { name: 'Make your bed' });
+    expect(tasks.at(-1)).toMatchObject({ createdBy: anna.id, assignedTo: ben.id });
   });
 
   it("puts the task on the child's Me page and hides it from the other children", async () => {

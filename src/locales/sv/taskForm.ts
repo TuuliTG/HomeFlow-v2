@@ -92,8 +92,6 @@ export const taskForm: Messages['taskForm'] = {
   whoFor: 'Vem är den för?',
   audiences: { adults: 'Vuxna', children: 'Barn' },
   whichChildren: 'Vilka barn?',
-  whichChildrenHint:
-    'Varje barn du väljer får den på sin Jag-sida. Välj ingen så kan vilket barn som helst ta den.',
   assignedTo: 'Vems syssla är det?',
   anyChild: 'Vilket barn som helst',
   points: 'Poäng',
@@ -131,6 +129,7 @@ export const taskForm: Messages['taskForm'] = {
     repeatRange: 'Välj hur ofta uppgiften upprepas: med 1–365 dagars mellanrum.',
     onlySharedHavePoints: 'Bara gemensamma uppgifter har poäng.',
     checkDetails: 'Kontrollera uppgiftens detaljer.',
+    childRequired: 'Välj minst ett barn.',
     saveFailed: 'Det gick inte att spara uppgiften. Försök igen.',
   },
   reminder: {
