@@ -25,6 +25,12 @@ export function useHouseholdMembers(userId: string) {
   });
 }
 
+/** The children of the user's household, who can be given a task for children. */
+export function useHouseholdChildren(userId: string) {
+  const members = useHouseholdMembers(userId);
+  return (members.data ?? []).filter((member) => member.isChild);
+}
+
 /**
  * Whether the user is asked who helped with this task they just marked done (`WhoHelpedPrompt`); never a
  * child, as the tasks they do are theirs.

@@ -59,12 +59,21 @@ export function taskInput(values: FieldValues, isChild: boolean) {
     dueOn: values.dueOn === '' ? null : values.dueOn,
     description: values.description.trim() === '' ? null : values.description,
     icon: values.icon,
-    labels: values.labels,
-    customLabels: values.customLabels,
+    ...labelsOf(values, isChild),
     // The switch keeps its value while hidden, so turning repeating off and on again brings it back.
     isRoutine: values.isRoutine && canBeRoutine({ ...values, isChild }),
     ...audience(values, isChild),
   };
+}
+
+/** What the form says about a task it saves besides the task itself. */
+export interface SaveOptions {
+  isDone: boolean;
+  /**
+   * Further children to add the same task for, one copy each, when an adult adds a task for several
+   * children; the task itself is the first child's.
+   */
+  alsoFor: string[];
 }
 
 interface FormState {
@@ -77,14 +86,15 @@ interface FormState {
 
 /**
  * Which fields the form shows, as it changes to suit who the task is for. An adult's task for children
- * (`isForChildren`) asks which children and the stars each earns, and is neither a type of work nor added as
- * done, since adults don't do it. A private task counts for no one, so it has neither a type nor points, and is added to do.
+ * (`isForChildren`) asks which children and the stars each earns, and has neither a type of work nor labels,
+ * nor is it added as done, since adults don't do it. A private task counts for no one, so it has neither a type nor points, and is added to do.
  */
 export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready }: FormState) {
   const isForChildren = !isChild && !isPrivate && forChildren;
   return {
     isForChildren,
     type: !isForChildren && !isPrivate,
+    labels: !isForChildren,
     points: !isPrivate,
     alreadyDone: canBeDoneAlready && !isForChildren && !isPrivate,
   };
@@ -105,10 +115,21 @@ export function canBeRoutine({ isChild, isPrivate, forChildren, repeat }: Routin
   return !isChild && !isPrivate && !forChildren && repeatDays(repeat) !== null;
 }
 
+/** Whether an adult shares the task with the children; their private task is theirs alone. */
+function isSharedWithChildren(values: FieldValues, isChild: boolean): boolean {
+  return !isChild && !values.isPrivate && values.forChildren;
+}
+
+/** The task's labels; an adult's task for children has none, though the field keeps them while hidden. */
+function labelsOf(values: FieldValues, isChild: boolean) {
+  return isSharedWithChildren(values, isChild)
+    ? { labels: [], customLabels: [] }
+    : { labels: values.labels, customLabels: values.customLabels };
+}
+
 /** Who the task is for, as the field values say. */
 function audience(values: FieldValues, isChild: boolean) {
-  // An adult's private task is theirs alone, so it isn't for children either.
-  const sharedWithChildren = !isChild && !values.isPrivate && values.forChildren;
+  const sharedWithChildren = isSharedWithChildren(values, isChild);
   return {
     isPrivate: values.isPrivate,
     forChildren: isChild || sharedWithChildren,
