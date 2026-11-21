@@ -228,13 +228,19 @@ next one back rather than follow a fixed calendar.
   Me page without setting due dates or repeats. An adult's shared task for children can be an **always task**
   (`is_always`, an "Always there" check mark that hides Repeats and Due date; `tasks_always_for_children` keeps it
   to shared tasks for children without a repeat or due date; the insert policy and `update_task()` let only adults
-  set it, a child's edit keeps it). Marking one done adds a fresh copy at once (`complete_task()`, like a repeat's
-  next occurrence, given to the same child), so statistics, goals, News and undo work as for any task. To stop
+  set it, a child's edit keeps it, and their form then shows no repeat or due date). It is one child's: the form
+  asks for a child, as a pause and limit shared by several children would let one child's tap block another's (one
+  left for any child, after its child became an adult, rests for everyone and can't be picked up meanwhile).
+  Marking one done adds a fresh copy at once (`complete_task()`, like a repeat's
+  next occurrence, given to the same child, with its labels and pictures), so goals, News, undo and points done work
+  as for any task; only its first row counts as created (ADR 0006). To stop
   double taps it can be done again only **2 minutes** after the previous copy was done (`ALWAYS_TASK_PAUSE_MS`), and
   at most `daily_limit` times a day (1–10, null for no limit; the form offers "Times a day", 1 by default). Each copy
   carries `times_done`/`times_done_on` (the doer's local date), so the limit costs no walk back through the copies.
+  As `complete_task()` accepts the doer's date within a day of the server's, the limit is a parent's soft limit,
+  not a hard one; the pause holds either way.
   The child's tile turns green with a filled check mark while it rests (a ring drains over the pause) and for the
-  rest of the day once the limit is reached; always tiles come after the child's other tasks, by name, so a done
+  rest of the day once the limit is reached (it refreshes when the pause ends, at midnight and after a refused tap); always tiles come after the child's other tasks, by name, so a done
   one keeps its place. The adults' card shows "Always · 1× a day". We chose copies over one row with a separate
   completions table, which would have needed every report of done tasks to change.
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
