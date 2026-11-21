@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 
-import { ChevronDownIcon } from '@/components/ui/icons';
+import { FormFoldButton } from '@/features/tasks/FormFoldButton';
 import { suggestionPointsLabel } from '@/features/tasks/suggestions';
 import type { TaskSuggestion } from '@/features/tasks/task';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -44,28 +44,15 @@ export function FavouriteTaskList({
   const t = useMessages();
   return (
     <section aria-labelledby={titleId} className="flex flex-col gap-2">
-      <h2 className="text-ink text-sm font-medium">
-        <button
-          ref={toggleRef}
-          type="button"
-          aria-expanded={isOpen}
-          aria-controls={contentId}
-          onClick={() => {
-            setIsOpen((open) => !open);
-          }}
-          className="hover:bg-surface -mx-2 flex min-h-11 items-center gap-2 rounded-xl px-2"
-        >
-          <span id={titleId}>{t.taskForm.favourites}</span>
-          {suggestions.length > 0 && (
-            <span className="bg-brand-50 text-brand-900 rounded-full px-2 text-xs">
-              {suggestions.length}
-            </span>
-          )}
-          <ChevronDownIcon
-            className={`text-ink-muted size-5 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          />
-        </button>
-      </h2>
+      <FormFoldButton
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        controls={contentId}
+        titleId={titleId}
+        title={t.taskForm.favourites}
+        count={suggestions.length}
+        buttonRef={toggleRef}
+      />
       <div id={contentId} hidden={!isOpen} className="flex flex-col gap-2">
         {suggestions.length === 0 ? (
           <p className="text-ink-muted text-sm">{t.taskForm.noFavourites}</p>
