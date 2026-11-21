@@ -2,15 +2,17 @@
 -- so a task for any child had no place left. A child's own new task is theirs, a child who becomes an adult or is
 -- removed takes their open ones with them, and the tasks for any child already there are given to a child.
 
--- The open tasks for any child go to the child who has them picked up or was asked to do them, else to each child
--- in the household: the task itself to the first, a copy (with its pictures) to each of the others. Those in a
--- household without children go, as nobody could do them.
+-- The open tasks for any child go to the child who has them picked up, was asked to do them (and didn't decline) or
+-- added them, else to each child in the household: the task itself to the first, a copy (with its pictures) to each
+-- of the others. Those in a household without children go, as nobody could do them.
 create temporary table orphans on commit drop as
   select t.id, t.household_id,
     coalesce(
       case when private.is_child_in_household(t.picked_up_by, t.household_id) then t.picked_up_by end,
       (select r.requested_for from public.task_requests r
-        where r.task_id = t.id and private.is_child_in_household(r.requested_for, t.household_id))
+        where r.task_id = t.id and r.answer is distinct from 'declined'
+          and private.is_child_in_household(r.requested_for, t.household_id)),
+      case when private.is_child_in_household(t.created_by, t.household_id) then t.created_by end
     ) as child_id
   from public.tasks t
   where t.for_children and not t.is_private and t.completed_at is null and t.assigned_to is null;
@@ -95,9 +97,8 @@ create policy "Adults and permitted children can add tasks to their household"
   );
 
 -- A child who becomes an adult no longer has tasks for children: the open ones given to them go, with their
--- reminders, plans and requests; the done ones stay, no longer given to them, so undoing one can't reopen a task
--- given to an adult. As before (20261108130000_tasks_for_children_only.sql), they also give back the other open
--- tasks for children they had.
+-- reminders, plans and requests; the done ones stay, no longer given to them. Every open task for children is given
+-- to a child, so there is nothing else of theirs to give back (20261108130000_tasks_for_children_only.sql did).
 create or replace function private.clear_assignments_of_new_adult()
 returns trigger
 language plpgsql
@@ -107,14 +108,6 @@ as $$
 begin
   delete from public.tasks t where t.assigned_to = new.user_id and t.completed_at is null;
   update public.tasks t set assigned_to = null where t.assigned_to = new.user_id;
-  perform private.put_back_from_adults(t.id)
-    from public.tasks t
-    where t.household_id = new.household_id and t.for_children and not t.is_private and t.completed_at is null
-      and (
-        t.picked_up_by = new.user_id
-        or exists (select 1 from public.task_reminders r where r.task_id = t.id and r.user_id = new.user_id)
-        or exists (select 1 from public.task_requests r where r.task_id = t.id and r.requested_for = new.user_id)
-      );
   return null;
 end;
 $$;
@@ -217,5 +210,48 @@ begin
   update public.tasks t set picked_up_by = null, picked_up_at = null
     where t.picked_up_by = remove_child.child_id;
   delete from auth.users u where u.id = remove_child.child_id;
+end;
+$$;
+
+-- As before (20261011220000_task_helpers.sql), but a done task for children reopens given to a child: the child who
+-- did it, if it was given to nobody (done before every task for children was a child's, or by a child who has
+-- since become an adult and is no child any more, when it can't be undone).
+create or replace function public.undo_complete_task(task_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  done public.tasks;
+begin
+  select * into done from public.tasks t
+    where t.id = undo_complete_task.task_id
+      and private.can_see_task(t)
+      and t.completed_by = auth.uid()
+      and t.completed_at > now() - interval '1 hour'
+    for update;
+  if done.id is null or exists (
+    select 1 from public.tasks t where t.previous_task_id = done.id and not private.can_see_task(t)
+  ) or (
+    done.for_children and not done.is_private and done.assigned_to is null
+    and not private.is_child_in_household(done.completed_by, done.household_id)
+  ) then
+    raise exception 'You have not marked this task done in the last hour' using errcode = 'P0002';
+  end if;
+  if exists (
+    select 1 from public.tasks t where t.previous_task_id = done.id and t.completed_at is not null
+  ) then
+    raise exception 'The next occurrence of this task is already done' using errcode = '55006';
+  end if;
+  delete from public.tasks t where t.previous_task_id = done.id;
+  delete from public.task_helpers h where h.task_id = done.id;
+  update public.tasks t
+    set completed_at = null, completed_by = null,
+        assigned_to = case
+          when t.for_children and not t.is_private then coalesce(t.assigned_to, done.completed_by)
+          else t.assigned_to
+        end
+    where t.id = done.id;
 end;
 $$;

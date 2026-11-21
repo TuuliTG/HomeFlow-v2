@@ -2,7 +2,7 @@
 -- share a household.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -93,6 +93,22 @@ select is_empty(
   'the adult no longer plans or is reminded to do it'
 );
 set local role authenticated;
+
+-- A task for any child Ben did before every task for children was a child's reopens as his when he undoes it.
+reset role;
+insert into public.tasks
+  (household_id, title, type, points, created_by, for_children, completed_at, completed_by)
+  select household_id, 'Old chore', 'physical', 1, created_by, true, now(), '22222222-2222-2222-2222-222222222222'
+  from public.tasks where title = 'Feed the cat' and previous_task_id is null;
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select public.undo_complete_task(id) from public.tasks where title = 'Old chore';
+select results_eq(
+  $$ select completed_at is null, assigned_to from public.tasks where title = 'Old chore' $$,
+  $$ values (true, '22222222-2222-2222-2222-222222222222'::uuid) $$,
+  'undoing a done task for any child gives it to the child who did it'
+);
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 
 -- An adult's private task is theirs to do, even one kept for children from when they were a child.
 insert into public.tasks (title, type, points, is_private, for_children)

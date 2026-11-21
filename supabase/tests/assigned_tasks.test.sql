@@ -199,7 +199,7 @@ select is(
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select throws_ok(
   $$ select public.undo_complete_task(current_setting('test.cat')::uuid) $$,
-  '23514', null,
+  'P0002', null,
   'a done chore of a new adult cannot be reopened without a child'
 );
 
