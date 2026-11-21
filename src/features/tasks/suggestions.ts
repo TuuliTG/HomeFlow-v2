@@ -63,6 +63,8 @@ export function suggestionAsTask({
     isRoutine,
     dueOn: null,
     assignedTo: null,
+    isAlways: false,
+    dailyLimit: null,
   };
 }
 

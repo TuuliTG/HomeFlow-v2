@@ -45,6 +45,8 @@ const newTask: NewTask = {
   labels: [],
   customLabels: [],
   isRoutine: false,
+  isAlways: false,
+  dailyLimit: null,
 };
 const row = {
   id: 't1',

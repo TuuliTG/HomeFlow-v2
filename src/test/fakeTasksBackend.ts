@@ -1,5 +1,10 @@
 import type * as liveApi from '@/features/tasks/liveApi';
-import { canDoTask, type NewTask, type TaskHelper } from '@/features/tasks/task';
+import {
+  alwaysTaskState,
+  canDoTask,
+  type NewTask,
+  type TaskHelper,
+} from '@/features/tasks/task';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeRequestsBackend } from '@/test/fakeRequestsApi';
@@ -22,6 +27,8 @@ export interface StoredTask extends NewTask {
   helpers: { userId: string; points: number }[];
   /** Its pictures' file names, in order (`task_images`). */
   images: string[];
+  /** For an always task, how many times it was done on a local date before this copy (`times_done`). */
+  timesDone: { count: number; on: string | null };
 }
 
 /** One member's points from a done task, like a row of `private.task_credits`. */
@@ -143,6 +150,30 @@ export function requestsFailing(): boolean {
   return requestsFail;
 }
 
+/** Like `complete_task()` for an always task: a fresh copy at once, counting the times it was done that day. */
+function addAlwaysTaskCopy(task: StoredTask, completedOn: string) {
+  const assignee =
+    task.assignedTo !== null && isChildIn(task.assignedTo, task.householdId)
+      ? task.assignedTo
+      : null;
+  const count = task.timesDone.on === completedOn ? task.timesDone.count + 1 : 1;
+  store(
+    {
+      ...task,
+      id: `task:${String(tasks.length)}`,
+      assignedTo: assignee,
+      pickedUpBy: assignee,
+      previousTaskId: task.id,
+      createdAt: new Date().toISOString(),
+      completed: null,
+      helpers: [],
+      images: [...task.images],
+      timesDone: { count, on: completedOn },
+    },
+    true,
+  );
+}
+
 export const fakeTasksBackend = {
   reset() {
     tasks.length = 0;
@@ -169,7 +200,10 @@ export const fakeTasksBackend = {
         labels: [],
         customLabels: [],
         isRoutine: false,
+        isAlways: false,
+        dailyLimit: null,
         ...task,
+        timesDone: { count: 0, on: null },
         id,
         householdId,
         createdBy: userId,
@@ -204,11 +238,22 @@ export const fakeTasksBackend = {
   completeTaskAs(userId: string, taskId: string, completedOn: string) {
     const task = openTaskOf(userId, taskId);
     if (!canDo(userId, task)) throw new Error('Only children mark tasks for children done');
+    const lastDone = tasks.find((candidate) => candidate.id === task.previousTaskId)?.completed;
+    const state = alwaysTaskState(
+      { ...task, lastDone: lastDone ? { ...lastDone, name: null } : null },
+      Date.now(),
+      completedOn,
+    );
+    if (state.kind !== 'ready') throw new Error('This always task cannot be done now');
     completions += 1;
     // A millisecond apart, so the newest completion sorts first.
     task.completed = { by: userId, at: new Date(Date.now() + completions).toISOString() };
     fakeRequestsBackend.forget(taskId);
     deliver(task, { kind: 'changed' });
+    if (task.isAlways) {
+      addAlwaysTaskCopy(task, completedOn);
+      return;
+    }
     if (task.repeatEveryDays === null) return;
     // Like complete_task(): it is given to the same child, as long as they are still one.
     const nextAssignee =
