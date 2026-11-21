@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 
+import { taskChipClassName } from '@/features/tasks/chipStyles';
 import { FormFoldButton } from '@/features/tasks/FormFoldButton';
 import { suggestionPointsLabel } from '@/features/tasks/suggestions';
 import type { TaskSuggestion } from '@/features/tasks/task';
@@ -156,7 +157,7 @@ function FavouriteTask({ suggestion, hintId, isSaving, onPick, onRemove }: Favou
           hold.markLongPress();
           offerRemove();
         }}
-        className="hover:border-brand-600 hover:bg-brand-50 border-line-strong bg-surface text-ink min-h-11 rounded-full border px-3 py-2 text-sm select-none [-webkit-touch-callout:none]"
+        className={`${taskChipClassName} select-none [-webkit-touch-callout:none]`}
       >
         {suggestion.title}
         <span className="text-ink-muted"> · {suggestionPointsLabel(suggestion, t)}</span>

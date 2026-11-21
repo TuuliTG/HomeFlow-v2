@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 
 import { TaskIcon } from '@/components/ui/TaskIcon';
+import { taskChipClassName } from '@/features/tasks/chipStyles';
 import { FormFoldButton } from '@/features/tasks/FormFoldButton';
 import type { TaskSuggestion } from '@/features/tasks/task';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -37,7 +38,7 @@ export function ReadyMadeTaskList({ tasks, onPick }: ReadyMadeTaskListProps) {
               onClick={() => {
                 onPick(task);
               }}
-              className="hover:border-brand-600 hover:bg-brand-50 border-line-strong bg-surface text-ink flex min-h-11 items-center gap-2 rounded-full border px-3 py-2 text-sm"
+              className={`${taskChipClassName} flex items-center gap-2`}
             >
               {task.icon && <TaskIcon name={task.icon} />}
               {task.title}

@@ -51,7 +51,7 @@ export const taskForm = {
   /** In the settings: the points an adult's new tasks start with, on this device. */
   defaultPoints: {
     heading: 'New tasks',
-    label: 'Default points',
+    label: 'Points',
   },
   suggestedTasks: 'Suggested tasks',
   onTheBoard: 'On the board · ',

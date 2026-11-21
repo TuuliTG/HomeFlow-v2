@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
+import { fakeFavouritesBackend } from '@/test/fakeFavouritesApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
@@ -105,12 +106,25 @@ describe('ready-made tasks', () => {
     expect(suggestions()).toEqual(['Clean the bathroom3 points']);
   });
 
+  it('leaves out a ready-made task the household has starred, as it is among the favourites', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 2 });
+    fakeFavouritesBackend.setFavouriteAs(anna.id, 'vacuum', true);
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await screen.findByRole('button', { name: /^Favourites/ });
+    await openReadyMade(user);
+    expect(isOffered('Vacuum')).toBe(false);
+    expect(isOffered('Do the laundry')).toBe(true);
+  });
+
   it('starts new tasks with the default points chosen in the settings', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
     renderAppAt('/settings');
 
-    const defaultPoints = await screen.findByLabelText('Default points');
+    const defaultPoints = await screen.findByRole('combobox', { name: 'Points' });
     expect(defaultPoints).toHaveValue('3');
     await user.selectOptions(defaultPoints, '5');
     await user.click(screen.getByRole('link', { name: 'Shared tasks' }));
@@ -131,6 +145,6 @@ describe('ready-made tasks', () => {
     renderAppAt('/settings');
 
     await screen.findByRole('heading', { name: 'Language' });
-    expect(screen.queryByLabelText('Default points')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Points' })).not.toBeInTheDocument();
   });
 });

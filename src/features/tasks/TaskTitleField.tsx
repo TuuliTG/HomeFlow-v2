@@ -153,6 +153,9 @@ interface StartingPointsProps {
 
 /** Before a name is typed: the household's favourites and the ready-made tasks, to fill in the form from. */
 function StartingPoints({ suggestions, readyMade, favourites, onPick }: StartingPointsProps) {
+  // A starred chore is among the favourites already.
+  const favouriteKeys = new Set(favourites?.keys);
+  const notFavourite = readyMade.filter((task) => !favouriteKeys.has(titleKey(task.title)));
   return (
     <>
       {favourites?.keys && (
@@ -165,7 +168,7 @@ function StartingPoints({ suggestions, readyMade, favourites, onPick }: Starting
           isSaving={favourites.isSaving}
         />
       )}
-      {readyMade.length > 0 && <ReadyMadeTaskList tasks={readyMade} onPick={onPick} />}
+      {notFavourite.length > 0 && <ReadyMadeTaskList tasks={notFavourite} onPick={onPick} />}
     </>
   );
 }
