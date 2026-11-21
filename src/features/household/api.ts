@@ -106,6 +106,15 @@ export async function newChildSignInCode(childId: string): Promise<SignInCode> {
 }
 
 /**
+ * Removes a child who signs in with codes from the user's household, with their login and everything they
+ * did (`remove_child()`, ADR 0003); only adults can.
+ */
+export async function removeChild(childId: string): Promise<void> {
+  const { error } = await getSupabaseClient().rpc('remove_child', { child_id: childId });
+  if (error) throw error;
+}
+
+/**
  * Marks another member of the user's household as a child or an adult. Only adults can, and not for
  * themselves; a new child gives back the adults-only tasks they picked up.
  */

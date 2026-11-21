@@ -963,6 +963,21 @@ export async function fakeSupabase(page: Page) {
     return reply(route, 200, { code, expiresAt: expires_at });
   }
 
+  /** Like remove_child(): an adult removes a child without email from their household. */
+  async function removeChild(route: Route) {
+    const { child_id } = route.request().postDataJSON() as { child_id: string };
+    const others = ownHousehold ? (members.get(ownHousehold.id) ?? []) : [];
+    if (!childAccounts.has(child_id) || !others.includes(child_id) || !ownHousehold) {
+      return reply(route, 400, { code: 'P0002', message: 'No child with this id' });
+    }
+    members.set(
+      ownHousehold.id,
+      others.filter((id) => id !== child_id),
+    );
+    children.delete(child_id);
+    return reply(route, 204);
+  }
+
   const endpoints: Record<string, (route: Route) => Promise<void>> = {
     '/auth/v1/signup': (route) => logInWith(route),
     '/auth/v1/token': (route) => logInWith(route),
@@ -975,6 +990,7 @@ export async function fakeSupabase(page: Page) {
     '/rest/v1/rpc/set_member_is_child': setMemberIsChild,
     '/rest/v1/rpc/household_invite_code': (route) =>
       reply(route, 200, ownHousehold?.invite_code ?? null),
+    '/rest/v1/rpc/remove_child': removeChild,
     '/rest/v1/rpc/new_child_sign_in_code': (route) => replyWithRows(route, [signInCode()]),
     '/functions/v1/add-child': addChild,
     // The fake has one user, Anna, so no code signs anyone in.

@@ -38,6 +38,15 @@ test('new user can create a household and see its invite code', async ({ page })
   await expect(code).toBeVisible();
   await expectNoA11yViolations(page, 'household with a child sign-in code');
 
+  // Ben added twice by mistake: the second one goes.
+  await page.getByLabel("Child's name").fill('Ben');
+  await page.getByRole('button', { name: 'Add child' }).click();
+  await expect(memberList(page)).toHaveCount(3);
+  await page.getByRole('button', { name: 'Remove Ben' }).last().click();
+  await expectNoA11yViolations(page, 'household confirming removing a child');
+  await page.getByRole('button', { name: 'Yes, remove' }).click();
+  await expect(memberList(page)).toHaveCount(2);
+
   await page.getByRole('link', { name: 'Shared tasks' }).click();
   await expect(page.getByRole('heading', { name: 'Shared tasks' })).toBeVisible();
   await expect(page.getByText('Hello, Anna')).toBeVisible();

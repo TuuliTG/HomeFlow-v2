@@ -36,6 +36,8 @@ little personal data as possible, and joining a family must be low effort withou
   passes to `verifyOtp`. Adults make a new code (`new_child_sign_in_code()`), e.g. for a new device or after
   logging out; only for children added this way, so nobody signs in as a member with their own password. No email
   or password is stored for the child, and an adult (the parent) creates the account.
+  An adult removes such a child, e.g. one added twice, with `remove_child()`: it deletes the child's private tasks,
+  puts back the open tasks they picked up, then their Auth user, which takes their points and history with it.
 - **Several accounts on one device**, for a child without a device of their own. On the household page an adult
   ticks "On this device" for a child without email: the app makes a sign-in code and takes it at once on a
   throwaway in-memory client, so the adult stays in use. Accounts not in use wait in `localStorage`
@@ -59,7 +61,8 @@ little personal data as possible, and joining a family must be low effort withou
 - A child without email who logs out, or whose device storage is cleared, needs a new code from an adult. Guessing
   a code means trying a share of 32^8 (about 10^12) codes within 15 minutes, fewer the more codes are live at once;
   there is no further rate limit.
-- Invite codes can't be rotated yet; there is no leaving a household or deleting an account in the app.
+- Invite codes can't be rotated yet; there is no leaving a household or deleting an account in the app, and only
+  children without email can be removed from one.
 - Anyone holding a device can switch to every account signed in on it, adults included. Kept tokens are as
   exposed as Supabase's own session in `localStorage`. The device's push notifications stay with whoever turned
   them on, or last opened Settings (ADR 0005), not with the account in use; after that account logs out, nobody
