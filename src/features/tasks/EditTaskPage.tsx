@@ -43,15 +43,14 @@ export function EditTaskPage() {
 }
 
 /**
- * Where to go after saving or deleting: back to the page that opened the form with a `returnTo` in its state (a
- * child's tasks, `ChildTasksPage`), else to the list the task is on.
+ * Where to go after saving or deleting: back to a child's tasks (`ChildTasksPage`) when it opened the form with
+ * `{ returnToChild }` in its state, else to the list the task is on. Only an id, so it can't lead elsewhere.
  */
 function useReturnTo(): string | null {
   const state: unknown = useLocation().state;
-  if (typeof state !== 'object' || state === null || !('returnTo' in state)) return null;
-  const { returnTo } = state;
-  // Only a path in the app: never another site.
-  return typeof returnTo === 'string' && /^\/(?!\/)/.test(returnTo) ? returnTo : null;
+  if (typeof state !== 'object' || state === null || !('returnToChild' in state)) return null;
+  const { returnToChild } = state;
+  return typeof returnToChild === 'string' ? paths.childTasks(returnToChild) : null;
 }
 
 /** After a new task was added without its pictures (`imagesNotSavedState`), asks to add them again. */
@@ -91,7 +90,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
             householdId,
             before: imagesBefore,
           });
-          await navigate(returnTo ?? paths.taskList(changed));
+          await navigate(returnTo ?? paths.taskList(changed), { replace: returnTo !== null });
         }}
       />
       <DeleteTask task={task} userId={userId} />
@@ -140,7 +139,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
             // Not mutate()'s onSuccess: the refetch after deleting removes the task, which unmounts
             // this form before that callback would run. A failure shows through isError.
             deleteTask.mutateAsync(task).then(
-              () => navigate(returnTo ?? paths.taskList(task)),
+              () => navigate(returnTo ?? paths.taskList(task), { replace: returnTo !== null }),
               () => undefined,
             );
           }}

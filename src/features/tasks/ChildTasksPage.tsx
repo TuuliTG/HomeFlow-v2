@@ -92,7 +92,7 @@ function TaskRow({ task, childId }: { task: Task; childId: string }) {
     <li>
       <Link
         to={paths.editTask(task.id)}
-        state={{ returnTo: paths.childTasks(childId) }}
+        state={{ returnToChild: childId }}
         className="bg-surface shadow-card hover:bg-brand-50 flex items-center gap-3 rounded-2xl px-4 py-3"
       >
         <TaskTypeIcon type={task.type} icon={task.icon} />
@@ -141,6 +141,7 @@ function CopyTo({ tasks, fromChildId, others }: CopyToProps) {
           type="button"
           disabled={copyTasks.isPending}
           onClick={() => {
+            copyTasks.reset();
             copyTasks.mutate({ tasks: other.toCopy, childId: other.id });
           }}
           className="text-brand-600 min-h-11 text-sm font-medium underline disabled:opacity-60"

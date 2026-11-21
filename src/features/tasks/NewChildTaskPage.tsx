@@ -19,7 +19,14 @@ export function NewChildTaskPage() {
   const navigate = useNavigate();
   const t = useMessages();
 
-  if (members.data === undefined) return <LoadingMessage />;
+  if (members.data === undefined) {
+    if (!members.isError) return <LoadingMessage />;
+    return (
+      <p role="alert" className="text-danger-700 text-sm">
+        {t.tasks.me.loadFailed}
+      </p>
+    );
+  }
   const child = members.data.find((member) => member.id === childId && member.isChild);
   if (!child) return <p className="text-ink-muted text-sm">{t.tasks.childTasks.notFound}</p>;
 

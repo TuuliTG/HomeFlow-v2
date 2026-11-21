@@ -63,14 +63,17 @@ export function newTaskOf(task: Task): NewTask {
 }
 
 /**
- * The child's tasks to copy to another child: those the other child doesn't have under the same name yet, so
- * copying twice adds nothing twice.
+ * The child's tasks to copy to another child: those the other child doesn't have under the same name yet, each
+ * name once, so copying twice adds nothing twice.
  */
 export function tasksToCopy(tasks: Task[], fromChildId: string, toChildId: string): Task[] {
   const theirs = new Set(
     tasks.filter((task) => task.assignedTo === toChildId).map((task) => titleKey(task.title)),
   );
-  return tasks.filter(
-    (task) => task.assignedTo === fromChildId && !theirs.has(titleKey(task.title)),
-  );
+  return tasks.filter((task) => {
+    if (task.assignedTo !== fromChildId || theirs.has(titleKey(task.title))) return false;
+    // Two tasks of the child's with the same name are copied once.
+    theirs.add(titleKey(task.title));
+    return true;
+  });
 }

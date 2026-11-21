@@ -147,4 +147,51 @@ describe("a child's tasks", () => {
     expect(await screen.findByRole('heading', { name: 'My stars' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: "Ben's tasks" })).not.toBeInTheDocument();
   });
+
+  it('come back to the list after deleting one', async () => {
+    const { anna, ben } = family();
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    const user = userEvent.setup();
+    renderAppAt(`/children/${ben.id}/tasks`);
+
+    await user.click(await screen.findByRole('link', { name: /Make the bed/ }));
+    await user.click(await screen.findByRole('button', { name: 'Delete task' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
+
+    expect(await screen.findByText('No tasks yet.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: "Ben's tasks" })).toBeInTheDocument();
+  });
+
+  it("are only a child's of the family", async () => {
+    const { anna } = family();
+    renderAppAt(`/children/${anna.id}/tasks`);
+
+    expect(await screen.findByText('This child is not in your family.')).toBeInTheDocument();
+  });
+
+  it('say when copying fails', async () => {
+    const { anna, ben } = family();
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    const user = userEvent.setup();
+    renderAppAt(`/children/${ben.id}/tasks`);
+
+    const copy = await screen.findByRole('button', { name: 'Copy to Dora' });
+    fakeTasksBackend.failRequests();
+    await user.click(copy);
+
+    expect(await screen.findByText("We couldn't copy the tasks. Try again.")).toBeInTheDocument();
+  });
+
+  it('copy a name the child has twice only once', async () => {
+    const { anna, ben, dora } = family();
+    give(anna.id, ben.id, { title: 'Brush teeth' });
+    give(anna.id, ben.id, { title: 'Brush teeth' });
+    const user = userEvent.setup();
+    renderAppAt(`/children/${ben.id}/tasks`);
+
+    await user.click(await screen.findByRole('button', { name: 'Copy to Dora' }));
+
+    expect(await screen.findByText('Copied to Dora.')).toBeInTheDocument();
+    expect(tasks.filter((task) => task.assignedTo === dora.id)).toHaveLength(1);
+  });
 });

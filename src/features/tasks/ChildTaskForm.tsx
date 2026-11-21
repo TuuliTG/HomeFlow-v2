@@ -1,5 +1,6 @@
 import { type SyntheticEvent, useId, useState } from 'react';
 
+import { paths } from '@/app/paths';
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
 import { useReadyMadeTasks } from '@/features/tasks/readyMadeTasks';
 import { type NewTask, newTaskSchema } from '@/features/tasks/task';
@@ -105,7 +106,8 @@ export function ChildTaskForm({ childId, isSaving, onSave }: ChildTaskFormProps)
       <TaskIconField value={fields.icon} onChange={set('icon')} />
       <TaskPointsField
         isChild={false}
-        forChildren="one"
+        forChildren
+        label={t.taskForm.starsForOne}
         value={fields.points}
         onChange={set('points')}
         inputRef={fieldRefs.points}
@@ -136,6 +138,7 @@ export function ChildTaskForm({ childId, isSaving, onSave }: ChildTaskFormProps)
         submitLabel={t.taskForm.create.submit}
         disabled={isSaving}
         initial={undefined}
+        cancelTo={paths.childTasks(childId)}
       />
     </form>
   );

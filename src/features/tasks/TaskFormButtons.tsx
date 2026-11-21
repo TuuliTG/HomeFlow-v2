@@ -7,10 +7,17 @@ interface TaskFormButtonsProps {
   disabled: boolean;
   /** The task being edited, whose list Cancel goes to when the form was opened directly. */
   initial: NewTask | undefined;
+  /** Where Cancel goes when the form was opened directly, instead of the task's list. */
+  cancelTo?: string | undefined;
 }
 
 /** Saves the task, or goes back without saving. */
-export function TaskFormButtons({ submitLabel, disabled, initial }: TaskFormButtonsProps) {
+export function TaskFormButtons({
+  submitLabel,
+  disabled,
+  initial,
+  cancelTo,
+}: TaskFormButtonsProps) {
   return (
     <div className="flex gap-3">
       <button
@@ -20,7 +27,7 @@ export function TaskFormButtons({ submitLabel, disabled, initial }: TaskFormButt
       >
         {submitLabel}
       </button>
-      <CancelLink fallback={paths.taskList(initial ?? NEW_TASK_DEFAULTS)} />
+      <CancelLink fallback={cancelTo ?? paths.taskList(initial ?? NEW_TASK_DEFAULTS)} />
     </div>
   );
 }
