@@ -165,13 +165,16 @@ const completeTaskKey = ['complete-task'] as const;
 /** What marking a task done remembers about it, to ask who helped afterwards. */
 export type DoneTask = Pick<Task, 'id' | 'title' | 'points' | 'isPrivate'>;
 
-/** Marks a task done today; a repeating task's next occurrence then appears on the board. */
+/**
+ * Marks a task done today; a repeating task's next occurrence then appears on the board. Refreshes even on
+ * failure: an always task may not be done again yet.
+ */
 export function useCompleteTask(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: completeTaskKey,
     mutationFn: (task: DoneTask) => completeTask(task.id, today()),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
 }
 

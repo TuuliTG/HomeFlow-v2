@@ -122,6 +122,7 @@ interface FormState {
   forChildren: boolean;
   /** Whether the form offers to add the task as already done. */
   canBeDoneAlready: boolean;
+  isAlways: boolean;
 }
 
 /**
@@ -129,7 +130,13 @@ interface FormState {
  * (`isForChildren`) asks which children and the stars each earns, and has neither a type of work nor labels,
  * nor is it added as done, since adults don't do it. A private task counts for no one, so it has neither a type nor points, and is added to do.
  */
-export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready }: FormState) {
+export function shownFields({
+  isChild,
+  isPrivate,
+  forChildren,
+  canBeDoneAlready,
+  isAlways,
+}: FormState) {
   const isForChildren = !isChild && !isPrivate && forChildren;
   return {
     isForChildren,
@@ -139,6 +146,11 @@ export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready 
     labels: !isForChildren,
     points: !isPrivate,
     alreadyDone: canBeDoneAlready && !isForChildren && !isPrivate,
+    /**
+     * Whether it is an always task, which has no repeat or due date to choose: an adult's task for children, or
+     * a child editing one (they can't change it).
+     */
+    isAlways: isAlways && (isForChildren || isChild),
   };
 }
 

@@ -159,4 +159,58 @@ describe('always tasks', () => {
         .map((heading) => heading.textContent),
     ).toEqual(['Pack for the trip', 'Brush teeth', 'Make the bed']);
   });
+
+  it("are one child's: editing one for any child asks for a child", async () => {
+    const anna = logInAsFamilyMember();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(ben.id, true);
+    const id = addAlwaysTask(anna.id, ben.id, { title: 'Brush teeth', dailyLimit: 1 });
+    const user = userEvent.setup();
+    renderAppAt(`/tasks/${id}/edit`);
+
+    await user.selectOptions(await screen.findByLabelText('Whose chore is it?'), 'Any child');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Choose at least one child.');
+    expect(tasks[0]).toMatchObject({ assignedTo: ben.id });
+  });
+
+  it('have no repeat or due date when a child edits one they added', async () => {
+    const { ben } = family();
+    const id = fakeTasksBackend.addTaskAs(ben.id, {
+      title: 'Read a book',
+      type: 'physical',
+      points: 1,
+      forChildren: true,
+      assignedTo: ben.id,
+      isAlways: true,
+    });
+    fakeAuthBackend.logInAs('ben@example.com', 'Ben');
+    renderAppAt(`/tasks/${id}/edit`);
+
+    expect(await screen.findByLabelText('Task')).toHaveValue('Read a book');
+    expect(screen.queryByLabelText('Repeats')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Due date')).not.toBeInTheDocument();
+  });
+
+  it('cannot be picked up while resting after another child did one', async () => {
+    const { anna, ben } = family();
+    const dora = fakeAuthBackend.addProfile('dora@example.com', 'Dora');
+    fakeHouseholdBackend.addMember(dora.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(dora.id, true);
+    const id = fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Feed the cat',
+      type: 'physical',
+      points: 1,
+      forChildren: true,
+      isAlways: true,
+    });
+    fakeTasksBackend.completeTaskAs(ben.id, id, today());
+    fakeAuthBackend.logInAs('dora@example.com', 'Dora');
+    renderAppAt('/');
+
+    expect(await screen.findByRole('img', { name: 'Done: Feed the cat' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pick up: Feed the cat' })).not.toBeInTheDocument();
+  });
 });

@@ -79,11 +79,18 @@ export function TaskForm({
   const [initialValues] = useState(() => fieldValues(initial ?? prefill, defaultPoints));
   const { fields, setFields, change, set } = useTaskFormFields(initialValues);
   const { isPrivate, forChildren } = fields;
-  const shown = shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready });
+  const shown = shownFields({
+    isChild,
+    isPrivate,
+    forChildren,
+    canBeDoneAlready,
+    isAlways: fields.isAlways,
+  });
   const children = useChildChoice(currentUserId, {
     isNew: !initial,
     isForChildren: shown.isForChildren,
     assignedTo: initialValues.assignedTo,
+    isAlways: fields.isAlways,
   });
   const readyMade = useReadyMadeTasks({
     isNew: !initial,
@@ -262,7 +269,7 @@ export function TaskForm({
         }}
         always={{
           offered: shown.isForChildren,
-          checked: fields.isAlways,
+          checked: shown.isAlways,
           onChange: set('isAlways'),
           dailyLimit: fields.dailyLimit,
           onDailyLimitChange: set('dailyLimit'),

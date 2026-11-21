@@ -12,7 +12,7 @@ import { EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
 import { useCompleteTask, usePickUpTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
-import { today } from '@/lib/dates';
+import { addDays, fromIsoDate, today } from '@/lib/dates';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /** Tasks as big tiles with icons and stars and little text, for children (ADR 0004). */
@@ -99,29 +99,33 @@ function TaskTile({ task, action, note }: TaskTileProps) {
         />
       )}
       {action === 'pickUp' && (
-        <button
-          type="button"
-          aria-label={`${t.pickUp}: ${task.title}`}
-          disabled={mutation.isPending}
+        <PickUpButton
+          title={task.title}
+          state={always}
+          isPending={mutation.isPending}
           onClick={() => {
             pickUpTask.mutate(task.id);
           }}
-          className="bg-brand-700 hover:bg-brand-900 min-h-11 shrink-0 rounded-xl px-4 text-[0.9375rem] font-bold text-white disabled:opacity-60"
-        >
-          {t.pickUp}
-        </button>
+        />
       )}
     </li>
   );
 }
 
+/** When an always task can next be done: once its pause is over, or tomorrow once done for today. */
+function changesAt(state: AlwaysTaskState): number | null {
+  if (state.kind === 'resting') return state.until;
+  if (state.kind === 'doneForToday') return fromIsoDate(addDays(today(), 1)).getTime();
+  return null;
+}
+
 /**
- * Where an always task stands (`alwaysTaskState()`), rendering again when its pause is over.
+ * Where an always task stands (`alwaysTaskState()`), rendering again when that changes.
  */
 function useAlwaysTaskState(task: Task): AlwaysTaskState {
   const [now, setNow] = useState(() => Date.now());
   const state = alwaysTaskState(task, now, today());
-  const until = state.kind === 'resting' ? state.until : null;
+  const until = changesAt(state);
   useEffect(() => {
     if (until === null) return;
     const timer = setTimeout(() => {
@@ -132,6 +136,23 @@ function useAlwaysTaskState(task: Task): AlwaysTaskState {
     };
   }, [until]);
   return state;
+}
+
+/** Picks a free task up, unless it is an always task that was just done. */
+function PickUpButton({ title, state, isPending, onClick }: MarkDoneButtonProps) {
+  const t = useMessages().tasks.card;
+  if (state.kind !== 'ready') return <DoneForNow state={state} title={title} />;
+  return (
+    <button
+      type="button"
+      aria-label={`${t.pickUp}: ${title}`}
+      disabled={isPending}
+      onClick={onClick}
+      className="bg-brand-700 hover:bg-brand-900 min-h-11 shrink-0 rounded-xl px-4 text-[0.9375rem] font-bold text-white disabled:opacity-60"
+    >
+      {t.pickUp}
+    </button>
+  );
 }
 
 interface MarkDoneButtonProps {

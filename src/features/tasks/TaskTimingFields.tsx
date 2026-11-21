@@ -22,7 +22,7 @@ interface TaskTimingFieldsProps {
   routine: { offered: boolean; checked: boolean; onChange: (checked: boolean) => void };
   /**
    * Whether it is an always task, offered for an adult's task for children, and how many times a day it earns
-   * its points (empty for no limit).
+   * its points (empty for no limit). Checked, it has no schedule, also when not offered (a child's edit).
    */
   always: {
     offered: boolean;
@@ -49,11 +49,10 @@ export function TaskTimingFields({ always, ...schedule }: TaskTimingFieldsProps)
           onChange={always.onChange}
         />
       )}
-      {always.offered && always.checked ? (
+      {always.offered && always.checked && (
         <DailyLimitField value={always.dailyLimit} onChange={always.onDailyLimitChange} />
-      ) : (
-        <ScheduleFields {...schedule} />
       )}
+      {!always.checked && <ScheduleFields {...schedule} />}
     </>
   );
 }
