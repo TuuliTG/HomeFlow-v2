@@ -3,6 +3,8 @@ import { type KeyboardEvent, type RefObject, useId, useState } from 'react';
 import { inputClassName } from '@/components/ui/formStyles';
 import { FavouriteStarButton } from '@/features/tasks/FavouriteStarButton';
 import { FavouriteTaskList } from '@/features/tasks/FavouriteTaskList';
+import { withReadyMade } from '@/features/tasks/readyMadeTasks';
+import { ReadyMadeTaskList } from '@/features/tasks/ReadyMadeTaskList';
 import {
   favouriteSuggestions,
   matchingSuggestions,
@@ -26,6 +28,8 @@ interface TaskTitleFieldProps {
   onChange: (title: string) => void;
   /** Tasks the household has added before, offered to add again; none when editing. */
   suggestions: TaskSuggestion[];
+  /** Everyday chores to start from (`readyMadeTasks`), offered after earlier tasks; none when editing. */
+  readyMade: TaskSuggestion[];
   /** Fills the form with an earlier task's details. */
   onPick: (suggestion: TaskSuggestion) => void;
   /** The household's favourites, starred with a button by the name; none when editing. */
@@ -36,13 +40,15 @@ interface TaskTitleFieldProps {
 }
 
 /**
- * The task's name, as a combobox listing earlier tasks that match what is typed, with a star to make it
- * a favourite. Before anything is typed, the household's favourites are offered as buttons.
+ * The task's name, as a combobox listing earlier and ready-made tasks that match what is typed, with a star to
+ * make it a favourite. Before anything is typed, the household's favourites and the ready-made tasks are offered
+ * as buttons.
  */
 export function TaskTitleField({
   value,
   onChange,
   suggestions,
+  readyMade,
   onPick,
   favourites,
   inputRef,
@@ -51,9 +57,11 @@ export function TaskTitleField({
   const listId = useId();
   const [isListOpen, setIsListOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  /** The earlier task picked to add again, until the name is changed. */
+  /** The earlier or ready-made task picked, until the name is changed. */
   const [picked, setPicked] = useState<TaskSuggestion | null>(null);
-  const matches = isListOpen ? matchingSuggestions(suggestions, value) : [];
+  const matches = isListOpen
+    ? matchingSuggestions(withReadyMade(suggestions, readyMade), value)
+    : [];
   const optionId = (index: number) => `${listId}-${String(index)}`;
   const t = useMessages();
 
@@ -82,14 +90,12 @@ export function TaskTitleField({
 
   return (
     <div className="flex flex-col gap-3">
-      {value === '' && favourites?.keys && (
-        <FavouriteTaskList
-          suggestions={favouriteSuggestions(suggestions, favourites.keys)}
+      {value === '' && (
+        <StartingPoints
+          suggestions={suggestions}
+          readyMade={readyMade}
+          favourites={favourites}
           onPick={pick}
-          onRemove={(title) => {
-            favourites.onChange(title, false);
-          }}
-          isSaving={favourites.isSaving}
         />
       )}
       <div className="relative flex items-end gap-2">
@@ -138,6 +144,36 @@ export function TaskTitleField({
   );
 }
 
+interface StartingPointsProps {
+  suggestions: TaskSuggestion[];
+  readyMade: TaskSuggestion[];
+  favourites: FavouriteTasks | undefined;
+  onPick: (suggestion: TaskSuggestion) => void;
+}
+
+/** Before a name is typed: the household's favourites and the ready-made tasks, to fill in the form from. */
+function StartingPoints({ suggestions, readyMade, favourites, onPick }: StartingPointsProps) {
+  const shownFavourites = favourites?.keys && favouriteSuggestions(suggestions, favourites.keys);
+  // A starred chore shown among the favourites isn't offered twice.
+  const favouriteKeys = new Set(shownFavourites?.map((task) => titleKey(task.title)));
+  const notFavourite = readyMade.filter((task) => !favouriteKeys.has(titleKey(task.title)));
+  return (
+    <>
+      {favourites && shownFavourites && (
+        <FavouriteTaskList
+          suggestions={shownFavourites}
+          onPick={onPick}
+          onRemove={(title) => {
+            favourites.onChange(title, false);
+          }}
+          isSaving={favourites.isSaving}
+        />
+      )}
+      {notFavourite.length > 0 && <ReadyMadeTaskList tasks={notFavourite} onPick={onPick} />}
+    </>
+  );
+}
+
 /** The star by the name field, for the task being named. */
 function TitleFavouriteStar({ title, favourites }: { title: string; favourites: FavouriteTasks }) {
   const t = useMessages();
@@ -163,14 +199,14 @@ interface SuggestionListProps {
   onPick: (suggestion: TaskSuggestion) => void;
 }
 
-/** Earlier tasks matching the name being typed, below the input. */
+/** Earlier and ready-made tasks matching the name being typed, below the input. */
 function SuggestionList({ id, matches, activeIndex, optionId, onPick }: SuggestionListProps) {
   const t = useMessages();
   return (
     <div
       id={id}
       role="listbox"
-      aria-label={t.taskForm.earlierTasks}
+      aria-label={t.taskForm.suggestedTasks}
       hidden={matches.length === 0}
       className="border-line bg-surface absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-lg border shadow-lg"
     >

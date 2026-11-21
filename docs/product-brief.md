@@ -28,7 +28,7 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
 - **Create / edit task** — first choose who it is for: adults (the default) or children. A task for children is the
   children's only, kept apart on the board for adults to check and edit; an adult chooses the stars it earns and
   which children it is for, and each child chosen gets their own copy straight onto their Me page. Then reuse a
-  previous task or type a new one; points, type; up to three pictures to clarify details; an optional icon (e.g. a bed) shown on the task's tile; a **private** check mark keeps a task to yourself, without points. A shared task can also have 0 points, e.g. a reminder: it counts for nobody in statistics or News. An **Already done** check mark adds a task you have just done and marks it done at once. Creating a task gets positive
+  previous task, start from a ready-made one (everyday chores, simpler ones for children), or type a new one; points (starting from the adult's default, chosen in the settings), type; up to three pictures to clarify details; an optional icon (e.g. a bed) shown on the task's tile; a **private** check mark keeps a task to yourself, without points. A shared task can also have 0 points, e.g. a reminder: it counts for nobody in statistics or News. An **Already done** check mark adds a task you have just done and marks it done at once. Creating a task gets positive
   feedback and counts towards _tasks created_ (no points).
 - **My tasks (Me)** — _To do_ (picked up, due date, points) and _Completed_ (with streak); meta tasks highlighted in purple.
   On a done task, an adult's _Who helped?_ (also asked right after marking it done) gives helpers (a child who helped,

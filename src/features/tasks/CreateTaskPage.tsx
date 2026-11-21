@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { useDefaultPoints } from '@/features/tasks/defaultPoints';
 import { parseToDoView, startFromLink } from '@/features/tasks/schedule';
 import { canDoTask, type NewTask } from '@/features/tasks/task';
 import {
@@ -63,8 +64,10 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
   const suggestions = useTaskSuggestions(userId);
   const favourites = useFavouriteTasks(userId);
   const setFavourite = useSetFavouriteTask(userId);
+  const [defaultPoints] = useDefaultPoints(userId);
   const t = useMessages();
   const [searchParams] = useSearchParams();
+  const fromLink = taskFromLink(searchParams);
   /** When the task goes in the user's timetable, if they are adding it from there (`paths.newTaskAt`). */
   const startsAt = startFromLink(searchParams);
 
@@ -79,7 +82,8 @@ function NewTaskForm({ userId, isChild, householdId }: NewTaskFormProps) {
         </p>
       )}
       <TaskForm
-        prefill={taskFromLink(searchParams)}
+        prefill={fromLink && { ...fromLink, points: defaultPoints }}
+        defaultPoints={defaultPoints}
         suggestions={suggestions.data ?? []}
         favourites={{
           keys: suggestions.isSuccess ? favourites.data : undefined,

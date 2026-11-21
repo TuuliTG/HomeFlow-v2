@@ -1,4 +1,4 @@
-import { type SyntheticEvent, useId, useRef, useState } from 'react';
+import { type SyntheticEvent, useId, useState } from 'react';
 
 import { paths } from '@/app/paths';
 import { CancelLink } from '@/components/ui/CancelLink';
@@ -11,18 +11,19 @@ import {
 import {
   canBeRoutine,
   type FieldName,
-  type FieldValues,
   fieldOf,
   fieldValues,
   type SaveOptions,
   shownFields,
   taskInput,
+  withReadyMadeTask,
 } from '@/features/tasks/taskFormValues';
 import { TaskDescriptionField } from '@/features/tasks/TaskDescriptionField';
 import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
 import { TaskIconField } from '@/features/tasks/TaskIconField';
 import { TaskImagesField } from '@/features/tasks/TaskImagesField';
 import { TaskLabelsField } from '@/features/tasks/TaskLabelsField';
+import { useReadyMadeTasks } from '@/features/tasks/readyMadeTasks';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
 import { TaskPointsField } from '@/features/tasks/TaskPointsField';
@@ -30,6 +31,7 @@ import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleF
 import { TaskTimingFields } from '@/features/tasks/TaskTimingFields';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
 import { useChildChoice } from '@/features/tasks/useChildChoice';
+import { useTaskFieldRefs, useTaskFormFields } from '@/features/tasks/useTaskFormFields';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface FormError {
@@ -49,6 +51,8 @@ interface TaskFormProps {
   suggestions?: TaskSuggestion[];
   /** The household's favourite tasks, offered to add again; leave out when editing. */
   favourites?: FavouriteTasks;
+  /** The points a new task, or a ready-made one for adults, starts with (`useDefaultPoints`). */
+  defaultPoints?: number;
   /** A child's tasks are always for children, and an adult awards their points, so they aren't asked. */
   isChild: boolean;
   currentUserId: string;
@@ -70,6 +74,7 @@ export function TaskForm({
   prefill,
   suggestions = [],
   favourites,
+  defaultPoints,
   isChild,
   currentUserId,
   submitLabel,
@@ -77,8 +82,8 @@ export function TaskForm({
   canBeDoneAlready = false,
   onSave,
 }: TaskFormProps) {
-  const [initialValues] = useState(() => fieldValues(initial ?? prefill));
-  const [fields, setFields] = useState(initialValues);
+  const [initialValues] = useState(() => fieldValues(initial ?? prefill, defaultPoints));
+  const { fields, setFields, change, set } = useTaskFormFields(initialValues);
   const { isPrivate, forChildren } = fields;
   const shown = shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready });
   const children = useChildChoice(currentUserId, {
@@ -86,47 +91,36 @@ export function TaskForm({
     isForChildren: shown.isForChildren,
     assignedTo: initialValues.assignedTo,
   });
+  const readyMade = useReadyMadeTasks({
+    isNew: !initial,
+    isForChildren: shown.childrensChore,
+    isPrivate,
+    defaultPoints,
+    earlier: suggestions,
+  });
   const [isDone, setIsDone] = useState(false);
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
   const t = useMessages();
   const errorId = useId();
-  const titleRef = useRef<HTMLInputElement>(null);
-  const pointsRef = useRef<HTMLInputElement>(null);
-  const repeatCountRef = useRef<HTMLInputElement>(null);
-  const dueOnRef = useRef<HTMLInputElement>(null);
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
-  const fieldRefs = {
-    title: titleRef,
-    description: descriptionRef,
-    points: pointsRef,
-    repeatEveryDays: repeatCountRef,
-    dueOn: dueOnRef,
-  };
+  const fieldRefs = useTaskFieldRefs();
 
   function errorPropsFor(field: FieldName | 'children') {
     const hasError = error?.field === field;
     return { 'aria-invalid': hasError, 'aria-describedby': hasError ? errorId : undefined };
   }
 
-  /** Changes some of the fields, e.g. `change({ dueOn: '' })`. */
-  function change(changed: Partial<FieldValues>) {
-    setFields((current) => ({ ...current, ...changed }));
-  }
-
-  /** Changes one field, e.g. `set('title')` as the title field's `onChange`. */
-  function set<K extends keyof FieldValues>(key: K) {
-    return (value: FieldValues[K]) => {
-      setFields((current) => ({ ...current, [key]: value }));
-    };
-  }
-
+  /** Fills in an earlier task's details, or a ready-made task's while keeping who it is for (and the rest). */
   function fillIn(suggestion: TaskSuggestion) {
-    const values = fieldValues(suggestionAsTask(suggestion));
+    setError(null);
+    if (readyMade.includes(suggestion)) {
+      setFields((current) => withReadyMadeTask(current, suggestion));
+      return;
+    }
+    const values = fieldValues(suggestionAsTask(suggestion), defaultPoints);
     setFields(values);
     children.reset(values.assignedTo);
-    setError(null);
   }
 
   /** A task done already has no due date. */
@@ -203,16 +197,17 @@ export function TaskForm({
         value={fields.title}
         onChange={set('title')}
         suggestions={suggestions}
+        readyMade={readyMade}
         onPick={fillIn}
         favourites={favourites}
-        inputRef={titleRef}
+        inputRef={fieldRefs.title}
         errorProps={errorPropsFor('title')}
       />
 
       <TaskDescriptionField
         value={fields.description}
         onChange={set('description')}
-        textareaRef={descriptionRef}
+        textareaRef={fieldRefs.description}
         errorProps={errorPropsFor('description')}
       />
 
@@ -247,7 +242,7 @@ export function TaskForm({
           forChildren={shown.isForChildren}
           value={fields.points}
           onChange={set('points')}
-          inputRef={pointsRef}
+          inputRef={fieldRefs.points}
           errorProps={errorPropsFor('points')}
         />
       )}
@@ -255,11 +250,11 @@ export function TaskForm({
       <TaskTimingFields
         repeat={fields.repeat}
         onRepeatChange={set('repeat')}
-        repeatCountRef={repeatCountRef}
+        repeatCountRef={fieldRefs.repeatEveryDays}
         repeatCountErrorProps={errorPropsFor('repeatEveryDays')}
         dueOn={fields.dueOn}
         onDueOnChange={set('dueOn')}
-        dueOnRef={dueOnRef}
+        dueOnRef={fieldRefs.dueOn}
         dueOnErrorProps={errorPropsFor('dueOn')}
         alreadyDone={{
           offered: shown.alreadyDone,
