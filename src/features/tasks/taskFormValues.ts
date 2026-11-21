@@ -3,9 +3,11 @@ import {
   MAX_CHILD_STARS,
   NEW_TASK_DEFAULTS,
   type NewTask,
+  newTaskSchema,
   type TaskSuggestion,
 } from '@/features/tasks/task';
 import { repeatDays, repeatFieldValue } from '@/features/tasks/taskRepeat';
+import type { Messages } from '@/lib/i18n/i18n';
 
 /**
  * A task's points as the field shows them. A shared task waiting for points starts empty, so an adult
@@ -91,8 +93,22 @@ function pointsInput({ points, forChildren }: FieldValues): number {
   return forChildren ? Math.min(Number(points), MAX_CHILD_STARS) : Number(points);
 }
 
+/**
+ * Checks the task the field values describe with `newTaskSchema`, or says which field to fix and how. A task
+ * for children asks for its stars, which can only be missing, rather than points from 0 to 10.
+ */
+export function checkTask(values: FieldValues, isChild: boolean, t: Messages) {
+  const parsed = newTaskSchema(t).safeParse(taskInput(values, isChild));
+  if (parsed.success) return parsed;
+  const [issue] = parsed.error.issues;
+  const path = issue?.path[0];
+  const message =
+    values.forChildren && path === 'points' ? t.taskForm.errors.starsRequired : issue?.message;
+  return { success: false as const, path, message };
+}
+
 /** The task the field values describe, for `newTaskSchema` to check. */
-export function taskInput(values: FieldValues, isChild: boolean) {
+function taskInput(values: FieldValues, isChild: boolean) {
   return {
     title: values.title,
     type: values.type,

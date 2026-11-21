@@ -159,8 +159,7 @@ describe('what a child sees of tasks they may not change', () => {
     const stars = await screen.findByRole('group', { name: 'Stars for each child' });
     expect(within(stars).queryByRole('radio', { checked: true })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Points must be a whole number from 0 to 10.',
-    );
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose the stars for each child.');
+    expect(within(stars).getByRole('radio', { name: '1 star' })).toHaveFocus();
   });
 });

@@ -158,6 +158,7 @@ export const taskForm: Messages['taskForm'] = {
     titleTooLong: (max) => `Nimessä saa olla enintään ${String(max)} merkkiä.`,
     descriptionTooLong: (max) => `Kuvauksessa saa olla enintään ${String(max)} merkkiä.`,
     pointsRange: 'Pisteiden pitää olla kokonaisluku 0–10.',
+    starsRequired: 'Valitse tähdet kullekin lapselle.',
     invalidDueDate: 'Valitse kelvollinen määräpäivä.',
     repeatRange: 'Valitse, kuinka usein tehtävä toistuu: 1–365 päivän välein.',
     onlySharedHavePoints: 'Vain yhteisillä tehtävillä on pisteitä.',
