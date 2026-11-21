@@ -5,9 +5,9 @@ import { repeatDays, repeatFieldValue } from '@/features/tasks/taskRepeat';
  * A task's points as the field shows them. A shared task waiting for points starts empty, so an adult
  * editing it chooses them rather than awarding the default by accident.
  */
-function pointsValue(task: NewTask): string {
+function pointsValue(task: NewTask, defaultPoints: number): string {
   if (task.points !== null) return String(task.points);
-  return task.isPrivate ? String(DEFAULT_POINTS) : '';
+  return task.isPrivate ? String(defaultPoints) : '';
 }
 
 const fieldNames = ['title', 'description', 'points', 'repeatEveryDays', 'dueOn'] as const;
@@ -20,15 +20,23 @@ export function fieldOf(path: PropertyKey | undefined): FieldName {
   return fieldNames.find((field) => field === path) ?? 'title';
 }
 
-/** The form's field values (strings, as inputs hold them) for a task, or for a new one. */
-export function fieldValues(
-  task: NewTask = { title: '', description: null, dueOn: null, ...NEW_TASK_DEFAULTS },
-) {
+/**
+ * The form's field values (strings, as inputs hold them) for a task, or for a new one with the user's default
+ * points. A private task shows them too, should it be made shared.
+ */
+export function fieldValues(task?: NewTask, defaultPoints = DEFAULT_POINTS) {
+  task ??= {
+    title: '',
+    description: null,
+    dueOn: null,
+    ...NEW_TASK_DEFAULTS,
+    points: defaultPoints,
+  };
   return {
     title: task.title,
     description: task.description ?? '',
     type: task.type,
-    points: pointsValue(task),
+    points: pointsValue(task, defaultPoints),
     repeat: repeatFieldValue(task.repeatEveryDays),
     dueOn: task.dueOn ?? '',
     isPrivate: task.isPrivate,
@@ -42,6 +50,11 @@ export function fieldValues(
 }
 
 export type FieldValues = ReturnType<typeof fieldValues>;
+
+/** The children a task for children is given to, as the form holds them: none for any child. */
+export function childIdsOf(assignedTo: string | null): string[] {
+  return assignedTo === null ? [] : [assignedTo];
+}
 
 function pointsInput(points: string): number {
   return points.trim() === '' ? Number.NaN : Number(points);
@@ -84,6 +97,8 @@ export function shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready 
   const isForChildren = !isChild && !isPrivate && forChildren;
   return {
     isForChildren,
+    /** Whether it is a chore for children, also when a child adds it. */
+    childrensChore: isChild || isForChildren,
     type: !isForChildren && !isPrivate,
     points: !isPrivate,
     alreadyDone: canBeDoneAlready && !isForChildren && !isPrivate,

@@ -11,7 +11,7 @@ interface FormFoldButtonProps {
   titleId: string;
   title: string;
   /** How many items there are, if any, shown while folded too. */
-  count: number;
+  count?: number;
   buttonRef?: Ref<HTMLButtonElement>;
 }
 
@@ -22,7 +22,7 @@ export function FormFoldButton({
   controls,
   titleId,
   title,
-  count,
+  count = 0,
   buttonRef,
 }: FormFoldButtonProps) {
   return (

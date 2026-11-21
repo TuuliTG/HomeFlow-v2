@@ -2,11 +2,15 @@ import { LanguageSettings } from '@/app/LanguageSettings';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { FamilySettings } from '@/features/household/FamilySettings';
 import { NotificationSettings } from '@/features/notifications/NotificationSettings';
+import { DefaultPointsSettings } from '@/features/tasks/DefaultPointsSettings';
 import { useIsChild } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
-/** Opened from the gear at the top of the app: the family's codes, notifications and language. */
+/**
+ * Opened from the gear at the top of the app: the family's codes, an adult's default points, notifications and
+ * language.
+ */
 export function SettingsPage() {
   const t = useMessages().app.settings;
   const user = useLoggedInUser();
@@ -16,6 +20,7 @@ export function SettingsPage() {
     <>
       <PageHeader title={t.title} />
       <FamilySettings />
+      {!isChild && <DefaultPointsSettings />}
       <NotificationSettings isChild={isChild} />
       <LanguageSettings />
     </>

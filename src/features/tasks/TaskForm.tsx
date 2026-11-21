@@ -10,6 +10,7 @@ import {
 } from '@/features/tasks/task';
 import {
   canBeRoutine,
+  childIdsOf,
   type FieldName,
   type FieldValues,
   fieldOf,
@@ -22,6 +23,7 @@ import { type DraftImage, savedImages } from '@/features/tasks/taskImages';
 import { TaskIconField } from '@/features/tasks/TaskIconField';
 import { TaskImagesField } from '@/features/tasks/TaskImagesField';
 import { TaskLabelsField } from '@/features/tasks/TaskLabelsField';
+import { useReadyMadeTasks } from '@/features/tasks/readyMadeTasks';
 import { suggestionAsTask } from '@/features/tasks/suggestions';
 import { TaskAudienceFields } from '@/features/tasks/TaskAudienceFields';
 import { TaskPointsField } from '@/features/tasks/TaskPointsField';
@@ -47,6 +49,8 @@ interface TaskFormProps {
   suggestions?: TaskSuggestion[];
   /** The household's favourite tasks, offered to add again; leave out when editing. */
   favourites?: FavouriteTasks;
+  /** The points a new task, or a ready-made one for adults, starts with (`useDefaultPoints`). */
+  defaultPoints?: number;
   /** A child's tasks are always for children, and an adult awards their points, so they aren't asked. */
   isChild: boolean;
   currentUserId: string;
@@ -70,11 +74,6 @@ export interface SaveOptions {
   alsoFor: string[];
 }
 
-/** The children a task for children is given to, as the form holds them: none for any child. */
-function childIdsOf(assignedTo: string | null): string[] {
-  return assignedTo === null ? [] : [assignedTo];
-}
-
 /** The fields of a task, validated with `newTaskSchema`, for creating or editing one. */
 export function TaskForm({
   initial,
@@ -82,6 +81,7 @@ export function TaskForm({
   prefill,
   suggestions = [],
   favourites,
+  defaultPoints,
   isChild,
   currentUserId,
   submitLabel,
@@ -89,7 +89,7 @@ export function TaskForm({
   canBeDoneAlready = false,
   onSave,
 }: TaskFormProps) {
-  const [initialValues] = useState(() => fieldValues(initial ?? prefill));
+  const [initialValues] = useState(() => fieldValues(initial ?? prefill, defaultPoints));
   const [fields, setFields] = useState(initialValues);
   const [childIds, setChildIds] = useState(childIdsOf(initialValues.assignedTo));
   const [isDone, setIsDone] = useState(false);
@@ -129,7 +129,7 @@ export function TaskForm({
   }
 
   function fillIn(suggestion: TaskSuggestion) {
-    const values = fieldValues(suggestionAsTask(suggestion));
+    const values = fieldValues(suggestionAsTask(suggestion), defaultPoints);
     setFields(values);
     setChildIds(childIdsOf(values.assignedTo));
     setError(null);
@@ -179,6 +179,13 @@ export function TaskForm({
 
   const { isPrivate, forChildren } = fields;
   const shown = shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready });
+  const readyMade = useReadyMadeTasks({
+    isNew: !initial,
+    isForChildren: shown.childrensChore,
+    isPrivate,
+    defaultPoints,
+    earlier: suggestions,
+  });
 
   return (
     <form
@@ -205,6 +212,7 @@ export function TaskForm({
         value={fields.title}
         onChange={set('title')}
         suggestions={suggestions}
+        readyMade={readyMade}
         onPick={fillIn}
         favourites={favourites}
         inputRef={titleRef}
