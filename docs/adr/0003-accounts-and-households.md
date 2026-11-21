@@ -1,6 +1,6 @@
 # 0003. Accounts and households
 
-- **Updated:** 2026-11-07
+- **Updated:** 2026-11-22 (each member's settings on their own page)
 
 ## Context
 
@@ -19,14 +19,20 @@ little personal data as possible, and joining a family must be low effort withou
   `create_household(name)` and `join_household(invite_code)` (security definer). Invite codes: 8 random characters
   without look-alikes, for adults only (`household_invite_code()`; members can't select the column). Members see
   each other's display names and nothing else about each other.
-- **Children**: `household_members.is_child`. Members join as adults; on the household page an adult marks another
-  member as a child or back with `set_member_is_child()` (security definer). Children can't change it, and nobody
+- **Children**: `household_members.is_child`. Members join as adults; on another member's page an adult marks them
+  as a child or back with `set_member_is_child()` (security definer). Children can't change it, and nobody
   changes themselves, so a household always keeps an adult (the caller's row is locked, so two adults can't make
   each other children at once). Children see only tasks for children (ADR 0004).
 - **What children may do**: by default only the family's tasks for children. An adult can let a child add tasks
   (`can_add_tasks`, ADR 0004), e.g. an older child who wants private tasks of their own. It is off for every child
   at first, including children from before it existed, and kept if a child is made an adult and back. Only adults
   add and delete goals (ADR 0007).
+- **The family page** lists the members first, one big row each (initial, name, role) without settings, so it is
+  easy to read and tap on a phone; then, for adults, the invite code and adding a child without email. An adult
+  opens another member's page from their row (`MemberPage` in `src/app`, `/household/members/:id`, behind
+  `AdultsOnly`): for a child, their tasks to set up (ADR 0004) and their settings as full-width switches and rows
+  (child, can add tasks, on this device, a new sign-in code, removing them); for an adult, only whether they are a
+  child. Small check boxes and links beside each name were hard to tap, and the list grew with every setting.
 - **Children without email**: an adult adds one by name on the household page. The `add-child` Edge Function
   creates their Supabase Auth user with an address that can't receive mail (`<uuid>@child.homeflow.invalid`) and
   no password, then `add_child()` (service role only) adds them as a child with `signs_in_with_code`. They sign in
@@ -38,10 +44,10 @@ little personal data as possible, and joining a family must be low effort withou
   or password is stored for the child, and an adult (the parent) creates the account.
   An adult removes such a child, e.g. one added twice, with `remove_child()`: it deletes the child's private tasks,
   puts back the open tasks they picked up, then their Auth user, which takes their points and history with it.
-- **Several accounts on one device**, for a child without a device of their own. On the household page an adult
-  ticks "On this device" for a child without email: the app makes a sign-in code and takes it at once on a
+- **Several accounts on one device**, for a child without a device of their own. On the child's page an adult
+  switches on "On this device" for a child without email: the app makes a sign-in code and takes it at once on a
   throwaway in-memory client, so the adult stays in use. Accounts not in use wait in `localStorage`
-  (`homeflow:deviceAccounts`: their tokens and display name); unticking ends the child's session and forgets it
+  (`homeflow:deviceAccounts`: their tokens and display name); switching it off ends the child's session and forgets it
   here. The menu under the name switches back and forth with one tap, no password (the owner's
   choice: no worse than handing over a logged-in phone). Each account keeps its own Supabase session, so RLS always
   sees whoever uses the app. A kept session is tried on a throwaway in-memory client first (the app's own client
