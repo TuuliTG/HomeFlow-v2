@@ -14,11 +14,15 @@ set local request.jwt.claims = '{"sub": "33333333-3333-3333-3333-333333333333", 
 select public.create_household('Carol''s flat');
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.create_household('The Smiths');
-insert into public.tasks (title, type, points, for_children) values ('Feed the cat', 'physical', 2, true);
 
 reset role;
 insert into public.household_members (household_id, user_id, is_child)
-  select household_id, '22222222-2222-2222-2222-222222222222', true from public.tasks where title = 'Feed the cat';
+  select household_id, '22222222-2222-2222-2222-222222222222', true from public.household_members
+  where user_id = '11111111-1111-1111-1111-111111111111';
+set local role authenticated;
+insert into public.tasks (title, type, points, for_children, assigned_to)
+  values ('Feed the cat', 'physical', 2, true, '22222222-2222-2222-2222-222222222222');
+reset role;
 do $$
 begin
   perform set_config('test.cat', id::text, true) from public.tasks where title = 'Feed the cat';
@@ -231,9 +235,10 @@ select is(
 );
 -- Ben does a 4-point task after the goal was set (now() is the same all through the transaction).
 reset role;
-insert into public.tasks (household_id, title, type, points, created_by, for_children, completed_at, completed_by)
-  select household_id, 'Wash up', 'physical', 4, '11111111-1111-1111-1111-111111111111', true, now(),
-    '22222222-2222-2222-2222-222222222222'
+insert into public.tasks
+  (household_id, title, type, points, created_by, for_children, assigned_to, completed_at, completed_by)
+  select household_id, 'Wash up', 'physical', 4, '11111111-1111-1111-1111-111111111111', true,
+    '22222222-2222-2222-2222-222222222222', now(), '22222222-2222-2222-2222-222222222222'
   from public.tasks where title = 'Feed the cat';
 set local role authenticated;
 select lives_ok(

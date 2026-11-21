@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 import { type NewTask, type Task, titleKey } from '@/features/tasks/task';
 import type { Messages } from '@/lib/i18n/i18n';
 import { fromIsoDate } from '@/lib/dates';
@@ -78,15 +76,4 @@ export function tasksToCopy(tasks: Task[], fromChildId: string, toChildId: strin
     theirs.add(titleKey(task.title));
     return true;
   });
-}
-
-/**
- * Router state for a child's New task form opened from the board's New task form, which then returns to the
- * board's children's tasks rather than to the child's page.
- */
-export const fromBoardState = { fromBoard: true } as const;
-
-/** Whether the router state is `fromBoardState`. */
-export function isFromBoardState(state: unknown): boolean {
-  return z.object({ fromBoard: z.literal(true) }).safeParse(state).success;
 }

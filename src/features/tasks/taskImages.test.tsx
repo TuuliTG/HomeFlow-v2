@@ -7,7 +7,7 @@ import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeImagesBackend, setTaskImages, uploadTaskImage } from '@/test/fakeImagesApi';
 import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
-import { logInAsFamilyMember } from '@/test/session';
+import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
 // jsdom can't decode pictures; a file named *.heic stands for one the browser can't read.
 vi.mock('@/features/tasks/shrinkImage', () => ({
@@ -68,9 +68,7 @@ describe('pictures on tasks', () => {
 
   it("attaches a description and pictures to a task added from a child's page", async () => {
     logInAsFamilyMember();
-    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
-    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
-    fakeHouseholdBackend.setChild(ben.id, true);
+    const ben = addChildToFamily();
     const user = userEvent.setup();
     renderAppAt(`/household/members/${ben.id}/new-task`);
 

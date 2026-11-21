@@ -123,7 +123,6 @@ export const taskForm: Messages['taskForm'] = {
   audiences: { adults: 'Vuxna', children: 'Barn' },
   whichChild: 'Vems uppgift?',
   assignedTo: 'Vems syssla är det?',
-  anyChild: 'Vilket barn som helst',
   points: 'Poäng',
   stars: 'Stjärnor',
   starCount: (count: number) => (count === 1 ? '1 stjärna' : `${String(count)} stjärnor`),

@@ -127,7 +127,6 @@ export const taskForm = {
   /** Adding a task for children: names the list of children to add it for, each opening their own form. */
   whichChild: 'Whose task?',
   assignedTo: 'Whose chore is it?',
-  anyChild: 'Any child',
   points: 'Points',
   /** The points of a task for children, which the child earns for doing it. */
   stars: 'Stars',

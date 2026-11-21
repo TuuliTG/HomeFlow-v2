@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-21 (always tasks for children, and setting up a child's tasks)
+- **Updated:** 2026-11-23 (every task for children is one child's; the board lists adults' tasks only)
 
 ## Context
 
@@ -31,22 +31,20 @@ next one back rather than follow a fixed calendar.
   private task doesn't need: who it is for, its type, points and "Already done". Its type is kept but never
   shown, also when editing.
 - **Tasks for children**: `for_children` (default false: adults only), chosen first on the task form by adults
-  ("Who is it for? Adults / Children", only on a new shared task in a family with children; the Private button
+  ("Who is it for? Adults / Children", only on a new shared task once the family has children; the Private button
   makes way while Children is chosen, and editing can't move a task between the two); the next occurrence keeps
-  it. Choosing
-  Children shows the household's children instead of the rest of the form (`ChildPicker`, an only child's opening at
-  once), and each opens that child's own form (`ChildTaskForm`, below), which returns to the board's children's
-  tasks (`fromBoardState`): parents found two forms for the same task confusing, so there is one. Its "Stars" are the
-  points, picked 0–5 by tapping a row of five stars (tapping the last filled one again clears them); it has no type,
-  labels or "Already done", and the board's form offers no earlier tasks for children to add again. **A shared task
+  it. Choosing Children shows the household's children instead of the rest of the form (`ChildPicker`, an only
+  child's opening at once), and each opens that child's own form (`ChildTaskForm`, below), which then opens the
+  child's page: parents found two forms for the same task confusing, so there is one. Its "Stars" are the points,
+  picked 0–5 by tapping a row of five stars (tapping the last filled one again clears them); it has no type, labels
+  or "Already done", and the board's form offers no earlier tasks for children to add again. **A shared task
   for children is the children's only**: parents wanted the children's chores kept apart from their own, so its stars always go to a
   child, and adults keep their own tasks (e.g. their own "Empty the dishwasher" with other points). Adults see,
-  edit and delete them on the board's "Children" list, chosen instead of "Adults" at its top
-  (`?children=1`, where saving one opens; one list at a time, as showing both under a tick box was misleading;
-  search and due filters apply to either, the filter by who picked a task up only to adults' tasks), and can ask a
-  child to do one, but can't pick one up, be asked to do one or mark one done: a trigger
-  (`private.check_task_doer()`, using `private.can_do_task()`) refuses every way of picking up or marking done,
-  `request_task()` asks only children for them (and only adults for adults-only ones), and making a task one for
+  edit and delete them on each child's page (below), where saving one opens; the board lists only adults' shared
+  tasks, as a list per child fits how parents set chores up. Adults can't pick one up, be asked to do one or mark
+  one done: a trigger (`private.check_task_doer()`, using `private.can_do_task()`) refuses every way of picking up
+  or marking done, `request_task()` asks only adults, for adults-only tasks (each task for children is a child's
+  already), and making a task one for
   children, or a child becoming an adult, takes it back from adults with their reminders, plans and requests
   (`private.put_back_from_adults()`). An adult's own private tasks stay theirs to do. A child (ADR 0003) sees and
   acts only on tasks for children, and every task they add is one (insert policy; `update_task()` refuses a child
@@ -87,23 +85,28 @@ next one back rather than follow a fixed calendar.
   or someone other than the member asked picks it up, and an accepted one once they give it back; the member asked
   picking the task up accepts it. Answering and cancelling lock the task before the request, like picking up, so they
   can't deadlock. Each function touches the task row, so live updates carry requests too.
-- **Chores for one child**: an adult gives a new task for children to one child in the household (the child's form;
-  "Whose chore is it?" with "Any child" when editing, shown when the household has children;
-  `assigned_to`, only for a shared task for children, `tasks_assigned_only_for_children`). Parents asked for this: some chores are one child's
-  job, so asking and waiting for a yes doesn't fit. A trigger (`private.pick_up_for_assignee()`) picks it up for the
-  child, also from whoever had it, so it is on their Me page with no new list, and puts it back for any child when an
-  adult clears it. Requests and schedules are settled as for any change of hands; those triggers also fire on
+- **Every task for children is one child's**: an open shared task for children is given to one child in the
+  household (`assigned_to`, `tasks_childrens_given_to_a_child`; only for a shared task for children,
+  `tasks_assigned_only_for_children`): a new one from that child's form, and "Whose chore is it?" when editing in a
+  family with more than one child. Parents first asked for
+  some chores to be one child's; once each child had their own page of tasks, a task for any child had no place left,
+  so there are no such tasks (the migration gave each to the child who had it, was asked and didn't decline, or added
+  it, else a copy to each child, which also counts as created; it removed those of families without children). A child's own shared task is theirs
+  (`private.give_childs_task_to_them()`), and a task made adults-only is no longer given to anyone (`update_task()`).
+  A trigger (`private.pick_up_for_assignee()`) picks it up for the child, also from whoever had it, so it is on their
+  Me page with no new list. Requests and schedules are settled as for any change of hands; those triggers also fire on
   `assigned_to`, as an `UPDATE OF` trigger doesn't see columns a BEFORE trigger changes, and giving a task to a child
   settles its request even when the child already had it. It is the child's alone: they can't put it back
   (`put_back_task()`), nobody can be asked to do it (`request_task()`), and other children don't see it
   (`private.can_see_task()` and the select policy) nor are told it was added (`notify-household`), so neither can they
-  act on it. Adults see it among the children's tasks as "Only for Ben", and change or clear
-  the child by editing it (`update_task(task_assigned_to, task_change_assignee)`; a child's edit, or one from an app
-  that doesn't send it yet, keeps it). Only adults give tasks, and only to a child in their household
-  (`private.is_child_in_household()`, insert policy). The next occurrence goes to the same child while they are still
-  one; a child who becomes an adult gives their chores back, no longer given to them, done ones included so
-  undoing one can't reopen it given to or held by an adult (a trigger on `household_members`, and
-  `private.check_task_doer()` on undo).
+  act on it. Adults change the child by editing it (`update_task(task_assigned_to, task_change_assignee)`; a child's
+  edit, or one from an app that doesn't send it yet, keeps it). Only adults give tasks, and only to a child in their
+  household (`private.is_child_in_household()`, insert policy). The next occurrence goes to the same child. A child
+  who becomes an adult, or is removed (`remove_child()`), takes their open chores with them: they go, as nobody else
+  was meant to do them; done ones stay, no longer given to them, so undoing one can't reopen it given to an adult
+  (a trigger on `household_members`; such an undo is refused, while a child undoing one given to nobody gets it,
+  `undo_complete_task()`). Deleting a child's login any other way fails while they have open chores, as
+  `assigned_to`'s `on delete set null` would leave them given to nobody.
 - **Chores for several children**: there is no adding one task for several children at once: giving each their
   own copy (one insert, all or none) was dropped with the board form's tick boxes, as "Copy to Mia" on a child's
   page (below) does the same. Copies are separate tasks, so two children doing a chore together both earn its full
@@ -148,8 +151,7 @@ next one back rather than follow a fixed calendar.
 - **Screens for children** (`useIsChild()`; until known, a loading message, and if it can't be told, the adults'
   screens, which show a child only what they may see): the Me page (`src/app/MePage`) shows their open goals as
   star jars (ADR 0007), their own tasks as big tiles (`ChildTaskTiles`: icon, name, one star per point, a round
-  Mark done button, Edit on ones they added), below them the tasks for children nobody has picked up (the only
-  shared tasks they see) as tiles to Pick up, and their Completed list. Me is a child's only tab (`MainNav`,
+  Mark done button, Edit on ones they added), and their Completed list. Me is a child's only tab (`MainNav`,
   showing the others once the user is known to be an adult): one screen with nothing to filter keeps it simple, so
   they don't see who is doing the other tasks. Shared tasks, News, Rewards and Statistics, and the goal forms, send
   a child to their Me page (`SharedTasksPage`, `src/app/AdultsOnly`), where their jars show their goals' progress. Children's screens carry no hints or explanations. Adults' screens are unchanged. Points are still called points, as
@@ -203,8 +205,7 @@ next one back rather than follow a fixed calendar.
     shows all. Two due dates together would show nothing or the same as one.
   - **Picked up by**: **Available** (`?available=1`, nobody has picked them up), then **You** and the other adults in
     the order they joined (`?who=<user id>`, `pickerFilter.ts`). Only Available is offered to the only adult in the
-    household and in the children's list, as children aren't offered (they can't pick up adults' tasks and have
-    their own list); a child or a member not in the household (any more) shows everyone's. Available and an adult
+    household, as children aren't offered (they can't pick up adults' tasks); a child or a member not in the household (any more) shows everyone's. Available and an adult
     exclude each other, as together they would always show nothing, hence one group.
 
   The two groups combine, e.g. what is due today and still free. These choices, like the Me page's view (`?view=`),
@@ -230,8 +231,7 @@ next one back rather than follow a fixed calendar.
   (`is_always`, "Always" on the child's form, which hides Repeats and Due date; `tasks_always_for_children` keeps it
   to shared tasks for children without a repeat or due date; the insert policy and `update_task()` let only adults
   set it, a child's edit keeps it, and their form then shows no repeat or due date). It is one child's: the form
-  asks for a child, as a pause and limit shared by several children would let one child's tap block another's (one
-  left for any child, after its child became an adult, rests for everyone and can't be picked up meanwhile).
+  asks for a child, as a pause and limit shared by several children would let one child's tap block another's.
   Marking one done adds a fresh copy at once (`complete_task()`, like a repeat's
   next occurrence, given to the same child, with its labels and pictures), so goals, News, undo and points done work
   as for any task; only its first row counts as created (ADR 0006). To stop

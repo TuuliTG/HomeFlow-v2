@@ -2,7 +2,7 @@
 -- Anna and Ben (adults) and Carol (a child) share a household; Dave has his own.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(29);
+select plan(30);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -16,7 +16,7 @@ select public.create_household('Dave''s flat');
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.create_household('The Smiths');
 insert into public.tasks (title, type, points) values ('Vacuum', 'physical', 3);
-insert into public.tasks (title, type, points, for_children) values ('Feed the cat', 'physical', 2, true);
+insert into public.tasks (title, type, points) values ('Feed the cat', 'physical', 2);
 insert into public.tasks (title, type, points, is_private) values ('Buy a present', 'meta', null, true);
 insert into public.tasks (title, type, points) values ('Dishes', 'physical', 1);
 insert into public.tasks (title, type, points) values ('Water plants', 'physical', 1);
@@ -26,10 +26,15 @@ insert into public.household_members (household_id, user_id, is_child)
   select household_id, '22222222-2222-2222-2222-222222222222'::uuid, false from public.tasks where title = 'Vacuum'
   union all
   select household_id, '33333333-3333-3333-3333-333333333333'::uuid, true from public.tasks where title = 'Vacuum';
+set local role authenticated;
+insert into public.tasks (title, type, points, for_children, assigned_to)
+  values ('Tidy the toys', 'physical', 1, true, '33333333-3333-3333-3333-333333333333');
+reset role;
 do $$
 begin
   perform set_config('test.vacuum', id::text, true) from public.tasks where title = 'Vacuum';
   perform set_config('test.cat', id::text, true) from public.tasks where title = 'Feed the cat';
+  perform set_config('test.toys', id::text, true) from public.tasks where title = 'Tidy the toys';
   perform set_config('test.present', id::text, true) from public.tasks where title = 'Buy a present';
   perform set_config('test.dishes', id::text, true) from public.tasks where title = 'Dishes';
   perform set_config('test.plants', id::text, true) from public.tasks where title = 'Water plants';
@@ -37,14 +42,19 @@ end
 $$;
 set local role authenticated;
 
--- Anna asks Ben to vacuum and Carol to feed the cat.
+-- Anna asks Ben to vacuum and to feed the cat.
 select lives_ok(
   format($$ select public.request_task(%L, '22222222-2222-2222-2222-222222222222') $$, current_setting('test.vacuum')),
   'a member can ask another to do a task'
 );
 select lives_ok(
-  format($$ select public.request_task(%L, '33333333-3333-3333-3333-333333333333') $$, current_setting('test.cat')),
-  'a member can ask a child to do a task for children'
+  format($$ select public.request_task(%L, '22222222-2222-2222-2222-222222222222') $$, current_setting('test.cat')),
+  'a member can be asked to do several tasks'
+);
+select throws_ok(
+  format($$ select public.request_task(%L, '33333333-3333-3333-3333-333333333333') $$, current_setting('test.toys')),
+  'P0002', null,
+  'nobody is asked to do a task for children, as each is given to a child'
 );
 select throws_ok(
   format($$ select public.request_task(%L, '11111111-1111-1111-1111-111111111111') $$, current_setting('test.dishes')),
@@ -57,7 +67,7 @@ select throws_ok(
   'a child cannot be asked to do an adults-only task'
 );
 select throws_ok(
-  format($$ select public.request_task(%L, '22222222-2222-2222-2222-222222222222') $$, current_setting('test.cat')),
+  format($$ select public.request_task(%L, '22222222-2222-2222-2222-222222222222') $$, current_setting('test.toys')),
   'P0002', null,
   'an adult cannot be asked to do a task for children'
 );
@@ -91,11 +101,7 @@ select results_eq(
   'the household sees who was asked to do which task'
 );
 set local request.jwt.claims = '{"sub": "33333333-3333-3333-3333-333333333333", "role": "authenticated"}';
-select results_eq(
-  'select task_id::text from public.task_requests',
-  format($$ values (%L) $$, current_setting('test.cat')),
-  'a child sees only requests for tasks for children'
-);
+select is_empty('select * from public.task_requests', 'a child sees no requests for adults-only tasks');
 set local request.jwt.claims = '{"sub": "44444444-4444-4444-4444-444444444444", "role": "authenticated"}';
 select is_empty('select * from public.task_requests', 'other households see no requests');
 
@@ -129,8 +135,8 @@ select throws_ok(
   'a task someone else has picked up cannot be asked of anyone'
 );
 
--- Carol declines; Anna clears the answer.
-set local request.jwt.claims = '{"sub": "33333333-3333-3333-3333-333333333333", "role": "authenticated"}';
+-- Ben declines the cat; Anna clears the answer.
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 select lives_ok(
   format($$ select public.answer_task_request(%L, false) $$, current_setting('test.cat')),
   'the member asked can decline'

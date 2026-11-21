@@ -6,7 +6,6 @@ import { inputClassName } from '@/components/ui/formStyles';
 import { SearchIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
 import { BoardFilters } from '@/features/tasks/BoardFilters';
 import { DueTaskGroups } from '@/features/tasks/DueTaskGroups';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
@@ -29,7 +28,6 @@ import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 import { useSearchParam } from '@/lib/useSearchParam';
 
-const CHILDRENS_PARAM = 'children';
 const FILTER_PARAM = 'show';
 const AVAILABLE_PARAM = 'available';
 const SEARCH_PARAM = 'q';
@@ -43,12 +41,11 @@ export function SharedTasksPage() {
 }
 
 /**
- * The board for adults: either the shared tasks adults do or the tasks for children, which adults only check and
- * edit, by due date, with a search and filters (for adults' tasks also by who has picked them up).
+ * The board for adults: the shared tasks adults do, by due date, with a search and filters. Children's tasks are on
+ * each child's page instead (ADR 0004).
  */
 function Board() {
   const user = useLoggedInUser();
-  const [childrens, setChildrens] = useSwitchParam(CHILDRENS_PARAM, user.id);
   const [due, setDue] = useDueFilterParam(user.id);
   const [availableOnly, setAvailableOnly] = useSwitchParam(AVAILABLE_PARAM, user.id);
   const { picker, members, setPickerId } = usePickerFilter(user.id);
@@ -74,27 +71,20 @@ function Board() {
       </div>
       <PointsToAward />
       <div className="flex flex-col gap-3">
-        <ListChoice childrens={childrens} onChange={setChildrens} />
         <BoardFilters
           currentUserId={user.id}
           due={due}
           onDueChange={setDue}
           availableOnly={availableOnly}
           onAvailableOnlyChange={showAvailableOnly}
-          // Adults can't pick up tasks for children, so only adults' tasks are filtered by who has.
-          members={childrens ? [] : members}
-          picker={childrens ? null : picker}
+          members={members}
+          picker={picker}
           onPickerChange={showPickedUpBy}
         >
           <SearchField search={search} onChange={setSearch} />
         </BoardFilters>
       </div>
-      <TaskList
-        filter={{ due, availableOnly }}
-        picker={childrens ? null : picker}
-        search={search}
-        childrens={childrens}
-      />
+      <TaskList filter={{ due, availableOnly }} picker={picker} search={search} />
     </>
   );
 }
@@ -134,29 +124,6 @@ function useSearchTextParam() {
   });
 }
 
-interface ListChoiceProps {
-  childrens: boolean;
-  onChange: (childrens: boolean) => void;
-}
-
-const lists = ['adults', 'children'] as const;
-
-/** Whether the board lists the adults' own tasks or the tasks for children; one at a time. */
-function ListChoice({ childrens, onChange }: ListChoiceProps) {
-  const t = useMessages().tasks.board.lists;
-  return (
-    <SegmentedChoice
-      legend={t.legend}
-      options={lists}
-      labels={t}
-      value={childrens ? 'children' : 'adults'}
-      onChange={(list) => {
-        onChange(list === 'children');
-      }}
-    />
-  );
-}
-
 interface SearchFieldProps {
   search: string;
   onChange: (search: string) => void;
@@ -187,12 +154,10 @@ interface TaskListProps {
   /** Only the tasks this member has picked up; null for everyone's. */
   picker: HouseholdMember | null;
   search: string;
-  /** Lists the tasks for children instead of the adults' own. */
-  childrens: boolean;
 }
 
-/** The adults' tasks, or the tasks for children, that the filters leave. */
-function TaskList({ filter, picker, search, childrens }: TaskListProps) {
+/** The adults' shared tasks that the filters leave. */
+function TaskList({ filter, picker, search }: TaskListProps) {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
   const messages = useMessages();
@@ -207,8 +172,8 @@ function TaskList({ filter, picker, search, childrens }: TaskListProps) {
       </p>
     );
   }
-  // Private tasks are listed only on the Me page.
-  const listed = tasks.data.filter((task) => !task.isPrivate && task.forChildren === childrens);
+  // Private tasks are listed only on the Me page, and children's on their pages.
+  const listed = tasks.data.filter((task) => !task.isPrivate && !task.forChildren);
   const shown = searchTasks(
     pickedUpBy(filterTasks(listed, filter, today()), picker?.id ?? null),
     search,
@@ -216,7 +181,7 @@ function TaskList({ filter, picker, search, childrens }: TaskListProps) {
   const searched = search.trim();
   const { routines, cards } = splitRoutines(shown, searched !== '');
   function emptyMessage(): string {
-    if (listed.length === 0) return childrens ? t.noChildrens : t.empty.all;
+    if (listed.length === 0) return t.empty.all;
     if (searched !== '') return t.noMatches(searched);
     if (picker !== null) return nothingPickedUpMessage(picker, user.id, messages);
     return (filter.availableOnly ? t.emptyAvailable : t.empty)[filter.due];

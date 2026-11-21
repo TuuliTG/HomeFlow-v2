@@ -122,7 +122,6 @@ export const taskForm: Messages['taskForm'] = {
   audiences: { adults: 'Aikuisille', children: 'Lapsille' },
   whichChild: 'Kenen tehtävä?',
   assignedTo: 'Kenen tehtävä se on?',
-  anyChild: 'Kenen tahansa lapsen',
   points: 'Pisteet',
   stars: 'Tähdet',
   starCount: (count: number) => (count === 1 ? '1 tähti' : `${String(count)} tähteä`),

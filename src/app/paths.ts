@@ -13,12 +13,20 @@ export const paths = {
   /** Who helped with a task the user marked done. */
   taskHelpers: (taskId: string) => `/tasks/${taskId}/helpers`,
   /**
-   * Where a task is listed: private tasks only on the Me page, shared ones on the board, those for children
-   * in its list of children's tasks.
+   * Where a task is listed: private tasks only on the Me page, a child's on their member page, the others on the
+   * board. Both of the last are adults' pages, which send a child to their Me page.
    */
-  taskList: ({ isPrivate, forChildren }: { isPrivate: boolean; forChildren: boolean }) => {
+  taskList: ({
+    isPrivate,
+    forChildren,
+    assignedTo,
+  }: {
+    isPrivate: boolean;
+    forChildren: boolean;
+    assignedTo: string | null;
+  }) => {
     if (isPrivate) return '/me';
-    return forChildren ? '/?children=1' : '/';
+    return forChildren && assignedTo !== null ? `/household/members/${assignedTo}` : '/';
   },
   /**
    * An adult's page of another member: for a child, their tasks and settings (ADR 0004); for an adult, whether

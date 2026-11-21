@@ -1,10 +1,9 @@
-import { useLocation, useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ChildTaskForm } from '@/features/tasks/ChildTaskForm';
-import { isFromBoardState } from '@/features/tasks/childTasks';
 import { ImagesNotSavedError, imagesNotSavedState } from '@/features/tasks/taskImages';
 import { useHouseholdMembers } from '@/features/tasks/useHelpers';
 import { useAddTask, useMembership } from '@/features/tasks/useTasks';
@@ -12,8 +11,8 @@ import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /**
- * Adds a task for one child, and goes back where it was opened from: their page (`paths.member`), or the board's
- * children's tasks when the board's New task form opened it (`fromBoardState`).
+ * Adds a task for one child, from their page (`paths.member`) or the board's New task form (`ChildPicker`), and
+ * opens their page, where it is listed.
  */
 export function NewChildTaskPage() {
   const { childId = '' } = useParams();
@@ -22,9 +21,7 @@ export function NewChildTaskPage() {
   const householdId = useMembership(user.id).data?.householdId ?? '';
   const addTask = useAddTask(user.id);
   const navigate = useNavigate();
-  const returnTo = isFromBoardState(useLocation().state)
-    ? paths.taskList({ isPrivate: false, forChildren: true })
-    : paths.member(childId);
+  const returnTo = paths.member(childId);
   const t = useMessages();
 
   if (members.data === undefined) {

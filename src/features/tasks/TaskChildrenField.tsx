@@ -6,15 +6,18 @@ import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskChildrenFieldProps {
   currentUserId: string;
-  /** The child whose chore it is, or null for any child. */
+  /** The child whose chore it is; null until chosen. */
   value: string | null;
-  onChange: (childId: string | null) => void;
+  onChange: (childId: string) => void;
   /** Focused when the task needs a child chosen. */
   selectRef: RefObject<HTMLSelectElement | null>;
   errorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
 }
 
-/** Whose chore an edited task for children is: one child's, or any child's. Hidden without children. */
+/**
+ * Whose chore an edited task for children is: every one is a child's (ADR 0004). Asked only when the family has
+ * more than one child.
+ */
 export function TaskChildrenField({
   currentUserId,
   value,
@@ -24,7 +27,7 @@ export function TaskChildrenField({
 }: TaskChildrenFieldProps) {
   const children = useHouseholdChildren(currentUserId);
   const { common, taskForm: t } = useMessages();
-  if (children.length === 0) return null;
+  if (children.length <= 1) return null;
   return (
     <label className="text-ink flex flex-col gap-1 text-sm font-medium">
       {t.assignedTo}
@@ -34,11 +37,11 @@ export function TaskChildrenField({
         {...errorProps}
         value={value ?? ''}
         onChange={(event) => {
-          onChange(event.target.value === '' ? null : event.target.value);
+          onChange(event.target.value);
         }}
         className={inputClassName}
       >
-        <option value="">{t.anyChild}</option>
+        {value === null && <option value="" disabled hidden />}
         {children.map((child) => (
           <option key={child.id} value={child.id}>
             {child.name ?? common.someone}

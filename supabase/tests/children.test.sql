@@ -2,7 +2,7 @@
 -- Anna and Ben share a household and Anna marks Ben as a child; Carol has her own household.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(33);
+select plan(37);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -16,8 +16,6 @@ select public.create_household('Carol''s flat');
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.create_household('The Smiths');
 insert into public.tasks (title, type, points) values ('Pay the bills', 'meta', 3);
-insert into public.tasks (title, type, points, for_children, repeat_every_days)
-  values ('Feed the cat', 'physical', 2, true, 1);
 insert into public.tasks (title, type, points) values ('Mow the lawn', 'physical', 5);
 insert into public.tasks (title, type, points) values ('Wash the car', 'physical', 4);
 
@@ -28,7 +26,6 @@ insert into public.household_members (household_id, user_id)
 do $$
 begin
   perform set_config('test.bills', id::text, true) from public.tasks where title = 'Pay the bills';
-  perform set_config('test.cat', id::text, true) from public.tasks where title = 'Feed the cat';
   perform set_config('test.lawn', id::text, true) from public.tasks where title = 'Mow the lawn';
   perform set_config('test.car', id::text, true) from public.tasks where title = 'Wash the car';
 end
@@ -63,6 +60,20 @@ select results_eq(
   $$ values (null::uuid) $$,
   'a new child gives back the adults-only tasks they picked up'
 );
+insert into public.tasks (title, type, points, for_children, repeat_every_days, assigned_to)
+  values ('Feed the cat', 'physical', 2, true, 1, '22222222-2222-2222-2222-222222222222');
+select throws_ok(
+  $$ insert into public.tasks (title, type, points, for_children) values ('Water the plants', 'physical', 1, true) $$,
+  '23514', null,
+  'a shared task for children is given to a child'
+);
+reset role;
+do $$
+begin
+  perform set_config('test.cat', id::text, true) from public.tasks where title = 'Feed the cat';
+end
+$$;
+set local role authenticated;
 select throws_ok(
   $$ select public.set_member_is_child('11111111-1111-1111-1111-111111111111', true) $$,
   'P0002', null,
@@ -170,13 +181,19 @@ select lives_ok(
   'a child an adult lets add tasks can add one available for children'
 );
 select results_eq(
+  $$ select assigned_to, picked_up_by from public.tasks where title = 'Tidy my room' $$,
+  $$ values (auth.uid(), auth.uid()) $$,
+  'a child''s own shared task is given to them'
+);
+select results_eq(
   $$ select title, for_children from public.task_suggestions() order by title $$,
   $$ values ('Feed the cat', true), ('Read a book', true), ('Tidy my room', true) $$,
   'a child is only offered tasks available for children to add again'
 );
-select lives_ok(
-  format('select public.pick_up_task(%L)', current_setting('test.cat')),
-  'a child can pick up a task available for children'
+select results_eq(
+  format('select picked_up_by from public.tasks where id = %L', current_setting('test.cat')),
+  $$ values (auth.uid()) $$,
+  'a child has the task given to them picked up'
 );
 select lives_ok(
   format('select public.set_task_reminder(%L, now() + interval ''1 day'')', current_setting('test.cat')),
@@ -193,9 +210,11 @@ select lives_ok(
   'an adult can make a task adults-only'
 );
 select results_eq(
-  format('select picked_up_by, for_children from public.tasks where id = %L', current_setting('test.cat')),
-  $$ values (null::uuid, false) $$,
-  'making a task adults-only puts it back from the child who picked it up'
+  format(
+    'select picked_up_by, assigned_to, for_children from public.tasks where id = %L', current_setting('test.cat')
+  ),
+  $$ values (null::uuid, null::uuid, false) $$,
+  'making a task adults-only takes it from the child it was given to'
 );
 select lives_ok(
   format(
@@ -204,12 +223,23 @@ select lives_ok(
   ),
   'an edit without for_children is still accepted'
 );
-select lives_ok(
+select throws_ok(
   format(
     $$ select public.update_task(%L, 'Feed the cat', null, 'physical', 2::smallint, null, 1::smallint, true) $$,
     current_setting('test.cat')
   ),
-  'an adult can make a task available for children'
+  '23514', null,
+  'a task made one for children needs a child'
+);
+select lives_ok(
+  format(
+    $$ select public.update_task(
+      %L, 'Feed the cat', null, 'physical', 2::smallint, null, 1::smallint, true, null,
+      '22222222-2222-2222-2222-222222222222', true
+    ) $$,
+    current_setting('test.cat')
+  ),
+  'an adult can make a task one for a child'
 );
 
 -- Ben does it; the next occurrence stays available for children.
@@ -223,6 +253,16 @@ select results_eq(
   $$ values (true, true) $$,
   'the next occurrence of a task done by a child stays available for children'
 );
+
+-- Ben becomes an adult: his open tasks for children go, the done ones stay but are no longer his.
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select public.set_member_is_child('22222222-2222-2222-2222-222222222222', false);
+select results_eq(
+  $$ select title, completed_at is null, assigned_to from public.tasks where for_children order by title, 2 $$,
+  $$ values ('Feed the cat', false, null::uuid) $$,
+  'a child who becomes an adult takes their open tasks for children with them'
+);
+select public.set_member_is_child('22222222-2222-2222-2222-222222222222', true);
 
 -- Even a reminder a child somehow holds for an adults-only task is never sent.
 reset role;

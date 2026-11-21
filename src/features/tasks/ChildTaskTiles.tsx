@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 import { CheckIcon, StarIcon } from '@/components/ui/icons';
 import { emptyClassName, sectionHeadingClassName } from '@/features/tasks/meStyles';
@@ -10,29 +10,22 @@ import {
 } from '@/features/tasks/task';
 import { EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
-import { useCompleteTask, usePickUpTask } from '@/features/tasks/useTasks';
+import { useCompleteTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { addDays, fromIsoDate, today } from '@/lib/dates';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /** Tasks as big tiles with icons and stars and little text, for children (ADR 0004). */
 
-type TileAction = 'markDone' | 'pickUp';
-
 interface TileSectionProps {
   heading: string;
-  /** What to say when there are no tasks; without it, the section is left out then. */
-  empty?: ReactNode;
+  /** What to say when there are no tasks. */
+  empty: string;
   tasks: Task[];
-  /** The tiles' button, if any. */
-  action: TileAction | null;
-  /** A line under each tile's stars, e.g. who is doing it. */
-  note?: (task: Task) => ReactNode;
 }
 
-export function TileSection({ heading, empty, tasks, action, note }: TileSectionProps) {
+export function TileSection({ heading, empty, tasks }: TileSectionProps) {
   const headingId = useId();
-  if (tasks.length === 0 && empty === undefined) return null;
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
       <h2 id={headingId} className={sectionHeadingClassName}>
@@ -43,7 +36,7 @@ export function TileSection({ heading, empty, tasks, action, note }: TileSection
       ) : (
         <ul aria-labelledby={headingId} className="flex flex-col gap-3">
           {tasks.map((task) => (
-            <TaskTile key={task.id} task={task} action={action} note={note?.(task)} />
+            <TaskTile key={task.id} task={task} />
           ))}
         </ul>
       )}
@@ -51,20 +44,12 @@ export function TileSection({ heading, empty, tasks, action, note }: TileSection
   );
 }
 
-interface TaskTileProps {
-  task: Task;
-  action: TileAction | null;
-  note: ReactNode;
-}
-
-/** A task as a big tile: its icon, name and points as stars, a note, and one button. */
-function TaskTile({ task, action, note }: TaskTileProps) {
+/** A task as a big tile: its icon, name and points as stars, and a button to mark it done. */
+function TaskTile({ task }: { task: Task }) {
   const user = useLoggedInUser();
   const completeTask = useCompleteTask(user.id);
-  const pickUpTask = usePickUpTask(user.id);
   const t = useMessages().tasks.card;
   const titleId = useId();
-  const mutation = action === 'markDone' ? completeTask : pickUpTask;
   const always = useAlwaysTaskState(task);
 
   return (
@@ -78,36 +63,23 @@ function TaskTile({ task, action, note }: TaskTileProps) {
           {task.title}
         </h3>
         <PointsAsStars task={task} />
-        {note && <p className="text-ink-muted text-sm font-semibold">{note}</p>}
         <div className="-my-2 -ml-1 w-fit">
           <EditLink task={task} currentUserId={user.id} />
         </div>
-        {mutation.isError && (
+        {completeTask.isError && (
           <p role="alert" className="text-danger-700 text-xs">
-            {t.failures[action === 'markDone' ? 'complete' : 'pickUp']}
+            {t.failures.complete}
           </p>
         )}
       </div>
-      {action === 'markDone' && (
-        <MarkDoneButton
-          title={task.title}
-          state={always}
-          isPending={mutation.isPending}
-          onClick={() => {
-            completeTask.mutate(task);
-          }}
-        />
-      )}
-      {action === 'pickUp' && (
-        <PickUpButton
-          title={task.title}
-          state={always}
-          isPending={mutation.isPending}
-          onClick={() => {
-            pickUpTask.mutate(task.id);
-          }}
-        />
-      )}
+      <MarkDoneButton
+        title={task.title}
+        state={always}
+        isPending={completeTask.isPending}
+        onClick={() => {
+          completeTask.mutate(task);
+        }}
+      />
     </li>
   );
 }
@@ -136,23 +108,6 @@ function useAlwaysTaskState(task: Task): AlwaysTaskState {
     };
   }, [until]);
   return state;
-}
-
-/** Picks a free task up, unless it is an always task that was just done. */
-function PickUpButton({ title, state, isPending, onClick }: MarkDoneButtonProps) {
-  const t = useMessages().tasks.card;
-  if (state.kind !== 'ready') return <DoneForNow state={state} title={title} />;
-  return (
-    <button
-      type="button"
-      aria-label={`${t.pickUp}: ${title}`}
-      disabled={isPending}
-      onClick={onClick}
-      className="bg-brand-700 hover:bg-brand-900 min-h-11 shrink-0 rounded-xl px-4 text-[0.9375rem] font-bold text-white disabled:opacity-60"
-    >
-      {t.pickUp}
-    </button>
-  );
 }
 
 interface MarkDoneButtonProps {
