@@ -247,11 +247,10 @@ next one back rather than follow a fixed calendar.
   "Tasks" link under each child (adults only, `ChildTasksLink`) opens `ChildTasksPage`
   (`/children/:childId/tasks`, behind `AdultsOnly`): the child's open tasks given to them, the always ones by name
   and then the custom ones (`childTaskList()`), each a row with when it comes up ("1× a day", "Every week · Mon 23
-  Nov") and its stars, opening the edit form, which returns there (`returnTo` in the link's state, only an in-app
-  path). Its plus opens a short form (`ChildTaskForm`): Always or Custom, then name (with the ready-made
+  Nov") and its stars, opening the edit form, which returns there (the child's id in the link's state, `returnToChild`: an id, not a path, so it can't lead off the app). Its plus opens a short form (`ChildTaskForm`): Always or Custom, then name (with the ready-made
   children's tasks), icon and stars (one to begin with), then "Times a day" or Repeats and Due date; who it is for
   isn't asked. It is the same task as the board's form makes, so nothing else changes. "Copy to Mia" gives each
-  other child a copy of the tasks they don't have under the same name (`tasksToCopy()`, one insert), so a second
+  other child a copy of the tasks they don't have under the same name (each name once; `tasksToCopy()`, one insert), so a second
   tap adds nothing twice. Copies come without pictures, since only whoever uploaded a picture can attach it
   (`set_task_images()`).
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
