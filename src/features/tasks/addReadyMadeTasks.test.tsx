@@ -67,8 +67,11 @@ describe('ready-made tasks', () => {
   it('keeps the child chosen, and what was typed, when a ready-made task is picked', async () => {
     logInAsFamilyMember();
     const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
-    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
-    fakeHouseholdBackend.setChild(ben.id, true);
+    const dora = fakeAuthBackend.addProfile('dora@example.com', 'Dora');
+    for (const child of [ben, dora]) {
+      fakeHouseholdBackend.addMember(child.id, 'The Virtanens');
+      fakeHouseholdBackend.setChild(child.id, true);
+    }
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
