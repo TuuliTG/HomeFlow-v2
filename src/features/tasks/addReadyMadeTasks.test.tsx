@@ -131,8 +131,9 @@ describe('ready-made tasks', () => {
       within(screen.getByRole('listbox', { name: 'Suggested tasks' }))
         .getAllByRole('option')
         .map((option) => option.textContent);
-    // The household's own "Empty the dishwasher" stands in for the ready-made one.
-    expect(suggestions()).toEqual([
+    // The household's own "Empty the dishwasher" stands in for the ready-made one. The two earlier tasks come
+    // newest first, which depends on whether they were added in the same millisecond, so their order isn't checked.
+    expect(suggestions().toSorted()).toEqual([
       'Dishes by handOn the board · 2 points',
       'Empty the dishwasherOn the board · 4 points',
     ]);
