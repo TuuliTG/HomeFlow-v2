@@ -246,8 +246,8 @@ next one back rather than follow a fixed calendar.
   (leaving out ones starred there), and listed after the household's earlier tasks while typing a name (unless it
   has its own of the same name). They are the app's, not the household's: each has a name in every language
   (`taskForm.readyMade.titles`), a type, an icon and labels, and the list follows who the task is for, adults'
-  chores (including meta work such as planning the shopping) or children's (their own things and simple help, no
-  cooking or shopping). An adults' one starts with the user's default points and a children's with one star, to
+  chores or children's (their own things, simple jobs and helping an adult, e.g. "Help cook dinner"). The
+  product owner chose the lists one by one; meta work is left to type, as it differs most between families. An adults' one starts with the user's default points and a children's with one star, to
   change before saving or later. Picking one fills in its name, type, icon, labels and points, keeping who the
   task is for (and which children) and whatever else was filled in. Nothing is added to the board by itself, so nobody is credited with creating
   tasks they didn't plan, and a list in the code needs no table or migration.

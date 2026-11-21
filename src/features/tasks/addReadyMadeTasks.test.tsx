@@ -29,7 +29,7 @@ describe('ready-made tasks', () => {
 
     await openReadyMade(user);
     expect(isOffered('Empty the dishwasher')).toBe(true);
-    expect(isOffered("Plan the week's shopping")).toBe(true);
+    expect(isOffered('Walk the dog')).toBe(true);
     expect(isOffered('Tidy your room')).toBe(false);
     await user.click(screen.getByRole('button', { name: 'Empty the dishwasher' }));
 
@@ -56,7 +56,8 @@ describe('ready-made tasks', () => {
     await openReadyMade(user);
     expect(isOffered('Tidy your room')).toBe(true);
     expect(isOffered('Cook dinner')).toBe(false);
-    expect(isOffered("Plan the week's shopping")).toBe(false);
+    expect(isOffered('Help cook dinner')).toBe(true);
+    expect(isOffered('Mop the floors')).toBe(false);
     await user.click(screen.getByRole('button', { name: 'Tidy your room' }));
 
     expect(screen.getByLabelText('Task')).toHaveValue('Tidy your room');
@@ -105,7 +106,7 @@ describe('ready-made tasks', () => {
 
     await openReadyMade(user);
     expect(isOffered('Make your bed')).toBe(true);
-    expect(isOffered('Pay the bills')).toBe(false);
+    expect(isOffered('Cook dinner')).toBe(false);
   });
 
   it('lists matching ready-made tasks after earlier ones while typing a name', async () => {

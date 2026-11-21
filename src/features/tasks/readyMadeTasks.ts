@@ -22,25 +22,30 @@ const forAdults: ReadyMadeTask[] = [
   { key: 'emptyDishwasher', type: 'physical', icon: 'dishes', labels: ['kitchen'] },
   { key: 'takeOutRubbish', type: 'physical', icon: 'trash', labels: ['cleaning'] },
   { key: 'doLaundry', type: 'physical', icon: 'laundry', labels: ['laundry'] },
+  { key: 'foldLaundry', type: 'physical', icon: 'clothes', labels: ['laundry'] },
   { key: 'vacuum', type: 'physical', icon: 'vacuum', labels: ['cleaning'] },
+  { key: 'mopFloors', type: 'physical', icon: 'cleaning', labels: ['cleaning'] },
+  { key: 'dust', type: 'physical', icon: 'cleaning', labels: ['cleaning'] },
   { key: 'cleanBathroom', type: 'physical', icon: 'bath', labels: ['cleaning'] },
+  { key: 'cleanKitchen', type: 'physical', icon: 'cleaning', labels: ['kitchen'] },
   { key: 'changeBedSheets', type: 'physical', icon: 'bed', labels: ['laundry'] },
   { key: 'cookDinner', type: 'physical', icon: 'cooking', labels: ['cooking'] },
   { key: 'waterPlants', type: 'physical', icon: 'plants', labels: ['garden'] },
-  { key: 'planShopping', type: 'meta', icon: 'groceries', labels: ['shopping'] },
-  { key: 'payBills', type: 'meta', icon: 'bills', labels: ['paperwork'] },
+  { key: 'walkDog', type: 'physical', icon: 'dog', labels: ['pets'] },
 ];
 
-/** Chores suited to children: their own things and simple help, no cooking or shopping. */
+/** Chores suited to children: their own things, simple jobs and helping an adult. */
 const forChildren: ReadyMadeTask[] = [
   { key: 'tidyRoom', type: 'physical', icon: 'toys', labels: ['tidying'] },
   { key: 'makeBed', type: 'physical', icon: 'bed', labels: ['tidying'] },
   { key: 'setTable', type: 'physical', icon: 'table', labels: ['kitchen'] },
   { key: 'clearTable', type: 'physical', icon: 'dishes', labels: ['kitchen'] },
   { key: 'putAwayClothes', type: 'physical', icon: 'clothes', labels: ['laundry'] },
-  { key: 'putAwayShoes', type: 'physical', icon: 'shoes', labels: ['tidying'] },
-  { key: 'feedPet', type: 'physical', icon: 'pet', labels: ['pets'] },
-  { key: 'waterPlants', type: 'physical', icon: 'plants', labels: ['garden'] },
+  { key: 'emptyDishwasher', type: 'physical', icon: 'dishes', labels: ['kitchen'] },
+  { key: 'takeOutRubbish', type: 'physical', icon: 'trash', labels: ['cleaning'] },
+  { key: 'vacuumRoom', type: 'physical', icon: 'vacuum', labels: ['cleaning'] },
+  { key: 'helpFoldLaundry', type: 'physical', icon: 'laundry', labels: ['laundry'] },
+  { key: 'helpCookDinner', type: 'physical', icon: 'cooking', labels: ['cooking'] },
 ];
 
 /** The stars a ready-made task for children earns, whatever an adult's default points. */
