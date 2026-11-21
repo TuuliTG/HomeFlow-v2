@@ -105,7 +105,7 @@ describe('always tasks', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Mark done: Brush teeth' }));
 
-    expect(await screen.findByRole('button', { name: 'Done: Brush teeth' })).toBeDisabled();
+    expect(await screen.findByRole('img', { name: 'Done: Brush teeth' })).toBeInTheDocument();
     expect(tasks.flatMap(creditsOf)).toEqual([{ userId: ben.id, points: 1 }]);
     expect(tasks.at(-1)).toMatchObject({ isAlways: true, pickedUpBy: ben.id, completed: null });
   });
@@ -131,7 +131,10 @@ describe('always tasks', () => {
     fakeAuthBackend.logInAs('ben@example.com', 'Ben');
     renderAppAt('/');
 
-    expect(await screen.findByRole('button', { name: 'Done: Make the bed' })).toBeDisabled();
+    expect(await screen.findByRole('img', { name: 'Done: Make the bed' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Mark done: Make the bed' }),
+    ).not.toBeInTheDocument();
   });
 
   it("keep their place on the child's page after being done", async () => {

@@ -158,7 +158,7 @@ export const taskForm = {
   dueDate: 'Due date',
   alreadyDone: 'Already done',
   routine: 'Quick routine: mark it done with one tap on the board',
-  always: 'Always there: back on their page soon after it is done',
+  always: 'Always there: comes back after it is done',
   dailyLimit: 'Times a day',
   noLimit: 'No limit',
   errors: {

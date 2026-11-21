@@ -149,7 +149,7 @@ export const taskForm: Messages['taskForm'] = {
   dueDate: 'Määräpäivä',
   alreadyDone: 'Jo tehty',
   routine: 'Pikarutiini: merkitse tehdyksi yhdellä napautuksella taululla',
-  always: 'Aina näkyvissä: palaa sivulle pian tehtyään',
+  always: 'Aina näkyvissä: palaa tehtyään',
   dailyLimit: 'Kertaa päivässä',
   noLimit: 'Ei rajaa',
   errors: {

@@ -160,20 +160,19 @@ function MarkDoneButton({ title, state, isPending, onClick }: MarkDoneButtonProp
 }
 
 /**
- * An always task's button while it can't be done: a filled check mark, ringed while its pause runs out.
+ * Shows an always task is done for now in place of its button: a filled check mark, ringed while its pause runs out.
  */
 function DoneForNow({ state, title }: { state: AlwaysTaskState; title: string }) {
   const t = useMessages().tasks.card;
   return (
-    <button
-      type="button"
-      disabled
+    <span
+      role="img"
       aria-label={`${t.doneForNow}: ${title}`}
       className="bg-done-600 relative flex size-14 shrink-0 items-center justify-center rounded-full text-white"
     >
       {state.kind === 'resting' && <PauseRing key={state.until} until={state.until} />}
       <CheckIcon className="size-7" strokeWidth={3} />
-    </button>
+    </span>
   );
 }
 

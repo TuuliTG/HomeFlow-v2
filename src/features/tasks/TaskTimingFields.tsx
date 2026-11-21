@@ -78,7 +78,7 @@ function DailyLimitField({
         onChange={(event) => {
           onChange(event.target.value);
         }}
-        className={inputClassName}
+        className={`${inputClassName} w-32`}
       >
         {dailyLimitChoices.map((times) => (
           <option key={times} value={times}>
