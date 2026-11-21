@@ -7,9 +7,9 @@ import { fakeGoalsBackend } from '@/test/fakeGoalsApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
-import { logInAsFamilyMember } from '@/test/session';
+import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
-/** Anna, an adult, adds Ben's goal and tasks for children; Ben, her child, logs in. */
+/** Anna, an adult, adds Ben's goal and gives him a task; Ben, her child, logs in. */
 function logInAsChild({ withGoal = true } = {}) {
   const anna = fakeAuthBackend.addProfile('anna@example.com', 'Anna');
   fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
@@ -19,20 +19,13 @@ function logInAsChild({ withGoal = true } = {}) {
   if (withGoal) {
     fakeGoalsBackend.addGoalAs(ben.id, { title: 'Cinema trip', targetPoints: 10, isShared: false });
   }
-  const bed = fakeTasksBackend.addTaskAs(anna.id, {
+  fakeTasksBackend.addTaskAs(anna.id, {
     title: 'Make your bed',
     type: 'physical',
     points: 2,
     forChildren: true,
     icon: 'bed',
-  });
-  fakeTasksBackend.pickUpTaskAs(ben.id, bed);
-  fakeTasksBackend.addTaskAs(anna.id, {
-    title: 'Feed the cat',
-    type: 'physical',
-    points: 3,
-    forChildren: true,
-    icon: 'pet',
+    assignedTo: ben.id,
   });
   return { anna, ben };
 }
@@ -61,47 +54,28 @@ describe('the Me page for children', () => {
     expect(within(completed).getByText('Make your bed')).toBeInTheDocument();
   });
 
-  it('lists the free tasks for children, to pick up and then mark done', async () => {
+  it("lists only their own tasks, not adults' or other children's", async () => {
     const { anna } = logInAsChild();
+    const mia = addChildToFamily('Mia');
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Pay the bills', type: 'meta', points: 3 });
-    const user = userEvent.setup();
-    renderAppAt('/me');
-
-    const free = await screen.findByRole('list', { name: 'Free to pick' });
-    const cat = within(free).getByRole('listitem', { name: 'Feed the cat' });
-    expect(within(cat).getByRole('img', { name: '3 points' })).toBeInTheDocument();
-    expect(screen.queryByText('Pay the bills')).not.toBeInTheDocument();
-
-    await user.click(within(free).getByRole('button', { name: 'Pick up: Feed the cat' }));
-
-    expect(await screen.findByText('No free tasks right now.')).toBeInTheDocument();
-    const myTasks = screen.getByRole('list', { name: 'My tasks' });
-    expect(
-      within(myTasks).getByRole('button', { name: 'Mark done: Feed the cat' }),
-    ).toBeInTheDocument();
-  });
-
-  it('leaves out the tasks other children are doing', async () => {
-    const { anna } = logInAsChild();
-    const mia = fakeAuthBackend.addProfile('mia@example.com', 'Mia');
-    fakeHouseholdBackend.addMember(mia.id, 'The Virtanens');
-    fakeHouseholdBackend.setChild(mia.id, true);
-    const plants = fakeTasksBackend.addTaskAs(anna.id, {
+    fakeTasksBackend.addTaskAs(anna.id, {
       title: 'Water the plants',
       type: 'physical',
       points: 1,
       forChildren: true,
+      assignedTo: mia.id,
     });
-    fakeTasksBackend.pickUpTaskAs(mia.id, plants);
     renderAppAt('/me');
 
-    expect(await screen.findByRole('list', { name: 'Free to pick' })).toBeInTheDocument();
+    const myTasks = await screen.findByRole('list', { name: 'My tasks' });
+    expect(within(myTasks).getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.queryByText('Pay the bills')).not.toBeInTheDocument();
     expect(screen.queryByText('Water the plants')).not.toBeInTheDocument();
   });
 
   it('sends them from the Shared tasks address to their Me page', async () => {
     logInAsChild();
-    renderAppAt('/?children=1');
+    renderAppAt('/');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'My stars' })).toBeInTheDocument();
   });

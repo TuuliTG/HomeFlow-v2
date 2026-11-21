@@ -5,12 +5,6 @@ export const tasks: Messages['tasks'] = {
   newTask: 'Ny uppgift',
   board: {
     title: 'Gemensamma uppgifter',
-    lists: {
-      legend: 'Vems uppgifter',
-      adults: 'Vuxna',
-      children: 'Barn',
-    },
-    noChildrens: 'Inga uppgifter för barn än. Skapa den första!',
     filtersButton: 'Filter',
     removeFilter: (filter) => `Ta bort filtret: ${filter}`,
     dueDate: 'Förfallodag',
@@ -75,8 +69,6 @@ export const tasks: Messages['tasks'] = {
   },
   card: {
     private: 'Privat',
-    forChildren: 'För barn',
-    onlyFor: (name) => `Bara för ${name}`,
     always: (dailyLimit) =>
       dailyLimit === null ? 'Alltid' : `Alltid · ${String(dailyLimit)}× om dagen`,
     waitingForPoints: 'Väntar på poäng',
@@ -170,8 +162,6 @@ export const tasks: Messages['tasks'] = {
     title: 'Mina stjärnor',
     myTasks: 'Mina uppgifter',
     nothingToDo: 'Inget att göra än.',
-    free: 'Lediga att välja',
-    nothingFree: 'Inga lediga uppgifter just nu.',
   },
   helpers: {
     title: 'Vem hjälpte till?',

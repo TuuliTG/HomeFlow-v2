@@ -7,7 +7,7 @@ import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
-import { logInAsFamilyMember } from '@/test/session';
+import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
 describe('task labels', () => {
   it('lets a member give a new task ready-made labels and one of their own', async () => {
@@ -37,6 +37,7 @@ describe('task labels', () => {
 
   it("aren't given to a task for children", async () => {
     logInAsFamilyMember();
+    addChildToFamily();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
@@ -47,7 +48,7 @@ describe('task labels', () => {
     expect(screen.queryByRole('button', { name: /labels/i })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    await screen.findByRole('listitem', { name: 'Make your bed' });
+    await screen.findByRole('link', { name: /Make your bed/ });
     expect(tasks[0]).toMatchObject({ forChildren: true, labels: [], customLabels: [] });
   });
 

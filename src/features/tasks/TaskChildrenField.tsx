@@ -8,7 +8,7 @@ interface TaskChildrenFieldProps {
   currentUserId: string;
   /** A new task can be added for several children, one copy each; a task being edited is one child's. */
   canChooseSeveral: boolean;
-  /** The children whose chore it is; none for any child, which only an edited task can be. */
+  /** The children whose chore it is; none until chosen. */
   value: string[];
   onChange: (childIds: string[]) => void;
   /** The first tick box, focused when none is ticked. */
@@ -17,8 +17,8 @@ interface TaskChildrenFieldProps {
 }
 
 /**
- * Whose chore a task for children is: a new task's chosen children's, or an edited task's child's or any
- * child's. Hidden without children.
+ * Whose chore a task for children is: a new task's chosen children's, or an edited task's child's (ADR 0004).
+ * Asked only when the family has more than one child.
  */
 export function TaskChildrenField({
   currentUserId,
@@ -30,7 +30,8 @@ export function TaskChildrenField({
 }: TaskChildrenFieldProps) {
   const children = useHouseholdChildren(currentUserId);
   const { common, taskForm: t } = useMessages();
-  if (children.length === 0) return null;
+  // A family's only child is chosen already (`useChildChoice`), so there is nothing to ask.
+  if (children.length <= 1) return null;
 
   if (!canChooseSeveral) {
     return (
@@ -40,11 +41,11 @@ export function TaskChildrenField({
           name="assignedTo"
           value={value[0] ?? ''}
           onChange={(event) => {
-            onChange(event.target.value === '' ? [] : [event.target.value]);
+            onChange([event.target.value]);
           }}
           className={inputClassName}
         >
-          <option value="">{t.anyChild}</option>
+          {value.length === 0 && <option value="" disabled hidden />}
           {children.map((child) => (
             <option key={child.id} value={child.id}>
               {child.name ?? common.someone}

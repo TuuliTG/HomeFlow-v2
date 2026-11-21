@@ -12,3 +12,11 @@ export function logInAsFamilyMember(
   fakeHouseholdBackend.addMember(user.id, householdName);
   return user;
 }
+
+/** Adds a child, with their own email, to the household, without logging them in. */
+export function addChildToFamily(displayName = 'Ben', householdName = 'The Virtanens'): AuthUser {
+  const child = fakeAuthBackend.addProfile(`${displayName.toLowerCase()}@example.com`, displayName);
+  fakeHouseholdBackend.addMember(child.id, householdName);
+  fakeHouseholdBackend.setChild(child.id, true);
+  return child;
+}

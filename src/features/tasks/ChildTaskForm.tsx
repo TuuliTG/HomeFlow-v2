@@ -28,7 +28,7 @@ const CHILD_TASK_STARS = 1;
 interface ChildTaskFormProps {
   /** The task being edited; a new one is always there to begin with. */
   initial?: NewTask;
-  /** The child it is for: a new task's from their page, or the edited task's (null for any child). */
+  /** The child it is for: a new task's from their page, or the edited task's (null only for a task done before every task for children was a child's). */
   childId: string | null;
   currentUserId: string;
   isSaving: boolean;
@@ -80,8 +80,8 @@ export function ChildTaskForm({
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
-    // An always task is one child's (ADR 0004).
-    if (fields.isAlways && assignedTo === null) {
+    // Every task for children is one child's (ADR 0004).
+    if (assignedTo === null) {
       setError({ field: 'children', message: t.taskForm.errors.childRequired });
       return;
     }

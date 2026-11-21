@@ -6,7 +6,7 @@ import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { creditsOf, fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
-import { logInAsFamilyMember } from '@/test/session';
+import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
 /** Anna (an adult, logged in) and her children Ben and Dora. */
 function family() {
@@ -38,9 +38,9 @@ describe('giving a task to one child', () => {
     await user.click(within(which).getByRole('checkbox', { name: 'Ben' }));
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    const task = await screen.findByRole('listitem', { name: 'Make your bed' });
-    expect(within(task).getByText('Only for Ben')).toBeInTheDocument();
-    expect(within(task).getByText('Picked up by Ben')).toBeInTheDocument();
+    // Ben's page opens, where it shows.
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Make your bed/ })).toBeInTheDocument();
     expect(tasks.at(-1)).toMatchObject({ assignedTo: ben.id, pickedUpBy: ben.id });
   });
 
@@ -57,11 +57,7 @@ describe('giving a task to one child', () => {
     await user.click(screen.getByRole('radio', { name: '2 stars' }));
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    const copies = await screen.findAllByRole('listitem', { name: 'Empty the dishwasher' });
-    expect(copies.map((copy) => within(copy).getByText(/^Only for/).textContent).sort()).toEqual([
-      'Only for Ben',
-      'Only for Dora',
-    ]);
+    await screen.findByRole('link', { name: /Empty the dishwasher/ });
     expect(tasks.slice(-2)).toMatchObject([
       { assignedTo: ben.id, pickedUpBy: ben.id, points: 2 },
       { assignedTo: dora.id, pickedUpBy: dora.id, points: 2 },
@@ -96,26 +92,23 @@ describe('giving a task to one child', () => {
     expect(tasks).toHaveLength(0);
   });
 
-  it('chooses the only child of the family already', async () => {
+  it('gives the task to the only child of the family without asking', async () => {
     const anna = logInAsFamilyMember();
-    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
-    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
-    fakeHouseholdBackend.setChild(ben.id, true);
+    const ben = addChildToFamily();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
     await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    const which = await screen.findByRole('group', { name: 'Which children?' });
-    expect(within(which).getByRole('checkbox', { name: 'Ben' })).toBeChecked();
+    expect(screen.queryByRole('group', { name: 'Which children?' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Task'), 'Make your bed');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    await screen.findByRole('listitem', { name: 'Make your bed' });
+    await screen.findByRole('link', { name: /Make your bed/ });
     expect(tasks.at(-1)).toMatchObject({ createdBy: anna.id, assignedTo: ben.id });
   });
 
   it("puts the task on the child's Me page and hides it from the other children", async () => {
-    const { anna, ben } = family();
+    const { anna, ben, dora } = family();
     fakeTasksBackend.addTaskAs(anna.id, {
       title: 'Make your bed',
       type: 'physical',
@@ -128,6 +121,7 @@ describe('giving a task to one child', () => {
       type: 'physical',
       points: 2,
       forChildren: true,
+      assignedTo: dora.id,
     });
 
     logInAs('ben@example.com', 'Ben');
@@ -144,8 +138,8 @@ describe('giving a task to one child', () => {
     expect(screen.queryByText('Make your bed')).not.toBeInTheDocument();
   });
 
-  it('can be undone by editing the task, which puts it back for any child', async () => {
-    const { anna, ben } = family();
+  it('can be given to another child by editing it, but not to no one', async () => {
+    const { anna, ben, dora } = family();
     const id = fakeTasksBackend.addTaskAs(anna.id, {
       title: 'Make your bed',
       type: 'physical',
@@ -158,19 +152,22 @@ describe('giving a task to one child', () => {
 
     const whose = await screen.findByLabelText('Whose chore is it?');
     expect(whose).toHaveDisplayValue('Ben');
-    await user.selectOptions(whose, 'Any child');
+    expect(
+      within(whose)
+        .getAllByRole('option')
+        .map((option) => option.textContent),
+    ).toEqual(['Ben', 'Dora']);
+    await user.selectOptions(whose, 'Dora');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-    const task = await screen.findByRole('listitem', { name: 'Make your bed' });
-    expect(within(task).getByText('For children')).toBeInTheDocument();
-    expect(within(task).queryByText(/Picked up by/)).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Dora' })).toBeInTheDocument();
     expect(tasks.find((candidate) => candidate.id === id)).toMatchObject({
-      assignedTo: null,
-      pickedUpBy: null,
+      assignedTo: dora.id,
+      pickedUpBy: dora.id,
     });
   });
 
-  it('is no longer given to a child who becomes an adult, who gives it back', async () => {
+  it('goes with a child who becomes an adult', () => {
     const { anna, ben } = family();
     fakeTasksBackend.addTaskAs(anna.id, {
       title: 'Make your bed',
@@ -180,11 +177,8 @@ describe('giving a task to one child', () => {
       assignedTo: ben.id,
     });
     fakeHouseholdBackend.setChild(ben.id, false);
-    renderAppAt('/?children=1');
 
-    const task = await screen.findByRole('listitem', { name: 'Make your bed' });
-    expect(within(task).getByText('For children')).toBeInTheDocument();
-    expect(within(task).queryByText(/Picked up by/)).not.toBeInTheDocument();
+    expect(tasks).toHaveLength(0);
   });
 
   it('stays given to the child when they edit a task they added', async () => {
@@ -195,11 +189,7 @@ describe('giving a task to one child', () => {
       type: 'physical',
       points: null,
       forChildren: true,
-    });
-    // As if Anna had given it to him since.
-    Object.assign(tasks.find((task) => task.id === id) ?? {}, {
       assignedTo: ben.id,
-      pickedUpBy: ben.id,
     });
     logInAs('ben@example.com', 'Ben');
     const user = userEvent.setup();
@@ -215,10 +205,9 @@ describe('giving a task to one child', () => {
 
   it("isn't offered without children in the household", async () => {
     logInAsFamilyMember();
-    const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    expect(screen.queryByRole('group', { name: 'Which children?' })).not.toBeInTheDocument();
+    await screen.findByLabelText('Task');
+    expect(screen.queryByRole('group', { name: 'Who is it for?' })).not.toBeInTheDocument();
   });
 });

@@ -2,7 +2,7 @@
 -- share a household.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -11,12 +11,16 @@ insert into auth.users (id, email) values
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.create_household('The Smiths');
-insert into public.tasks (title, type, points, for_children) values ('Feed the cat', 'physical', 2, true);
 insert into public.tasks (title, type, points) values ('Empty the dishwasher', 'physical', 1);
 
 reset role;
 insert into public.household_members (household_id, user_id, is_child)
-  select household_id, '22222222-2222-2222-2222-222222222222', true from public.tasks where title = 'Feed the cat';
+  select household_id, '22222222-2222-2222-2222-222222222222', true from public.tasks
+  where title = 'Empty the dishwasher';
+set local role authenticated;
+insert into public.tasks (title, type, points, for_children, assigned_to)
+  values ('Feed the cat', 'physical', 2, true, '22222222-2222-2222-2222-222222222222');
+reset role;
 do $$
 begin
   perform set_config('test.cat', id::text, true) from public.tasks where title = 'Feed the cat';
@@ -25,11 +29,11 @@ end
 $$;
 set local role authenticated;
 
--- Anna adds the cat for the children: she can't pick it up or mark it done, but she can change it.
+-- Anna gives Ben the cat: she can't pick it up or mark it done, but she can change it.
 select throws_ok(
   format('select public.pick_up_task(%L)', current_setting('test.cat')),
-  '42501', null,
-  'an adult cannot pick up a task for children'
+  '55006', null,
+  'an adult cannot pick up a task given to a child'
 );
 select throws_ok(
   format('select public.complete_task(%L, current_date)', current_setting('test.cat')),
@@ -46,9 +50,10 @@ select lives_ok(
 
 -- Ben does it.
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
-select lives_ok(
-  format('select public.pick_up_task(%L)', current_setting('test.cat')),
-  'a child can pick up a task for children'
+select is(
+  (select picked_up_by from public.tasks where id = current_setting('test.cat')::uuid),
+  '22222222-2222-2222-2222-222222222222'::uuid,
+  'a task for children is picked up for the child it is given to'
 );
 select lives_ok(
   format('select public.complete_task(%L, current_date)', current_setting('test.cat')),
@@ -60,22 +65,23 @@ select results_eq(
   'the child earns the task''s points'
 );
 
--- Anna picks up the dishwasher, plans it and sets a reminder, then makes it a task for the children.
+-- Anna picks up the dishwasher, plans it and sets a reminder, then makes it Ben's.
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.pick_up_task(current_setting('test.dishwasher')::uuid);
 select public.set_task_schedule(current_setting('test.dishwasher')::uuid, now() + interval '1 day', 30);
 select public.set_task_reminder(current_setting('test.dishwasher')::uuid, now() + interval '1 day');
 select lives_ok(
   format(
-    $$ select public.update_task(%L, 'Empty the dishwasher', null, 'physical', 1::smallint, null, null, true, null) $$,
+    $$ select public.update_task(%L, 'Empty the dishwasher', null, 'physical', 1::smallint, null, null, true, null,
+         '22222222-2222-2222-2222-222222222222', true) $$,
     current_setting('test.dishwasher')
   ),
   'an adult can make an adults-only task one for children'
 );
 select is(
   (select picked_up_by from public.tasks where id = current_setting('test.dishwasher')::uuid),
-  null::uuid,
-  'making a task one for children puts it back from the adult who had it'
+  '22222222-2222-2222-2222-222222222222'::uuid,
+  'making a task one for a child takes it from the adult who had it'
 );
 reset role;
 select is_empty(
@@ -87,6 +93,22 @@ select is_empty(
   'the adult no longer plans or is reminded to do it'
 );
 set local role authenticated;
+
+-- A task for any child Ben did before every task for children was a child's reopens as his when he undoes it.
+reset role;
+insert into public.tasks
+  (household_id, title, type, points, created_by, for_children, completed_at, completed_by)
+  select household_id, 'Old chore', 'physical', 1, created_by, true, now(), '22222222-2222-2222-2222-222222222222'
+  from public.tasks where title = 'Feed the cat' and previous_task_id is null;
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
+select public.undo_complete_task(id) from public.tasks where title = 'Old chore';
+select results_eq(
+  $$ select completed_at is null, assigned_to from public.tasks where title = 'Old chore' $$,
+  $$ values (true, '22222222-2222-2222-2222-222222222222'::uuid) $$,
+  'undoing a done task for any child gives it to the child who did it'
+);
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 
 -- An adult's private task is theirs to do, even one kept for children from when they were a child.
 insert into public.tasks (title, type, points, is_private, for_children)

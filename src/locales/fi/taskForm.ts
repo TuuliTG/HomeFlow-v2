@@ -122,7 +122,6 @@ export const taskForm: Messages['taskForm'] = {
   audiences: { adults: 'Aikuisille', children: 'Lapsille' },
   whichChildren: 'Mille lapsille?',
   assignedTo: 'Kenen tehtävä se on?',
-  anyChild: 'Kenen tahansa lapsen',
   points: 'Pisteet',
   stars: 'Tähdet kullekin lapselle',
   starsForOne: 'Tähdet',

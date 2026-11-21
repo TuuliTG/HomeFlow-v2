@@ -57,7 +57,7 @@ test('new user can create a household and see its invite code', async ({ page })
 
   await page.getByRole('link', { name: 'Shared tasks' }).click();
   await expect(page.getByRole('heading', { name: 'Shared tasks' })).toBeVisible();
-  await expect(page.getByText('Hello, Anna')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'The Andersons' })).toBeVisible();
 });
 
 test('new user can join a household with its invite code', async ({ page }) => {

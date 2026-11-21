@@ -187,18 +187,12 @@ describe('asking a family member to do a task', () => {
   it('offers no Ask when nobody else could do the task or someone else has it', async () => {
     const anna = logInAsFamilyMember();
     addTask(anna.id, 'Vacuum');
-    const ben = addMember('ben@example.com', 'Ben', true);
-    const dust = addTask(anna.id, 'Dust', true);
-    fakeTasksBackend.pickUpTaskAs(ben.id, dust);
-    const user = userEvent.setup();
+    addMember('ben@example.com', 'Ben', true);
     renderAppAt('/');
 
-    // Ben is a child, so only tasks for children could be asked of him; he has picked up the one there is.
+    // Ben is a child, and children are never asked to do adults' tasks.
     const vacuum = await screen.findByRole('listitem', { name: 'Vacuum' });
     expect(within(vacuum).queryByRole('link', { name: /^Ask someone/ })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('radio', { name: 'Children' }));
-    const dusting = await screen.findByRole('listitem', { name: 'Dust' });
-    expect(within(dusting).queryByRole('link', { name: /^Ask someone/ })).not.toBeInTheDocument();
   });
 
   it('explains when an answer cannot be saved', async () => {

@@ -7,7 +7,7 @@ import { fakeFavouritesBackend } from '@/test/fakeFavouritesApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
-import { logInAsFamilyMember } from '@/test/session';
+import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
 /** Opens the ready-made tasks, folded away on the New task form. */
 async function openReadyMade(user: ReturnType<typeof userEvent.setup>) {
@@ -49,6 +49,7 @@ describe('ready-made tasks', () => {
 
   it("offers children's chores, each for one star, for a task for children", async () => {
     logInAsFamilyMember();
+    addChildToFamily();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
@@ -130,8 +131,9 @@ describe('ready-made tasks', () => {
       within(screen.getByRole('listbox', { name: 'Suggested tasks' }))
         .getAllByRole('option')
         .map((option) => option.textContent);
-    // The household's own "Empty the dishwasher" stands in for the ready-made one.
-    expect(suggestions()).toEqual([
+    // The household's own "Empty the dishwasher" stands in for the ready-made one. The two earlier tasks come
+    // newest first, which depends on whether they were added in the same millisecond, so their order isn't checked.
+    expect(suggestions().toSorted()).toEqual([
       'Dishes by handOn the board · 2 points',
       'Empty the dishwasherOn the board · 4 points',
     ]);
@@ -166,6 +168,7 @@ describe('ready-made tasks', () => {
 
   it('starts new tasks with the default points chosen in the settings', async () => {
     logInAsFamilyMember();
+    addChildToFamily();
     const user = userEvent.setup();
     renderAppAt('/settings');
 

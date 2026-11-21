@@ -6,7 +6,7 @@ import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
-import { logInAsFamilyMember } from '@/test/session';
+import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
 function addBen() {
   const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
@@ -95,6 +95,7 @@ describe('private tasks', () => {
 
   it("hide what a private task doesn't need: who it is for, its type, points and already done", async () => {
     logInAsFamilyMember();
+    addChildToFamily();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 

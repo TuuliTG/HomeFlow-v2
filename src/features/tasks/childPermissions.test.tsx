@@ -8,7 +8,7 @@ import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
-/** Anna (adult) adds "Feed the cat" for children; Ben is her child, optionally allowed to add tasks. */
+/** Anna (adult) gives Ben, her child, "Feed the cat"; Ben is optionally allowed to add tasks. */
 function setUpFamily({ benCanAddTasks = false } = {}) {
   const anna = fakeAuthBackend.addAccount('anna@example.com', 'Anna');
   fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
@@ -21,6 +21,7 @@ function setUpFamily({ benCanAddTasks = false } = {}) {
     type: 'physical',
     points: 2,
     forChildren: true,
+    assignedTo: ben.id,
   });
   return { anna, ben };
 }
@@ -92,6 +93,7 @@ describe('awarding points', () => {
       type: 'physical',
       points: null,
       forChildren: true,
+      assignedTo: ben.id,
     });
     fakeTasksBackend.completeTaskAs(ben.id, 'task:1', '2026-10-10');
     fakeAuthBackend.logInAs('anna@example.com', 'Anna');
@@ -117,6 +119,7 @@ describe('awarding points', () => {
       type: 'physical',
       points: null,
       forChildren: true,
+      assignedTo: ben.id,
     });
     logInAsBen();
     renderAppAt('/');
@@ -151,6 +154,7 @@ describe('what a child sees of tasks they may not change', () => {
       type: 'physical',
       points: null,
       forChildren: true,
+      assignedTo: ben.id,
     });
     fakeAuthBackend.logInAs('anna@example.com', 'Anna');
     const user = userEvent.setup();

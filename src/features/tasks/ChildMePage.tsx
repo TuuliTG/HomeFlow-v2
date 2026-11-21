@@ -18,8 +18,8 @@ interface ChildMePageProps {
 }
 
 /**
- * The Me page for a child, their only screen: their goals, then their tasks and the free tasks for children
- * as big tiles with icons and stars, with little text, and what they have done.
+ * The Me page for a child, their only screen: their goals, then their tasks as big tiles with icons and stars,
+ * with little text, and what they have done.
  */
 export function ChildMePage({ goals }: ChildMePageProps) {
   const t = useMessages().tasks;
@@ -44,7 +44,7 @@ export function ChildMePage({ goals }: ChildMePageProps) {
   );
 }
 
-/** The child's tasks to mark done, then the free tasks for children (the only ones they see) to pick up. */
+/** The child's tasks to mark done; every task for children is one child's (ADR 0004). */
 function ChildTasks() {
   const user = useLoggedInUser();
   const tasks = useTasks(user.id);
@@ -60,20 +60,11 @@ function ChildTasks() {
     );
   }
   return (
-    <>
-      <TileSection
-        heading={t.child.myTasks}
-        empty={t.child.nothingToDo}
-        tasks={alwaysLast(tasks.data.filter((task) => isToDoBy(task, user.id)))}
-        action="markDone"
-      />
-      <TileSection
-        heading={t.child.free}
-        empty={t.child.nothingFree}
-        tasks={tasks.data.filter((task) => !task.isPrivate && task.pickedUpBy === null)}
-        action="pickUp"
-      />
-    </>
+    <TileSection
+      heading={t.child.myTasks}
+      empty={t.child.nothingToDo}
+      tasks={alwaysLast(tasks.data.filter((task) => isToDoBy(task, user.id)))}
+    />
   );
 }
 
