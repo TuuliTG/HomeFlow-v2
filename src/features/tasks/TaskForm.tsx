@@ -87,10 +87,8 @@ export function TaskForm({
     isAlways: fields.isAlways,
   });
   const children = useChildChoice(currentUserId, {
-    isNew: !initial,
     isForChildren: shown.isForChildren,
     assignedTo: initialValues.assignedTo,
-    isAlways: fields.isAlways,
   });
   const readyMade = useReadyMadeTasks({
     isNew: !initial,

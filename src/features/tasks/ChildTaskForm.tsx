@@ -80,8 +80,8 @@ export function ChildTaskForm({
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
-    // An always task is one child's (ADR 0004).
-    if (fields.isAlways && assignedTo === null) {
+    // Every task for children is one child's (ADR 0004).
+    if (assignedTo === null) {
       setError({ field: 'children', message: t.taskForm.errors.childRequired });
       return;
     }

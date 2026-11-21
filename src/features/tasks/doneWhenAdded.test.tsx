@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
-import { logInAsFamilyMember } from '@/test/session';
+import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -62,6 +62,7 @@ describe('adding a task that is already done', () => {
 
   it("isn't offered for a task for children, which only children do", async () => {
     logInAsFamilyMember();
+    addChildToFamily();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
@@ -71,7 +72,7 @@ describe('adding a task that is already done', () => {
     await user.type(screen.getByLabelText('Task'), 'Make your bed');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    await screen.findByRole('listitem', { name: 'Make your bed' });
+    await screen.findByRole('link', { name: /Make your bed/ });
     expect(tasks.at(-1)).toMatchObject({ forChildren: true, completed: null });
   });
 

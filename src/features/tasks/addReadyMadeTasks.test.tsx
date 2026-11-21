@@ -7,7 +7,7 @@ import { fakeFavouritesBackend } from '@/test/fakeFavouritesApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
-import { logInAsFamilyMember } from '@/test/session';
+import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
 /** Opens the ready-made tasks, folded away on the New task form. */
 async function openReadyMade(user: ReturnType<typeof userEvent.setup>) {
@@ -49,6 +49,7 @@ describe('ready-made tasks', () => {
 
   it("offers children's chores, each for one star, for a task for children", async () => {
     logInAsFamilyMember();
+    addChildToFamily();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
@@ -166,6 +167,7 @@ describe('ready-made tasks', () => {
 
   it('starts new tasks with the default points chosen in the settings', async () => {
     logInAsFamilyMember();
+    addChildToFamily();
     const user = userEvent.setup();
     renderAppAt('/settings');
 

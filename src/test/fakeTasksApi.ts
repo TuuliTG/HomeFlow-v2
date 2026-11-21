@@ -112,8 +112,9 @@ export const addTasks: typeof tasksApi.addTasks = (newTasks) =>
       if (task.isAlways && (fakeHouseholdBackend.isChild(userId) || !task.forChildren)) {
         throw new Error('Only adults add always tasks, for children');
       }
+      checkGivenToAChild(userId, task);
     }
-    return newTasks.map((task) => fakeTasksBackend.addTaskAs(userId, task));
+    return newTasks.map((task) => fakeTasksBackend.addTaskAs(userId, ownChore(userId, task)));
   });
 
 export const completeTask: typeof tasksApi.completeTask = (taskId, completedOn) =>
@@ -146,6 +147,19 @@ function checkAssignee(userId: string, task: NewTask) {
   ) {
     throw new Error('Only an adult gives a task for children to a child in their household');
   }
+}
+
+/** Like the trigger on tasks: a child's shared task is given to them. */
+function ownChore(userId: string, task: NewTask): NewTask {
+  const isChildsShared =
+    fakeHouseholdBackend.isChild(userId) && task.forChildren && !task.isPrivate;
+  return isChildsShared ? { ...task, assignedTo: userId } : task;
+}
+
+/** Like `tasks_childrens_given_to_a_child`: an adult's shared task for children is given to a child. */
+function checkGivenToAChild(userId: string, task: NewTask) {
+  if (fakeHouseholdBackend.isChild(userId) || !task.forChildren || task.isPrivate) return;
+  if (task.assignedTo === null) throw new Error('A task for children is given to a child');
 }
 
 /** Runs `change` as the logged-in user; rejects, like the database, if it throws. */
@@ -187,15 +201,25 @@ function pickerAfterEdit(task: StoredTask, details: NewTask): string | null {
   return null;
 }
 
+/**
+ * Like update_task(): a child's edit keeps whose chore it is, and a task made adults-only is no longer given to a
+ * child.
+ */
+function assigneeAfterEdit(task: StoredTask, details: NewTask, isChild: boolean): string | null {
+  if (isChild) return task.assignedTo;
+  return details.forChildren ? details.assignedTo : null;
+}
+
 export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
   asCurrentUser((userId) => {
     const task = changeableTaskOf(userId, taskId);
     const isChild = fakeHouseholdBackend.isChild(userId);
     if (!details.forChildren && isChild) throw new Error('Only adults can make a task adults-only');
-    // Like update_task(): a child's edit sends their task back to waiting for points, and keeps whose chore
-    // it is.
-    const assignedTo = isChild ? task.assignedTo : details.assignedTo;
-    if (!isChild) checkAssignee(userId, { ...details, assignedTo });
+    const assignedTo = assigneeAfterEdit(task, details, isChild);
+    if (!isChild) {
+      checkAssignee(userId, { ...details, assignedTo });
+      checkGivenToAChild(userId, { ...details, assignedTo });
+    }
     const pickedUpBy = pickerAfterEdit(task, { ...details, assignedTo });
     if (pickedUpBy !== task.pickedUpBy) {
       fakeRequestsBackend.settle(taskId, pickedUpBy);
@@ -203,6 +227,7 @@ export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
     }
     Object.assign(task, {
       ...details,
+      // Like update_task(): a child's edit sends their task back to waiting for points.
       points: isChild ? null : details.points,
       assignedTo,
       pickedUpBy,

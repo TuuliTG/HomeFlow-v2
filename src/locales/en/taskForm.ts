@@ -127,7 +127,6 @@ export const taskForm = {
   /** Adding a task for children: one copy for each child chosen, on their Me page; names the tick boxes. */
   whichChildren: 'Which children?',
   assignedTo: 'Whose chore is it?',
-  anyChild: 'Any child',
   points: 'Points',
   /** The points of a task for children, which each child earns for doing it. */
   stars: 'Stars for each child',

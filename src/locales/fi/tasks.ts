@@ -4,12 +4,6 @@ export const tasks: Messages['tasks'] = {
   newTask: 'Uusi tehtävä',
   board: {
     title: 'Yhteiset tehtävät',
-    lists: {
-      legend: 'Kenen tehtävät',
-      adults: 'Aikuiset',
-      children: 'Lapset',
-    },
-    noChildrens: 'Ei vielä lasten tehtäviä. Luo ensimmäinen!',
     filtersButton: 'Suodattimet',
     removeFilter: (filter) => `Poista suodatin: ${filter}`,
     dueDate: 'Määräpäivä',
@@ -161,8 +155,6 @@ export const tasks: Messages['tasks'] = {
     title: 'Omat tähdet',
     myTasks: 'Omat tehtävät',
     nothingToDo: 'Ei vielä tehtäviä.',
-    free: 'Vapaana',
-    nothingFree: 'Juuri nyt ei ole vapaita tehtäviä.',
   },
   helpers: {
     title: 'Kuka auttoi?',

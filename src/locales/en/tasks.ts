@@ -7,12 +7,6 @@ export const tasks = {
      * Which list the board shows adults: their own tasks, or the tasks for children, which adults only check
      * and edit; children do them. The legend is for screen readers.
      */
-    lists: {
-      legend: 'Whose tasks',
-      adults: 'Adults',
-      children: 'Children',
-    },
-    noChildrens: 'No tasks for children yet. Create the first one!',
     /** The board's filters, behind a button next to the search. */
     filtersButton: 'Filters',
     /** The label of a chip that turns a filter off while the filters are folded. */
@@ -190,8 +184,6 @@ export const tasks = {
     title: 'My stars',
     myTasks: 'My tasks',
     nothingToDo: 'Nothing to do yet.',
-    free: 'Free to pick',
-    nothingFree: 'No free tasks right now.',
   },
   /** Saying who helped with a task the user did, and giving them bonus points. */
   helpers: {

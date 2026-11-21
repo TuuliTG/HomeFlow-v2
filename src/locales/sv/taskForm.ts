@@ -123,7 +123,6 @@ export const taskForm: Messages['taskForm'] = {
   audiences: { adults: 'Vuxna', children: 'Barn' },
   whichChildren: 'Vilka barn?',
   assignedTo: 'Vems syssla är det?',
-  anyChild: 'Vilket barn som helst',
   points: 'Poäng',
   stars: 'Stjärnor till varje barn',
   starsForOne: 'Stjärnor',

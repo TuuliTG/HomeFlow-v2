@@ -47,11 +47,12 @@ test('family member can create a task and see it on the shared task board', asyn
   await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
 });
 
-test('family member can add a task for the children, kept apart from their own', async ({
-  page,
-}) => {
+test("family member can add a task for a child, kept on the child's page", async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
+  await page.getByLabel("Child's name").fill('Ben');
+  await page.getByRole('button', { name: 'Add child' }).click();
+  await expect(page.getByRole('region', { name: "Ben's sign-in code" })).toBeVisible();
   await page.getByRole('link', { name: 'Shared tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
 
@@ -67,16 +68,12 @@ test('family member can add a task for the children, kept apart from their own',
   await expect(stars.getByRole('radio', { name: '2 stars' })).toBeChecked();
   await page.getByRole('button', { name: 'Create task' }).click();
 
-  // The board opens on the children's tasks, one list at a time.
-  const lists = page.getByRole('group', { name: 'Whose tasks' });
-  await expect(lists.getByRole('radio', { name: 'Children' })).toBeChecked();
-  const task = page.getByRole('listitem', { name: 'Feed the cat' });
-  await expect(task.getByText('For children')).toBeVisible();
-  await expect(task.getByText('2 points')).toBeVisible();
-  await expect(task.getByRole('button', { name: 'Mark done: Feed the cat' })).toHaveCount(0);
-  await lists.getByText('Adults', { exact: true }).click();
-  await expect(page.getByText('Feed the cat')).toBeHidden();
+  // Ben, the only child, was chosen already, and his page opens with the task.
+  await expect(page.getByRole('heading', { level: 1, name: "Ben's tasks" })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Feed the cat/ })).toBeVisible();
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
   await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
+  await expect(page.getByText('Feed the cat')).toBeHidden();
 });
 
 test('family member can attach a picture to a task and see it on the board', async ({ page }) => {
