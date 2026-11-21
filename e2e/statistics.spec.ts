@@ -54,6 +54,7 @@ test('family member compares only the adults, or members chosen one by one', asy
   await logInAsNewUser(page);
   await page.getByLabel('Invite code').fill(EXISTING_HOUSEHOLD.inviteCode);
   await page.getByRole('button', { name: 'Join household' }).click();
+  await page.getByRole('button', { name: 'Add a child without email' }).click();
   await page.getByLabel("Child's name").fill('Cleo');
   await page.getByRole('button', { name: 'Add child' }).click();
   await expect(page.getByRole('link', { name: 'Cleo Child' })).toBeVisible();

@@ -33,7 +33,7 @@ export function ChildTaskList({ childId }: { childId: string }) {
   }
   const { always, custom } = childTaskList(tasks.data, childId);
   return (
-    <>
+    <div className="flex flex-col gap-6">
       {always.length + custom.length === 0 && (
         <p className="text-ink-muted text-sm">{t.childTasks.empty}</p>
       )}
@@ -44,7 +44,7 @@ export function ChildTaskList({ childId }: { childId: string }) {
         fromChildId={childId}
         others={members.data.filter((other) => other.isChild && other.id !== childId)}
       />
-    </>
+    </div>
   );
 }
 

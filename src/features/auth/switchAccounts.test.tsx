@@ -224,7 +224,9 @@ describe('switching accounts on one device', () => {
 
     await screen.findByRole('region', { name: 'Members' });
     expect(screen.queryByRole('heading', { name: 'Invite your family' })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Child's name")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Add a child without email' }),
+    ).not.toBeInTheDocument();
   });
 
   it('stops offering an account once it logs in with its password', async () => {

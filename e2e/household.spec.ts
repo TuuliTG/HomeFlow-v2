@@ -29,6 +29,7 @@ test('new user can create a household and see its invite code', async ({ page })
   await expect(memberList(page)).toHaveText([/Anna\s*You$/]);
   await expectNoA11yViolations(page, 'household');
 
+  await page.getByRole('button', { name: 'Add a child without email' }).click();
   await page.getByLabel("Child's name").fill('Ben');
   await page.getByRole('button', { name: 'Add child' }).click();
   const code = page.getByRole('region', { name: "Ben's sign-in code" });
@@ -44,6 +45,7 @@ test('new user can create a household and see its invite code', async ({ page })
   await page.getByRole('link', { name: /Family/ }).click();
 
   // Ben added twice by mistake: the second one goes.
+  await page.getByRole('button', { name: 'Add a child without email' }).click();
   await page.getByLabel("Child's name").fill('Ben');
   await page.getByRole('button', { name: 'Add child' }).click();
   await expect(memberList(page)).toHaveCount(3);
