@@ -150,6 +150,9 @@ export const taskForm: Messages['taskForm'] = {
   dueDate: 'Förfallodag',
   alreadyDone: 'Redan gjord',
   routine: 'Snabb rutin: markera den som klar med ett tryck på tavlan',
+  always: 'Alltid där: tillbaka på sidan strax efter att den är gjord',
+  dailyLimit: 'Gånger om dagen',
+  noLimit: 'Ingen gräns',
   errors: {
     titleRequired: 'Ge uppgiften ett namn.',
     titleTooLong: (max) => `Namnet får ha högst ${String(max)} tecken.`,

@@ -83,6 +83,8 @@ describe('suggestionAsTask', () => {
       isRoutine: true,
       dueOn: null,
       assignedTo: null,
+      isAlways: false,
+      dailyLimit: null,
     });
   });
 

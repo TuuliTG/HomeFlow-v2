@@ -65,6 +65,10 @@ const row = {
   labels: [],
   custom_labels: [],
   is_routine: false,
+  is_always: false,
+  daily_limit: null,
+  times_done: 0,
+  times_done_on: null,
   task_images: [],
   previous: null,
   request: null,
@@ -178,6 +182,8 @@ describe('tasks api', () => {
       task_labels: ['cleaning'],
       task_custom_labels: ['Upstairs'],
       task_is_routine: true,
+      task_is_always: false,
+      task_daily_limit: null,
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
@@ -392,6 +398,8 @@ describe('tasks api', () => {
       labels: ['cleaning'],
       custom_labels: ['Upstairs'],
       is_routine: true,
+      is_always: false,
+      daily_limit: null,
     };
     expect(query.insert).toHaveBeenCalledWith([row, { ...row, assigned_to: 'carol' }]);
     expect(query.select).toHaveBeenCalledWith('id');

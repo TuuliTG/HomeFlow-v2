@@ -7,7 +7,7 @@ import { CompletedList } from '@/features/tasks/CompletedList';
 import { TileSection } from '@/features/tasks/ChildTaskTiles';
 import { sectionHeadingClassName } from '@/features/tasks/meStyles';
 import { NewTaskLink } from '@/features/tasks/NewTaskLink';
-import { isToDoBy } from '@/features/tasks/task';
+import { isToDoBy, type Task } from '@/features/tasks/task';
 import { useTasks } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -64,7 +64,7 @@ function ChildTasks() {
       <TileSection
         heading={t.child.myTasks}
         empty={t.child.nothingToDo}
-        tasks={tasks.data.filter((task) => isToDoBy(task, user.id))}
+        tasks={alwaysLast(tasks.data.filter((task) => isToDoBy(task, user.id)))}
         action="markDone"
       />
       <TileSection
@@ -74,5 +74,16 @@ function ChildTasks() {
         action="pickUp"
       />
     </>
+  );
+}
+
+/**
+ * The tasks with the always ones last, by name: each time one is done a fresh copy replaces it, which would
+ * otherwise move it to the top. The others keep their order.
+ */
+function alwaysLast(tasks: Task[]): Task[] {
+  return tasks.toSorted(
+    (a, b) =>
+      Number(a.isAlways) - Number(b.isAlways) || (a.isAlways ? a.title.localeCompare(b.title) : 0),
   );
 }

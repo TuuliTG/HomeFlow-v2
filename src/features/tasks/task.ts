@@ -181,9 +181,7 @@ export interface Task extends NewTask {
 
 /** Whether an always task can be done now, rests for a moment after being done, or is done for today. */
 export type AlwaysTaskState =
-  | { kind: 'ready' }
-  | { kind: 'resting'; until: number }
-  | { kind: 'doneForToday' };
+  { kind: 'ready' } | { kind: 'resting'; until: number } | { kind: 'doneForToday' };
 
 /**
  * Where an always task stands at `now` on the local date `today`: done as often as its limit allows today, or
@@ -276,8 +274,10 @@ export function canChange(task: Task, userId: string, isChild: boolean): boolean
 }
 
 /** A task the household has added before, to add again with the same details (`task_suggestions()`). */
-export interface TaskSuggestion
-  extends Omit<NewTask, 'dueOn' | 'assignedTo' | 'isAlways' | 'dailyLimit'> {
+export interface TaskSuggestion extends Omit<
+  NewTask,
+  'dueOn' | 'assignedTo' | 'isAlways' | 'dailyLimit'
+> {
   /** How many times members have added it; repeats a task adds itself don't count. */
   timesAdded: number;
   /** Whether it is on the board now, not yet done. */
