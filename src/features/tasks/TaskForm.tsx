@@ -261,9 +261,11 @@ export function TaskForm({
         onDueOnChange={set('dueOn')}
         dueOnRef={dueOnRef}
         dueOnErrorProps={errorPropsFor('dueOn')}
-        alreadyDone={
-          shown.alreadyDone ? { checked: isDone, onChange: checkAlreadyDone } : undefined
-        }
+        alreadyDone={{
+          offered: shown.alreadyDone,
+          checked: isDone,
+          onChange: checkAlreadyDone,
+        }}
         routine={{
           offered: canBeRoutine({ isChild, isPrivate, forChildren, repeat: fields.repeat }),
           checked: fields.isRoutine,
