@@ -121,8 +121,6 @@ export const taskForm: Messages['taskForm'] = {
   whoFor: 'Kenelle tehtävä on?',
   audiences: { adults: 'Aikuisille', children: 'Lapsille' },
   whichChildren: 'Mille lapsille?',
-  whichChildrenHint:
-    'Jokainen valittu lapsi saa sen Minä-sivulleen. Jos et valitse ketään, kuka tahansa lapsi voi ottaa sen.',
   assignedTo: 'Kenen tehtävä se on?',
   anyChild: 'Kenen tahansa lapsen',
   points: 'Pisteet',
@@ -160,6 +158,7 @@ export const taskForm: Messages['taskForm'] = {
     repeatRange: 'Valitse, kuinka usein tehtävä toistuu: 1–365 päivän välein.',
     onlySharedHavePoints: 'Vain yhteisillä tehtävillä on pisteitä.',
     checkDetails: 'Tarkista tehtävän tiedot.',
+    childRequired: 'Valitse vähintään yksi lapsi.',
     saveFailed: 'Tehtävää ei voitu tallentaa. Yritä uudelleen.',
   },
   reminder: {

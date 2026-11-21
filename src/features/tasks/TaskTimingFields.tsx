@@ -16,7 +16,7 @@ interface TaskTimingFieldsProps {
   dueOnRef: Ref<HTMLInputElement>;
   dueOnErrorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
   /** "Already done", offered when adding a task; a task done already isn't asked for a due date. */
-  alreadyDone: { checked: boolean; onChange: (checked: boolean) => void } | undefined;
+  alreadyDone: { offered: boolean; checked: boolean; onChange: (checked: boolean) => void };
   /** Whether it is a routine, offered for repeating shared tasks (`canBeRoutine()`). */
   routine: { offered: boolean; checked: boolean; onChange: (checked: boolean) => void };
 }
@@ -40,7 +40,7 @@ export function TaskTimingFields({
   const t = useMessages();
   return (
     <>
-      {alreadyDone && (
+      {alreadyDone.offered && (
         <CheckboxField
           name="isDone"
           label={t.taskForm.alreadyDone}
@@ -57,7 +57,7 @@ export function TaskTimingFields({
           countRef={repeatCountRef}
           countErrorProps={repeatCountErrorProps}
         />
-        {!alreadyDone?.checked && (
+        {!(alreadyDone.offered && alreadyDone.checked) && (
           <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
             {t.taskForm.dueDate}
             <input

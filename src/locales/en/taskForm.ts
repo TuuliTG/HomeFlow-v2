@@ -124,10 +124,8 @@ export const taskForm = {
   /** Adults choose first who the task is for; the form changes to suit. */
   whoFor: 'Who is it for?',
   audiences: { adults: 'Adults', children: 'Children' },
-  /** Adding a task for children: one copy for each child chosen, on their Me page. */
+  /** Adding a task for children: one copy for each child chosen, on their Me page; names the tick boxes. */
   whichChildren: 'Which children?',
-  whichChildrenHint:
-    'Each child chosen gets it on their Me page. Choose none and any child can pick it up.',
   assignedTo: 'Whose chore is it?',
   anyChild: 'Any child',
   points: 'Points',
@@ -170,6 +168,7 @@ export const taskForm = {
     repeatRange: 'Choose how often it repeats: every 1 to 365 days.',
     onlySharedHavePoints: 'Only shared tasks have points.',
     checkDetails: 'Check the task details.',
+    childRequired: 'Choose at least one child.',
     saveFailed: "We couldn't save the task. Try again.",
   },
   reminder: {

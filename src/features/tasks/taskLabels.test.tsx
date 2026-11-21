@@ -35,6 +35,22 @@ describe('task labels', () => {
     expect(tasks[0]).toMatchObject({ labels: ['kitchen'], customLabels: ['Dishwasher'] });
   });
 
+  it("aren't given to a task for children", async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.type(await screen.findByLabelText('Task'), 'Make your bed');
+    await user.click(screen.getByRole('button', { name: 'Choose labels' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Kitchen' }));
+    await user.click(screen.getByRole('radio', { name: 'Children' }));
+    expect(screen.queryByRole('button', { name: /labels/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    await screen.findByRole('listitem', { name: 'Make your bed' });
+    expect(tasks[0]).toMatchObject({ forChildren: true, labels: [], customLabels: [] });
+  });
+
   it("offers the household's own labels, and picks a ready-made or known one for a name typed again", async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, {

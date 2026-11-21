@@ -13,7 +13,7 @@ import {
 } from '@/features/tasks/taskImages';
 import { notMarkedDoneState } from '@/features/tasks/notMarkedDone';
 import { TaskForm } from '@/features/tasks/TaskForm';
-import type { SaveOptions } from '@/features/tasks/taskFormValues';
+import { type SaveOptions } from '@/features/tasks/taskFormValues';
 import { taskFromLink } from '@/features/tasks/taskLink';
 import { usePlanNewTask } from '@/features/tasks/useSchedules';
 import {

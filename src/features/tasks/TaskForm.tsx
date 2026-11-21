@@ -10,9 +10,7 @@ import {
 } from '@/features/tasks/task';
 import {
   canBeRoutine,
-  childIdsOf,
   type FieldName,
-  type FormError,
   type FieldValues,
   fieldOf,
   fieldValues,
@@ -33,7 +31,14 @@ import { TaskPointsField } from '@/features/tasks/TaskPointsField';
 import { type FavouriteTasks, TaskTitleField } from '@/features/tasks/TaskTitleField';
 import { TaskTimingFields } from '@/features/tasks/TaskTimingFields';
 import { TaskTypeField } from '@/features/tasks/TaskTypeField';
+import { useChildChoice } from '@/features/tasks/useChildChoice';
 import { useMessages } from '@/lib/i18n/i18n';
+
+interface FormError {
+  /** The field to fix, or null when saving failed. */
+  field: FieldName | 'children' | null;
+  message: string;
+}
 
 interface TaskFormProps {
   /** The task being edited; a new task starts empty and can be made private. */
@@ -79,7 +84,20 @@ export function TaskForm({
 }: TaskFormProps) {
   const [initialValues] = useState(() => fieldValues(initial ?? prefill, defaultPoints));
   const [fields, setFields] = useState(initialValues);
-  const [childIds, setChildIds] = useState(childIdsOf(initialValues.assignedTo));
+  const { isPrivate, forChildren } = fields;
+  const shown = shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready });
+  const children = useChildChoice(currentUserId, {
+    isNew: !initial,
+    isForChildren: shown.isForChildren,
+    assignedTo: initialValues.assignedTo,
+  });
+  const readyMade = useReadyMadeTasks({
+    isNew: !initial,
+    isForChildren: shown.childrensChore,
+    isPrivate,
+    defaultPoints,
+    earlier: suggestions,
+  });
   const [isDone, setIsDone] = useState(false);
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
@@ -99,7 +117,7 @@ export function TaskForm({
     dueOn: dueOnRef,
   };
 
-  function errorPropsFor(field: FieldName) {
+  function errorPropsFor(field: FieldName | 'children') {
     const hasError = error?.field === field;
     return { 'aria-invalid': hasError, 'aria-describedby': hasError ? errorId : undefined };
   }
@@ -125,7 +143,7 @@ export function TaskForm({
     }
     const values = fieldValues(suggestionAsTask(suggestion), defaultPoints);
     setFields(values);
-    setChildIds(childIdsOf(values.assignedTo));
+    children.reset(values.assignedTo);
   }
 
   /** A task done already has no due date. */
@@ -153,7 +171,12 @@ export function TaskForm({
 
   function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
-    const [assignedTo = null, ...alsoFor] = childIds;
+    if (children.isMissing) {
+      setError({ field: 'children', message: t.taskForm.errors.childRequired });
+      children.firstRef.current?.focus();
+      return;
+    }
+    const [assignedTo = null, ...alsoFor] = children.childIds;
     const parsed = newTaskSchema(t).safeParse(taskInput({ ...fields, assignedTo }, isChild));
     if (!parsed.success) {
       const [issue] = parsed.error.issues;
@@ -169,16 +192,6 @@ export function TaskForm({
       setError({ field: null, message: t.taskForm.errors.saveFailed });
     });
   }
-
-  const { isPrivate, forChildren } = fields;
-  const shown = shownFields({ isChild, isPrivate, forChildren, canBeDoneAlready });
-  const readyMade = useReadyMadeTasks({
-    isNew: !initial,
-    isForChildren: shown.childrensChore,
-    isPrivate,
-    defaultPoints,
-    earlier: suggestions,
-  });
 
   return (
     <form
@@ -196,8 +209,10 @@ export function TaskForm({
         onPrivateChange={set('isPrivate')}
         forChildren={shown.isForChildren}
         onForChildrenChange={chooseAudience}
-        childIds={childIds}
-        onChildIdsChange={setChildIds}
+        childIds={children.childIds}
+        onChildIdsChange={children.setChildIds}
+        firstChildRef={children.firstRef}
+        childErrorProps={errorPropsFor('children')}
         currentUserId={currentUserId}
       />
 
@@ -233,14 +248,16 @@ export function TaskForm({
 
       <TaskIconField value={fields.icon} onChange={set('icon')} />
 
-      <TaskLabelsField
-        value={{ labels: fields.labels, customLabels: fields.customLabels }}
-        onChange={(changed) => {
-          change(changed);
-          setError(null);
-        }}
-        currentUserId={currentUserId}
-      />
+      {shown.labels && (
+        <TaskLabelsField
+          value={{ labels: fields.labels, customLabels: fields.customLabels }}
+          onChange={(changed) => {
+            change(changed);
+            setError(null);
+          }}
+          currentUserId={currentUserId}
+        />
+      )}
 
       {shown.points && (
         <TaskPointsField
@@ -262,9 +279,11 @@ export function TaskForm({
         onDueOnChange={set('dueOn')}
         dueOnRef={dueOnRef}
         dueOnErrorProps={errorPropsFor('dueOn')}
-        alreadyDone={
-          shown.alreadyDone ? { checked: isDone, onChange: checkAlreadyDone } : undefined
-        }
+        alreadyDone={{
+          offered: shown.alreadyDone,
+          checked: isDone,
+          onChange: checkAlreadyDone,
+        }}
         routine={{
           offered: canBeRoutine({ isChild, isPrivate, forChildren, repeat: fields.repeat }),
           checked: fields.isRoutine,
