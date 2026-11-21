@@ -54,7 +54,7 @@ export const taskForm: Messages['taskForm'] = {
   },
   defaultPoints: {
     heading: 'Nya uppgifter',
-    label: 'Poäng',
+    label: 'Standardpoäng för uppgifter',
   },
   suggestedTasks: 'Föreslagna uppgifter',
   onTheBoard: 'På listan · ',
