@@ -4,9 +4,10 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { canChange, type Task } from '@/features/tasks/task';
+import { ChildTaskForm } from '@/features/tasks/ChildTaskForm';
+import { canChange, type NewTask, type Task } from '@/features/tasks/task';
 import { TaskForm } from '@/features/tasks/TaskForm';
-import { isImagesNotSavedState } from '@/features/tasks/taskImages';
+import { type DraftImage, isImagesNotSavedState, savedImages } from '@/features/tasks/taskImages';
 import { useDeleteTask, useMembership, useTasks, useUpdateTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -42,6 +43,25 @@ export function EditTaskPage() {
   );
 }
 
+/**
+ * Where to go after saving or deleting: back to a child's tasks (`ChildTasksPage`) when it opened the form with
+ * `{ returnToChild }` in its state, else to the list the task is on. Only an id, so it can't lead elsewhere.
+ */
+function useReturnTo(): string | null {
+  const state: unknown = useLocation().state;
+  if (typeof state !== 'object' || state === null || !('returnToChild' in state)) return null;
+  const { returnToChild } = state;
+  return typeof returnToChild === 'string' ? paths.childTasks(returnToChild) : null;
+}
+
+/**
+ * Whether an adult is editing a task for children, which has the same form as adding one for a child (keeping its
+ * description and pictures as they are); other tasks, and a child's edits, have the full form.
+ */
+function isChildrensTask(task: Task, isChild: boolean): boolean {
+  return !isChild && task.forChildren && !task.isPrivate;
+}
+
 /** After a new task was added without its pictures (`imagesNotSavedState`), asks to add them again. */
 function ImagesNotSavedNotice() {
   const t = useMessages().taskForm.edit;
@@ -59,28 +79,42 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
   // The pictures the form opened with: live updates may change the task's meanwhile.
   const [imagesBefore] = useState(task.images);
   const navigate = useNavigate();
+  const returnTo = useReturnTo();
   const t = useMessages();
+
+  async function save(changed: NewTask, images: DraftImage[]) {
+    await updateTask.mutateAsync({
+      taskId: task.id,
+      task: changed,
+      images,
+      householdId,
+      before: imagesBefore,
+    });
+    await navigate(returnTo ?? paths.taskList(changed), { replace: returnTo !== null });
+  }
 
   return (
     <div className="flex flex-col gap-8">
-      <TaskForm
-        initial={task}
-        initialImages={imagesBefore}
-        isChild={isChild}
-        currentUserId={userId}
-        submitLabel={t.taskForm.edit.submit}
-        isSaving={updateTask.isPending}
-        onSave={async (changed, images) => {
-          await updateTask.mutateAsync({
-            taskId: task.id,
-            task: changed,
-            images,
-            householdId,
-            before: imagesBefore,
-          });
-          await navigate(paths.taskList(changed));
-        }}
-      />
+      {isChildrensTask(task, isChild) ? (
+        <ChildTaskForm
+          initial={task}
+          childId={task.assignedTo}
+          currentUserId={userId}
+          isSaving={updateTask.isPending}
+          cancelTo={returnTo ?? paths.taskList(task)}
+          onSave={(changed) => save(changed, savedImages(imagesBefore))}
+        />
+      ) : (
+        <TaskForm
+          initial={task}
+          initialImages={imagesBefore}
+          isChild={isChild}
+          currentUserId={userId}
+          submitLabel={t.taskForm.edit.submit}
+          isSaving={updateTask.isPending}
+          onSave={save}
+        />
+      )}
       <DeleteTask task={task} userId={userId} />
     </div>
   );
@@ -90,6 +124,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
 function DeleteTask({ task, userId }: { task: Task; userId: string }) {
   const deleteTask = useDeleteTask(userId);
   const navigate = useNavigate();
+  const returnTo = useReturnTo();
   const [isConfirming, setIsConfirming] = useState(false);
   const { common, taskForm } = useMessages();
   const t = taskForm.edit;
@@ -126,7 +161,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
             // Not mutate()'s onSuccess: the refetch after deleting removes the task, which unmounts
             // this form before that callback would run. A failure shows through isError.
             deleteTask.mutateAsync(task).then(
-              () => navigate(paths.taskList(task)),
+              () => navigate(returnTo ?? paths.taskList(task), { replace: returnTo !== null }),
               () => undefined,
             );
           }}

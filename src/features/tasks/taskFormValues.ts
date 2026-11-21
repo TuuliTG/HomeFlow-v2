@@ -18,7 +18,14 @@ function pointsValue(task: NewTask, defaultPoints: number): string {
   return task.isPrivate ? String(defaultPoints) : '';
 }
 
-const fieldNames = ['title', 'description', 'points', 'repeatEveryDays', 'dueOn'] as const;
+const fieldNames = [
+  'title',
+  'description',
+  'points',
+  'repeatEveryDays',
+  'dueOn',
+  'dailyLimit',
+] as const;
 
 /** The form's fields that can be named as the one to fix. */
 export type FieldName = (typeof fieldNames)[number];
@@ -63,10 +70,15 @@ export function fieldValues(task?: NewTask, defaultPoints = DEFAULT_POINTS) {
 /** Once a day, what a new always task allows unless the adult chooses otherwise. */
 const DEFAULT_DAILY_LIMIT = '1';
 
-/** The "Times a day" field's value: the task's limit, empty for none, or the default if it isn't an always task. */
-function dailyLimitValue({ isAlways, dailyLimit }: NewTask): string {
-  if (!isAlways) return DEFAULT_DAILY_LIMIT;
-  return dailyLimit === null ? '' : String(dailyLimit);
+/**
+ * The daily limit field's value: the times a day, the default once a day while there is none, and whether there
+ * is no limit, kept apart so switching "No limit" off brings the number back.
+ */
+function dailyLimitValue({ isAlways, dailyLimit }: NewTask) {
+  return {
+    times: dailyLimit === null ? DEFAULT_DAILY_LIMIT : String(dailyLimit),
+    noLimit: isAlways && dailyLimit === null,
+  };
 }
 
 export type FieldValues = ReturnType<typeof fieldValues>;
@@ -87,10 +99,14 @@ export function withReadyMadeTask(values: FieldValues, task: TaskSuggestion): Fi
   };
 }
 
+function numberInput(value: string): number {
+  return value.trim() === '' ? Number.NaN : Number(value);
+}
+
 /** A task for children's points are picked as stars, so more points than stars come down to the most stars. */
 function pointsInput({ points, forChildren }: FieldValues): number {
-  if (points.trim() === '') return Number.NaN;
-  return forChildren ? Math.min(Number(points), MAX_CHILD_STARS) : Number(points);
+  const number = numberInput(points);
+  return forChildren ? Math.min(number, MAX_CHILD_STARS) : number;
 }
 
 /**
@@ -200,7 +216,8 @@ function timingOf(values: FieldValues, isChild: boolean) {
         isAlways,
         repeatEveryDays: null,
         dueOn: null,
-        dailyLimit: values.dailyLimit === '' ? null : Number(values.dailyLimit),
+        // An emptied field is no number rather than no limit, which only the switch chooses.
+        dailyLimit: values.dailyLimit.noLimit ? null : numberInput(values.dailyLimit.times),
       }
     : {
         isAlways,

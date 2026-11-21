@@ -129,7 +129,12 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
        */
       isAlways: z.boolean(),
       /** How many times a day an always task earns its points; null for no limit and for other tasks. */
-      dailyLimit: z.number().int().min(1).max(MAX_DAILY_LIMIT).nullable(),
+      dailyLimit: z
+        .number(errors.dailyLimitRange(MAX_DAILY_LIMIT))
+        .int(errors.dailyLimitRange(MAX_DAILY_LIMIT))
+        .min(1, errors.dailyLimitRange(MAX_DAILY_LIMIT))
+        .max(MAX_DAILY_LIMIT, errors.dailyLimitRange(MAX_DAILY_LIMIT))
+        .nullable(),
     })
     .refine((task) => !task.isPrivate || task.points === null, {
       path: ['points'],

@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-22 (always tasks for children)
+- **Updated:** 2026-11-22 (always tasks for children, and setting up a child's tasks)
 
 ## Context
 
@@ -236,7 +236,7 @@ next one back rather than follow a fixed calendar.
   next occurrence, given to the same child, with its labels and pictures), so goals, News, undo and points done work
   as for any task; only its first row counts as created (ADR 0006). To stop
   double taps it can be done again only **2 minutes** after the previous copy was done (`ALWAYS_TASK_PAUSE_MS`), and
-  at most `daily_limit` times a day (1–10, null for no limit; the form offers "Times a day", 1 by default). Each copy
+  at most `daily_limit` times a day (1–10, null for no limit; the form says "Can be done at most [1] times a day" with a "No limit" switch beside it, which keeps the number while on). Each copy
   carries `times_done`/`times_done_on` (the doer's local date), so the limit costs no walk back through the copies.
   As `complete_task()` accepts the doer's date within a day of the server's, the limit is a parent's soft limit,
   not a hard one; the pause holds either way.
@@ -244,6 +244,14 @@ next one back rather than follow a fixed calendar.
   rest of the day once the limit is reached (it refreshes when the pause ends, at midnight and after a refused tap); always tiles come after the child's other tasks, by name, so a done
   one keeps its place. The adults' card shows "Always · 1× a day". We chose copies over one row with a separate
   completions table, which would have needed every report of done tasks to change.
+- **Setting up a child's tasks**: parents wanted one place per child for their chores. The Family page's
+  "Tasks" link under each child (adults only, `ChildTasksLink`) opens `ChildTasksPage`
+  (`/children/:childId/tasks`, behind `AdultsOnly`): the child's open tasks given to them, the always ones by name
+  and then the custom ones (`childTaskList()`), each a row with when it comes up ("1× a day", "Every week · Mon 23
+  Nov") and its stars, opening the edit form, which returns there (the child's id in the link's state, `returnToChild`: an id, not a path, so it can't lead off the app). Its plus opens a short form (`ChildTaskForm`): Always or Custom, then name (with the ready-made
+  children's tasks), icon and stars (one to begin with), then "Times a day" or Repeats and Due date; who it is for
+  isn't asked. It is the same task as the board's form makes, so nothing else changes; an adult editing any shared task for children gets this form too (with whose it is, keeping its description and pictures), so a children's task can no longer be made an adults' one by editing. "Copy to Mia", shown for each other child who lacks some of the tasks, opens a page of tick boxes (`CopyChildTasksPage`): the tasks Mia lacks under the same name start ticked (each name once, `tasksToCopy()`), those she has can't be ticked, and "Copy 3 tasks" adds the chosen ones in one insert and returns with "Copied to Mia." Copies come without pictures, since only whoever uploaded a picture can attach it
+  (`set_task_images()`).
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how
   long ago in the user's calendar days ("Last done by Ben, 3 days ago"), so the family sees who usually carries it
   and can take turns. It comes from `previous_task_id`, embedded as `previous_occurrence(...)`: PostgREST finds no

@@ -20,8 +20,11 @@ import { NewGoalPage } from '@/features/rewards/NewGoalPage';
 import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { SharedTasksPage } from '@/features/tasks/SharedTasksPage';
+import { ChildTasksPage } from '@/features/tasks/ChildTasksPage';
+import { CopyChildTasksPage } from '@/features/tasks/CopyChildTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
 import { EditTaskPage } from '@/features/tasks/EditTaskPage';
+import { NewChildTaskPage } from '@/features/tasks/NewChildTaskPage';
 import { AskForTaskPage } from '@/features/tasks/AskForTaskPage';
 import { TaskHelpersPage } from '@/features/tasks/TaskHelpersPage';
 import { LanguageProvider } from '@/lib/i18n/LanguageProvider';
@@ -67,6 +70,12 @@ export const routes: RouteObject[] = [
                   { path: paths.newGoal, element: <NewGoalPage /> },
                   { path: paths.editGoal(':goalId'), element: <EditGoalPage /> },
                   { path: paths.statistics, element: <StatisticsPage /> },
+                  { path: paths.childTasks(':childId'), element: <ChildTasksPage /> },
+                  { path: paths.newChildTask(':childId'), element: <NewChildTaskPage /> },
+                  {
+                    path: paths.copyChildTasks(':childId', ':toChildId'),
+                    element: <CopyChildTasksPage />,
+                  },
                 ],
               },
               { path: paths.household, element: <HouseholdPage /> },

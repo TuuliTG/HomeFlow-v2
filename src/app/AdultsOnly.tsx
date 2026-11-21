@@ -6,8 +6,8 @@ import { useIsChild } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 
 /**
- * Screens children don't have (News, Rewards, Statistics): a child is sent to their Me page, which shows
- * their goals' progress instead.
+ * Screens children don't have (News, Rewards, Statistics, setting up a child's tasks): a child is sent to their
+ * Me page, which shows their goals' progress instead.
  */
 export function AdultsOnly() {
   const user = useLoggedInUser();

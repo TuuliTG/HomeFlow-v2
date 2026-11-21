@@ -7,6 +7,8 @@ import { useMessages } from '@/lib/i18n/i18n';
 const STAR_CHOICES = Array.from({ length: MAX_CHILD_STARS }, (_, index) => index + 1);
 
 interface TaskStarsFieldProps {
+  /** The field's label, if not "Stars for each child", e.g. on a form for one child already named. */
+  label?: string | undefined;
   value: string;
   onChange: (points: string) => void;
   /** The first star, focused when the stars need choosing. */
@@ -18,7 +20,13 @@ interface TaskStarsFieldProps {
  * The stars each child earns for a task for children: a row of stars, filled up to the one picked. Picking the
  * last filled star again clears them all, for a task worth none.
  */
-export function TaskStarsField({ value, onChange, inputRef, errorProps }: TaskStarsFieldProps) {
+export function TaskStarsField({
+  label,
+  value,
+  onChange,
+  inputRef,
+  errorProps,
+}: TaskStarsFieldProps) {
   const t = useMessages().taskForm;
   const name = useId();
   const labelId = useId();
@@ -28,7 +36,7 @@ export function TaskStarsField({ value, onChange, inputRef, errorProps }: TaskSt
   return (
     <div role="radiogroup" aria-labelledby={labelId} {...errorProps}>
       <p id={labelId} className="text-ink mb-1 text-sm font-medium">
-        {t.stars}
+        {label ?? t.stars}
       </p>
       <div className="-ml-1.5 flex">
         {STAR_CHOICES.map((count) => (
