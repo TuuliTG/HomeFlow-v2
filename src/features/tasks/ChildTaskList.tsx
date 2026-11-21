@@ -1,11 +1,10 @@
 import { useId } from 'react';
-import { Link, useLocation, useParams } from 'react-router';
+import { Link, useLocation } from 'react-router';
 
 import { paths } from '@/app/paths';
 import { AddLink } from '@/components/ui/AddLink';
 import { StarIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
 import { childTaskList, scheduleOf, tasksToCopy } from '@/features/tasks/childTasks';
 import type { Task } from '@/features/tasks/task';
@@ -15,50 +14,44 @@ import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /**
- * An adult's page of one child's tasks, to set them up: the always ones, then the custom ones, each opening to edit,
- * with a plus to add one and a way to copy them all to another child (ADR 0004).
+ * One child's tasks, for an adult to set them up on the child's page: the always ones, then the custom ones, each
+ * opening to edit, and a way to copy them to another child (ADR 0004).
  */
-export function ChildTasksPage() {
-  const { childId = '' } = useParams();
+export function ChildTaskList({ childId }: { childId: string }) {
   const user = useLoggedInUser();
   const members = useHouseholdMembers(user.id);
   const tasks = useTasks(user.id);
-  const t = useMessages();
+  const t = useMessages().tasks;
 
   if (members.data === undefined || tasks.data === undefined) {
     if (!members.isError && !tasks.isError) return <LoadingMessage />;
     return (
       <p role="alert" className="text-danger-700 text-sm">
-        {t.tasks.me.loadFailed}
+        {t.me.loadFailed}
       </p>
     );
   }
-  const children = members.data.filter((member) => member.isChild);
-  const child = children.find((member) => member.id === childId);
-  if (!child) return <p className="text-ink-muted text-sm">{t.tasks.childTasks.notFound}</p>;
-  const name = child.name ?? t.common.someone;
   const { always, custom } = childTaskList(tasks.data, childId);
-
   return (
-    <>
-      <div className="flex items-start justify-between gap-4">
-        <PageHeader title={t.tasks.childTasks.title(name)} />
-        <AddLink to={paths.newChildTask(childId)} label={t.tasks.childTasks.add(name)} />
-      </div>
-      <div className="flex flex-col gap-8">
-        {always.length + custom.length === 0 && (
-          <p className="text-ink-muted text-sm">{t.tasks.childTasks.empty}</p>
-        )}
-        <TaskSection heading={t.tasks.childTasks.kinds.always} tasks={always} childId={childId} />
-        <TaskSection heading={t.tasks.childTasks.kinds.custom} tasks={custom} childId={childId} />
-        <CopyTo
-          tasks={tasks.data}
-          fromChildId={childId}
-          others={children.filter((other) => other.id !== childId)}
-        />
-      </div>
-    </>
+    <div className="flex flex-col gap-6">
+      {always.length + custom.length === 0 && (
+        <p className="text-ink-muted text-sm">{t.childTasks.empty}</p>
+      )}
+      <TaskSection heading={t.childTasks.kinds.always} tasks={always} childId={childId} />
+      <TaskSection heading={t.childTasks.kinds.custom} tasks={custom} childId={childId} />
+      <CopyTo
+        tasks={tasks.data}
+        fromChildId={childId}
+        others={members.data.filter((other) => other.isChild && other.id !== childId)}
+      />
+    </div>
   );
+}
+
+/** The link adding a task for a child, beside their name on their page. */
+export function AddChildTaskLink({ childId, name }: { childId: string; name: string }) {
+  const t = useMessages().tasks.childTasks;
+  return <AddLink to={paths.newChildTask(childId)} label={t.add(name)} />;
 }
 
 interface TaskSectionProps {

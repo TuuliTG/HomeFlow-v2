@@ -91,7 +91,7 @@ function CopyForm({ tasks, copyable, fromChildId, toChildId, toName }: CopyFormP
       .mutateAsync({ tasks: copyable.filter((task) => chosen.has(task.id)), childId: toChildId })
       .then(
         () =>
-          navigate(paths.childTasks(fromChildId), {
+          navigate(paths.member(fromChildId), {
             replace: true,
             state: { copiedTo: toChildId },
           }),
@@ -133,7 +133,7 @@ function CopyForm({ tasks, copyable, fromChildId, toChildId, toName }: CopyFormP
         >
           {t.copySubmit(chosen.size)}
         </button>
-        <CancelLink fallback={paths.childTasks(fromChildId)} />
+        <CancelLink fallback={paths.member(fromChildId)} />
       </div>
     </form>
   );

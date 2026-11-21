@@ -23,8 +23,10 @@ async function joinHousehold(user: UserEvent, code: string) {
 async function memberNames() {
   const members = await screen.findByRole('region', { name: 'Members' });
   const items = await within(members).findAllByRole('listitem');
-  // Each member's name, without the "Child" choice beside it.
-  return items.map((item) => item.firstElementChild?.textContent);
+  // Each member's name, without their initial (hidden from screen readers) or role below it.
+  return items.map(
+    (item) => item.querySelector('[aria-hidden] + span')?.firstElementChild?.textContent,
+  );
 }
 
 describe('household setup', () => {
@@ -64,7 +66,8 @@ describe('household setup', () => {
       await screen.findByRole('heading', { level: 1, name: 'The Virtanens' }),
     ).toBeInTheDocument();
     expect(screen.getByText('ABCDEFGA')).toBeInTheDocument();
-    expect(await memberNames()).toEqual(['Anna (you)']);
+    expect(await memberNames()).toEqual(['Anna']);
+    expect(screen.getByText('You')).toBeInTheDocument();
   });
 
   it('asks for a name instead of creating an unnamed household', async () => {
@@ -92,7 +95,7 @@ describe('household setup', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'The Virtanens' }),
     ).toBeInTheDocument();
-    expect(await memberNames()).toEqual(['Ben', 'Anna (you)']);
+    expect(await memberNames()).toEqual(['Ben', 'Anna']);
   });
 
   it('explains when no household has the invite code', async () => {

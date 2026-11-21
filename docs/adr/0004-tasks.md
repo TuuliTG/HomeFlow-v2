@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-22 (always tasks for children, and setting up a child's tasks)
+- **Updated:** 2026-11-21 (always tasks for children, and setting up a child's tasks)
 
 ## Context
 
@@ -244,9 +244,8 @@ next one back rather than follow a fixed calendar.
   rest of the day once the limit is reached (it refreshes when the pause ends, at midnight and after a refused tap); always tiles come after the child's other tasks, by name, so a done
   one keeps its place. The adults' card shows "Always · 1× a day". We chose copies over one row with a separate
   completions table, which would have needed every report of done tasks to change.
-- **Setting up a child's tasks**: parents wanted one place per child for their chores. The Family page's
-  "Tasks" link under each child (adults only, `ChildTasksLink`) opens `ChildTasksPage`
-  (`/children/:childId/tasks`, behind `AdultsOnly`): the child's open tasks given to them, the always ones by name
+- **Setting up a child's tasks**: parents wanted one place per child for their chores. A child's page, opened from
+  their row on the family page (ADR 0003), lists them (`ChildTaskList`): the child's open tasks given to them, the always ones by name
   and then the custom ones (`childTaskList()`), each a row with when it comes up ("1× a day", "Every week · Mon 23
   Nov") and its stars, opening the edit form, which returns there (the child's id in the link's state, `returnToChild`: an id, not a path, so it can't lead off the app). Its plus opens a short form (`ChildTaskForm`): Always or Custom, then name (with the ready-made
   children's tasks), icon and stars (one to begin with), then "Times a day" or Repeats and Due date; who it is for
