@@ -33,26 +33,24 @@ export const household: Messages['household'] = {
   members: {
     heading: 'Medlemmar',
     loadFailed: 'Det gick inte att ladda medlemmarna.',
-    you: ' (du)',
     child: 'Barn',
-    isChild: (name: string) => `${name} är ett barn`,
     setChildFailed: 'Det gick inte att spara ändringen. Försök igen.',
     canAddTasks: 'Kan lägga till uppgifter',
-    canAddTasksFor: (name: string) => `${name} kan lägga till uppgifter`,
     setCanAddTasksFailed: 'Det gick inte att spara ändringen. Försök igen.',
     newCode: 'Ny inloggningskod',
-    newCodeFor: (name: string) => `Ny inloggningskod för ${name}`,
     newCodeFailed: 'Det gick inte att skapa en ny kod. Försök igen.',
     onThisDevice: 'På den här enheten',
-    onThisDeviceFor: (name: string) => `${name} är inloggad på den här enheten`,
     setOnThisDeviceFailed:
       'Det gick inte att logga in eller ut barnet på den här enheten. Försök igen.',
-    remove: (name: string) => `Ta bort ${name}`,
     confirmRemove: (name: string) => `Ta bort ${name} med poäng och historik?`,
     yesRemove: 'Ja, ta bort',
     removeFailed: 'Vi kunde inte ta bort barnet. Försök igen.',
-    tasks: 'Uppgifter',
-    tasksFor: (name) => `${name}s uppgifter`,
+    /** Who a member is, under their name in the list. */
+    roles: { you: 'Du', adult: 'Vuxen', child: 'Barn' },
+    settings: 'Inställningar',
+    removeFromFamily: (name: string) => `Ta bort ${name} från familjen`,
+    /** The link from a member's page back to the family. */
+    backToFamily: 'Familj',
   },
   family: {
     heading: 'Din familj',

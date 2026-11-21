@@ -36,11 +36,11 @@ export function NewChildTaskPage() {
       <ChildTaskForm
         childId={childId}
         currentUserId={user.id}
-        cancelTo={paths.childTasks(childId)}
+        cancelTo={paths.member(childId)}
         isSaving={addTask.isPending}
         onSave={async (task) => {
           await addTask.mutateAsync({ task, images: [], householdId, alsoFor: [] });
-          await navigate(paths.childTasks(childId));
+          await navigate(paths.member(childId));
         }}
       />
     </>

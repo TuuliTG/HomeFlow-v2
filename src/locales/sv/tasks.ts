@@ -150,7 +150,6 @@ export const tasks: Messages['tasks'] = {
     youHelped: (name) => `Du hjälpte ${name}`,
   },
   childTasks: {
-    title: (name) => `${name}s uppgifter`,
     add: (name) => `Lägg till en uppgift för ${name}`,
     newTitle: (name) => `Ny uppgift för ${name}`,
     kindLegend: 'Typ av uppgift',

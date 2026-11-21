@@ -169,7 +169,6 @@ export const tasks = {
   /** The Me page for children: their tasks as big tiles, and tasks to pick. */
   /** An adult's page of one child's own tasks (`ChildTasksPage`). */
   childTasks: {
-    title: (name: string) => `${name}'s tasks`,
     add: (name: string) => `Add a task for ${name}`,
     newTitle: (name: string) => `New task for ${name}`,
     kindLegend: 'Kind of task',

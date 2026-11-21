@@ -14,11 +14,17 @@ function annaWithBen() {
   return { anna, ben };
 }
 
-const benOnThisDevice = { name: 'Ben is signed in on this device' };
+const benOnThisDevice = { name: 'On this device' };
+
+/** Opens Ben's page from the family's member list. */
+async function openBen(user: UserEvent) {
+  await user.click(await screen.findByRole('link', { name: /^Ben/ }));
+}
 
 /** Ticks Ben as signed in on this device, and waits until he is. */
 async function signBenInHere(user: UserEvent) {
-  const box = await screen.findByRole('checkbox', benOnThisDevice);
+  await openBen(user);
+  const box = await screen.findByRole('switch', benOnThisDevice);
   await user.click(box);
   await waitFor(() => {
     expect(box).toBeEnabled();
@@ -83,8 +89,9 @@ describe('switching accounts on one device', () => {
     await screen.findByText('Hello, Anna');
 
     await user.click(screen.getByRole('link', { name: 'The Virtanens' }));
+    await openBen(user);
 
-    expect(await screen.findByRole('checkbox', benOnThisDevice)).toBeChecked();
+    expect(await screen.findByRole('switch', benOnThisDevice)).toBeChecked();
   });
 
   it('signs a child out of this device, ending their session', async () => {
@@ -92,7 +99,7 @@ describe('switching accounts on one device', () => {
     const user = userEvent.setup();
     renderAppAt('/household');
     await signBenInHere(user);
-    const box = screen.getByRole('checkbox', benOnThisDevice);
+    const box = screen.getByRole('switch', benOnThisDevice);
 
     await user.click(box);
 
@@ -111,7 +118,7 @@ describe('switching accounts on one device', () => {
     renderAppAt('/household');
     await signBenInHere(user);
     fakeAuthBackend.failRequests();
-    const box = screen.getByRole('checkbox', benOnThisDevice);
+    const box = screen.getByRole('switch', benOnThisDevice);
 
     await user.click(box);
 
@@ -130,15 +137,16 @@ describe('switching accounts on one device', () => {
     const user = userEvent.setup();
     renderAppAt('/household');
 
-    await screen.findByRole('checkbox', benOnThisDevice);
-    expect(
-      screen.queryByRole('checkbox', { name: 'Carl is signed in on this device' }),
-    ).not.toBeInTheDocument();
+    await user.click(await screen.findByRole('link', { name: /^Carl/ }));
+    await screen.findByRole('switch', { name: 'Child' });
+    expect(screen.queryByRole('switch', benOnThisDevice)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: /Family/ }));
     await useBenOnThisDevice(user);
     await user.click(screen.getByRole('link', { name: 'The Virtanens' }));
     const members = await screen.findByRole('region', { name: 'Members' });
     await within(members).findByText('Anna');
-    expect(screen.queryByRole('checkbox', { name: /on this device/ })).not.toBeInTheDocument();
+    // A child opens nobody's page, so sees no settings.
+    expect(within(members).queryByRole('link')).not.toBeInTheDocument();
   });
 
   it('says so when the child could not be signed in here, and stays with the adult', async () => {
@@ -147,12 +155,13 @@ describe('switching accounts on one device', () => {
     const user = userEvent.setup();
     renderAppAt('/household');
 
-    await user.click(await screen.findByRole('checkbox', benOnThisDevice));
+    await openBen(user);
+    await user.click(await screen.findByRole('switch', benOnThisDevice));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       "We couldn't sign the child in or out on this device. Try again.",
     );
-    expect(screen.getByRole('checkbox', benOnThisDevice)).not.toBeChecked();
+    expect(screen.getByRole('switch', benOnThisDevice)).not.toBeChecked();
     expect(screen.getByText('Hello, Anna')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
   });

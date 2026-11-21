@@ -56,7 +56,7 @@ test('family member compares only the adults, or members chosen one by one', asy
   await page.getByRole('button', { name: 'Join household' }).click();
   await page.getByLabel("Child's name").fill('Cleo');
   await page.getByRole('button', { name: 'Add child' }).click();
-  await expect(page.getByRole('checkbox', { name: 'Cleo is a child' })).toBeChecked();
+  await expect(page.getByRole('link', { name: 'Cleo Child' })).toBeVisible();
   await page
     .getByRole('navigation', { name: 'Main' })
     .getByRole('link', { name: 'Statistics' })

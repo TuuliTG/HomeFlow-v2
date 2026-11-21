@@ -51,7 +51,7 @@ function useReturnTo(): string | null {
   const state: unknown = useLocation().state;
   if (typeof state !== 'object' || state === null || !('returnToChild' in state)) return null;
   const { returnToChild } = state;
-  return typeof returnToChild === 'string' ? paths.childTasks(returnToChild) : null;
+  return typeof returnToChild === 'string' ? paths.member(returnToChild) : null;
 }
 
 /**

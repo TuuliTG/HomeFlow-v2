@@ -6,6 +6,7 @@ import { ErrorPage } from '@/app/ErrorPage';
 import { MePage } from '@/app/MePage';
 import { NotFoundPage } from '@/app/NotFoundPage';
 import { OnboardingGate } from '@/app/OnboardingGate';
+import { MemberPage } from '@/app/MemberPage';
 import { paths } from '@/app/paths';
 import { SettingsPage } from '@/app/SettingsPage';
 import { UpdateBanner } from '@/app/UpdateBanner';
@@ -20,7 +21,6 @@ import { NewGoalPage } from '@/features/rewards/NewGoalPage';
 import { RewardsPage } from '@/features/rewards/RewardsPage';
 import { StatisticsPage } from '@/features/statistics/StatisticsPage';
 import { SharedTasksPage } from '@/features/tasks/SharedTasksPage';
-import { ChildTasksPage } from '@/features/tasks/ChildTasksPage';
 import { CopyChildTasksPage } from '@/features/tasks/CopyChildTasksPage';
 import { CreateTaskPage } from '@/features/tasks/CreateTaskPage';
 import { EditTaskPage } from '@/features/tasks/EditTaskPage';
@@ -70,7 +70,7 @@ export const routes: RouteObject[] = [
                   { path: paths.newGoal, element: <NewGoalPage /> },
                   { path: paths.editGoal(':goalId'), element: <EditGoalPage /> },
                   { path: paths.statistics, element: <StatisticsPage /> },
-                  { path: paths.childTasks(':childId'), element: <ChildTasksPage /> },
+                  { path: paths.member(':memberId'), element: <MemberPage /> },
                   { path: paths.newChildTask(':childId'), element: <NewChildTaskPage /> },
                   {
                     path: paths.copyChildTasks(':childId', ':toChildId'),

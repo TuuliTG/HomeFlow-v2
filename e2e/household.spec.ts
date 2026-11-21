@@ -26,24 +26,30 @@ test('new user can create a household and see its invite code', async ({ page })
 
   await expect(page.getByRole('heading', { level: 1, name: 'The Andersons' })).toBeVisible();
   await expect(page.getByText(NEW_INVITE_CODE)).toBeVisible();
-  await expect(memberList(page)).toHaveText(['Anna (you)']);
+  await expect(memberList(page)).toHaveText([/Anna\s*You$/]);
   await expectNoA11yViolations(page, 'household');
 
   await page.getByLabel("Child's name").fill('Ben');
   await page.getByRole('button', { name: 'Add child' }).click();
   const code = page.getByRole('region', { name: "Ben's sign-in code" });
   await expect(code.getByText('KX7P-29QF')).toBeVisible();
-  await expect(page.getByRole('checkbox', { name: 'Ben is a child' })).toBeChecked();
-  await page.getByRole('button', { name: 'New sign-in code for Ben' }).click();
-  await expect(code).toBeVisible();
   await expectNoA11yViolations(page, 'household with a child sign-in code');
+
+  // A new code from Ben's own page.
+  await page.getByRole('link', { name: 'Ben Child' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Ben' })).toBeVisible();
+  await page.getByRole('button', { name: 'New sign-in code' }).click();
+  await expect(page.getByRole('region', { name: "Ben's sign-in code" })).toBeVisible();
+  await expectNoA11yViolations(page, "a child's page with a sign-in code");
+  await page.getByRole('link', { name: /Family/ }).click();
 
   // Ben added twice by mistake: the second one goes.
   await page.getByLabel("Child's name").fill('Ben');
   await page.getByRole('button', { name: 'Add child' }).click();
   await expect(memberList(page)).toHaveCount(3);
-  await page.getByRole('button', { name: 'Remove Ben' }).last().click();
-  await expectNoA11yViolations(page, 'household confirming removing a child');
+  await page.getByRole('link', { name: 'Ben Child' }).last().click();
+  await page.getByRole('button', { name: 'Remove Ben from the family' }).click();
+  await expectNoA11yViolations(page, "a child's page confirming removing them");
   await page.getByRole('button', { name: 'Yes, remove' }).click();
   await expect(memberList(page)).toHaveCount(2);
 
@@ -66,10 +72,11 @@ test('new user can join a household with its invite code', async ({ page }) => {
   await expect(
     page.getByRole('heading', { level: 1, name: EXISTING_HOUSEHOLD.name }),
   ).toBeVisible();
-  // Ben's row also has the "Child" choice, which only an adult has for the other members.
-  await expect(memberList(page)).toHaveText([/^Ben/, 'Anna (you)']);
-  await page.getByRole('checkbox', { name: 'Ben is a child' }).check();
-  await expect(page.getByRole('checkbox', { name: 'Ben is a child' })).toBeChecked();
+  await expect(memberList(page)).toHaveText([/Ben\s*Adult/, /Anna\s*You$/]);
+  // An adult opens another member's page to mark them as a child.
+  await page.getByRole('link', { name: 'Ben Adult' }).click();
+  await page.getByRole('switch', { name: 'Child' }).check();
+  await expect(page.getByRole('switch', { name: 'Child' })).toBeChecked();
 
   await page.getByRole('link', { name: 'Shared tasks' }).click();
   const bensTask = page.getByRole('listitem', { name: EXISTING_HOUSEHOLD.task });

@@ -20,12 +20,15 @@ export const paths = {
     if (isPrivate) return '/me';
     return forChildren ? '/?children=1' : '/';
   },
-  /** An adult's page of one child's own tasks, to set them up (ADR 0004). */
-  childTasks: (childId: string) => `/children/${childId}/tasks`,
-  newChildTask: (childId: string) => `/children/${childId}/tasks/new`,
+  /**
+   * An adult's page of another member: for a child, their tasks and settings (ADR 0004); for an adult, whether
+   * they are a child.
+   */
+  member: (memberId: string) => `/household/members/${memberId}`,
+  newChildTask: (childId: string) => `/household/members/${childId}/new-task`,
   /** Choosing which of a child's tasks to copy to another child. */
   copyChildTasks: (fromChildId: string, toChildId: string) =>
-    `/children/${fromChildId}/tasks/copy/${toChildId}`,
+    `/household/members/${fromChildId}/copy/${toChildId}`,
   me: '/me',
   news: '/news',
   rewards: '/rewards',

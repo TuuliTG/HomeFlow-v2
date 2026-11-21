@@ -44,9 +44,9 @@ describe("a child's tasks", () => {
     const user = userEvent.setup();
     renderAppAt('/household');
 
-    await user.click(await screen.findByRole('link', { name: "Ben's tasks" }));
+    await user.click(await screen.findByRole('link', { name: 'Ben Child' }));
 
-    expect(await screen.findByRole('heading', { name: "Ben's tasks" })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
     const always = screen.getByRole('list', { name: 'Always' });
     expect(within(always).getByRole('link', { name: /Make the bed/ })).toHaveTextContent(
       '1× a day',
@@ -61,7 +61,7 @@ describe("a child's tasks", () => {
   it('get an always task from the short form, once a day to begin with', async () => {
     const { ben } = family();
     const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks`);
+    renderAppAt(`/household/members/${ben.id}`);
 
     await user.click(await screen.findByRole('link', { name: 'Add a task for Ben' }));
     expect(await screen.findByRole('heading', { name: 'New task for Ben' })).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe("a child's tasks", () => {
   it('get a custom task that repeats', async () => {
     const { ben } = family();
     const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks/new`);
+    renderAppAt(`/household/members/${ben.id}/new-task`);
 
     await user.click(await screen.findByRole('radio', { name: 'Custom' }));
     await user.type(screen.getByRole('combobox', { name: 'Task' }), 'Water the plants');
@@ -106,7 +106,7 @@ describe("a child's tasks", () => {
     const { anna, ben } = family();
     give(anna.id, ben.id, { title: 'Make the bed' });
     const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks`);
+    renderAppAt(`/household/members/${ben.id}`);
 
     await user.click(await screen.findByRole('link', { name: /Make the bed/ }));
     const name = await screen.findByLabelText('Task');
@@ -114,36 +114,36 @@ describe("a child's tasks", () => {
     await user.type(name, 'Make your bed');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-    expect(await screen.findByRole('heading', { name: "Ben's tasks" })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Make your bed/ })).toBeInTheDocument();
   });
 
   it('are set up by adults only', async () => {
     const { ben } = family();
     fakeAuthBackend.logInAs('ben@example.com', 'Ben');
-    renderAppAt(`/children/${ben.id}/tasks`);
+    renderAppAt(`/household/members/${ben.id}`);
 
     expect(await screen.findByRole('heading', { name: 'My stars' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: "Ben's tasks" })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 1, name: 'Ben' })).not.toBeInTheDocument();
   });
 
   it('come back to the list after deleting one', async () => {
     const { anna, ben } = family();
     give(anna.id, ben.id, { title: 'Make the bed' });
     const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks`);
+    renderAppAt(`/household/members/${ben.id}`);
 
     await user.click(await screen.findByRole('link', { name: /Make the bed/ }));
     await user.click(await screen.findByRole('button', { name: 'Delete task' }));
     await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
 
     expect(await screen.findByText('No tasks yet.')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: "Ben's tasks" })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
   });
 
   it("are only a child's of the family", async () => {
     const { anna } = family();
-    renderAppAt(`/children/${anna.id}/tasks`);
+    renderAppAt(`/household/members/${anna.id}`);
 
     expect(await screen.findByText('This child is not in your family.')).toBeInTheDocument();
   });
@@ -152,7 +152,7 @@ describe("a child's tasks", () => {
     const { anna, ben } = family();
     give(anna.id, ben.id, { title: 'Make the bed' });
     const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks`);
+    renderAppAt(`/household/members/${ben.id}`);
 
     await user.click(await screen.findByRole('link', { name: /Make the bed/ }));
 
@@ -165,7 +165,7 @@ describe("a child's tasks", () => {
   it('ask for a number of times a day unless there is no limit', async () => {
     const { ben } = family();
     const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks/new`);
+    renderAppAt(`/household/members/${ben.id}/new-task`);
 
     await user.type(await screen.findByRole('combobox', { name: 'Task' }), 'Brush teeth');
     await user.clear(screen.getByLabelText('Times a day'));
@@ -182,7 +182,7 @@ describe("a child's tasks", () => {
     give(anna.id, ben.id, { title: 'Read a book' });
     give(anna.id, dora.id, { title: 'Brush teeth' });
     const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks`);
+    renderAppAt(`/household/members/${ben.id}`);
 
     await user.click(await screen.findByRole('link', { name: 'Copy to Dora' }));
     expect(await screen.findByRole('heading', { name: 'Copy to Dora' })).toBeInTheDocument();
@@ -193,7 +193,7 @@ describe("a child's tasks", () => {
     await user.click(screen.getByRole('button', { name: 'Copy 1 task' }));
 
     expect(await screen.findByText('Copied to Dora.')).toHaveAttribute('role', 'status');
-    expect(screen.getByRole('heading', { name: "Ben's tasks" })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
     const doras = tasks.filter((task) => task.assignedTo === dora.id);
     expect(doras.map((task) => task.title).toSorted()).toEqual(['Brush teeth', 'Make the bed']);
     expect(doras.find((task) => task.title === 'Make the bed')).toMatchObject({
@@ -207,7 +207,7 @@ describe("a child's tasks", () => {
     const { anna, ben, dora } = family();
     give(anna.id, ben.id, { title: 'Brush teeth' });
     give(anna.id, dora.id, { title: 'Brush teeth' });
-    renderAppAt(`/children/${ben.id}/tasks`);
+    renderAppAt(`/household/members/${ben.id}`);
 
     expect(await screen.findByRole('link', { name: /Brush teeth/ })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Copy to Dora' })).not.toBeInTheDocument();
@@ -217,7 +217,7 @@ describe("a child's tasks", () => {
     const { anna, ben, dora } = family();
     give(anna.id, ben.id, { title: 'Make the bed' });
     const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks/copy/${dora.id}`);
+    renderAppAt(`/household/members/${ben.id}/copy/${dora.id}`);
 
     await user.click(await screen.findByRole('checkbox', { name: /Make the bed/ }));
     expect(screen.getByRole('button', { name: 'Copy 0 tasks' })).toBeDisabled();
@@ -233,7 +233,7 @@ describe("a child's tasks", () => {
     give(anna.id, ben.id, { title: 'Brush teeth' });
     give(anna.id, ben.id, { title: 'Brush teeth' });
     const user = userEvent.setup();
-    renderAppAt(`/children/${ben.id}/tasks/copy/${dora.id}`);
+    renderAppAt(`/household/members/${ben.id}/copy/${dora.id}`);
 
     await user.click(await screen.findByRole('button', { name: 'Copy 1 task' }));
 

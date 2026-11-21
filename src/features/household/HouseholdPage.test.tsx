@@ -74,15 +74,18 @@ describe('household page', () => {
     expect(await screen.findByText('New member (no name yet)')).toBeInTheDocument();
   });
 
-  it('lets an adult mark another member as a child, and back', async () => {
+  it('lets an adult open another member and mark them as a child, and back', async () => {
     const user = userEvent.setup();
     const { name } = logInWithHousehold();
     const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
     fakeHouseholdBackend.addMember(ben.id, name);
     renderAppAt('/household');
 
-    const benIsChild = await screen.findByRole('checkbox', { name: 'Ben is a child' });
-    expect(screen.queryByRole('checkbox', { name: 'Anna is a child' })).not.toBeInTheDocument();
+    const members = await screen.findByRole('region', { name: 'Members' });
+    expect(within(members).queryByRole('link', { name: /^Anna/ })).not.toBeInTheDocument();
+    await user.click(await within(members).findByRole('link', { name: 'Ben Adult' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
+    const benIsChild = screen.getByRole('switch', { name: 'Child' });
     await user.click(benIsChild);
     await vi.waitFor(() => {
       expect(fakeHouseholdBackend.isChild(ben.id)).toBe(true);
@@ -96,7 +99,7 @@ describe('household page', () => {
     expect(fakeHouseholdBackend.isChild(ben.id)).toBe(false);
   });
 
-  it('shows a child who the children are, without letting them change it', async () => {
+  it('shows a child who the children are, without letting them open anyone', async () => {
     const anna = fakeAuthBackend.addProfile('anna@example.com', 'Anna');
     fakeHouseholdBackend.addMember(anna.id, 'The Virtanens');
     const ben = fakeAuthBackend.logInAs('ben@example.com', 'Ben');
@@ -106,9 +109,9 @@ describe('household page', () => {
 
     const members = await screen.findByRole('region', { name: 'Members' });
     const [annaItem, benItem] = await within(members).findAllByRole('listitem');
-    expect(annaItem).toHaveTextContent(/^Anna$/);
-    expect(benItem).toHaveTextContent(/^Ben \(you\)Child$/);
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(annaItem).toHaveTextContent(/Anna\s*Adult$/);
+    expect(benItem).toHaveTextContent(/Ben\s*You$/);
+    expect(within(members).queryByRole('link')).not.toBeInTheDocument();
   });
 
   it('says so when marking a child fails', async () => {
@@ -116,9 +119,9 @@ describe('household page', () => {
     const { name } = logInWithHousehold();
     const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
     fakeHouseholdBackend.addMember(ben.id, name);
-    renderAppAt('/household');
+    renderAppAt(`/household/members/${ben.id}`);
 
-    const benIsChild = await screen.findByRole('checkbox', { name: 'Ben is a child' });
+    const benIsChild = await screen.findByRole('switch', { name: 'Child' });
     fakeHouseholdBackend.failRequests();
     await user.click(benIsChild);
 
