@@ -131,6 +131,8 @@ export const taskForm = {
   points: 'Points',
   /** The points of a task for children, which each child earns for doing it. */
   stars: 'Stars for each child',
+  /** A task for one child, whose name the form's title already gives. */
+  starsForOne: 'Stars',
   /** Shown under the points when they are 0: such a shared task counts for nobody (ADR 0004). */
   noPointsHint: 'Not counted in statistics.',
   images: {

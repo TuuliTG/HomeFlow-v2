@@ -2,7 +2,8 @@ import { useId } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { paths } from '@/app/paths';
-import { PlusIcon, StarIcon } from '@/components/ui/icons';
+import { AddLink } from '@/components/ui/AddLink';
+import { StarIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
@@ -42,13 +43,7 @@ export function ChildTasksPage() {
     <>
       <div className="flex items-start justify-between gap-4">
         <PageHeader title={t.tasks.childTasks.title(name)} />
-        <Link
-          to={paths.newChildTask(childId)}
-          aria-label={t.tasks.childTasks.add(name)}
-          className="bg-brand-700 hover:bg-brand-900 flex size-11 shrink-0 items-center justify-center rounded-full text-white"
-        >
-          <PlusIcon className="size-6" />
-        </Link>
+        <AddLink to={paths.newChildTask(childId)} label={t.tasks.childTasks.add(name)} />
       </div>
       <div className="flex flex-col gap-8">
         {always.length + custom.length === 0 && (
@@ -148,7 +143,7 @@ function CopyTo({ tasks, fromChildId, others }: CopyToProps) {
           onClick={() => {
             copyTasks.mutate({ tasks: other.toCopy, childId: other.id });
           }}
-          className="text-brand-700 min-h-11 text-sm font-semibold underline disabled:opacity-60"
+          className="text-brand-600 min-h-11 text-sm font-medium underline disabled:opacity-60"
         >
           {t.childTasks.copyTo(other.name ?? common.someone)}
         </button>

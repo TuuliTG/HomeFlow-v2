@@ -125,6 +125,7 @@ export const taskForm: Messages['taskForm'] = {
   anyChild: 'Kenen tahansa lapsen',
   points: 'Pisteet',
   stars: 'Tähdet kullekin lapselle',
+  starsForOne: 'Tähdet',
   noPointsHint: 'Ei lasketa tilastoihin.',
   images: {
     label: 'Kuvat (vapaaehtoinen)',

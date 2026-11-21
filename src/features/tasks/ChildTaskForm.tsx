@@ -105,7 +105,7 @@ export function ChildTaskForm({ childId, isSaving, onSave }: ChildTaskFormProps)
       <TaskIconField value={fields.icon} onChange={set('icon')} />
       <TaskPointsField
         isChild={false}
-        forChildren
+        forChildren="one"
         value={fields.points}
         onChange={set('points')}
         inputRef={fieldRefs.points}
