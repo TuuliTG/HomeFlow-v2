@@ -232,14 +232,16 @@ export function TaskForm({
 
       <TaskIconField value={fields.icon} onChange={set('icon')} />
 
-      <TaskLabelsField
-        value={{ labels: fields.labels, customLabels: fields.customLabels }}
-        onChange={(changed) => {
-          change(changed);
-          setError(null);
-        }}
-        currentUserId={currentUserId}
-      />
+      {shown.labels && (
+        <TaskLabelsField
+          value={{ labels: fields.labels, customLabels: fields.customLabels }}
+          onChange={(changed) => {
+            change(changed);
+            setError(null);
+          }}
+          currentUserId={currentUserId}
+        />
+      )}
 
       {shown.points && (
         <TaskPointsField
