@@ -29,5 +29,6 @@ export function useTaskFieldRefs() {
     points: useRef<HTMLInputElement>(null),
     repeatEveryDays: useRef<HTMLInputElement>(null),
     dueOn: useRef<HTMLInputElement>(null),
+    dailyLimit: useRef<HTMLInputElement>(null),
   };
 }

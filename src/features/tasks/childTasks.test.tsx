@@ -140,7 +140,7 @@ describe('tasks for children', () => {
     expect(tasks.at(-1)).toMatchObject({ title: 'Tidy my room', forChildren: true });
   });
 
-  it('can be changed when an adult edits a task', async () => {
+  it('are edited by an adult with the same form as a new task for a child', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, {
       title: 'Feed the cat',
@@ -152,14 +152,15 @@ describe('tasks for children', () => {
     renderAppAt('/?children=1');
 
     await user.click(await screen.findByRole('link', { name: 'Edit: Feed the cat' }));
-    const forChildren = await screen.findByRole('radio', { name: 'Children' });
-    expect(forChildren).toBeChecked();
-    await user.click(screen.getByRole('radio', { name: 'Adults' }));
+    expect(await screen.findByRole('radio', { name: 'Custom' })).toBeChecked();
+    expect(screen.queryByRole('radio', { name: 'Adults' })).not.toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Stars'));
+    await user.type(screen.getByLabelText('Stars'), '3');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     const task = await screen.findByRole('listitem', { name: 'Feed the cat' });
-    expect(within(task).queryByText('For children')).not.toBeInTheDocument();
-    expect(within(task).getByRole('button', { name: 'Pick up: Feed the cat' })).toBeInTheDocument();
+    expect(within(task).getByText('For children')).toBeInTheDocument();
+    expect(tasks[0]).toMatchObject({ points: 3, forChildren: true });
   });
 
   it('stay for children when a child edits one they added', async () => {

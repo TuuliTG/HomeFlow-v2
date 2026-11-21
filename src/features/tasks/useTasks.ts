@@ -10,6 +10,7 @@ import {
   undoCompleteTask,
   updateTask,
 } from '@/features/tasks/api';
+import { newTaskOf } from '@/features/tasks/childTasks';
 import { fetchCompletedTasks } from '@/features/tasks/completedTasksApi';
 import { fetchFavouriteTasks, setFavouriteTask } from '@/features/tasks/favouritesApi';
 import { fetchImageUrls } from '@/features/tasks/imagesApi';
@@ -155,6 +156,19 @@ export function useAddTask(userId: string) {
         return taskId;
       }),
     // Stay pending until the list is refreshed, so the board shows the new task straight away.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
+  });
+}
+
+/**
+ * Gives another child a copy of each task, all or none. Without the pictures: only whoever uploaded a picture can
+ * add it to a task (`set_task_images()`).
+ */
+export function useCopyTasks(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tasks, childId }: { tasks: Task[]; childId: string }) =>
+      addTasks(tasks.map((task) => ({ ...newTaskOf(task), assignedTo: childId }))),
     onSettled: () => queryClient.invalidateQueries({ queryKey: tasksKey(userId) }),
   });
 }

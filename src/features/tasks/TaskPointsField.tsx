@@ -9,6 +9,8 @@ interface TaskPointsFieldProps {
   isChild: boolean;
   /** An adult's task for children earns each child who does it these points, shown as stars. */
   forChildren: boolean;
+  /** The field's label, if not the usual one, e.g. "Stars" on a form for one child already named. */
+  label?: string;
   value: string;
   onChange: (points: string) => void;
   inputRef: Ref<HTMLInputElement>;
@@ -21,6 +23,7 @@ interface TaskPointsFieldProps {
 export function TaskPointsField({
   isChild,
   forChildren,
+  label,
   value,
   onChange,
   inputRef,
@@ -35,7 +38,7 @@ export function TaskPointsField({
     .join(' ');
   return (
     <label className="text-ink flex flex-col gap-1 text-sm font-medium">
-      {forChildren ? t.stars : t.points}
+      {label ?? (forChildren ? t.stars : t.points)}
       <input
         type="number"
         name="points"

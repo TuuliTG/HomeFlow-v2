@@ -131,6 +131,8 @@ export const taskForm = {
   points: 'Points',
   /** The points of a task for children, which each child earns for doing it. */
   stars: 'Stars for each child',
+  /** A task for one child, whose name the form's title already gives. */
+  starsForOne: 'Stars',
   /** Shown under the points when they are 0: such a shared task counts for nobody (ADR 0004). */
   noPointsHint: 'Not counted in statistics.',
   images: {
@@ -160,8 +162,12 @@ export const taskForm = {
   routine: 'Quick routine: mark it done with one tap on the board',
   always: 'Always there: comes back after it is done',
   dailyLimit: 'Times a day',
+  /** "Can be done at most [count] times a day", around the field. */
+  dailyLimitBefore: 'Can be done at most',
+  dailyLimitAfter: 'times a day',
   noLimit: 'No limit',
   errors: {
+    dailyLimitRange: (max: number) => `Choose 1 to ${String(max)} times a day, or no limit.`,
     titleRequired: 'Give the task a name.',
     titleTooLong: (max: number) => `Keep the name to ${String(max)} characters or fewer.`,
     descriptionTooLong: (max: number) =>
