@@ -48,7 +48,7 @@ export const household: Messages['household'] = {
     setOnThisDeviceFailed:
       'Lasta ei voitu kirjata sisään tai ulos tällä laitteella. Yritä uudelleen.',
     remove: (name: string) => `Poista ${name}`,
-    confirmRemove: (name: string) => `Poistetaanko ${name}? Myös pisteet ja historia poistuvat.`,
+    confirmRemove: (name: string) => `Poistetaanko ${name} pisteineen ja historioineen?`,
     yesRemove: 'Kyllä, poista',
     removeFailed: 'Lapsen poistaminen ei onnistunut. Yritä uudelleen.',
   },

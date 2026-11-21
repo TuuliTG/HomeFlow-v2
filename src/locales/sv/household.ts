@@ -48,7 +48,7 @@ export const household: Messages['household'] = {
     setOnThisDeviceFailed:
       'Det gick inte att logga in eller ut barnet på den här enheten. Försök igen.',
     remove: (name: string) => `Ta bort ${name}`,
-    confirmRemove: (name: string) => `Ta bort ${name}? Poäng och historik försvinner också.`,
+    confirmRemove: (name: string) => `Ta bort ${name} med poäng och historik?`,
     yesRemove: 'Ja, ta bort',
     removeFailed: 'Vi kunde inte ta bort barnet. Försök igen.',
   },

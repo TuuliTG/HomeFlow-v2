@@ -176,7 +176,7 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
               onClick={() => {
                 setIsConfirmingRemove(true);
               }}
-              className="text-ink-muted hover:text-danger-700 rounded-lg p-1 disabled:opacity-60"
+              className="text-ink-muted hover:text-danger-700 -my-2.5 rounded-lg p-2.5 disabled:opacity-60"
             >
               <TrashIcon className="size-4" />
             </button>

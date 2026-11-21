@@ -112,7 +112,7 @@ describe('removing a child without email', () => {
     await user.click(await screen.findByRole('button', { name: 'Remove Ben' }));
     await user.click(screen.getByRole('button', { name: 'Keep it' }));
     await user.click(screen.getByRole('button', { name: 'Remove Ben' }));
-    expect(screen.getByText(/Ben's points and history go too/)).toBeInTheDocument();
+    expect(screen.getByText(/Remove Ben with their points and history/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Yes, remove' }));
 
     const members = screen.getByRole('region', { name: 'Members' });
