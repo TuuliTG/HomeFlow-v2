@@ -80,7 +80,7 @@ export function ChildTaskForm({
   const t = useMessages();
   const errorId = useId();
   const fieldRefs = useTaskFieldRefs();
-  const childRef = useRef<HTMLInputElement>(null);
+  const childRef = useRef<HTMLSelectElement>(null);
 
   function errorPropsFor(field: FieldName | 'children') {
     const hasError = error?.field === field;
@@ -92,6 +92,7 @@ export function ChildTaskForm({
     // An always task is one child's (ADR 0004).
     if (fields.isAlways && assignedTo === null) {
       setError({ field: 'children', message: t.taskForm.errors.childRequired });
+      childRef.current?.focus();
       return;
     }
     const parsed = checkTask({ ...fields, assignedTo }, false, t);
@@ -127,12 +128,9 @@ export function ChildTaskForm({
       {initial && (
         <TaskChildrenField
           currentUserId={currentUserId}
-          canChooseSeveral={false}
-          value={assignedTo === null ? [] : [assignedTo]}
-          onChange={([chosen = null]) => {
-            setAssignedTo(chosen);
-          }}
-          firstRef={childRef}
+          value={assignedTo}
+          onChange={setAssignedTo}
+          selectRef={childRef}
           errorProps={errorPropsFor('children')}
         />
       )}
@@ -166,7 +164,6 @@ export function ChildTaskForm({
       <TaskPointsField
         isChild={false}
         forChildren
-        label={t.taskForm.starsForOne}
         value={fields.points}
         onChange={set('points')}
         inputRef={fieldRefs.points}

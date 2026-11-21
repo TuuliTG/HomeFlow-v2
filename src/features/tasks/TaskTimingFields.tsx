@@ -9,7 +9,7 @@ import { TaskRepeatField } from '@/features/tasks/TaskRepeatField';
 import { CUSTOM_REPEAT, type RepeatFieldValue } from '@/features/tasks/taskRepeat';
 import { useMessages } from '@/lib/i18n/i18n';
 
-interface TaskTimingFieldsProps {
+interface ScheduleFieldsProps {
   repeat: RepeatFieldValue;
   onRepeatChange: (repeat: RepeatFieldValue) => void;
   repeatCountRef: Ref<HTMLInputElement>;
@@ -22,41 +22,6 @@ interface TaskTimingFieldsProps {
   alreadyDone: { offered: boolean; checked: boolean; onChange: (checked: boolean) => void };
   /** Whether it is a routine, offered for repeating shared tasks (`canBeRoutine()`). */
   routine: { offered: boolean; checked: boolean; onChange: (checked: boolean) => void };
-  /**
-   * Whether it is an always task, offered for an adult's task for children, and how many times a day it earns
-   * its points, or no limit. Checked, it has no schedule, also when not offered (a child's edit).
-   */
-  always: {
-    offered: boolean;
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-    dailyLimit: DailyLimitValue;
-    onDailyLimitChange: (dailyLimit: DailyLimitValue) => void;
-  };
-}
-
-/**
- * When a task is to be done: always (then only how many times a day), or whether it is done already, how often it
- * repeats, when it is due and whether a repeating task is a routine.
- */
-export function TaskTimingFields({ always, ...schedule }: TaskTimingFieldsProps) {
-  const t = useMessages();
-  return (
-    <>
-      {always.offered && (
-        <CheckboxField
-          name="isAlways"
-          label={t.taskForm.always}
-          checked={always.checked}
-          onChange={always.onChange}
-        />
-      )}
-      {always.offered && always.checked && (
-        <DailyLimitField value={always.dailyLimit} onChange={always.onDailyLimitChange} />
-      )}
-      {!always.checked && <ScheduleFields {...schedule} />}
-    </>
-  );
 }
 
 /** The daily limit field's value: times a day as typed, or no limit. */
@@ -182,7 +147,7 @@ export function ScheduleFields({
   dueOnErrorProps,
   alreadyDone,
   routine,
-}: Omit<TaskTimingFieldsProps, 'always'>) {
+}: ScheduleFieldsProps) {
   const t = useMessages();
   return (
     <>

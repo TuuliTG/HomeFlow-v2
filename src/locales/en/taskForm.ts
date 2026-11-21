@@ -124,15 +124,14 @@ export const taskForm = {
   /** Adults choose first who the task is for; the form changes to suit. */
   whoFor: 'Who is it for?',
   audiences: { adults: 'Adults', children: 'Children' },
-  /** Adding a task for children: one copy for each child chosen, on their Me page; names the tick boxes. */
-  whichChildren: 'Which children?',
+  /** Adding a task for children: names the list of children to add it for, each opening their own form. */
+  whichChild: 'Whose task?',
+  noChildren: 'There are no children in the family yet.',
   assignedTo: 'Whose chore is it?',
   anyChild: 'Any child',
   points: 'Points',
-  /** The points of a task for children, which each child earns for doing it. */
-  stars: 'Stars for each child',
-  /** A task for one child, whose name the form's title already gives. */
-  starsForOne: 'Stars',
+  /** The points of a task for children, which the child earns for doing it. */
+  stars: 'Stars',
   /** "1 star", "3 stars": a star to pick in the stars of a task for children. */
   starCount: (count: number) => (count === 1 ? '1 star' : `${String(count)} stars`),
   /** Shown under the points when they are 0: such a shared task counts for nobody (ADR 0004). */
@@ -162,7 +161,6 @@ export const taskForm = {
   dueDate: 'Due date',
   alreadyDone: 'Already done',
   routine: 'Quick routine: mark it done with one tap on the board',
-  always: 'Always there: comes back after it is done',
   dailyLimit: 'Times a day, at most',
   /** Buttons either side of the times-a-day number. */
   dailyLimitFewer: 'One fewer',
@@ -176,12 +174,12 @@ export const taskForm = {
       `Keep the description to ${String(max)} characters or fewer.`,
     pointsRange: 'Points must be a whole number from 0 to 10.',
     /** A task for children has no stars picked yet (a child's own task, waiting for an adult's). */
-    starsRequired: 'Choose the stars for each child.',
+    starsRequired: 'Choose the stars.',
     invalidDueDate: 'Pick a valid due date.',
     repeatRange: 'Choose how often it repeats: every 1 to 365 days.',
     onlySharedHavePoints: 'Only shared tasks have points.',
     checkDetails: 'Check the task details.',
-    childRequired: 'Choose at least one child.',
+    childRequired: 'Choose a child.',
     saveFailed: "We couldn't save the task. Try again.",
   },
   reminder: {

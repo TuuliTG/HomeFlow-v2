@@ -21,6 +21,14 @@ function isOffered(title: string) {
   return within(list).queryByRole('button', { name: title }) !== null;
 }
 
+/** Ben, a child in the logged-in adult's household. */
+function addChild() {
+  const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+  fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+  fakeHouseholdBackend.setChild(ben.id, true);
+  return ben;
+}
+
 describe('ready-made tasks', () => {
   it("adds an adults' chore with the default points, to adjust before saving", async () => {
     logInAsFamilyMember();
@@ -47,12 +55,12 @@ describe('ready-made tasks', () => {
     ]);
   });
 
-  it("offers children's chores, each for one star, for a task for children", async () => {
+  it("offers children's chores, each for one star, on a child's form", async () => {
     logInAsFamilyMember();
+    const ben = addChild();
     const user = userEvent.setup();
-    renderAppAt('/tasks/new');
+    renderAppAt(`/household/members/${ben.id}/new-task`);
 
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
     await openReadyMade(user);
     expect(isOffered('Tidy your room')).toBe(true);
     expect(isOffered('Cook dinner')).toBe(false);
@@ -64,26 +72,17 @@ describe('ready-made tasks', () => {
     expect(screen.getByRole('radio', { name: '1 star' })).toBeChecked();
   });
 
-  it('keeps the child chosen, and what was typed, when a ready-made task is picked', async () => {
+  it("keeps what was typed when a ready-made task is picked on a child's form", async () => {
     logInAsFamilyMember();
-    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
-    const dora = fakeAuthBackend.addProfile('dora@example.com', 'Dora');
-    for (const child of [ben, dora]) {
-      fakeHouseholdBackend.addMember(child.id, 'The Virtanens');
-      fakeHouseholdBackend.setChild(child.id, true);
-    }
+    const ben = addChild();
     const user = userEvent.setup();
-    renderAppAt('/tasks/new');
+    renderAppAt(`/household/members/${ben.id}/new-task`);
 
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    const which = await screen.findByRole('group', { name: 'Which children?' });
-    await user.click(within(which).getByRole('checkbox', { name: 'Ben' }));
-    await user.type(screen.getByLabelText('Description (optional)'), 'Before Saturday');
+    await user.type(await screen.findByLabelText('Description (optional)'), 'Before Saturday');
     await openReadyMade(user);
     await user.click(screen.getByRole('button', { name: 'Make your bed' }));
-
-    expect(within(which).getByRole('checkbox', { name: 'Ben' })).toBeChecked();
     await user.click(screen.getByRole('button', { name: 'Create task' }));
+
     await waitFor(() => {
       expect(tasks).toMatchObject([
         {

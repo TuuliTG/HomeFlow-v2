@@ -20,6 +20,14 @@ function family() {
   return { anna, ben };
 }
 
+/** Ben, a child in the logged-in adult's household. */
+function addChild() {
+  const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+  fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+  fakeHouseholdBackend.setChild(ben.id, true);
+  return ben;
+}
+
 /** Anna gives Ben an always task, earning one star. */
 function addAlwaysTask(
   annaId: string,
@@ -39,16 +47,11 @@ function addAlwaysTask(
 describe('always tasks', () => {
   it('are added by an adult for a child, once a day unless they choose otherwise', async () => {
     const anna = logInAsFamilyMember();
-    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
-    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
-    fakeHouseholdBackend.setChild(ben.id, true);
+    const ben = addChild();
     const user = userEvent.setup();
-    renderAppAt('/tasks/new');
+    renderAppAt(`/household/members/${ben.id}/new-task`);
 
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    await user.type(screen.getByLabelText('Task'), 'Brush teeth');
-    expect(screen.getByLabelText('Repeats')).toBeInTheDocument();
-    await user.click(screen.getByRole('checkbox', { name: /^Always there/ }));
+    await user.type(await screen.findByRole('combobox', { name: 'Task' }), 'Brush teeth');
     // An always task is never due and never repeats.
     expect(screen.queryByLabelText('Repeats')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Due date')).not.toBeInTheDocument();
@@ -61,8 +64,8 @@ describe('always tasks', () => {
     expect(screen.getByLabelText('Times a day, at most')).toHaveValue(2);
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    const task = await screen.findByRole('listitem', { name: 'Brush teeth' });
-    expect(within(task).getByText('Always · 2× a day')).toBeInTheDocument();
+    const always = await screen.findByRole('list', { name: 'Always' });
+    expect(within(always).getByRole('link', { name: /Brush teeth/ })).toHaveTextContent('2× a day');
     expect(tasks.at(-1)).toMatchObject({
       createdBy: anna.id,
       assignedTo: ben.id,
@@ -75,51 +78,33 @@ describe('always tasks', () => {
 
   it('can have no limit', async () => {
     logInAsFamilyMember();
-    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
-    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
-    fakeHouseholdBackend.setChild(ben.id, true);
+    const ben = addChild();
     const user = userEvent.setup();
-    renderAppAt('/tasks/new');
+    renderAppAt(`/household/members/${ben.id}/new-task`);
 
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    await user.type(screen.getByLabelText('Task'), 'Tidy toys');
-    await user.click(screen.getByRole('checkbox', { name: /^Always there/ }));
+    await user.type(await screen.findByRole('combobox', { name: 'Task' }), 'Tidy toys');
     await user.click(screen.getByRole('switch', { name: 'No limit' }));
     expect(screen.getByLabelText('Times a day, at most')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'One more' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    expect(
-      within(await screen.findByRole('listitem', { name: 'Tidy toys' })).getByText('Always'),
-    ).toBeInTheDocument();
+    await screen.findByRole('list', { name: 'Always' });
     expect(tasks.at(-1)).toMatchObject({ isAlways: true, dailyLimit: null });
   });
 
   it('go up to 10 times a day', async () => {
     logInAsFamilyMember();
-    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
-    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
-    fakeHouseholdBackend.setChild(ben.id, true);
+    const ben = addChild();
     const user = userEvent.setup();
-    renderAppAt('/tasks/new');
+    renderAppAt(`/household/members/${ben.id}/new-task`);
 
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    await user.click(screen.getByRole('checkbox', { name: /^Always there/ }));
-    await user.clear(screen.getByLabelText('Times a day, at most'));
+    await user.clear(await screen.findByLabelText('Times a day, at most'));
     await user.type(screen.getByLabelText('Times a day, at most'), '10');
 
     await user.click(screen.getByRole('button', { name: 'One more' }));
     expect(screen.getByLabelText('Times a day, at most')).toHaveValue(10);
     await user.click(screen.getByRole('button', { name: 'One fewer' }));
     expect(screen.getByLabelText('Times a day, at most')).toHaveValue(9);
-  });
-
-  it("are not offered for adults' tasks", async () => {
-    logInAsFamilyMember();
-    renderAppAt('/tasks/new');
-
-    expect(await screen.findByLabelText('Task')).toBeInTheDocument();
-    expect(screen.queryByRole('checkbox', { name: /^Always there/ })).not.toBeInTheDocument();
   });
 
   it('rest for a moment after the child marks one done, then come back', async () => {
@@ -198,7 +183,8 @@ describe('always tasks', () => {
     await user.selectOptions(await screen.findByLabelText('Whose chore is it?'), 'Any child');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Choose at least one child.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Choose a child.');
+    expect(screen.getByLabelText('Whose chore is it?')).toHaveFocus();
     expect(tasks[0]).toMatchObject({ assignedTo: ben.id });
   });
 

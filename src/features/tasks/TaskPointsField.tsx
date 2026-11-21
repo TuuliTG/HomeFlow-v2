@@ -8,10 +8,8 @@ import { useMessages } from '@/lib/i18n/i18n';
 interface TaskPointsFieldProps {
   /** A child doesn't choose the points of their task: an adult awards them (ADR 0004). */
   isChild: boolean;
-  /** An adult's task for children earns each child who does it these points, picked as stars. */
-  forChildren: boolean;
-  /** The field's label, if not the usual one, e.g. "Stars" on a form for one child already named. */
-  label?: string;
+  /** An adult's task for children earns the child who does it these points, picked as stars. */
+  forChildren?: boolean;
   value: string;
   onChange: (points: string) => void;
   inputRef: Ref<HTMLInputElement>;
@@ -24,8 +22,7 @@ interface TaskPointsFieldProps {
  */
 export function TaskPointsField({
   isChild,
-  forChildren,
-  label,
+  forChildren = false,
   value,
   onChange,
   inputRef,
@@ -37,7 +34,6 @@ export function TaskPointsField({
   if (forChildren) {
     return (
       <TaskStarsField
-        label={label}
         value={value}
         onChange={onChange}
         inputRef={inputRef}

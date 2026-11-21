@@ -60,21 +60,6 @@ describe('adding a task that is already done', () => {
     expect(screen.getByLabelText('Due date')).toHaveValue('');
   });
 
-  it("isn't offered for a task for children, which only children do", async () => {
-    logInAsFamilyMember();
-    const user = userEvent.setup();
-    renderAppAt('/tasks/new');
-
-    await user.click(await screen.findByRole('checkbox', { name: 'Already done' }));
-    await user.click(screen.getByRole('radio', { name: 'Children' }));
-    expect(screen.queryByRole('checkbox', { name: 'Already done' })).not.toBeInTheDocument();
-    await user.type(screen.getByLabelText('Task'), 'Make your bed');
-    await user.click(screen.getByRole('button', { name: 'Create task' }));
-
-    await screen.findByRole('listitem', { name: 'Make your bed' });
-    expect(tasks.at(-1)).toMatchObject({ forChildren: true, completed: null });
-  });
-
   it("isn't offered for a private task, which is added to do even if checked before", async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();

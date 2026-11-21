@@ -136,20 +136,17 @@ interface TaskWithImages {
 }
 
 /**
- * Adds a task with its pictures and returns its id, with a copy for each child in `alsoFor`, all or none.
- * Uploads the pictures first, so a failed upload adds nothing; if the tasks are added but their pictures
- * can't be attached, rejects with `ImagesNotSavedError` for the first.
+ * Adds a task with its pictures and returns its id. Uploads the pictures first, so a failed upload adds nothing;
+ * if the task is added but its pictures can't be attached, rejects with `ImagesNotSavedError`.
  */
 export function useAddTask(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ task, images, householdId, alsoFor }: TaskWithImages & { alsoFor: string[] }) =>
+    mutationFn: ({ task, images, householdId }: TaskWithImages) =>
       saveWithImages(householdId, images, async (uploaded) => {
-        const copies = alsoFor.map((childId) => ({ ...task, assignedTo: childId }));
-        const taskIds = await addTasks([task, ...copies]);
-        const taskId = taskIds[0] ?? '';
+        const [taskId = ''] = await addTasks([task]);
         try {
-          for (const id of taskIds) await replaceTaskImages(id, [], uploaded);
+          await replaceTaskImages(taskId, [], uploaded);
         } catch {
           throw new ImagesNotSavedError(taskId);
         }

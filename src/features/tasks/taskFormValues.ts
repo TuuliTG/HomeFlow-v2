@@ -144,11 +144,6 @@ function taskInput(values: FieldValues, isChild: boolean) {
 /** What the form says about a task it saves besides the task itself. */
 export interface SaveOptions {
   isDone: boolean;
-  /**
-   * Further children to add the same task for, one copy each, when an adult adds a task for several
-   * children; the task itself is the first child's.
-   */
-  alsoFor: string[];
 }
 
 interface FormState {
@@ -162,8 +157,8 @@ interface FormState {
 
 /**
  * Which fields the form shows, as it changes to suit who the task is for. An adult's task for children
- * (`isForChildren`) asks which children and the stars each earns, and has neither a type of work nor labels,
- * nor is it added as done, since adults don't do it. A private task counts for no one, so it has neither a type nor points, and is added to do.
+ * (`isForChildren`) shows a choice of child instead, whose own form adds it (ADR 0004). A private task counts for no
+ * one, so it has neither a type nor points, and is added to do.
  */
 export function shownFields({
   isChild,
@@ -172,20 +167,13 @@ export function shownFields({
   canBeDoneAlready,
   isAlways,
 }: FormState) {
-  const isForChildren = !isChild && !isPrivate && forChildren;
   return {
-    isForChildren,
-    /** Whether it is a chore for children, also when a child adds it. */
-    childrensChore: isChild || isForChildren,
-    type: !isForChildren && !isPrivate,
-    labels: !isForChildren,
+    isForChildren: !isChild && !isPrivate && forChildren,
+    type: !isPrivate,
     points: !isPrivate,
-    alreadyDone: canBeDoneAlready && !isForChildren && !isPrivate,
-    /**
-     * Whether it is an always task, which has no repeat or due date to choose: an adult's task for children, or
-     * a child editing one (they can't change it).
-     */
-    isAlways: isAlways && (isForChildren || isChild),
+    alreadyDone: canBeDoneAlready && !isPrivate,
+    /** Whether a child is editing an always task, which has no repeat or due date they can change. */
+    isAlways: isAlways && isChild,
   };
 }
 

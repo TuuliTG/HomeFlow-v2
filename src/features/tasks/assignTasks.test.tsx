@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
-import { creditsOf, fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
+import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
 
@@ -25,17 +25,24 @@ function logInAs(email: string, name: string) {
 }
 
 describe('giving a task to one child', () => {
-  it('is offered for a task for children, and picks it up for the child chosen', async () => {
+  it("is given from the child's own form, chosen from the children, and back on the board", async () => {
     const { ben } = family();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await user.type(await screen.findByLabelText('Task'), 'Make your bed');
-    expect(screen.queryByRole('group', { name: 'Which children?' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('radio', { name: 'Children' }));
-    const which = await screen.findByRole('group', { name: 'Which children?' });
-    expect(within(which).getByRole('checkbox', { name: 'Ben' })).not.toBeChecked();
-    await user.click(within(which).getByRole('checkbox', { name: 'Ben' }));
+    await user.click(await screen.findByRole('radio', { name: 'Children' }));
+    const whose = await screen.findByRole('list', { name: 'Whose task?' });
+    expect(
+      within(whose)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Ben', 'Dora']);
+    expect(screen.queryByLabelText('Task')).not.toBeInTheDocument();
+    await user.click(within(whose).getByRole('link', { name: 'Ben' }));
+
+    expect(await screen.findByRole('heading', { name: 'New task for Ben' })).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'Custom' }));
+    await user.type(screen.getByRole('combobox', { name: 'Task' }), 'Make your bed');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     const task = await screen.findByRole('listitem', { name: 'Make your bed' });
@@ -44,60 +51,8 @@ describe('giving a task to one child', () => {
     expect(tasks.at(-1)).toMatchObject({ assignedTo: ben.id, pickedUpBy: ben.id });
   });
 
-  it('adds a copy for each child chosen, who each earn its stars', async () => {
-    const { ben, dora } = family();
-    const user = userEvent.setup();
-    renderAppAt('/tasks/new');
-
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    const which = await screen.findByRole('group', { name: 'Which children?' });
-    await user.click(within(which).getByRole('checkbox', { name: 'Ben' }));
-    await user.click(within(which).getByRole('checkbox', { name: 'Dora' }));
-    await user.type(screen.getByLabelText('Task'), 'Empty the dishwasher');
-    await user.click(screen.getByRole('radio', { name: '2 stars' }));
-    await user.click(screen.getByRole('button', { name: 'Create task' }));
-
-    const copies = await screen.findAllByRole('listitem', { name: 'Empty the dishwasher' });
-    expect(copies.map((copy) => within(copy).getByText(/^Only for/).textContent).sort()).toEqual([
-      'Only for Ben',
-      'Only for Dora',
-    ]);
-    expect(tasks.slice(-2)).toMatchObject([
-      { assignedTo: ben.id, pickedUpBy: ben.id, points: 2 },
-      { assignedTo: dora.id, pickedUpBy: dora.id, points: 2 },
-    ]);
-
-    // Doing it together, each marks their own copy done and earns the stars.
-    const [bens, doras] = tasks.slice(-2);
-    fakeTasksBackend.completeTaskAs(ben.id, bens?.id ?? '', '2026-10-11');
-    fakeTasksBackend.completeTaskAs(dora.id, doras?.id ?? '', '2026-10-11');
-    expect(tasks.slice(-2).flatMap(creditsOf)).toEqual([
-      { userId: ben.id, points: 2 },
-      { userId: dora.id, points: 2 },
-    ]);
-  });
-
-  it('needs at least one child chosen', async () => {
-    family();
-    const user = userEvent.setup();
-    renderAppAt('/tasks/new');
-
-    await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    await screen.findByRole('group', { name: 'Which children?' });
-    await user.type(screen.getByLabelText('Task'), 'Make your bed');
-    await user.click(screen.getByRole('button', { name: 'Create task' }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Choose at least one child.');
-    const ben = screen.getByRole('checkbox', { name: 'Ben' });
-    expect(ben).toHaveFocus();
-    expect(ben).toBeInvalid();
-    await user.click(ben);
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(tasks).toHaveLength(0);
-  });
-
-  it('chooses the only child of the family already', async () => {
-    const anna = logInAsFamilyMember();
+  it("opens the only child's form at once", async () => {
+    logInAsFamilyMember();
     const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
     fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
     fakeHouseholdBackend.setChild(ben.id, true);
@@ -105,13 +60,8 @@ describe('giving a task to one child', () => {
     renderAppAt('/tasks/new');
 
     await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    const which = await screen.findByRole('group', { name: 'Which children?' });
-    expect(within(which).getByRole('checkbox', { name: 'Ben' })).toBeChecked();
-    await user.type(screen.getByLabelText('Task'), 'Make your bed');
-    await user.click(screen.getByRole('button', { name: 'Create task' }));
 
-    await screen.findByRole('listitem', { name: 'Make your bed' });
-    expect(tasks.at(-1)).toMatchObject({ createdBy: anna.id, assignedTo: ben.id });
+    expect(await screen.findByRole('heading', { name: 'New task for Ben' })).toBeInTheDocument();
   });
 
   it("puts the task on the child's Me page and hides it from the other children", async () => {
@@ -213,12 +163,12 @@ describe('giving a task to one child', () => {
     });
   });
 
-  it("isn't offered without children in the household", async () => {
+  it('says so when the household has no children', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
     await user.click(await screen.findByRole('radio', { name: 'Children' }));
-    expect(screen.queryByRole('group', { name: 'Which children?' })).not.toBeInTheDocument();
+    expect(await screen.findByText('There are no children in the family yet.')).toBeInTheDocument();
   });
 });

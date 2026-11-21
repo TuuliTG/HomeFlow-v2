@@ -52,17 +52,22 @@ test('family member can add a task for the children, kept apart from their own',
 }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
+  await page.getByRole('button', { name: 'Add a child without email' }).click();
+  await page.getByLabel("Child's name").fill('Ben');
+  await page.getByRole('button', { name: 'Add child' }).click();
   await page.getByRole('link', { name: 'Shared tasks' }).click();
   await page.getByRole('link', { name: 'New task' }).click();
 
-  // The choice is a segmented control: its radios are hidden behind their labels.
+  // The choice is a segmented control: its radios are hidden behind their labels. With one child, their own
+  // form opens at once.
   await page.getByRole('group', { name: 'Who is it for?' }).getByText('Children').click();
-  await expect(page.getByRole('radio', { name: 'Children' })).toBeChecked();
+  await expect(page.getByRole('heading', { level: 1, name: 'New task for Ben' })).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations, 'a11y violations on a task for children').toEqual([]);
+  expect(results.violations, "a11y violations on a child's new task").toEqual([]);
+  await page.getByRole('group', { name: 'Kind of task' }).getByText('Custom').click();
   await page.getByLabel('Task', { exact: true }).fill('Feed the cat');
   // The stars are hidden radios behind their star icons.
-  const stars = page.getByRole('radiogroup', { name: 'Stars for each child' });
+  const stars = page.getByRole('radiogroup', { name: 'Stars' });
   await stars.locator('label').nth(1).click();
   await expect(stars.getByRole('radio', { name: '2 stars' })).toBeChecked();
   await page.getByRole('button', { name: 'Create task' }).click();
@@ -71,7 +76,7 @@ test('family member can add a task for the children, kept apart from their own',
   const lists = page.getByRole('group', { name: 'Whose tasks' });
   await expect(lists.getByRole('radio', { name: 'Children' })).toBeChecked();
   const task = page.getByRole('listitem', { name: 'Feed the cat' });
-  await expect(task.getByText('For children')).toBeVisible();
+  await expect(task.getByText('Only for Ben')).toBeVisible();
   await expect(task.getByText('2 points')).toBeVisible();
   await expect(task.getByRole('button', { name: 'Mark done: Feed the cat' })).toHaveCount(0);
   await lists.getByText('Adults', { exact: true }).click();
