@@ -1,9 +1,14 @@
+import { useState } from 'react';
+
+import { TrashIcon } from '@/components/ui/icons';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
+import { ConfirmRemoveChild } from '@/features/household/ConfirmRemoveChild';
 import type { HouseholdMember, SignInCode } from '@/features/household/household';
 import { SavingCheckbox } from '@/components/ui/SavingCheckbox';
 import {
   useHouseholdMembers,
   useNewChildSignInCode,
+  useRemoveChild,
   useSetChildOnThisDevice,
   useSetMemberCanAddTasks,
   useSetMemberIsChild,
@@ -30,6 +35,8 @@ interface MemberActions {
   isOnThisDevice?: boolean;
   /** Signs a child without email in on this device or out of it, settling once that is done. */
   setOnThisDevice?: (onThisDevice: boolean) => Promise<void>;
+  /** Removes a child without email from the household, with everything they did. */
+  remove?: () => void;
 }
 
 /**
@@ -46,6 +53,7 @@ function useMemberActions(
   const setCanAddTasks = useSetMemberCanAddTasks(householdId);
   const newCode = useNewChildSignInCode();
   const childHere = useSetChildOnThisDevice();
+  const removeChild = useRemoveChild(householdId);
   const { otherAccounts } = useAuth();
   const t = useMessages().household.members;
 
@@ -71,19 +79,26 @@ function useMemberActions(
           childHere
             .mutateAsync({ childId: memberId, displayName: member.displayName ?? '', onThisDevice })
             .catch(() => undefined),
+        remove: () => {
+          removeChild.mutate(memberId);
+        },
       }),
     };
   }
 
   return {
     actionsFor,
-    isSaving: setIsChild.isPending || setCanAddTasks.isPending,
+    isSaving: [setIsChild, setCanAddTasks, removeChild].some((saving) => saving.isPending),
     isMakingCode: newCode.isPending || childHere.isPending,
-    failure:
-      (setIsChild.isError && t.setChildFailed) ||
-      (setCanAddTasks.isError && t.setCanAddTasksFailed) ||
-      (newCode.isError && t.newCodeFailed) ||
-      (childHere.isError && t.setOnThisDeviceFailed),
+    failure: (
+      [
+        [setIsChild, t.setChildFailed],
+        [setCanAddTasks, t.setCanAddTasksFailed],
+        [newCode, t.newCodeFailed],
+        [childHere, t.setOnThisDeviceFailed],
+        [removeChild, t.removeFailed],
+      ] as const
+    ).find(([saving]) => saving.isError)?.[1],
   };
 }
 
@@ -145,13 +160,27 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
   const { common, household } = useMessages();
   const t = household.members;
   const name = member.displayName ?? common.newMember;
-  const { newCode, setIsChild, setCanAddTasks, setOnThisDevice } = actions;
+  const { newCode, remove } = actions;
+  const [isConfirmingRemove, setIsConfirmingRemove] = useState(false);
   return (
-    <li className="text-ink flex items-center justify-between gap-3 px-4 py-3">
+    <li className="text-ink flex flex-wrap items-center justify-between gap-3 px-4 py-3">
       <div className="flex flex-col items-start gap-1">
-        <span>
+        <span className="flex items-center gap-1">
           {member.displayName ?? <span className="text-ink-muted">{common.newMember}</span>}
           {isYou && <span className="text-ink-muted">{t.you}</span>}
+          {remove && !isConfirmingRemove && (
+            <button
+              type="button"
+              aria-label={t.remove(name)}
+              disabled={isSaving}
+              onClick={() => {
+                setIsConfirmingRemove(true);
+              }}
+              className="text-ink-muted hover:text-danger-700 rounded-lg p-1 disabled:opacity-60"
+            >
+              <TrashIcon className="size-4" />
+            </button>
+          )}
         </span>
         {newCode && (
           <button
@@ -167,41 +196,72 @@ function MemberRow({ member, isYou, actions, isSaving, isMakingCode }: MemberRow
           </button>
         )}
       </div>
-      <div className="flex shrink-0 flex-col items-end gap-1">
-        {setIsChild ? (
-          <SavingCheckbox
-            label={t.child}
-            ariaLabel={t.isChild(name)}
-            checked={member.isChild}
-            disabled={isSaving}
-            onChange={setIsChild}
-          />
-        ) : (
-          member.isChild && (
-            <span className="bg-done-100 text-done-800 rounded-full px-2 py-0.5 text-xs font-medium">
-              {t.child}
-            </span>
-          )
-        )}
-        {setCanAddTasks && (
-          <SavingCheckbox
-            label={t.canAddTasks}
-            ariaLabel={t.canAddTasksFor(name)}
-            checked={member.canAddTasks}
-            disabled={isSaving}
-            onChange={setCanAddTasks}
-          />
-        )}
-        {setOnThisDevice && (
-          <SavingCheckbox
-            label={t.onThisDevice}
-            ariaLabel={t.onThisDeviceFor(name)}
-            checked={actions.isOnThisDevice ?? false}
-            disabled={isMakingCode}
-            onChange={setOnThisDevice}
-          />
-        )}
-      </div>
+      <MemberChoices
+        member={member}
+        name={name}
+        actions={actions}
+        isSaving={isSaving}
+        isMakingCode={isMakingCode}
+      />
+      {remove && isConfirmingRemove && (
+        <ConfirmRemoveChild
+          name={name}
+          isSaving={isSaving}
+          onRemove={remove}
+          onKeep={() => {
+            setIsConfirmingRemove(false);
+          }}
+        />
+      )}
     </li>
+  );
+}
+
+/** The checkboxes beside a member, or just a "Child" label for someone who can't change them. */
+function MemberChoices({
+  member,
+  name,
+  actions,
+  isSaving,
+  isMakingCode,
+}: Omit<MemberRowProps, 'isYou'> & { name: string }) {
+  const t = useMessages().household.members;
+  const { setIsChild, setCanAddTasks, setOnThisDevice } = actions;
+  return (
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      {setIsChild ? (
+        <SavingCheckbox
+          label={t.child}
+          ariaLabel={t.isChild(name)}
+          checked={member.isChild}
+          disabled={isSaving}
+          onChange={setIsChild}
+        />
+      ) : (
+        member.isChild && (
+          <span className="bg-done-100 text-done-800 rounded-full px-2 py-0.5 text-xs font-medium">
+            {t.child}
+          </span>
+        )
+      )}
+      {setCanAddTasks && (
+        <SavingCheckbox
+          label={t.canAddTasks}
+          ariaLabel={t.canAddTasksFor(name)}
+          checked={member.canAddTasks}
+          disabled={isSaving}
+          onChange={setCanAddTasks}
+        />
+      )}
+      {setOnThisDevice && (
+        <SavingCheckbox
+          label={t.onThisDevice}
+          ariaLabel={t.onThisDeviceFor(name)}
+          checked={actions.isOnThisDevice ?? false}
+          disabled={isMakingCode}
+          onChange={setOnThisDevice}
+        />
+      )}
+    </div>
   );
 }

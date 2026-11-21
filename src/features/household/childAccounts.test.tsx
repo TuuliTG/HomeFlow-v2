@@ -102,6 +102,50 @@ describe('children without email', () => {
   });
 });
 
+describe('removing a child without email', () => {
+  it('is up to an adult, who confirms it first', async () => {
+    logInAsFamilyMember();
+    fakeHouseholdBackend.addChildAccount('Ben', 'The Virtanens');
+    const user = userEvent.setup();
+    renderAppAt('/household');
+
+    await user.click(await screen.findByRole('button', { name: 'Remove Ben' }));
+    await user.click(screen.getByRole('button', { name: 'Keep it' }));
+    await user.click(screen.getByRole('button', { name: 'Remove Ben' }));
+    expect(screen.getByText(/Ben's points and history go too/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Yes, remove' }));
+
+    const members = screen.getByRole('region', { name: 'Members' });
+    await vi.waitFor(() => {
+      expect(within(members).queryByText('Ben')).not.toBeInTheDocument();
+    });
+  });
+
+  it("isn't offered for members who log in with email, nor to children", async () => {
+    logInAsFamilyMember();
+    const dan = fakeAuthBackend.addProfile('dan@example.com', 'Dan');
+    fakeHouseholdBackend.addMember(dan.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(dan.id, true);
+    renderAppAt('/household');
+
+    await screen.findByRole('checkbox', { name: 'Dan is a child' });
+    expect(screen.queryByRole('button', { name: /^Remove/ })).not.toBeInTheDocument();
+  });
+
+  it('says so when it fails', async () => {
+    logInAsFamilyMember();
+    fakeHouseholdBackend.addChildAccount('Ben', 'The Virtanens');
+    const user = userEvent.setup();
+    renderAppAt('/household');
+
+    await user.click(await screen.findByRole('button', { name: 'Remove Ben' }));
+    fakeHouseholdBackend.failRequests();
+    await user.click(screen.getByRole('button', { name: 'Yes, remove' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't remove the child.");
+  });
+});
+
 describe('letting a child add tasks', () => {
   it('is up to an adult, and offered only for children', async () => {
     logInAsFamilyMember();

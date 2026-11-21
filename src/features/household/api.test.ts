@@ -149,6 +149,15 @@ describe('household api', () => {
     await expect(api.newChildSignInCode('u2')).rejects.toBe(failure);
   });
 
+  it('removes a child through the database function', async () => {
+    client.rpc.mockResolvedValueOnce({ data: null, error: null });
+    await api.removeChild('u2');
+    expect(client.rpc).toHaveBeenCalledWith('remove_child', { child_id: 'u2' });
+
+    client.rpc.mockResolvedValueOnce({ data: null, error: failure });
+    await expect(api.removeChild('u2')).rejects.toBe(failure);
+  });
+
   it('creates a household through the database function', async () => {
     client.rpc.mockResolvedValue({ data: householdRow, error: null });
 

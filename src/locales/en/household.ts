@@ -45,6 +45,10 @@ export const household = {
     onThisDevice: 'On this device',
     onThisDeviceFor: (name: string) => `${name} is signed in on this device`,
     setOnThisDeviceFailed: "We couldn't sign the child in or out on this device. Try again.",
+    remove: (name: string) => `Remove ${name}`,
+    confirmRemove: (name: string) => `Remove ${name}? ${name}'s points and history go too.`,
+    yesRemove: 'Yes, remove',
+    removeFailed: "We couldn't remove the child. Try again.",
   },
   family: {
     heading: 'Your family',

@@ -7,6 +7,7 @@ import {
   addChild,
   joinHousehold,
   newChildSignInCode,
+  removeChild,
   setMemberCanAddTasks,
   setMemberIsChild,
 } from '@/features/household/api';
@@ -115,6 +116,22 @@ export function useSetMemberCanAddTasks(householdId: string) {
   return useMutation({
     mutationFn: ({ memberId, canAddTasks }: { memberId: string; canAddTasks: boolean }) =>
       setMemberCanAddTasks(memberId, canAddTasks),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: membersKey(householdId) }),
+  });
+}
+
+/**
+ * Removes a child without email from the household, signing them out on this device first while their
+ * session can still end.
+ */
+export function useRemoveChild(householdId: string) {
+  const queryClient = useQueryClient();
+  const { signOutOnThisDevice } = useAuth();
+  return useMutation({
+    mutationFn: async (childId: string) => {
+      await signOutOnThisDevice(childId);
+      await removeChild(childId);
+    },
     onSettled: () => queryClient.invalidateQueries({ queryKey: membersKey(householdId) }),
   });
 }

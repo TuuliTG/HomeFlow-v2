@@ -159,3 +159,11 @@ export function LockIcon(props: IconProps) {
     </BaseIcon>
   );
 }
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+    </BaseIcon>
+  );
+}

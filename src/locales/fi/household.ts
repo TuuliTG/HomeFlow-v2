@@ -47,6 +47,10 @@ export const household: Messages['household'] = {
     onThisDeviceFor: (name: string) => `${name} on kirjautuneena tällä laitteella`,
     setOnThisDeviceFailed:
       'Lasta ei voitu kirjata sisään tai ulos tällä laitteella. Yritä uudelleen.',
+    remove: (name: string) => `Poista ${name}`,
+    confirmRemove: (name: string) => `Poistetaanko ${name}? Myös pisteet ja historia poistuvat.`,
+    yesRemove: 'Kyllä, poista',
+    removeFailed: 'Lapsen poistaminen ei onnistunut. Yritä uudelleen.',
   },
   family: {
     heading: 'Perheesi',

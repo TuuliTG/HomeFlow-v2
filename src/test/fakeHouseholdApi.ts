@@ -175,6 +175,20 @@ export const newChildSignInCode: typeof householdApi.newChildSignInCode = (child
   return Promise.resolve(issueCode({ id: childId, email: '' }));
 };
 
+/** Like `remove_child()`: an adult, for a child without email in their household. */
+export const removeChild: typeof householdApi.removeChild = (childId) => {
+  const householdId = adultHouseholdId();
+  if (requestsFail || !householdId) return Promise.reject(new Error('Not allowed'));
+  if (!childAccounts.has(childId) || memberships.get(childId) !== householdId) {
+    return Promise.reject(new Error('No such child'));
+  }
+  memberships.delete(childId);
+  children.delete(childId);
+  childAccounts.delete(childId);
+  childrenAddingTasks.delete(childId);
+  return Promise.resolve();
+};
+
 export const fetchHouseholdMembers: typeof householdApi.fetchHouseholdMembers = (householdId) =>
   Promise.resolve(
     [...memberships]
