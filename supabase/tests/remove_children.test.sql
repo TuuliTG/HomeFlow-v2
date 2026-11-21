@@ -2,7 +2,7 @@
 -- to her household; Dan is a child there with his own email; Carol has her own household.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(10);
+select plan(11);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -16,13 +16,18 @@ select public.create_household('Carol''s flat');
 set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select public.create_household('The Smiths');
 insert into public.tasks (title, type, points, for_children) values ('Feed the cat', 'physical', 2, true);
+insert into public.tasks (title, type, points, for_children) values ('Empty the dishwasher', 'physical', 1, true);
 
 set local role service_role;
 select * from public.add_child('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'Ben');
 reset role;
 insert into public.household_members (household_id, user_id, is_child)
   select household_id, '44444444-4444-4444-4444-444444444444', true from public.tasks where title = 'Feed the cat';
--- Ben has picked up the cat and keeps a private task.
+-- Ben was given the dishwasher and has done it, has picked up the cat and keeps a private task.
+update public.tasks set assigned_to = '22222222-2222-2222-2222-222222222222',
+    picked_up_by = '22222222-2222-2222-2222-222222222222', picked_up_at = now(),
+    completed_at = now(), completed_by = '22222222-2222-2222-2222-222222222222'
+  where title = 'Empty the dishwasher';
 update public.tasks set picked_up_by = '22222222-2222-2222-2222-222222222222', picked_up_at = now()
   where title = 'Feed the cat';
 insert into public.tasks (household_id, title, type, is_private, for_children, created_by)
@@ -77,6 +82,12 @@ select results_eq(
   $$ select picked_up_by, picked_up_at from public.tasks where title = 'Feed the cat' $$,
   $$ values (null::uuid, null::timestamptz) $$,
   'tasks the child picked up are put back'
+);
+select results_eq(
+  $$ select completed_at is not null, completed_by, picked_up_by, assigned_to from public.tasks
+     where title = 'Empty the dishwasher' $$,
+  $$ values (true, null::uuid, null::uuid, null::uuid) $$,
+  'tasks the child did stay done, by nobody'
 );
 select results_eq(
   $$ select count(*)::int from public.household_members $$,

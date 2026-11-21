@@ -1,7 +1,8 @@
 -- Removing a child without email (ADR 0003), e.g. one added twice by mistake. Their login exists only for this
 -- household, so it goes with them, and with it everything that cascades from auth.users: membership, profile,
 -- sign-in code, reminders, likes and the rest. Their private tasks would be left without a creator, which nobody can
--- see, so they go first; open tasks they picked up are put back for others.
+-- see, so they go first. The tasks they picked up are put back first too, done or not: the cascade would clear only
+-- picked_up_by, not picked_up_at, and the two go together.
 
 -- Raises insufficient_privilege (42501) for a child, and no_data_found (P0002) for anyone but a child without email
 -- in the adult's household.
@@ -25,7 +26,7 @@ begin
   end if;
   delete from public.tasks t where t.created_by = remove_child.child_id and t.is_private;
   update public.tasks t set picked_up_by = null, picked_up_at = null
-    where t.picked_up_by = remove_child.child_id and t.completed_at is null;
+    where t.picked_up_by = remove_child.child_id;
   delete from auth.users u where u.id = remove_child.child_id;
 end;
 $$;

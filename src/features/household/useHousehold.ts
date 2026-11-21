@@ -41,7 +41,12 @@ export function useSetMemberIsChild(householdId: string) {
   return useMutation({
     mutationFn: ({ memberId, isChild }: { memberId: string; isChild: boolean }) =>
       setMemberIsChild(memberId, isChild),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: membersKey(householdId) }),
+    onSettled: () =>
+      Promise.all(
+        [membersKey(householdId), ['tasks'], ['statistics']].map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey }),
+        ),
+      ),
   });
 }
 
@@ -122,7 +127,8 @@ export function useSetMemberCanAddTasks(householdId: string) {
 
 /**
  * Removes a child without email from the household, signing them out on this device first while their
- * session can still end.
+ * session can still end (if removing then fails, they stay signed out). Tasks and statistics they were
+ * part of reload too.
  */
 export function useRemoveChild(householdId: string) {
   const queryClient = useQueryClient();
@@ -132,6 +138,11 @@ export function useRemoveChild(householdId: string) {
       await signOutOnThisDevice(childId);
       await removeChild(childId);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: membersKey(householdId) }),
+    onSettled: () =>
+      Promise.all(
+        [membersKey(householdId), ['tasks'], ['statistics']].map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey }),
+        ),
+      ),
   });
 }
