@@ -52,8 +52,9 @@ describe('always tasks', () => {
     // An always task is never due and never repeats.
     expect(screen.queryByLabelText('Repeats')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Due date')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Times a day')).toHaveDisplayValue('1');
-    await user.selectOptions(screen.getByLabelText('Times a day'), '2');
+    expect(screen.getByLabelText('Times a day')).toHaveValue(1);
+    await user.clear(screen.getByLabelText('Times a day'));
+    await user.type(screen.getByLabelText('Times a day'), '2');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     const task = await screen.findByRole('listitem', { name: 'Brush teeth' });
@@ -79,7 +80,8 @@ describe('always tasks', () => {
     await user.click(await screen.findByRole('radio', { name: 'Children' }));
     await user.type(screen.getByLabelText('Task'), 'Tidy toys');
     await user.click(screen.getByRole('checkbox', { name: /^Always there/ }));
-    await user.selectOptions(screen.getByLabelText('Times a day'), 'No limit');
+    await user.click(screen.getByRole('switch', { name: 'No limit' }));
+    expect(screen.getByLabelText('Times a day')).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     expect(

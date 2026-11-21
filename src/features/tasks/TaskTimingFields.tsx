@@ -1,6 +1,7 @@
 import type { Ref } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
+import { Switch } from '@/components/ui/Switch';
 import { CheckboxField } from '@/features/tasks/CheckboxField';
 import { MAX_DAILY_LIMIT } from '@/features/tasks/task';
 import { TaskRepeatField } from '@/features/tasks/TaskRepeatField';
@@ -22,14 +23,14 @@ interface TaskTimingFieldsProps {
   routine: { offered: boolean; checked: boolean; onChange: (checked: boolean) => void };
   /**
    * Whether it is an always task, offered for an adult's task for children, and how many times a day it earns
-   * its points (empty for no limit). Checked, it has no schedule, also when not offered (a child's edit).
+   * its points, or no limit. Checked, it has no schedule, also when not offered (a child's edit).
    */
   always: {
     offered: boolean;
     checked: boolean;
     onChange: (checked: boolean) => void;
-    dailyLimit: string;
-    onDailyLimitChange: (dailyLimit: string) => void;
+    dailyLimit: DailyLimitValue;
+    onDailyLimitChange: (dailyLimit: DailyLimitValue) => void;
   };
 }
 
@@ -57,36 +58,57 @@ export function TaskTimingFields({ always, ...schedule }: TaskTimingFieldsProps)
   );
 }
 
-const dailyLimitChoices = Array.from({ length: MAX_DAILY_LIMIT }, (_, index) => index + 1);
+/** The daily limit field's value: times a day as typed, or no limit. */
+interface DailyLimitValue {
+  times: string;
+  noLimit: boolean;
+}
 
-/** How many times a day an always task earns its points, or no limit (an empty value). */
-export function DailyLimitField({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
+interface DailyLimitFieldProps {
+  value: DailyLimitValue;
+  onChange: (value: DailyLimitValue) => void;
+  inputRef?: Ref<HTMLInputElement>;
+  errorProps?: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
+}
+
+/**
+ * "Can be done at most [n] times a day", how many times a day an always task earns its points, with a "No limit"
+ * switch beside it; the number keeps its value while switched off.
+ */
+export function DailyLimitField({ value, onChange, inputRef, errorProps }: DailyLimitFieldProps) {
   const t = useMessages().taskForm;
   return (
-    <label className="text-ink flex flex-col gap-1 text-sm font-medium">
-      {t.dailyLimit}
-      <select
-        name="dailyLimit"
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value);
-        }}
-        className={`${inputClassName} w-32`}
+    <div className="flex items-center justify-between gap-3">
+      <p
+        className={`text-ink flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium ${value.noLimit ? 'opacity-50' : ''}`}
       >
-        {dailyLimitChoices.map((times) => (
-          <option key={times} value={times}>
-            {times}
-          </option>
-        ))}
-        <option value="">{t.noLimit}</option>
-      </select>
-    </label>
+        {t.dailyLimitBefore}
+        <input
+          type="number"
+          name="dailyLimit"
+          ref={inputRef}
+          {...errorProps}
+          aria-label={t.dailyLimit}
+          inputMode="numeric"
+          min={1}
+          max={MAX_DAILY_LIMIT}
+          disabled={value.noLimit}
+          value={value.times}
+          onChange={(event) => {
+            onChange({ ...value, times: event.target.value });
+          }}
+          className={`${inputClassName} w-16 text-center`}
+        />
+        {t.dailyLimitAfter}
+      </p>
+      <Switch
+        label={t.noLimit}
+        checked={value.noLimit}
+        onChange={(noLimit) => {
+          onChange({ ...value, noLimit });
+        }}
+      />
+    </div>
   );
 }
 

@@ -162,8 +162,12 @@ export const taskForm = {
   routine: 'Quick routine: mark it done with one tap on the board',
   always: 'Always there: comes back after it is done',
   dailyLimit: 'Times a day',
+  /** "Can be done at most [count] times a day", around the field. */
+  dailyLimitBefore: 'Can be done at most',
+  dailyLimitAfter: 'times a day',
   noLimit: 'No limit',
   errors: {
+    dailyLimitRange: (max: number) => `Choose 1 to ${String(max)} times a day, or no limit.`,
     titleRequired: 'Give the task a name.',
     titleTooLong: (max: number) => `Keep the name to ${String(max)} characters or fewer.`,
     descriptionTooLong: (max: number) =>
