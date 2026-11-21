@@ -84,7 +84,7 @@ function MemberRow({ member, isYou, canOpen }: MemberRowProps) {
   return (
     <Link
       to={paths.member(member.userId)}
-      className={`${rowClassName} hover:bg-brand-50 rounded-2xl`}
+      className={`${rowClassName} hover:bg-brand-50 in-[li:first-child]:rounded-t-2xl in-[li:last-child]:rounded-b-2xl`}
     >
       {content}
       <span aria-hidden="true" className="text-line-strong text-2xl">

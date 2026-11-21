@@ -34,9 +34,8 @@ export const household: Messages['household'] = {
     heading: 'Medlemmar',
     loadFailed: 'Det gick inte att ladda medlemmarna.',
     child: 'Barn',
-    setChildFailed: 'Det gick inte att spara ändringen. Försök igen.',
+    saveFailed: 'Det gick inte att spara ändringen. Försök igen.',
     canAddTasks: 'Kan lägga till uppgifter',
-    setCanAddTasksFailed: 'Det gick inte att spara ändringen. Försök igen.',
     newCode: 'Ny inloggningskod',
     newCodeFailed: 'Det gick inte att skapa en ny kod. Försök igen.',
     onThisDevice: 'På den här enheten',
@@ -47,6 +46,7 @@ export const household: Messages['household'] = {
     removeFailed: 'Vi kunde inte ta bort barnet. Försök igen.',
     /** Who a member is, under their name in the list. */
     roles: { you: 'Du', adult: 'Vuxen', child: 'Barn' },
+    notFound: 'Den här medlemmen finns inte i din familj.',
     settings: 'Inställningar',
     removeFromFamily: (name: string) => `Ta bort ${name} från familjen`,
     /** The link from a member's page back to the family. */

@@ -1,6 +1,6 @@
 # 0003. Accounts and households
 
-- **Updated:** 2026-11-22 (each member's settings on their own page)
+- **Updated:** 2026-11-21 (each member's settings on their own page)
 
 ## Context
 
@@ -31,7 +31,8 @@ little personal data as possible, and joining a family must be low effort withou
   easy to read and tap on a phone; then, for adults, the invite code and adding a child without email. An adult
   opens another member's page from their row (`MemberPage` in `src/app`, `/household/members/:id`, behind
   `AdultsOnly`): for a child, their tasks to set up (ADR 0004) and their settings as full-width switches and rows
-  (child, can add tasks, on this device, a new sign-in code, removing them); for an adult, only whether they are a
+  (child, except for a child without email, who has no password to log in with as an adult; can add tasks; on this
+  device, a new sign-in code and removing them); for an adult, only whether they are a
   child. Small check boxes and links beside each name were hard to tap, and the list grew with every setting.
 - **Children without email**: an adult adds one by name on the household page. The `add-child` Edge Function
   creates their Supabase Auth user with an address that can't receive mail (`<uuid>@child.homeflow.invalid`) and

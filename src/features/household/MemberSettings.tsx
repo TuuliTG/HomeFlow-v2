@@ -41,31 +41,39 @@ export function MemberSettings({ householdId, member, onRemoved }: MemberSetting
   const memberId = member.userId;
   const failure = (
     [
-      [setIsChild.isError, t.setChildFailed],
-      [setCanAddTasks.isError, t.setCanAddTasksFailed],
+      [setIsChild.isError || setCanAddTasks.isError, t.saveFailed],
       [childHere.isError, t.setOnThisDeviceFailed],
     ] as const
   ).find(([isError]) => isError)?.[1];
 
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-3">
-      <h2 id={headingId} className="text-ink text-xl font-extrabold">
-        {t.settings}
-      </h2>
+    <section
+      {...(member.isChild ? { 'aria-labelledby': headingId } : { 'aria-label': t.settings })}
+      className="flex flex-col gap-3"
+    >
+      {/* Only a child's page has their tasks above to set the settings apart from. */}
+      {member.isChild && (
+        <h2 id={headingId} className="text-ink text-xl font-extrabold">
+          {t.settings}
+        </h2>
+      )}
       <ul className="bg-surface shadow-card flex flex-col rounded-2xl">
-        <li className={rowClassName}>
-          <SavingSwitch
-            label={t.child}
-            checked={member.isChild}
-            disabled={setIsChild.isPending}
-            onChange={(isChild) =>
-              setIsChild.mutateAsync({ memberId, isChild }).then(
-                () => undefined,
-                () => undefined,
-              )
-            }
-          />
-        </li>
+        {/* A child without email has no password to log in with as an adult. */}
+        {!member.signsInWithCode && (
+          <li className={rowClassName}>
+            <SavingSwitch
+              label={t.child}
+              checked={member.isChild}
+              disabled={setIsChild.isPending}
+              onChange={(isChild) =>
+                setIsChild.mutateAsync({ memberId, isChild }).then(
+                  () => undefined,
+                  () => undefined,
+                )
+              }
+            />
+          </li>
+        )}
         {member.isChild && (
           <li className={rowClassName}>
             <SavingSwitch

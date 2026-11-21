@@ -14,12 +14,19 @@ import { useMessages } from '@/lib/i18n/i18n';
  * settings; for an adult, only whether they are a child. Reached from the family's member list.
  */
 export function MemberPage() {
+  const user = useLoggedInUser();
+  const household = useOwnHousehold(user.id);
+  if (!household.data) return <LoadingMessage />;
+  return <MemberOf householdId={household.data.id} />;
+}
+
+/** The member's page once the household is known, so its members are asked for with its id. */
+function MemberOf({ householdId }: { householdId: string }) {
   const { memberId = '' } = useParams();
   const user = useLoggedInUser();
-  const householdId = useOwnHousehold(user.id).data?.id ?? '';
   const members = useHouseholdMembers(householdId);
   const navigate = useNavigate();
-  const { common, household, tasks } = useMessages();
+  const { common, household } = useMessages();
 
   if (members.data === undefined) {
     if (!members.isError) return <LoadingMessage />;
@@ -32,13 +39,14 @@ export function MemberPage() {
   const member = members.data.find(
     (candidate) => candidate.userId === memberId && candidate.userId !== user.id,
   );
-  if (!member) return <p className="text-ink-muted text-sm">{tasks.childTasks.notFound}</p>;
+  if (!member) return <p className="text-ink-muted text-sm">{household.members.notFound}</p>;
   const name = member.displayName ?? common.newMember;
 
   return (
     <>
       <Link to={paths.household} className="text-brand-700 text-sm font-bold">
-        ‹ {household.members.backToFamily}
+        <span aria-hidden="true">‹ </span>
+        {household.members.backToFamily}
       </Link>
       <div className="mt-2 flex items-start justify-between gap-4">
         <PageHeader title={name} />

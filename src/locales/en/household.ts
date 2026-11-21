@@ -33,9 +33,8 @@ export const household = {
     heading: 'Members',
     loadFailed: "We couldn't load the members.",
     child: 'Child',
-    setChildFailed: "We couldn't save that change. Try again.",
+    saveFailed: "We couldn't save that change. Try again.",
     canAddTasks: 'Can add tasks',
-    setCanAddTasksFailed: "We couldn't save that change. Try again.",
     newCode: 'New sign-in code',
     newCodeFailed: "We couldn't make a new code. Try again.",
     onThisDevice: 'On this device',
@@ -45,6 +44,7 @@ export const household = {
     removeFailed: "We couldn't remove the child. Try again.",
     /** Who a member is, under their name in the list. */
     roles: { you: 'You', adult: 'Adult', child: 'Child' },
+    notFound: "This member isn't in your family.",
     settings: 'Settings',
     removeFromFamily: (name: string) => `Remove ${name} from the family`,
     /** The link from a member's page back to the family. */

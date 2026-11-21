@@ -145,7 +145,7 @@ describe("a child's tasks", () => {
     const { anna } = family();
     renderAppAt(`/household/members/${anna.id}`);
 
-    expect(await screen.findByText('This child is not in your family.')).toBeInTheDocument();
+    expect(await screen.findByText("This member isn't in your family.")).toBeInTheDocument();
   });
 
   it('open an always task in the same form as a new one', async () => {

@@ -34,9 +34,8 @@ export const household: Messages['household'] = {
     heading: 'Jäsenet',
     loadFailed: 'Jäseniä ei voitu ladata.',
     child: 'Lapsi',
-    setChildFailed: 'Muutosta ei voitu tallentaa. Yritä uudelleen.',
+    saveFailed: 'Muutosta ei voitu tallentaa. Yritä uudelleen.',
     canAddTasks: 'Voi lisätä tehtäviä',
-    setCanAddTasksFailed: 'Muutosta ei voitu tallentaa. Yritä uudelleen.',
     newCode: 'Uusi kirjautumiskoodi',
     newCodeFailed: 'Uutta koodia ei voitu tehdä. Yritä uudelleen.',
     onThisDevice: 'Tällä laitteella',
@@ -47,6 +46,7 @@ export const household: Messages['household'] = {
     removeFailed: 'Lapsen poistaminen ei onnistunut. Yritä uudelleen.',
     /** Who a member is, under their name in the list. */
     roles: { you: 'Sinä', adult: 'Aikuinen', child: 'Lapsi' },
+    notFound: 'Tätä jäsentä ei ole perheessäsi.',
     settings: 'Asetukset',
     removeFromFamily: (name: string) => `Poista ${name} perheestä`,
     /** The link from a member's page back to the family. */

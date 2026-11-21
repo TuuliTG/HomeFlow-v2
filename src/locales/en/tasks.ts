@@ -166,8 +166,7 @@ export const tasks = {
     /** Under a task the user helped someone else with. */
     youHelped: (name: string) => `You helped ${name}`,
   },
-  /** The Me page for children: their tasks as big tiles, and tasks to pick. */
-  /** An adult's page of one child's own tasks (`ChildTasksPage`). */
+  /** A child's tasks on their page, which an adult sets up (`ChildTaskList`, `MemberPage`). */
   childTasks: {
     add: (name: string) => `Add a task for ${name}`,
     newTitle: (name: string) => `New task for ${name}`,
@@ -185,6 +184,7 @@ export const tasks = {
     copySubmit: (count: number) => (count === 1 ? 'Copy 1 task' : `Copy ${String(count)} tasks`),
     pickToCopy: 'Tasks to copy',
   },
+  /** The Me page for children: their tasks as big tiles, and tasks to pick. */
   child: {
     title: 'My stars',
     myTasks: 'My tasks',
