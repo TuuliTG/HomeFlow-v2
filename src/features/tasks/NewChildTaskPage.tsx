@@ -4,6 +4,7 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ChildTaskForm } from '@/features/tasks/ChildTaskForm';
+import { ImagesNotSavedError, imagesNotSavedState } from '@/features/tasks/taskImages';
 import { useHouseholdMembers } from '@/features/tasks/useHelpers';
 import { useAddTask, useMembership } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
@@ -38,8 +39,15 @@ export function NewChildTaskPage() {
         currentUserId={user.id}
         cancelTo={paths.member(childId)}
         isSaving={addTask.isPending}
-        onSave={async (task) => {
-          await addTask.mutateAsync({ task, images: [], householdId, alsoFor: [] });
+        onSave={async (task, images) => {
+          try {
+            await addTask.mutateAsync({ task, images, householdId, alsoFor: [] });
+          } catch (error) {
+            if (!(error instanceof ImagesNotSavedError)) throw error;
+            // The task was added: adding its pictures again on the edit page doesn't add it twice.
+            await navigate(paths.editTask(error.taskId), { state: imagesNotSavedState });
+            return;
+          }
           await navigate(paths.member(childId));
         }}
       />

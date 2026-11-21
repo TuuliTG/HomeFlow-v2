@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { ChildTaskForm } from '@/features/tasks/ChildTaskForm';
 import { canChange, type NewTask, type Task } from '@/features/tasks/task';
 import { TaskForm } from '@/features/tasks/TaskForm';
-import { type DraftImage, isImagesNotSavedState, savedImages } from '@/features/tasks/taskImages';
+import { type DraftImage, isImagesNotSavedState } from '@/features/tasks/taskImages';
 import { useDeleteTask, useMembership, useTasks, useUpdateTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
 import { useMessages } from '@/lib/i18n/i18n';
@@ -55,8 +55,8 @@ function useReturnTo(): string | null {
 }
 
 /**
- * Whether an adult is editing a task for children, which has the same form as adding one for a child (keeping its
- * description and pictures as they are); other tasks, and a child's edits, have the full form.
+ * Whether an adult is editing a task for children, which has the same form as adding one for a child; other tasks,
+ * and a child's edits, have the full form.
  */
 function isChildrensTask(task: Task, isChild: boolean): boolean {
   return !isChild && task.forChildren && !task.isPrivate;
@@ -98,11 +98,12 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
       {isChildrensTask(task, isChild) ? (
         <ChildTaskForm
           initial={task}
+          initialImages={imagesBefore}
           childId={task.assignedTo}
           currentUserId={userId}
           isSaving={updateTask.isPending}
           cancelTo={returnTo ?? paths.taskList(task)}
-          onSave={(changed) => save(changed, savedImages(imagesBefore))}
+          onSave={save}
         />
       ) : (
         <TaskForm

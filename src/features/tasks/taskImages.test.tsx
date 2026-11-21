@@ -66,6 +66,29 @@ describe('pictures on tasks', () => {
     expect(pictures[0]).toHaveAttribute('target', '_blank');
   });
 
+  it("attaches a description and pictures to a task added from a child's page", async () => {
+    logInAsFamilyMember();
+    const ben = fakeAuthBackend.addProfile('ben@example.com', 'Ben');
+    fakeHouseholdBackend.addMember(ben.id, 'The Virtanens');
+    fakeHouseholdBackend.setChild(ben.id, true);
+    const user = userEvent.setup();
+    renderAppAt(`/household/members/${ben.id}/new-task`);
+
+    await user.type(await screen.findByRole('combobox', { name: 'Task' }), 'Tidy the desk');
+    await user.type(screen.getByLabelText('Description (optional)'), 'Books on the shelf');
+    await user.upload(screen.getByLabelText('Add a picture'), photo('desk.jpg'));
+    expect(await screen.findByRole('img', { name: 'Picture 1' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
+    expect(tasks.at(-1)).toMatchObject({
+      title: 'Tidy the desk',
+      description: 'Books on the shelf',
+      assignedTo: ben.id,
+    });
+    expect(fakeImagesBackend.files()).toContain(`${folder}/picture-1.jpg`);
+  });
+
   it('lets another member see the pictures of a shared task', async () => {
     const anna = logInAsFamilyMember();
     await addTaskWithImages(anna.id, { count: 1 });
