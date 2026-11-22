@@ -26,9 +26,9 @@ describe('starring tasks from the task lists', () => {
       expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
     });
     await user.click(screen.getByRole('link', { name: 'New task' }));
-    await user.click(await screen.findByRole('button', { name: /^Favourites/ }));
-    const favourites = screen.getByRole('region', { name: 'Favourites' });
-    expect(await within(favourites).findByRole('button', { name: /Take out trash/ })).toBeVisible();
+    await user.click(await screen.findByLabelText('Task'));
+    const option = await screen.findByRole('option', { name: /^Take out trash/ });
+    expect(within(option).getByText('Favourite')).toBeInTheDocument();
   });
 
   it('shows which tasks are favourites already and unstars one', async () => {

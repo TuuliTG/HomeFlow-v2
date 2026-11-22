@@ -23,13 +23,7 @@ export const taskForm: Messages['taskForm'] = {
   task: 'Tehtävä',
   titlePlaceholder: 'esim. Vie kierrätys',
   alreadyOnBoard: (title) => `${title} on jo listalla. Voit silti lisätä sen uudelleen.`,
-  favourites: 'Suosikit',
-  noFavourites: 'Napauta tähteä tehtävän nimen vieressä, niin se on tässä ensi kerralla.',
-  holdToRemoveFavourite: 'Pidä suosikkia painettuna poistaaksesi sen.',
-  removeFavourite: 'Poista suosikeista',
-  removeFavouriteLabel: (title) => `Poista suosikeista: ${title}`,
   readyMade: {
-    heading: 'Valmiit tehtävät',
     titles: {
       emptyDishwasher: 'Tyhjennä astianpesukone',
       takeOutRubbish: 'Vie roskat',

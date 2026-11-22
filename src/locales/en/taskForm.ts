@@ -23,14 +23,8 @@ export const taskForm = {
   titlePlaceholder: 'e.g. Take out the recycling',
   alreadyOnBoard: (title: string) =>
     `${title} is already on the board. You can still add it again.`,
-  favourites: 'Favourites',
-  noFavourites: "Tap the star by a task's name to keep it here for next time.",
-  holdToRemoveFavourite: 'Press and hold a favourite to remove it.',
-  removeFavourite: 'Remove from favourites',
-  removeFavouriteLabel: (title: string) => `Remove from favourites: ${title}`,
   /** Everyday chores offered on the New task form for adults or for children (`readyMadeTasks`). */
   readyMade: {
-    heading: 'Ready-made tasks',
     titles: {
       emptyDishwasher: 'Empty the dishwasher',
       takeOutRubbish: 'Take out the rubbish',

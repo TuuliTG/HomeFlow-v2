@@ -159,28 +159,24 @@ test('family member can add a task again from earlier tasks and favourites', asy
     'true',
   );
   await page.getByLabel('Task', { exact: true }).fill('');
-  await page.getByRole('button', { name: /^Favourites/ }).click();
-  await page
-    .getByRole('region', { name: 'Favourites' })
-    .getByRole('button', { name: /Take out trash/ })
-    .click();
+  const favourite = page.getByRole('option', { name: /^Take out trash/ });
+  await expect(favourite.getByText('Favourite')).toBeAttached();
+  const withFavourite = await new AxeBuilder({ page }).analyze();
+  expect(withFavourite.violations, 'a11y violations on the listed favourites').toEqual([]);
+  await favourite.click();
   await expect(
     page.getByText('Take out trash is already on the board.', { exact: false }),
   ).toBeVisible();
 
+  await page.getByRole('button', { name: 'Favourite' }).click();
+  await expect(page.getByRole('button', { name: 'Favourite' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
   await page.getByLabel('Task', { exact: true }).fill('');
-  await page.getByRole('button', { name: /^Favourites/ }).click();
-  await page
-    .getByRole('region', { name: 'Favourites' })
-    .getByRole('button', { name: /Take out trash/ })
-    .click({ delay: 700 });
-  const remove = page.getByRole('button', { name: 'Remove from favourites: Take out trash' });
-  await expect(remove).toBeFocused();
-  const withRemove = await new AxeBuilder({ page }).analyze();
-  expect(withRemove.violations, 'a11y violations removing a favourite').toEqual([]);
-  await remove.click();
-  await expect(page.getByText("Tap the star by a task's name to keep it here")).toBeVisible();
-  await expect(page.getByLabel('Task', { exact: true })).toHaveValue('');
+  const unstarred = page.getByRole('option', { name: /^Take out trash/ });
+  await expect(unstarred).toBeVisible();
+  await expect(unstarred.getByText('Favourite')).toHaveCount(0);
 });
 
 test('family member can mark a repeating task done and see it come back', async ({ page }) => {
