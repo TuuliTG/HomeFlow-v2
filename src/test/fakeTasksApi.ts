@@ -202,12 +202,35 @@ function pickerAfterEdit(task: StoredTask, details: NewTask): string | null {
 }
 
 /**
- * Like update_task(): a child's edit keeps whose chore it is, and a task made adults-only is no longer given to a
- * child.
+ * Like update_task(): a child's edit keeps whose chore it is, or makes their private task theirs when making it shared,
+ * and a task made adults-only is no longer given to a child.
  */
 function assigneeAfterEdit(task: StoredTask, details: NewTask, isChild: boolean): string | null {
-  if (isChild) return task.assignedTo;
+  if (isChild) return task.assignedTo ?? (isShared(task, details) ? task.createdBy : null);
   return details.forChildren ? details.assignedTo : null;
+}
+
+/** Like update_task(): whether the edit makes a private task shared; a shared task can't be made private. */
+function isShared(task: StoredTask, details: NewTask): boolean {
+  return task.isPrivate && !details.isPrivate;
+}
+
+/**
+ * Whether the task stays private after the edit. Like update_task(): a child shares a task only while they may add
+ * tasks, and an adult's task made shared is no longer theirs to do unless they picked it up, so their reminder and plan
+ * go.
+ */
+function privacyAfterEdit(userId: string, task: StoredTask, details: NewTask) {
+  if (!isShared(task, details)) return task.isPrivate;
+  const isChild = fakeHouseholdBackend.isChild(userId);
+  if (isChild && !fakeHouseholdBackend.canAddTasks(userId)) {
+    throw new Error('Only children allowed to add tasks can share one');
+  }
+  if (!isChild && task.pickedUpBy !== userId) {
+    fakeTasksBackend.clearReminderAs(userId, task.id);
+    fakeSchedulesBackend.clearScheduleAs(userId, task.id);
+  }
+  return false;
 }
 
 export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
@@ -215,6 +238,7 @@ export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
     const task = changeableTaskOf(userId, taskId);
     const isChild = fakeHouseholdBackend.isChild(userId);
     if (!details.forChildren && isChild) throw new Error('Only adults can make a task adults-only');
+    const isPrivate = privacyAfterEdit(userId, task, details);
     const assignedTo = assigneeAfterEdit(task, details, isChild);
     if (!isChild) {
       checkAssignee(userId, { ...details, assignedTo });
@@ -227,6 +251,7 @@ export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
     }
     Object.assign(task, {
       ...details,
+      isPrivate,
       // Like update_task(): a child's edit sends their task back to waiting for points.
       points: isChild ? null : details.points,
       assignedTo,

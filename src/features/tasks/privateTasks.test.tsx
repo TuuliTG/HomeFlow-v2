@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
-import { fakeTasksBackend } from '@/test/fakeTasksBackend';
+import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
@@ -62,6 +62,63 @@ describe('private tasks', () => {
     await user.click(await screen.findByRole('button', { name: 'Save changes' }));
 
     expect(await screen.findByRole('heading', { level: 1, name: 'My tasks' })).toBeInTheDocument();
+  });
+
+  it('can be made shared when edited, earning points', async () => {
+    const anna = logInAsFamilyMember();
+    addBen();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Buy a present',
+      type: 'meta',
+      points: null,
+      isPrivate: true,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Buy a present' }));
+    const privateButton = await screen.findByRole('button', { name: 'Private' });
+    expect(privateButton).toHaveAttribute('aria-pressed', 'true');
+    await user.click(privateButton);
+    await user.clear(screen.getByLabelText('Points'));
+    await user.type(screen.getByLabelText('Points'), '4');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    const task = await screen.findByRole('listitem', { name: 'Buy a present' });
+    expect(within(task).queryByText('Private')).not.toBeInTheDocument();
+    expect(within(task).getByText(/4 points/)).toBeInTheDocument();
+  });
+
+  it("become the adults' when an adult shares one added while they were a child", async () => {
+    const anna = logInAsFamilyMember();
+    addChildToFamily();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Sort my photos',
+      type: 'physical',
+      points: null,
+      forChildren: true,
+      isPrivate: true,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Sort my photos' }));
+    await user.click(await screen.findByRole('button', { name: 'Private' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByRole('listitem', { name: 'Sort my photos' })).toBeInTheDocument();
+    expect(tasks.at(-1)).toMatchObject({ isPrivate: false, forChildren: false, assignedTo: null });
+  });
+
+  it("can't be made from a shared task when edited", async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Vacuum' }));
+    await screen.findByLabelText('Task');
+    expect(screen.queryByRole('button', { name: 'Private' })).not.toBeInTheDocument();
   });
 
   it('can be added from the Me page', async () => {

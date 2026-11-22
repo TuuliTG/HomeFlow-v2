@@ -184,6 +184,7 @@ describe('tasks api', () => {
       task_is_routine: true,
       task_is_always: false,
       task_daily_limit: null,
+      task_is_private: false,
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
