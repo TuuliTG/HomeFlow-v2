@@ -126,6 +126,24 @@ describe('deleting a task', () => {
     expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
   });
 
+  it("doesn't speak of the household for a private task", async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Dentist',
+      type: 'meta',
+      points: null,
+      isPrivate: true,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/tasks/task:0/edit');
+
+    await user.click(await screen.findByRole('button', { name: 'Delete task' }));
+
+    expect(screen.getByRole('region', { name: 'Delete task' })).toHaveTextContent(
+      "Delete “Dentist”? This can't be undone.",
+    );
+  });
+
   it('can be called off', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });
@@ -162,6 +180,32 @@ describe('deleting a task', () => {
     fakeTasksBackend.failRequests();
 
     await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't delete the task.");
+  });
+});
+
+describe('swiping a task card aside', () => {
+  it('shows a delete button that removes the task at once', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await user.click(await screen.findByRole('button', { name: 'Delete: Dust' }));
+
+    expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
+  });
+
+  it('says when the task cannot be deleted', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });
+    const user = userEvent.setup();
+    renderAppAt('/');
+    const button = await screen.findByRole('button', { name: 'Delete: Dust' });
+    fakeTasksBackend.failRequests();
+
+    await user.click(button);
 
     expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't delete the task.");
   });

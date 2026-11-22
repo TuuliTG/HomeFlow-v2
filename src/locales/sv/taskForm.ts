@@ -14,6 +14,8 @@ export const taskForm: Messages['taskForm'] = {
     backToTasks: 'Tillbaka till uppgifterna',
     submit: 'Spara ändringar',
     delete: 'Ta bort uppgift',
+    confirmDeleteOwn: (title) => `Ta bort ”${title}”? Det går inte att ångra.`,
+    confirmDeleteChild: (title, name) => `Ta bort ”${title}” för ${name}? Det går inte att ångra.`,
     confirmDelete: (title) => `Ta bort ”${title}” för hela hushållet? Det går inte att ångra.`,
     deleteFailed: 'Det gick inte att ta bort uppgiften. Försök igen.',
     imagesNotSaved: 'Uppgiften lades till, men inte bilderna. Lägg till dem här igen.',
@@ -160,6 +162,7 @@ export const taskForm: Messages['taskForm'] = {
     onlySharedHavePoints: 'Bara gemensamma uppgifter har poäng.',
     checkDetails: 'Kontrollera uppgiftens detaljer.',
     childRequired: 'Välj ett barn.',
+    childHasTask: (name) => `${name} har den här uppgiften redan.`,
     saveFailed: 'Det gick inte att spara uppgiften. Försök igen.',
   },
   reminder: {

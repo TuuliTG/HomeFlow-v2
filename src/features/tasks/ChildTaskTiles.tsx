@@ -9,6 +9,7 @@ import {
   type Task,
 } from '@/features/tasks/task';
 import { EditLink } from '@/features/tasks/TaskCardLinks';
+import { TaskSwipeToDelete } from '@/features/tasks/TaskSwipeToDelete';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
 import { useCompleteTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
@@ -53,33 +54,37 @@ function TaskTile({ task }: { task: Task }) {
   const always = useAlwaysTaskState(task);
 
   return (
-    <li
-      aria-labelledby={titleId}
-      className={`flex items-center gap-4 rounded-2xl p-4 ${always.kind === 'ready' ? 'bg-surface shadow-card' : 'bg-done-100'}`}
-    >
-      <TaskTypeIcon type={task.type} icon={task.icon} size="lg" />
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <h3 id={titleId} className="text-ink text-lg leading-snug font-bold break-words">
-          {task.title}
-        </h3>
-        <PointsAsStars task={task} />
-        <div className="-my-2 -ml-1 w-fit">
-          <EditLink task={task} currentUserId={user.id} />
+    <li aria-labelledby={titleId}>
+      <TaskSwipeToDelete
+        task={task}
+        currentUserId={user.id}
+        className={`rounded-2xl ${always.kind === 'ready' ? 'shadow-card' : ''}`}
+        contentClassName={`flex items-center gap-4 p-4 ${always.kind === 'ready' ? 'bg-surface' : 'bg-done-100'}`}
+      >
+        <TaskTypeIcon type={task.type} icon={task.icon} size="lg" />
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <h3 id={titleId} className="text-ink text-lg leading-snug font-bold break-words">
+            {task.title}
+          </h3>
+          <PointsAsStars task={task} />
+          <div className="-my-2 -ml-1 w-fit">
+            <EditLink task={task} currentUserId={user.id} />
+          </div>
+          {completeTask.isError && (
+            <p role="alert" className="text-danger-700 text-xs">
+              {t.failures.complete}
+            </p>
+          )}
         </div>
-        {completeTask.isError && (
-          <p role="alert" className="text-danger-700 text-xs">
-            {t.failures.complete}
-          </p>
-        )}
-      </div>
-      <MarkDoneButton
-        title={task.title}
-        state={always}
-        isPending={completeTask.isPending}
-        onClick={() => {
-          completeTask.mutate(task);
-        }}
-      />
+        <MarkDoneButton
+          title={task.title}
+          state={always}
+          isPending={completeTask.isPending}
+          onClick={() => {
+            completeTask.mutate(task);
+          }}
+        />
+      </TaskSwipeToDelete>
     </li>
   );
 }

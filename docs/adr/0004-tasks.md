@@ -113,8 +113,13 @@ next one back rather than follow a fixed calendar.
   stars, and nobody is credited for a sibling's work.
 - **Fixing mistakes**: any adult, and a child for their own tasks, can edit (`update_task()`) or delete
   (`delete_task()`) an open task; done tasks
-  stay as history. Whoever marked a task done can undo it for an hour (`undo_complete_task()`), which also removes
-  the next occurrence it created, unless that one is already done.
+  stay as history. Deleting asks first on the edit page; on a task card (the board, Me, a child's page and their
+  tiles) swiping it left shows a delete button behind it (`SwipeToDelete`) that deletes at once, the swipe being
+  the confirmation. The button is in the tab order and slides the card open when focused, so keyboard and
+  screen-reader users reach it without swiping; deleting from the keyboard moves focus to the next card. The edit
+  page's question says whom deleting affects: everyone for a shared task, "from Ben's tasks" for a child's, and
+  neither for a private task or a child's own. Whoever marked a task done can undo it for an hour
+  (`undo_complete_task()`), which also removes the next occurrence it created, unless that one is already done.
 - **Pictures**: whoever may edit a task (`private.can_change_task()`) can attach up to three pictures on the task
   form, e.g. to show which plants to water; its card shows them as thumbnails that open full size. The app redraws
   each as a JPEG of at most 1600 px (`shrinkImage`), which also drops metadata such as the photo's location, and
@@ -249,7 +254,11 @@ next one back rather than follow a fixed calendar.
   and then the custom ones (`childTaskList()`), each a row with when it comes up ("1× a day", "Every week · Mon 23
   Nov") and its stars, opening the edit form, which returns there (the child's id in the link's state, `returnToChild`: an id, not a path, so it can't lead off the app). Its plus opens a short form (`ChildTaskForm`): Always or Custom, then name (with the ready-made
   children's tasks), description, pictures, icon and stars (one to begin with), then "Times a day" or Repeats and
-  Due date; who it is for isn't asked. It is the only form for adding an adult's task for children (the board's form
+  Due date; who it is for isn't asked. A child has each task once: the form refuses a name the child already has
+  open (ignoring case and spaces, `childHasTask()`), also when an edited task is renamed or moved to another child (`wouldGiveTwice()`: an
+  edit keeping both is saved even if the child has the task twice from before), and leaves
+  out the ready-made tasks they have; this is checked in the app only, as two adults adding the same task at the
+  same moment is rare and harmless. It is the only form for adding an adult's task for children (the board's form
   leads here); an adult editing any shared task for children gets this form too (with whose it is), so a children's task can no longer be made an adults' one by editing. "Copy to Mia", shown for each other child who lacks some of the tasks, opens a page of tick boxes (`CopyChildTasksPage`): the tasks Mia lacks under the same name start ticked (each name once, `tasksToCopy()`), those she has can't be ticked, and "Copy 3 tasks" adds the chosen ones in one insert and returns with "Copied to Mia." Copies come without pictures, since only whoever uploaded a picture can attach it
   (`set_task_images()`).
 - **Who last did it**: the card of a repeating shared task says who marked its previous occurrence done and how

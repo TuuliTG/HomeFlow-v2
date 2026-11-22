@@ -13,6 +13,9 @@ export const taskForm: Messages['taskForm'] = {
     backToTasks: 'Takaisin tehtäviin',
     submit: 'Tallenna muutokset',
     delete: 'Poista tehtävä',
+    confirmDeleteOwn: (title) => `Poistetaanko “${title}”? Poistoa ei voi perua.`,
+    confirmDeleteChild: (title, name) =>
+      `Poistetaanko “${title}”? Se poistuu vain tältä lapselta: ${name}. Poistoa ei voi perua.`,
     confirmDelete: (title) => `Poistetaanko “${title}” koko kotitaloudelta? Poistoa ei voi perua.`,
     deleteFailed: 'Tehtävää ei voitu poistaa. Yritä uudelleen.',
     imagesNotSaved: 'Tehtävä lisättiin, mutta sen kuvia ei. Lisää ne tässä uudelleen.',
@@ -159,6 +162,7 @@ export const taskForm: Messages['taskForm'] = {
     onlySharedHavePoints: 'Vain yhteisillä tehtävillä on pisteitä.',
     checkDetails: 'Tarkista tehtävän tiedot.',
     childRequired: 'Valitse lapsi.',
+    childHasTask: (name) => `${name} on jo saanut tämän tehtävän.`,
     saveFailed: 'Tehtävää ei voitu tallentaa. Yritä uudelleen.',
   },
   reminder: {

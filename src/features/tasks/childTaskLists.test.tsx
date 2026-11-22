@@ -135,10 +135,24 @@ describe("a child's tasks", () => {
 
     await user.click(await screen.findByRole('link', { name: /Make the bed/ }));
     await user.click(await screen.findByRole('button', { name: 'Delete task' }));
+    expect(screen.getByRole('region', { name: 'Delete task' })).toHaveTextContent(
+      "Delete “Make the bed” from Ben's tasks?",
+    );
     await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
 
     expect(await screen.findByText('No tasks yet.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
+  });
+
+  it("are deleted by swiping one aside on the child's page", async () => {
+    const { anna, ben } = family();
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    const user = userEvent.setup();
+    renderAppAt(`/household/members/${ben.id}`);
+
+    await user.click(await screen.findByRole('button', { name: 'Delete: Make the bed' }));
+
+    expect(await screen.findByText('No tasks yet.')).toBeInTheDocument();
   });
 
   it("are only a child's of the family", async () => {
@@ -226,6 +240,66 @@ describe("a child's tasks", () => {
     await user.click(screen.getByRole('button', { name: 'Copy 1 task' }));
 
     expect(await screen.findByText("We couldn't copy the tasks. Try again.")).toBeInTheDocument();
+  });
+
+  it("don't get a task the child has already", async () => {
+    const { anna, ben } = family();
+    give(anna.id, ben.id, { title: 'Brush teeth' });
+    const count = tasks.length;
+    const user = userEvent.setup();
+    renderAppAt(`/household/members/${ben.id}/new-task`);
+
+    const name = await screen.findByRole('combobox', { name: 'Task' });
+    await user.type(name, ' brush TEETH ');
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Ben has this task already.');
+    expect(name).toHaveFocus();
+    expect(tasks).toHaveLength(count);
+  });
+
+  it("aren't offered a ready-made task the child has already", async () => {
+    const { anna, ben } = family();
+    give(anna.id, ben.id, { title: 'Tidy your room' });
+    const user = userEvent.setup();
+    renderAppAt(`/household/members/${ben.id}/new-task`);
+
+    await user.type(await screen.findByRole('combobox', { name: 'Task' }), 'your');
+    const offered = () =>
+      within(screen.getByRole('listbox', { name: 'Suggested tasks' }))
+        .getAllByRole('option')
+        .map((option) => option.textContent);
+    expect(offered()).not.toContainEqual(expect.stringContaining('Tidy your room'));
+    expect(offered()).toContainEqual(expect.stringContaining('Make your bed'));
+  });
+
+  it("can't be moved to a child who has the task already", async () => {
+    const { anna, ben, dora } = family();
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    give(anna.id, dora.id, { title: 'Make the bed' });
+    const user = userEvent.setup();
+    renderAppAt(`/household/members/${ben.id}`);
+
+    await user.click(await screen.findByRole('link', { name: /Make the bed/ }));
+    await user.selectOptions(await screen.findByLabelText('Whose chore is it?'), 'Dora');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Dora has this task already.');
+    expect(tasks.filter((task) => task.assignedTo === dora.id)).toHaveLength(1);
+  });
+
+  it('can still be edited when the child has the task twice from before', async () => {
+    const { anna, ben } = family();
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    const user = userEvent.setup();
+    renderAppAt('/tasks/task:0/edit');
+
+    await user.click(await screen.findByRole('radio', { name: 'Custom' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
+    expect(tasks[0]).toMatchObject({ isAlways: false });
   });
 
   it('copy a name the child has twice only once', async () => {

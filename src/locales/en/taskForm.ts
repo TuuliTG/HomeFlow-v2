@@ -11,6 +11,9 @@ export const taskForm = {
     backToTasks: 'Back to the tasks',
     submit: 'Save changes',
     delete: 'Delete task',
+    confirmDeleteOwn: (title: string) => `Delete “${title}”? This can't be undone.`,
+    confirmDeleteChild: (title: string, name: string) =>
+      `Delete “${title}” from ${name}'s tasks? This can't be undone.`,
     confirmDelete: (title: string) =>
       `Delete “${title}” for everyone in the household? This can't be undone.`,
     deleteFailed: "We couldn't delete the task. Try again.",
@@ -172,6 +175,7 @@ export const taskForm = {
     onlySharedHavePoints: 'Only shared tasks have points.',
     checkDetails: 'Check the task details.',
     childRequired: 'Choose a child.',
+    childHasTask: (name: string) => `${name} has this task already.`,
     saveFailed: "We couldn't save the task. Try again.",
   },
   reminder: {
