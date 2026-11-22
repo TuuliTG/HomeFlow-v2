@@ -227,7 +227,8 @@ next one back rather than follow a fixed calendar.
   `tasks_routine_always_available` keeps an open routine without a repeat or due date (`update_task()` clears it
   when a task gets one; open routines from when they repeated lost their repeat and due date). Marking one done adds
   a fresh copy at once (`complete_task()`), without an always task's pause or daily limit; the copies don't count
-  as added in Statistics. "Add again" keeps it a routine. The board shows routines as small chips above the due
+  as added in Statistics (nor do the earlier occurrences of routines from when they repeated). Picking an earlier
+  routine from the name field keeps it a routine. The board shows routines as small chips above the due
   dates (`RoutineChips`) instead of cards: each is a button that marks it done with one tap (no confirmation even if
   someone picked it up, since anyone may do a routine), quieter once done today and then saying who did it last.
   Like the due-date groups, the section folds away behind its heading (`?routines=hidden`, remembered on the

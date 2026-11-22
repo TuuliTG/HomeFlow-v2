@@ -1,10 +1,11 @@
 -- Routines are always available (ADR 0004): no repeat and no due date. Marking one done adds a fresh copy straight
 -- away, as for an always task, so anyone can do it again whenever it needs doing. The open routines lose their repeat
--- and due date; done ones keep theirs as history.
+-- and due date, as do those done within the undo window, so undoing one reopens it as it is now; older done ones keep
+-- theirs as history.
 alter table public.tasks drop constraint tasks_routine_repeats;
 
 update public.tasks set repeat_every_days = null, due_on = null
-  where is_routine and completed_at is null;
+  where is_routine and (completed_at is null or completed_at > now() - interval '1 hour');
 
 alter table public.tasks
   add constraint tasks_routine_always_available check (
