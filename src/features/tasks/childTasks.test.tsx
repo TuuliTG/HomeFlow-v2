@@ -179,4 +179,48 @@ describe('tasks for children', () => {
     ).toBeInTheDocument();
     expect(tasks.at(-1)).toMatchObject({ forChildren: true, points: null });
   });
+
+  it("become the child's own chore when a child makes their private task shared", async () => {
+    const ben = logInAsChild();
+    fakeHouseholdBackend.setCanAddTasks(ben.id, true);
+    fakeTasksBackend.addTaskAs(ben.id, {
+      title: 'Tidy my desk',
+      type: 'physical',
+      points: null,
+      forChildren: true,
+      isPrivate: true,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Tidy my desk' }));
+    await user.click(await screen.findByRole('button', { name: 'Private' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByRole('listitem', { name: 'Tidy my desk' })).toBeInTheDocument();
+    expect(tasks.at(-1)).toMatchObject({
+      isPrivate: false,
+      forChildren: true,
+      points: null,
+      assignedTo: ben.id,
+      pickedUpBy: ben.id,
+    });
+  });
+
+  it("can't be made from a child's private task once the child may no longer add tasks", async () => {
+    const ben = logInAsChild();
+    fakeTasksBackend.addTaskAs(ben.id, {
+      title: 'Tidy my desk',
+      type: 'physical',
+      points: null,
+      forChildren: true,
+      isPrivate: true,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Tidy my desk' }));
+    await screen.findByLabelText('Task');
+    expect(screen.queryByRole('button', { name: 'Private' })).not.toBeInTheDocument();
+  });
 });

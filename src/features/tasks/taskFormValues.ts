@@ -55,7 +55,9 @@ export function fieldValues(task?: NewTask, defaultPoints = DEFAULT_POINTS) {
     repeat: repeatFieldValue(task.repeatEveryDays),
     dueOn: task.dueOn ?? '',
     isPrivate: task.isPrivate,
-    forChildren: task.forChildren,
+    // A private task made shared is an adult's for the adults (a child's are always for children), even one they
+    // added while they were a child.
+    forChildren: task.forChildren && !task.isPrivate,
     icon: task.icon,
     assignedTo: task.assignedTo,
     labels: task.labels,

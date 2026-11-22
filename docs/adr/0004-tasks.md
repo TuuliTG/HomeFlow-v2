@@ -19,7 +19,13 @@ next one back rather than follow a fixed calendar.
 - **Links in descriptions**: the card turns `http(s)://` and `www.` addresses in a description into links that
   open in a new tab (`descriptionParts()` in `descriptionLinks.ts`) and wraps long ones so they fit and can be
   copied. Other schemes (`javascript:`, `mailto:`) stay plain text; the description is never rendered as HTML.
-- **Private tasks**: `is_private` (chosen when adding, never changed; the next occurrence keeps it). The select
+- **Private tasks**: `is_private` (chosen when adding; the next occurrence keeps it). Its creator can make an open
+  private task shared by un-pressing "Private" when editing it (`update_task()`'s `task_is_private`), but a shared
+  task is never made private, as others may have seen it. An adult's becomes an adults' shared task with the points
+  they pick, open to anyone, so their reminder and plan for it go unless they picked it up; a child's becomes their
+  own chore, given to them and waiting for an adult's points, and only while they may add tasks (`can_add_tasks`). Its
+  done occurrences stay private, undoing the one before can't hide it again (`undo_complete_task()` refuses), and
+  making it shared notifies no one (an update, ADR 0005). The select
   policy shows a private task only to its creator, so the board and live updates hide it from
   the others, and every security definer function that acts on any open task skips other members' private ones.
   A private task is the creator's own to do: it is listed only in their My tasks (Me page), without picking it up,
@@ -29,7 +35,7 @@ next one back rather than follow a fixed calendar.
   shared tasks, both done and created (ADR 0006). A private task whose creator deletes their account or leaves
   stays hidden from everyone. On the form a "Private" toggle button comes first and, when pressed, hides what a
   private task doesn't need: who it is for, its type, points and "Already done". Its type is kept but never
-  shown, also when editing.
+  shown while it is private; the form shows "Private" when editing only a private task.
 - **Tasks for children**: `for_children` (default false: adults only), chosen first on the task form by adults
   ("Who is it for? Adults / Children", only on a new shared task once the family has children; the Private button
   makes way while Children is chosen, and editing can't move a task between the two); the next occurrence keeps

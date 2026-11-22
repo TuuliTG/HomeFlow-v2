@@ -448,3 +448,25 @@ test('family member can make a task a routine and mark it done with one tap', as
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations with routines on the board').toEqual([]);
 });
+
+test('family member can make a private task shared by editing it', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('Buy a present');
+  await page.getByRole('button', { name: 'Private' }).click();
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  await page.getByRole('link', { name: 'Edit: Buy a present' }).click();
+  const privateButton = page.getByRole('button', { name: 'Private' });
+  await expect(privateButton).toHaveAttribute('aria-pressed', 'true');
+  await privateButton.click();
+  await expect(page.getByLabel('Points')).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on a private task made shared').toEqual([]);
+  await page.getByRole('button', { name: 'Save changes' }).click();
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Shared tasks' })).toBeVisible();
+  await expect(page.getByRole('listitem', { name: 'Buy a present' })).toBeVisible();
+});
