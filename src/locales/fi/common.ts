@@ -5,6 +5,7 @@ const weekdays = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'];
 export const common: Messages['common'] = {
   loading: 'Ladataan…',
   cancel: 'Peruuta',
+  close: 'Sulje',
   save: 'Tallenna',
   delete: 'Poista',
   yesDelete: 'Kyllä, poista',

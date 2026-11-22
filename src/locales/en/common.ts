@@ -5,6 +5,7 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 export const common = {
   loading: 'Loading…',
   cancel: 'Cancel',
+  close: 'Close',
   save: 'Save',
   delete: 'Delete',
   yesDelete: 'Yes, delete',

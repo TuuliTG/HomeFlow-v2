@@ -22,9 +22,19 @@ function addRoutine(userId: string, title: string) {
 }
 
 const routines = () => screen.getByRole('region', { name: 'Routines' });
+const menu = () => within(screen.getByRole('dialog'));
+
+async function openRoutine(user: ReturnType<typeof userEvent.setup>, title: string) {
+  await user.click(
+    await within(await screen.findByRole('region', { name: 'Routines' })).findByRole('button', {
+      name: new RegExp(`^${title}`),
+    }),
+  );
+  expect(screen.getByRole('dialog', { name: title })).toBeInTheDocument();
+}
 
 describe('routines on the board', () => {
-  it('shows routines as chips rather than cards, and marks one done with a tap, again and again', async () => {
+  it('shows routines as chips rather than cards, and marks one done from its menu', async () => {
     const anna = logInAsFamilyMember();
     addRoutine(anna.id, 'Empty the dishwasher');
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
@@ -35,15 +45,60 @@ describe('routines on the board', () => {
       screen.queryByRole('listitem', { name: 'Empty the dishwasher' }),
     ).not.toBeInTheDocument();
 
-    await user.click(
-      within(routines()).getByRole('button', { name: 'Mark done: Empty the dishwasher' }),
-    );
+    await openRoutine(user, 'Empty the dishwasher');
+    await user.click(menu().getByRole('button', { name: 'Mark done' }));
 
-    const again = await within(routines()).findByRole('button', {
-      name: /^Mark done: Empty the dishwasher\s*Done by you$/,
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await within(routines()).findByRole('button', {
+      name: /^Empty the dishwasher\s*Done by you$/,
     });
     expect(screen.getByRole('button', { name: /^Routines/ })).toHaveTextContent('0');
-    expect(again).toBeDisabled();
+    await openRoutine(user, 'Empty the dishwasher');
+    expect(menu().queryByRole('button', { name: 'Mark done' })).not.toBeInTheDocument();
+  });
+
+  it('opens the routine to edit from its menu', async () => {
+    const anna = logInAsFamilyMember();
+    addRoutine(anna.id, 'Empty the dishwasher');
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await openRoutine(user, 'Empty the dishwasher');
+    await user.click(menu().getByRole('link', { name: 'Edit' }));
+
+    expect(await screen.findByLabelText('Task')).toHaveValue('Empty the dishwasher');
+  });
+
+  it('deletes the routine from its menu', async () => {
+    const anna = logInAsFamilyMember();
+    addRoutine(anna.id, 'Empty the dishwasher');
+    addRoutine(anna.id, 'Feed the cat');
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await openRoutine(user, 'Empty the dishwasher');
+    await user.click(menu().getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(
+        within(routines()).queryByRole('button', { name: /^Empty the dishwasher/ }),
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /^Routines/ })).toHaveFocus();
+    expect(fakeTasksBackend.taskCount()).toBe(1);
+  });
+
+  it('closes the menu without doing anything', async () => {
+    const anna = logInAsFamilyMember();
+    addRoutine(anna.id, 'Empty the dishwasher');
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await openRoutine(user, 'Empty the dishwasher');
+    await user.click(menu().getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    expect(fakeTasksBackend.taskCount()).toBe(1);
   });
 
   it('can be done again once its short pause is over', async () => {
@@ -60,11 +115,8 @@ describe('routines on the board', () => {
     const user = userEvent.setup();
     renderAppAt('/');
 
-    await user.click(
-      await within(await screen.findByRole('region', { name: 'Routines' })).findByRole('button', {
-        name: /^Mark done: Empty the dishwasher/,
-      }),
-    );
+    await openRoutine(user, 'Empty the dishwasher');
+    await user.click(menu().getByRole('button', { name: 'Mark done' }));
 
     await waitFor(() => {
       expect(fakeTasksBackend.taskCount()).toBe(3);
@@ -99,9 +151,7 @@ describe('hiding the routines', () => {
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(toggle).toHaveTextContent('2');
-    expect(
-      screen.queryByRole('button', { name: 'Mark done: Feed the cat' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Feed the cat' })).not.toBeInTheDocument();
     unmount();
 
     renderAppAt('/');
@@ -131,7 +181,7 @@ describe('making a task a routine', () => {
 
     expect(
       await within(await screen.findByRole('region', { name: 'Routines' })).findByRole('button', {
-        name: 'Mark done: Empty the dishwasher',
+        name: 'Empty the dishwasher',
       }),
     ).toBeInTheDocument();
   });
