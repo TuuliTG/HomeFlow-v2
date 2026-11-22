@@ -429,7 +429,7 @@ test('with reduced motion, a done task gets no flying stars', async ({ page }) =
   await expect(points.locator('xpath=..').locator('svg').first()).toBeHidden();
 });
 
-test('family member can make a task a routine and mark it done with one tap', async ({ page }) => {
+test('family member can make a task a routine and mark it done from its menu', async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
   await page.getByRole('link', { name: 'Shared tasks' }).click();
@@ -441,10 +441,18 @@ test('family member can make a task a routine and mark it done with one tap', as
   await page.getByRole('button', { name: 'Create task' }).click();
 
   const routines = page.getByRole('region', { name: 'Routines' });
-  await routines.getByRole('button', { name: 'Mark done: Empty the dishwasher' }).click();
+  await routines.getByRole('button', { name: 'Empty the dishwasher' }).click();
+  const menu = page.getByRole('dialog', { name: 'Empty the dishwasher' });
+  const menuResults = await new AxeBuilder({ page }).analyze();
+  expect(menuResults.violations, 'a11y violations with a routine menu open').toEqual([]);
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+  await routines.getByRole('button', { name: 'Empty the dishwasher' }).click();
+  await menu.getByRole('button', { name: 'Mark done' }).click();
+  await expect(menu).toBeHidden();
   await expect(
-    routines.getByRole('button', { name: 'Mark done: Empty the dishwasher Done by you' }),
-  ).toBeDisabled();
+    routines.getByRole('button', { name: 'Empty the dishwasher Done by you' }),
+  ).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations with routines on the board').toEqual([]);
 });

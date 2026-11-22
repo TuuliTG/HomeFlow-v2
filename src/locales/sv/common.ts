@@ -29,6 +29,7 @@ export const ordinal = (count: number) => {
 export const common: Messages['common'] = {
   loading: 'Laddar…',
   cancel: 'Avbryt',
+  close: 'Stäng',
   save: 'Spara',
   delete: 'Ta bort',
   yesDelete: 'Ja, ta bort',

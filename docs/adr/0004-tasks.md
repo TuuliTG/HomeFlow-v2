@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-23 (every task for children is one child's; the board lists adults' tasks only)
+- **Updated:** 2026-11-23 (a routine chip opens a menu to mark it done, edit or delete it)
 
 ## Context
 
@@ -236,15 +236,15 @@ next one back rather than follow a fixed calendar.
   once don't count it twice, but without a daily limit; the copies don't count
   as added in Statistics (nor do the earlier occurrences of routines from when they repeated). Picking an earlier
   routine from the name field keeps it a routine. The board shows routines as small chips above the due
-  dates (`RoutineChips`) instead of cards: each is a button that marks it done with one tap (no confirmation even if
-  someone picked it up, since anyone may do a routine), disabled during the pause, quieter once done today and then
-  saying who did it last.
+  dates (`RoutineChips`) instead of cards: tapping one opens a menu (`BottomSheet`, a native modal `<dialog>`) to
+  mark it done (no confirmation even if someone picked it up, since anyone may do a routine; not offered during the
+  pause), edit it, or delete it at once (as swiping a card does). A chip is quieter once done today and then says
+  who did it last.
   Like the due-date groups, the section folds away behind its heading (`?routines=hidden`, remembered on the
   device), which still counts the routines not done today. Celebrating and "Who helped?" follow as for a card; undo
-  is in the completed list as for any task. A search shows routines as ordinary cards, which is how one is found to
-  edit it. We chose an explicit choice over treating every daily task as a routine, because some daily tasks
-  deserve a card, and always available over repeating, because an everyday chore needs doing whenever it does,
-  not on a schedule.
+  is in the completed list as for any task. A search shows routines as ordinary cards. We chose an explicit choice
+  over treating every daily task as a routine, because some daily tasks deserve a card, and always available over
+  repeating, because an everyday chore needs doing whenever it does, not on a schedule.
 - **Always tasks**: parents wanted a child's everyday chores (brushing teeth, making the bed) always on the child's
   Me page without setting due dates or repeats. An adult's shared task for children can be an **always task**
   (`is_always`, "Always" on the child's form, which hides Repeats and Due date; `tasks_always_for_children` keeps it

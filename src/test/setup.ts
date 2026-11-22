@@ -46,6 +46,14 @@ Object.defineProperty(window, 'matchMedia', {
   value: (query: string) => ({ matches: false, media: query }),
 });
 
+// jsdom's <dialog> can't open as a modal; browsers also make the page behind it inert and close it on Escape.
+HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+  this.open = true;
+};
+HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+  this.open = false;
+};
+
 // jsdom doesn't lay pages out, so it has no scrolling; every browser HomeFlow supports does.
 Element.prototype.scrollIntoView = () => undefined;
 
