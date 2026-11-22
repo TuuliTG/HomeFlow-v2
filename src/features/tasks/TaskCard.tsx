@@ -10,6 +10,7 @@ import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskImages } from '@/features/tasks/TaskImages';
 import { TaskPeople } from '@/features/tasks/TaskPeople';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
+import { TaskSwipeToDelete } from '@/features/tasks/TaskSwipeToDelete';
 import { TaskRequestPanel } from '@/features/tasks/TaskRequestPanel';
 import { TaskTags } from '@/features/tasks/TaskTags';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
@@ -51,31 +52,40 @@ export function TaskCard({
       ref={isPanel ? focusWhenOpened : undefined}
       aria-labelledby={titleId}
       tabIndex={isPanel ? -1 : undefined}
-      className="bg-surface shadow-card flex flex-col gap-3 rounded-2xl p-4"
+      className="rounded-2xl"
     >
-      <div className="flex items-start gap-3">
-        <TaskTypeIcon type={task.type} icon={task.icon} />
-        <TaskDetails
-          task={task}
-          currentUserId={currentUserId}
-          titleId={titleId}
-          titleLevel={titleLevel}
-        />
-        <div className="-mt-2 -mr-2 ml-auto flex shrink-0 items-center gap-1">
-          {points !== null && (
-            <span className="bg-points-100 text-points-800 flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-extrabold whitespace-nowrap">
-              <StarIcon className="size-4 fill-current" />
-              {t.common.points(points)}
-            </span>
-          )}
-          <TaskFavouriteStar title={task.title} currentUserId={currentUserId} />
+      <TaskSwipeToDelete
+        task={task}
+        currentUserId={currentUserId}
+        className="shadow-card rounded-2xl"
+        contentClassName="bg-surface flex flex-col gap-3 p-4"
+      >
+        <div className="flex items-start gap-3">
+          <TaskTypeIcon type={task.type} icon={task.icon} />
+          <TaskDetails
+            task={task}
+            currentUserId={currentUserId}
+            titleId={titleId}
+            titleLevel={titleLevel}
+          />
+          <div className="-mt-2 -mr-2 ml-auto flex shrink-0 items-center gap-1">
+            {points !== null && (
+              <span className="bg-points-100 text-points-800 flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-extrabold whitespace-nowrap">
+                <StarIcon className="size-4 fill-current" />
+                {t.common.points(points)}
+              </span>
+            )}
+            <TaskFavouriteStar title={task.title} currentUserId={currentUserId} />
+          </div>
         </div>
-      </div>
-      <TaskImages paths={task.images} title={task.title} currentUserId={currentUserId} />
-      {isToDoBy(task, currentUserId) && <TaskReminder task={task} currentUserId={currentUserId} />}
-      <TaskRequestPanel task={task} currentUserId={currentUserId} />
-      <TaskActions task={task} currentUserId={currentUserId} />
-      {children}
+        <TaskImages paths={task.images} title={task.title} currentUserId={currentUserId} />
+        {isToDoBy(task, currentUserId) && (
+          <TaskReminder task={task} currentUserId={currentUserId} />
+        )}
+        <TaskRequestPanel task={task} currentUserId={currentUserId} />
+        <TaskActions task={task} currentUserId={currentUserId} />
+        {children}
+      </TaskSwipeToDelete>
     </Root>
   );
 }

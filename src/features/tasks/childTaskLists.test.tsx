@@ -141,6 +141,17 @@ describe("a child's tasks", () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
   });
 
+  it("are deleted by swiping one aside on the child's page", async () => {
+    const { anna, ben } = family();
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    const user = userEvent.setup();
+    renderAppAt(`/household/members/${ben.id}`);
+
+    await user.click(await screen.findByRole('button', { name: 'Delete: Make the bed' }));
+
+    expect(await screen.findByText('No tasks yet.')).toBeInTheDocument();
+  });
+
   it("are only a child's of the family", async () => {
     const { anna } = family();
     renderAppAt(`/household/members/${anna.id}`);

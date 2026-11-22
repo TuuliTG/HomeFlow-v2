@@ -305,6 +305,29 @@ test('family member can fix a task and then delete it', async ({ page }) => {
   await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
 });
 
+test('family member can swipe a task card aside to delete it', async ({ page }) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('Vacuum');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  const title = page.getByRole('heading', { name: 'Vacuum' });
+  const box = await title.boundingBox();
+  if (!box) throw new Error('The task card is not on the page.');
+  await page.mouse.move(box.x + box.width, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width - 50, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.move(box.x + box.width - 100, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.up();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations on a swiped task card').toEqual([]);
+  await page.getByRole('button', { name: 'Delete: Vacuum' }).click();
+
+  await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
+});
+
 test('family member can say who helped with a task and give them bonus points', async ({
   page,
 }) => {

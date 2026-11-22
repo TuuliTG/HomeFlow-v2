@@ -167,6 +167,32 @@ describe('deleting a task', () => {
   });
 });
 
+describe('swiping a task card aside', () => {
+  it('shows a delete button that removes the task at once', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await user.click(await screen.findByRole('button', { name: 'Delete: Dust' }));
+
+    expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
+  });
+
+  it('says when the task cannot be deleted', async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });
+    const user = userEvent.setup();
+    renderAppAt('/');
+    const button = await screen.findByRole('button', { name: 'Delete: Dust' });
+    fakeTasksBackend.failRequests();
+
+    await user.click(button);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't delete the task.");
+  });
+});
+
 describe('undoing "Mark done"', () => {
   it('puts a task you just marked done back on the board, without its next occurrence', async () => {
     const anna = logInAsFamilyMember();

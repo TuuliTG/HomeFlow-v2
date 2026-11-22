@@ -94,6 +94,7 @@ export const tasks: Messages['tasks'] = {
     imagesFailed: 'Kuvia ei voitu ladata.',
     edit: 'Muokkaa',
     editLabel: (title) => `Muokkaa: ${title}`,
+    deleteLabel: (title) => `Poista: ${title}`,
     pickUp: 'Varaa',
     putBack: 'Peru varaus',
     markDone: 'Merkitse tehdyksi',
