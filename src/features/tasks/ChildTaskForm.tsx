@@ -1,7 +1,7 @@
 import { type SyntheticEvent, useId, useRef, useState } from 'react';
 
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
-import { childHasTask } from '@/features/tasks/childTasks';
+import { childHasTask, wouldGiveTwice } from '@/features/tasks/childTasks';
 import { useReadyMadeTasks } from '@/features/tasks/readyMadeTasks';
 import type { NewTask } from '@/features/tasks/task';
 import { TaskChildrenField } from '@/features/tasks/TaskChildrenField';
@@ -76,7 +76,7 @@ export function ChildTaskForm({
   );
   const { fields, setFields, change, set } = useTaskFormFields(initialValues);
   const [assignedTo, setAssignedTo] = useState(childId);
-  // The others the household has open: the task being edited doesn't count as the child having it already.
+  // The household's open tasks, except the one being edited.
   const tasks = (useTasks(currentUserId).data ?? []).filter((task) => task.id !== taskId);
   const children = useHouseholdChildren(currentUserId);
   const readyMade = useReadyMadeTasks({
@@ -114,8 +114,7 @@ export function ChildTaskForm({
       fieldRefs[field].current?.focus();
       return;
     }
-    // A child has each task once (ADR 0004).
-    if (childHasTask(tasks, assignedTo, parsed.data.title)) {
+    if (wouldGiveTwice(tasks, parsed.data, initial)) {
       const name = children.find((child) => child.id === assignedTo)?.name ?? t.common.someone;
       setError({ field: 'title', message: t.taskForm.errors.childHasTask(name) });
       fieldRefs.title.current?.focus();

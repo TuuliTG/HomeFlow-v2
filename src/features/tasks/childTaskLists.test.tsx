@@ -288,6 +288,20 @@ describe("a child's tasks", () => {
     expect(tasks.filter((task) => task.assignedTo === dora.id)).toHaveLength(1);
   });
 
+  it('can still be edited when the child has the task twice from before', async () => {
+    const { anna, ben } = family();
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    give(anna.id, ben.id, { title: 'Make the bed' });
+    const user = userEvent.setup();
+    renderAppAt('/tasks/task:0/edit');
+
+    await user.click(await screen.findByRole('radio', { name: 'Custom' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ben' })).toBeInTheDocument();
+    expect(tasks[0]).toMatchObject({ isAlways: false });
+  });
+
   it('copy a name the child has twice only once', async () => {
     const { anna, ben, dora } = family();
     give(anna.id, ben.id, { title: 'Brush teeth' });
