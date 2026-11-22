@@ -1,7 +1,8 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ALWAYS_TASK_PAUSE_MS } from '@/features/tasks/task';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
@@ -42,10 +43,32 @@ describe('routines on the board', () => {
       name: /^Mark done: Empty the dishwasher\s*Done by you$/,
     });
     expect(screen.getByRole('button', { name: /^Routines/ })).toHaveTextContent('0');
+    expect(again).toBeDisabled();
+  });
 
-    await user.click(again);
+  it('can be done again once its short pause is over', async () => {
+    const anna = logInAsFamilyMember();
+    const routineId = fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Empty the dishwasher',
+      type: 'physical',
+      points: 1,
+      isRoutine: true,
+    });
+    fakeTasksBackend.completeTaskAs(anna.id, routineId, '2026-10-08');
+    // The clock stands still here, so a moment more than the pause.
+    fakeTasksBackend.ageCompletions(ALWAYS_TASK_PAUSE_MS + 1000);
+    const user = userEvent.setup();
+    renderAppAt('/');
 
-    expect(fakeTasksBackend.taskCount()).toBe(4);
+    await user.click(
+      await within(await screen.findByRole('region', { name: 'Routines' })).findByRole('button', {
+        name: /^Mark done: Empty the dishwasher/,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(fakeTasksBackend.taskCount()).toBe(3);
+    });
   });
 
   it('shows routines as cards when searching, so they can be found and edited', async () => {

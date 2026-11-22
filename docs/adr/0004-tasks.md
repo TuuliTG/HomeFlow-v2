@@ -226,11 +226,13 @@ next one back rather than follow a fixed calendar.
   A routine is always available, like an always task: the pill hides Already done, Repeats and Due date, and
   `tasks_routine_always_available` keeps an open routine without a repeat or due date (`update_task()` clears it
   when a task gets one; open routines from when they repeated lost their repeat and due date). Marking one done adds
-  a fresh copy at once (`complete_task()`), without an always task's pause or daily limit; the copies don't count
+  a fresh copy at once (`complete_task()`), after an always task's two-minute pause, so a double tap or two people at
+  once don't count it twice, but without a daily limit; the copies don't count
   as added in Statistics (nor do the earlier occurrences of routines from when they repeated). Picking an earlier
   routine from the name field keeps it a routine. The board shows routines as small chips above the due
   dates (`RoutineChips`) instead of cards: each is a button that marks it done with one tap (no confirmation even if
-  someone picked it up, since anyone may do a routine), quieter once done today and then saying who did it last.
+  someone picked it up, since anyone may do a routine), disabled during the pause, quieter once done today and then
+  saying who did it last.
   Like the due-date groups, the section folds away behind its heading (`?routines=hidden`, remembered on the
   device), which still counts the routines not done today. Celebrating and "Who helped?" follow as for a card; undo
   is in the completed list as for any task. A search shows routines as ordinary cards, which is how one is found to

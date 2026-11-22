@@ -86,7 +86,8 @@ end;
 $$;
 
 -- complete_task() as before (20261122120000_always_tasks.sql), and a routine is followed at once by a fresh copy,
--- without an always task's pause or daily limit.
+-- after the same pause as an always task, so a double tap or two people at once don't count it twice, but without a
+-- daily limit.
 create or replace function public.complete_task(task_id uuid, completed_on date)
 returns uuid
 language plpgsql
@@ -110,14 +111,14 @@ begin
   if done.id is null then
     raise exception 'No open task with this id in your household' using errcode = 'P0002';
   end if;
+  -- Keeps the app's ALWAYS_TASK_PAUSE_MS.
+  if (done.is_always or done.is_routine) and exists (
+    select 1 from public.tasks p
+      where p.id = done.previous_task_id and p.completed_at > now() - interval '2 minutes'
+  ) then
+    raise exception 'This task was done a moment ago' using errcode = '55006';
+  end if;
   if done.is_always then
-    -- Keeps the app's ALWAYS_TASK_PAUSE_MS.
-    if exists (
-      select 1 from public.tasks p
-        where p.id = done.previous_task_id and p.completed_at > now() - interval '2 minutes'
-    ) then
-      raise exception 'This task was done a moment ago' using errcode = '55006';
-    end if;
     if done.daily_limit is not null and done.times_done_on = completed_on
       and done.times_done >= done.daily_limit then
       raise exception 'This task has been done as often as it may be today' using errcode = '55006';

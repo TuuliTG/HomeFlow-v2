@@ -444,7 +444,7 @@ test('family member can make a task a routine and mark it done with one tap', as
   await routines.getByRole('button', { name: 'Mark done: Empty the dishwasher' }).click();
   await expect(
     routines.getByRole('button', { name: 'Mark done: Empty the dishwasher Done by you' }),
-  ).toBeEnabled();
+  ).toBeDisabled();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations with routines on the board').toEqual([]);
 });

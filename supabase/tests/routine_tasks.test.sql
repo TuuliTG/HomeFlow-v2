@@ -1,7 +1,7 @@
 -- Routine tasks. Run with `npm run db:test` (needs Docker).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(10);
+select plan(11);
 
 insert into auth.users (id, email) values ('11111111-1111-1111-1111-111111111111', 'anna@example.com');
 
@@ -59,9 +59,20 @@ end
 $$;
 set local role authenticated;
 
+select throws_ok(
+  format('select public.complete_task(%L, current_date)', current_setting('test.next')),
+  '55006', null,
+  'a routine can''t be done again straight away'
+);
+
+reset role;
+update public.tasks set completed_at = now() - interval '3 minutes'
+  where id = current_setting('test.dishes')::uuid;
+set local role authenticated;
+
 select lives_ok(
   format('select public.complete_task(%L, current_date)', current_setting('test.next')),
-  'a routine can be done again straight away'
+  'a routine can be done again after a short pause'
 );
 
 reset role;

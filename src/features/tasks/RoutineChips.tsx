@@ -3,6 +3,7 @@ import { useId } from 'react';
 import { FoldButton } from '@/components/ui/FoldButton';
 import { TaskIcon } from '@/components/ui/TaskIcon';
 import { useFoldedParam } from '@/features/tasks/foldedParam';
+import { useAlwaysTaskState } from '@/features/tasks/useAlwaysTaskState';
 import type { Task } from '@/features/tasks/task';
 import { useCompleteTask } from '@/features/tasks/useTasks';
 import { today, toIsoDate } from '@/lib/dates';
@@ -16,7 +17,8 @@ interface RoutineChipsProps {
 
 /**
  * Everyday chores, like emptying the dishwasher, as small chips instead of cards (ADR 0004). A routine is always
- * available, so each chip is a button that marks it done with one tap; one done today also shows who did it last.
+ * available, so each chip is a button that marks it done with one tap, resting for a moment once done; one done
+ * today also shows who did it last.
  * They fold away behind their heading, which still counts those not done today. Nothing without routines.
  */
 export function RoutineChips({ routines, currentUserId }: RoutineChipsProps) {
@@ -89,10 +91,11 @@ function RoutineChip({
   currentUserId,
   t,
 }: RoutineChipProps) {
+  const isResting = useAlwaysTaskState(routine).kind === 'resting';
   return (
     <button
       type="button"
-      disabled={disabled}
+      disabled={disabled || isResting}
       onClick={onDone}
       className={`hover:bg-brand-50 flex min-h-11 max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm disabled:opacity-60 ${isDoneToday ? 'border-line bg-page text-ink-muted' : 'border-brand-600 bg-surface text-ink font-semibold'}`}
     >
