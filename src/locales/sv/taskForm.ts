@@ -166,6 +166,7 @@ export const taskForm: Messages['taskForm'] = {
     onlySharedHavePoints: 'Bara gemensamma uppgifter har poäng.',
     checkDetails: 'Kontrollera uppgiftens detaljer.',
     childRequired: 'Välj ett barn.',
+    childHasTask: (name) => `${name} har den här uppgiften redan.`,
     saveFailed: 'Det gick inte att spara uppgiften. Försök igen.',
   },
   reminder: {

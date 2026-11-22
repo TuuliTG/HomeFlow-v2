@@ -165,6 +165,7 @@ export const taskForm: Messages['taskForm'] = {
     onlySharedHavePoints: 'Vain yhteisillä tehtävillä on pisteitä.',
     checkDetails: 'Tarkista tehtävän tiedot.',
     childRequired: 'Valitse lapsi.',
+    childHasTask: (name) => `${name} on jo saanut tämän tehtävän.`,
     saveFailed: 'Tehtävää ei voitu tallentaa. Yritä uudelleen.',
   },
   reminder: {

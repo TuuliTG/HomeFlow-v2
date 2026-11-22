@@ -98,6 +98,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
       {isChildrensTask(task, isChild) ? (
         <ChildTaskForm
           initial={task}
+          taskId={task.id}
           initialImages={imagesBefore}
           childId={task.assignedTo}
           currentUserId={userId}

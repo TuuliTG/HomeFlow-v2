@@ -178,6 +178,7 @@ export const taskForm = {
     onlySharedHavePoints: 'Only shared tasks have points.',
     checkDetails: 'Check the task details.',
     childRequired: 'Choose a child.',
+    childHasTask: (name: string) => `${name} has this task already.`,
     saveFailed: "We couldn't save the task. Try again.",
   },
   reminder: {

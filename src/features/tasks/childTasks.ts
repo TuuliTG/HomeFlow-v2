@@ -77,3 +77,10 @@ export function tasksToCopy(tasks: Task[], fromChildId: string, toChildId: strin
     return true;
   });
 }
+
+/** Whether the child has a task under this name among `tasks`: a child has each task once (ADR 0004). */
+export function childHasTask(tasks: Task[], childId: string, title: string): boolean {
+  return tasks.some(
+    (task) => task.assignedTo === childId && titleKey(task.title) === titleKey(title),
+  );
+}
