@@ -5,6 +5,7 @@ import { paths } from '@/app/paths';
 import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ChildTaskForm } from '@/features/tasks/ChildTaskForm';
+import { useDefaultPoints } from '@/features/tasks/defaultPoints';
 import { canChange, type NewTask, type Task } from '@/features/tasks/task';
 import { TaskForm } from '@/features/tasks/TaskForm';
 import { type DraftImage, isImagesNotSavedState } from '@/features/tasks/taskImages';
@@ -81,6 +82,8 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
   const [imagesBefore] = useState(task.images);
   const navigate = useNavigate();
   const returnTo = useReturnTo();
+  // What a private task made shared starts with.
+  const [defaultPoints] = useDefaultPoints(userId);
   const t = useMessages();
 
   async function save(changed: NewTask, images: DraftImage[]) {
@@ -113,6 +116,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
           initialImages={imagesBefore}
           isChild={isChild}
           currentUserId={userId}
+          defaultPoints={defaultPoints}
           submitLabel={t.taskForm.edit.submit}
           isSaving={updateTask.isPending}
           onSave={save}

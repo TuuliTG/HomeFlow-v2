@@ -577,6 +577,7 @@ export async function fakeSupabase(page: Page) {
       task_is_routine: boolean;
       task_is_always: boolean;
       task_daily_limit: number | null;
+      task_is_private: boolean | null;
     };
     const task = ownOpenTask(body.task_id);
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
@@ -594,6 +595,8 @@ export async function fakeSupabase(page: Page) {
       is_routine: body.task_is_routine,
       is_always: body.task_is_always,
       daily_limit: body.task_daily_limit,
+      // A private task can be made shared, a shared one not private.
+      is_private: task.is_private && body.task_is_private !== false,
       ...(body.task_assigned_to !== task.assigned_to && { picked_up_by: body.task_assigned_to }),
     });
     return reply(route, 204);

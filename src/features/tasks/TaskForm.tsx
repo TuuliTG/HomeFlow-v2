@@ -66,6 +66,11 @@ function offeredSuggestions(suggestions: TaskSuggestion[], isChild: boolean): Ta
   return isChild ? suggestions : suggestions.filter((task) => !task.forChildren);
 }
 
+/** A new task can be made private, and a private one shared; a shared task can't be made private. */
+function canBePrivate(initial: NewTask | undefined): boolean {
+  return !initial || initial.isPrivate;
+}
+
 /**
  * The fields of a task, validated with `newTaskSchema`, for creating or editing one. An adult adding a task for the
  * children picks a child instead, whose own form then opens (`ChildPicker`, ADR 0004).
@@ -164,6 +169,7 @@ export function TaskForm({
     >
       <TaskAudienceFields
         isNew={!initial}
+        canBePrivate={canBePrivate(initial)}
         isChild={isChild}
         isPrivate={isPrivate}
         onPrivateChange={set('isPrivate')}

@@ -64,6 +64,42 @@ describe('private tasks', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'My tasks' })).toBeInTheDocument();
   });
 
+  it('can be made shared when edited, earning points', async () => {
+    const anna = logInAsFamilyMember();
+    addBen();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Buy a present',
+      type: 'meta',
+      points: null,
+      isPrivate: true,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Buy a present' }));
+    const privateButton = await screen.findByRole('button', { name: 'Private' });
+    expect(privateButton).toHaveAttribute('aria-pressed', 'true');
+    await user.click(privateButton);
+    await user.clear(screen.getByLabelText('Points'));
+    await user.type(screen.getByLabelText('Points'), '4');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    const task = await screen.findByRole('listitem', { name: 'Buy a present' });
+    expect(within(task).queryByText('Private')).not.toBeInTheDocument();
+    expect(within(task).getByText(/4 points/)).toBeInTheDocument();
+  });
+
+  it("can't be made from a shared task when edited", async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
+    const user = userEvent.setup();
+    renderAppAt('/');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Vacuum' }));
+    await screen.findByLabelText('Task');
+    expect(screen.queryByRole('button', { name: 'Private' })).not.toBeInTheDocument();
+  });
+
   it('can be added from the Me page', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();

@@ -6,8 +6,9 @@ import { useHouseholdChildren } from '@/features/tasks/useHelpers';
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface TaskAudienceFieldsProps {
-  /** Only a new task can be made private. */
   isNew: boolean;
+  /** A new task can be made private, and a private one shared; a shared task can't be made private. */
+  canBePrivate: boolean;
   /** A child's tasks are always for children, so they are only asked whether to keep one private. */
   isChild: boolean;
   isPrivate: boolean;
@@ -23,11 +24,13 @@ interface TaskAudienceFieldsProps {
  * Who the task is for, at the top of the form: a new task can be made private first, which leaves nothing
  * more to choose; otherwise an adult in a family with children chooses the adults or the children (ADR 0004; not
  * when editing),
- * and a task for the children can't be private. A private task being edited stays the creator's. Beside "Private",
- * an adults' shared task can be made a routine, which is always available.
+ * and a task for the children can't be private. A private task being edited can be made shared, with the family
+ * it was for: an adult's with the adults, a child's as their own chore. Beside "Private", an adults' shared task can
+ * be made a routine, which is always available.
  */
 export function TaskAudienceFields({
   isNew,
+  canBePrivate,
   isChild,
   isPrivate,
   onPrivateChange,
@@ -38,9 +41,9 @@ export function TaskAudienceFields({
 }: TaskAudienceFieldsProps) {
   const t = useMessages().taskForm;
   const hasChildren = useHouseholdChildren(currentUserId).length > 0;
-  const toggles = (isNew || routine.offered) && (
+  const toggles = (canBePrivate || routine.offered) && (
     <div className="flex flex-wrap gap-2">
-      {isNew && (
+      {canBePrivate && (
         <TogglePill
           pressed={isPrivate}
           onChange={onPrivateChange}

@@ -183,8 +183,8 @@ export async function putBackTask(taskId: string): Promise<void> {
 }
 
 /**
- * Replaces an open task's details. Any member of the household can edit a shared task they see; whether
- * it is private stays as it was when it was added. Only adults can make a task adults-only or give it to a
+ * Replaces an open task's details. Any member of the household can edit a shared task they see; whoever added a
+ * private task can make it shared, but a shared task stays shared. Only adults can make a task adults-only or give it to a
  * child; a child's edit keeps whose chore it is.
  */
 export async function updateTask(
@@ -204,6 +204,7 @@ export async function updateTask(
     isRoutine,
     isAlways,
     dailyLimit,
+    isPrivate,
   }: NewTask,
 ): Promise<void> {
   const { error } = await getSupabaseClient().rpc('update_task', {
@@ -224,6 +225,7 @@ export async function updateTask(
     task_is_routine: isRoutine,
     task_is_always: isAlways,
     task_daily_limit: dailyLimit,
+    task_is_private: isPrivate,
   });
   if (error) throw error;
 }

@@ -202,12 +202,17 @@ function pickerAfterEdit(task: StoredTask, details: NewTask): string | null {
 }
 
 /**
- * Like update_task(): a child's edit keeps whose chore it is, and a task made adults-only is no longer given to a
- * child.
+ * Like update_task(): a child's edit keeps whose chore it is, or makes their private task theirs when making it shared,
+ * and a task made adults-only is no longer given to a child.
  */
 function assigneeAfterEdit(task: StoredTask, details: NewTask, isChild: boolean): string | null {
-  if (isChild) return task.assignedTo;
+  if (isChild) return task.assignedTo ?? (privacyAfterEdit(task, details) ? null : task.createdBy);
   return details.forChildren ? details.assignedTo : null;
+}
+
+/** Like update_task(): a private task can be made shared, but a shared task can't be made private. */
+function privacyAfterEdit(task: StoredTask, details: NewTask): boolean {
+  return task.isPrivate && details.isPrivate;
 }
 
 export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
@@ -227,6 +232,7 @@ export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
     }
     Object.assign(task, {
       ...details,
+      isPrivate: privacyAfterEdit(task, details),
       // Like update_task(): a child's edit sends their task back to waiting for points.
       points: isChild ? null : details.points,
       assignedTo,
