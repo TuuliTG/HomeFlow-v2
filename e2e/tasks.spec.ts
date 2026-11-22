@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import {
   EXISTING_HOUSEHOLD,
@@ -47,6 +47,18 @@ test('family member can create a task and see it on the shared task board', asyn
   await expect(page.getByRole('listitem', { name: 'Water plants' })).toBeVisible();
 });
 
+/** Drags `target` left with the mouse, as a finger swipes a card aside. */
+async function swipeLeft(page: Page, target: Locator) {
+  const box = await target.boundingBox();
+  if (!box) throw new Error('The task card is not on the page.');
+  const y = box.y + box.height / 2;
+  await page.mouse.move(box.x + box.width - 10, y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width - 60, y, { steps: 5 });
+  await page.mouse.move(box.x + box.width - 110, y, { steps: 5 });
+  await page.mouse.up();
+}
+
 test("family member can add a task for a child, kept on the child's page", async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
@@ -77,6 +89,12 @@ test("family member can add a task for a child, kept on the child's page", async
   await page.getByRole('link', { name: 'Shared tasks' }).click();
   await expect(page.getByText('No tasks yet. Create the first one!')).toBeVisible();
   await expect(page.getByText('Feed the cat')).toBeHidden();
+
+  // On Ben's page, the task's row slides aside to delete it.
+  await page.goBack();
+  await swipeLeft(page, page.getByRole('link', { name: /Feed the cat/ }));
+  await page.getByRole('button', { name: 'Delete: Feed the cat' }).click();
+  await expect(page.getByText('No tasks yet.')).toBeVisible();
 });
 
 test('family member can attach a picture to a task and see it on the board', async ({ page }) => {
@@ -313,14 +331,7 @@ test('family member can swipe a task card aside to delete it', async ({ page }) 
   await page.getByLabel('Task', { exact: true }).fill('Vacuum');
   await page.getByRole('button', { name: 'Create task' }).click();
 
-  const title = page.getByRole('heading', { name: 'Vacuum' });
-  const box = await title.boundingBox();
-  if (!box) throw new Error('The task card is not on the page.');
-  await page.mouse.move(box.x + box.width, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(box.x + box.width - 50, box.y + box.height / 2, { steps: 5 });
-  await page.mouse.move(box.x + box.width - 100, box.y + box.height / 2, { steps: 5 });
-  await page.mouse.up();
+  await swipeLeft(page, page.getByRole('heading', { name: 'Vacuum' }));
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations on a swiped task card').toEqual([]);
   await page.getByRole('button', { name: 'Delete: Vacuum' }).click();

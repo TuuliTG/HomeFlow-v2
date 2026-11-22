@@ -1,4 +1,5 @@
 import {
+  type MouseEvent,
   type PointerEvent,
   type ReactNode,
   type RefObject,
@@ -14,7 +15,11 @@ const OPEN_OFFSET = 80;
 /** How far a finger moves before it counts as a swipe or a scroll, in pixels. */
 const SLOP = 8;
 
+/** What the content's first control after a delete is found by. */
+const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea';
+
 interface Drag {
+  pointerId: number;
   startX: number;
   startY: number;
   /** Where the content was when the drag started. */
@@ -26,7 +31,8 @@ interface Drag {
 interface SwipeToDeleteProps {
   /** The delete button's accessible name, e.g. "Delete: Make the bed". */
   label: string;
-  onDelete: () => void;
+  /** Deletes; resolves once the content is gone, rejects when deleting fails. */
+  onDelete: () => Promise<void>;
   disabled: boolean;
   /** The frame's shape and shadow, e.g. `rounded-2xl shadow-card`; it clips the content to it. */
   className: string;
@@ -38,7 +44,7 @@ interface SwipeToDeleteProps {
 /**
  * Content that slides left when swiped to show a delete button behind it. Tapping the content or anywhere else
  * slides it back. The button is in the tab order, and focusing it slides the content open, so it can be reached
- * without swiping.
+ * without swiping; deleting with the keyboard moves focus to the next item of the list it is in (or the one before).
  */
 export function SwipeToDelete({
   label,
@@ -56,16 +62,25 @@ export function SwipeToDelete({
   const frameRef = useRef<HTMLDivElement>(null);
   const isOpen = offset !== 0;
   useCloseOnOutsidePointer(frameRef, isOpen, setOffset);
+  useNoDragAndDrop(frameRef);
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
     justSwiped.current = false;
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    drag.current = { startX: event.clientX, startY: event.clientY, from: offset, direction: null };
+    if (drag.current || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    // Dragging in a field selects its text, not the content.
+    if (event.target instanceof Element && event.target.closest('input, textarea, select')) return;
+    drag.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      from: offset,
+      direction: null,
+    };
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
     const current = drag.current;
-    if (!current) return;
+    if (current?.pointerId !== event.pointerId) return;
     const dx = event.clientX - current.startX;
     const dy = event.clientY - current.startY;
     if (current.direction === null) {
@@ -81,14 +96,44 @@ export function SwipeToDelete({
     if (current.direction === 'sideways') setOffset(slid(current.from + dx));
   }
 
-  function handlePointerEnd(event: PointerEvent<HTMLDivElement>) {
+  /** Ends the drag by `event`'s pointer, if it is the one dragging; returns it if it was a swipe. */
+  function endDrag(event: PointerEvent<HTMLDivElement>): Drag | null {
     const current = drag.current;
+    if (current?.pointerId !== event.pointerId) return null;
     drag.current = null;
-    if (current?.direction !== 'sideways') return;
-    justSwiped.current = true;
+    if (current.direction !== 'sideways') return null;
     setIsDragging(false);
-    const at = slid(current.from + event.clientX - current.startX);
+    return current;
+  }
+
+  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
+    const swipe = endDrag(event);
+    if (!swipe) return;
+    // A touch swipe usually ends without a click, so the next click isn't the one ending it.
+    justSwiped.current = true;
+    setTimeout(() => {
+      justSwiped.current = false;
+    });
+    const at = slid(swipe.from + event.clientX - swipe.startX);
     setOffset(at < -OPEN_OFFSET / 2 ? -OPEN_OFFSET : 0);
+  }
+
+  function handlePointerCancel(event: PointerEvent<HTMLDivElement>) {
+    // A cancelled pointer has no reliable position: back to where the swipe started.
+    const swipe = endDrag(event);
+    if (swipe) setOffset(swipe.from);
+  }
+
+  function handleDelete(event: MouseEvent<HTMLButtonElement>) {
+    const byKeyboard = event.detail === 0;
+    const item = frameRef.current?.closest('li');
+    const next = item?.nextElementSibling ?? item?.previousElementSibling;
+    onDelete().then(
+      () => {
+        if (byKeyboard) next?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+      },
+      () => undefined,
+    );
   }
 
   return (
@@ -96,18 +141,18 @@ export function SwipeToDelete({
       <div
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerEnd}
-        onPointerCancel={handlePointerEnd}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         onClickCapture={(event) => {
           // The click ending a swipe, or a tap while open, which closes it, doesn't reach the content.
           if (!justSwiped.current && !isOpen) return;
           event.preventDefault();
           event.stopPropagation();
-          if (justSwiped.current) justSwiped.current = false;
-          else setOffset(0);
+          if (!justSwiped.current) setOffset(0);
+          justSwiped.current = false;
         }}
         style={{ transform: `translateX(${String(offset)}px)` }}
-        className={`relative z-10 touch-pan-y ${isDragging ? 'select-none' : 'transition-transform'} ${contentClassName}`}
+        className={`relative z-10 touch-pan-y ${isDragging ? 'select-none' : 'motion-safe:transition-transform'} ${contentClassName}`}
       >
         {children}
       </div>
@@ -115,7 +160,7 @@ export function SwipeToDelete({
         type="button"
         aria-label={label}
         disabled={disabled}
-        onClick={onDelete}
+        onClick={handleDelete}
         onFocus={() => {
           setOffset(-OPEN_OFFSET);
         }}
@@ -124,7 +169,7 @@ export function SwipeToDelete({
         }}
         style={{ width: OPEN_OFFSET }}
         // Hidden while closed, so it doesn't show at the content's rounded corners; still focusable, which opens it.
-        className={`bg-danger-700 absolute inset-y-0 right-0 flex items-center justify-center text-white disabled:opacity-60 ${isOpen ? '' : 'opacity-0'}`}
+        className={`bg-danger-700 focus-visible:outline-surface absolute inset-y-0 right-0 flex items-center justify-center text-white focus-visible:outline-2 focus-visible:-outline-offset-4 disabled:opacity-60 ${isOpen ? '' : 'opacity-0'}`}
       >
         <TrashIcon className="size-6" />
       </button>
@@ -153,4 +198,18 @@ function useCloseOnOutsidePointer(
       document.removeEventListener('pointerdown', handle);
     };
   }, [ref, isOpen, setOffset]);
+}
+
+/** Stops a link or picture in `ref` from starting the browser's own drag and drop, which would end a swipe. */
+function useNoDragAndDrop(ref: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const element = ref.current;
+    function prevent(event: DragEvent) {
+      event.preventDefault();
+    }
+    element?.addEventListener('dragstart', prevent);
+    return () => {
+      element?.removeEventListener('dragstart', prevent);
+    };
+  }, [ref]);
 }

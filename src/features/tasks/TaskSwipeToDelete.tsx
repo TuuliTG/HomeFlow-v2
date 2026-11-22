@@ -38,9 +38,8 @@ export function TaskSwipeToDelete({
       <SwipeToDelete
         label={tasks.card.deleteLabel(task.title)}
         disabled={deleteTask.isPending}
-        onDelete={() => {
-          deleteTask.mutate(task);
-        }}
+        // A failure shows through isError.
+        onDelete={() => deleteTask.mutateAsync(task)}
         className={className}
         contentClassName={contentClassName}
       >
