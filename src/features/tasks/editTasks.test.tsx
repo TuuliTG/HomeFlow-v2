@@ -126,6 +126,24 @@ describe('deleting a task', () => {
     expect(await screen.findByText('No tasks yet. Create the first one!')).toBeInTheDocument();
   });
 
+  it("doesn't speak of the household for a private task", async () => {
+    const anna = logInAsFamilyMember();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Dentist',
+      type: 'meta',
+      points: null,
+      isPrivate: true,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/tasks/task:0/edit');
+
+    await user.click(await screen.findByRole('button', { name: 'Delete task' }));
+
+    expect(screen.getByRole('region', { name: 'Delete task' })).toHaveTextContent(
+      "Delete “Dentist”? This can't be undone.",
+    );
+  });
+
   it('can be called off', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Dust', type: 'physical', points: 2 });

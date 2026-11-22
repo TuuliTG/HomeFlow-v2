@@ -135,6 +135,9 @@ describe("a child's tasks", () => {
 
     await user.click(await screen.findByRole('link', { name: /Make the bed/ }));
     await user.click(await screen.findByRole('button', { name: 'Delete task' }));
+    expect(screen.getByRole('region', { name: 'Delete task' })).toHaveTextContent(
+      "Delete “Make the bed” from Ben's tasks?",
+    );
     await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
 
     expect(await screen.findByText('No tasks yet.')).toBeInTheDocument();
