@@ -595,8 +595,10 @@ export async function fakeSupabase(page: Page) {
       is_routine: body.task_is_routine,
       is_always: body.task_is_always,
       daily_limit: body.task_daily_limit,
-      // A private task can be made shared, a shared one not private.
+      // A private task can be made shared, a shared one not private. (Only adults log in here.)
       is_private: task.is_private && body.task_is_private !== false,
+      ...(task.is_private &&
+        body.task_is_private === false && { for_children: false, assigned_to: null }),
       ...(body.task_assigned_to !== task.assigned_to && { picked_up_by: body.task_assigned_to }),
     });
     return reply(route, 204);

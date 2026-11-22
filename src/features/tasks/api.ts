@@ -184,8 +184,8 @@ export async function putBackTask(taskId: string): Promise<void> {
 
 /**
  * Replaces an open task's details. Any member of the household can edit a shared task they see; whoever added a
- * private task can make it shared, but a shared task stays shared. Only adults can make a task adults-only or give it to a
- * child; a child's edit keeps whose chore it is.
+ * private task can make it shared (a child only while they may add tasks), but a shared task stays shared. Only
+ * adults can make a task adults-only or give it to a child; a child's edit keeps whose chore it is.
  */
 export async function updateTask(
   taskId: string,

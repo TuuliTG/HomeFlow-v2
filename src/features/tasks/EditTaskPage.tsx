@@ -77,7 +77,8 @@ function ImagesNotSavedNotice() {
 
 function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChild: boolean }) {
   const updateTask = useUpdateTask(userId);
-  const householdId = useMembership(userId).data?.householdId ?? '';
+  const membership = useMembership(userId).data;
+  const householdId = membership?.householdId ?? '';
   // The pictures the form opened with: live updates may change the task's meanwhile.
   const [imagesBefore] = useState(task.images);
   const navigate = useNavigate();
@@ -115,6 +116,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
           initial={task}
           initialImages={imagesBefore}
           isChild={isChild}
+          canShare={membership?.canAddTasks === true}
           currentUserId={userId}
           defaultPoints={defaultPoints}
           submitLabel={t.taskForm.edit.submit}

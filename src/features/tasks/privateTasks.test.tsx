@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
-import { fakeTasksBackend } from '@/test/fakeTasksBackend';
+import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
@@ -87,6 +87,27 @@ describe('private tasks', () => {
     const task = await screen.findByRole('listitem', { name: 'Buy a present' });
     expect(within(task).queryByText('Private')).not.toBeInTheDocument();
     expect(within(task).getByText(/4 points/)).toBeInTheDocument();
+  });
+
+  it("become the adults' when an adult shares one added while they were a child", async () => {
+    const anna = logInAsFamilyMember();
+    addChildToFamily();
+    fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Sort my photos',
+      type: 'physical',
+      points: null,
+      forChildren: true,
+      isPrivate: true,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Sort my photos' }));
+    await user.click(await screen.findByRole('button', { name: 'Private' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByRole('listitem', { name: 'Sort my photos' })).toBeInTheDocument();
+    expect(tasks.at(-1)).toMatchObject({ isPrivate: false, forChildren: false, assignedTo: null });
   });
 
   it("can't be made from a shared task when edited", async () => {

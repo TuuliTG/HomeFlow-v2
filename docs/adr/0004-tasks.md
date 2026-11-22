@@ -22,8 +22,10 @@ next one back rather than follow a fixed calendar.
 - **Private tasks**: `is_private` (chosen when adding; the next occurrence keeps it). Its creator can make an open
   private task shared by un-pressing "Private" when editing it (`update_task()`'s `task_is_private`), but a shared
   task is never made private, as others may have seen it. An adult's becomes an adults' shared task with the points
-  they pick; a child's becomes their own chore, given to them and waiting for an adult's points. Its done
-  occurrences stay private, and making it shared notifies no one (an update, ADR 0005). The select
+  they pick, open to anyone, so their reminder and plan for it go unless they picked it up; a child's becomes their
+  own chore, given to them and waiting for an adult's points, and only while they may add tasks (`can_add_tasks`). Its
+  done occurrences stay private, undoing the one before can't hide it again (`undo_complete_task()` refuses), and
+  making it shared notifies no one (an update, ADR 0005). The select
   policy shows a private task only to its creator, so the board and live updates hide it from
   the others, and every security definer function that acts on any open task skips other members' private ones.
   A private task is the creator's own to do: it is listed only in their My tasks (Me page), without picking it up,

@@ -182,6 +182,7 @@ describe('tasks for children', () => {
 
   it("become the child's own chore when a child makes their private task shared", async () => {
     const ben = logInAsChild();
+    fakeHouseholdBackend.setCanAddTasks(ben.id, true);
     fakeTasksBackend.addTaskAs(ben.id, {
       title: 'Tidy my desk',
       type: 'physical',
@@ -204,5 +205,22 @@ describe('tasks for children', () => {
       assignedTo: ben.id,
       pickedUpBy: ben.id,
     });
+  });
+
+  it("can't be made from a child's private task once the child may no longer add tasks", async () => {
+    const ben = logInAsChild();
+    fakeTasksBackend.addTaskAs(ben.id, {
+      title: 'Tidy my desk',
+      type: 'physical',
+      points: null,
+      forChildren: true,
+      isPrivate: true,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('link', { name: 'Edit: Tidy my desk' }));
+    await screen.findByLabelText('Task');
+    expect(screen.queryByRole('button', { name: 'Private' })).not.toBeInTheDocument();
   });
 });

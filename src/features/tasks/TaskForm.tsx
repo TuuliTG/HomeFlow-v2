@@ -49,6 +49,8 @@ interface TaskFormProps {
   defaultPoints?: number;
   /** A child's tasks are always for children, and an adult awards their points, so they aren't asked. */
   isChild: boolean;
+  /** Whether a private task being edited can be made shared (by default): a child's only while they may add tasks. */
+  canShare?: boolean;
   currentUserId: string;
   submitLabel: string;
   isSaving: boolean;
@@ -66,9 +68,11 @@ function offeredSuggestions(suggestions: TaskSuggestion[], isChild: boolean): Ta
   return isChild ? suggestions : suggestions.filter((task) => !task.forChildren);
 }
 
-/** A new task can be made private, and a private one shared; a shared task can't be made private. */
-function canBePrivate(initial: NewTask | undefined): boolean {
-  return !initial || initial.isPrivate;
+/**
+ * A new task can be made private, and a private one shared (`canShare`); a shared task can't be made private.
+ */
+function canBePrivate(initial: NewTask | undefined, canShare: boolean | undefined): boolean {
+  return !initial || (initial.isPrivate && canShare !== false);
 }
 
 /**
@@ -83,6 +87,7 @@ export function TaskForm({
   favourites,
   defaultPoints,
   isChild,
+  canShare,
   currentUserId,
   submitLabel,
   isSaving,
@@ -169,7 +174,7 @@ export function TaskForm({
     >
       <TaskAudienceFields
         isNew={!initial}
-        canBePrivate={canBePrivate(initial)}
+        canBePrivate={canBePrivate(initial, canShare)}
         isChild={isChild}
         isPrivate={isPrivate}
         onPrivateChange={set('isPrivate')}
