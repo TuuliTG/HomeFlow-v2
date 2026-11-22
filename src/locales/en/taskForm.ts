@@ -27,7 +27,6 @@ export const taskForm = {
   removeFavouriteLabel: (title: string) => `Remove from favourites: ${title}`,
   /** Everyday chores offered on the New task form for adults or for children (`readyMadeTasks`). */
   readyMade: {
-    heading: 'Ready-made tasks',
     titles: {
       emptyDishwasher: 'Empty the dishwasher',
       takeOutRubbish: 'Take out the rubbish',

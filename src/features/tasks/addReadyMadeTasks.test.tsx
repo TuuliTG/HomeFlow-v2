@@ -3,22 +3,30 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
-import { fakeFavouritesBackend } from '@/test/fakeFavouritesApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeTasksBackend, tasks } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { addChildToFamily, logInAsFamilyMember } from '@/test/session';
 
-/** Opens the ready-made tasks, folded away on the New task form. */
-async function openReadyMade(user: ReturnType<typeof userEvent.setup>) {
-  const toggle = await screen.findByRole('button', { name: /^Ready-made tasks/ });
-  if (toggle.getAttribute('aria-expanded') === 'false') await user.click(toggle);
+/** Opens the list of tasks to start from, by tapping the empty name field. */
+async function openSuggestions(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByLabelText('Task'));
 }
 
-/** Whether the opened ready-made tasks offer one named `title`. */
+/** The task named `title` in the opened list, if it is offered. */
+function offered(title: string) {
+  const list = screen.getByRole('listbox', { name: 'Suggested tasks' });
+  return within(list).queryByRole('option', { name: new RegExp(`^${title}`) });
+}
+
 function isOffered(title: string) {
-  const list = screen.getByRole('region', { name: 'Ready-made tasks' });
-  return within(list).queryByRole('button', { name: title }) !== null;
+  return offered(title) !== null;
+}
+
+async function pick(user: ReturnType<typeof userEvent.setup>, title: string) {
+  const option = offered(title);
+  if (!option) throw new Error(`${title} isn't offered`);
+  await user.click(option);
 }
 
 describe('ready-made tasks', () => {
@@ -27,11 +35,11 @@ describe('ready-made tasks', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await openReadyMade(user);
+    await openSuggestions(user);
     expect(isOffered('Empty the dishwasher')).toBe(true);
     expect(isOffered('Walk the dog')).toBe(true);
     expect(isOffered('Tidy your room')).toBe(false);
-    await user.click(screen.getByRole('button', { name: 'Empty the dishwasher' }));
+    await pick(user, 'Empty the dishwasher');
 
     expect(screen.getByLabelText('Task')).toHaveValue('Empty the dishwasher');
     expect(screen.getByLabelText('Points')).toHaveValue(3);
@@ -53,12 +61,12 @@ describe('ready-made tasks', () => {
     const user = userEvent.setup();
     renderAppAt(`/household/members/${ben.id}/new-task`);
 
-    await openReadyMade(user);
+    await openSuggestions(user);
     expect(isOffered('Tidy your room')).toBe(true);
     expect(isOffered('Cook dinner')).toBe(false);
     expect(isOffered('Help cook dinner')).toBe(true);
     expect(isOffered('Mop the floors')).toBe(false);
-    await user.click(screen.getByRole('button', { name: 'Tidy your room' }));
+    await pick(user, 'Tidy your room');
 
     expect(screen.getByLabelText('Task')).toHaveValue('Tidy your room');
     expect(screen.getByRole('radio', { name: '1 star' })).toBeChecked();
@@ -71,8 +79,8 @@ describe('ready-made tasks', () => {
     renderAppAt(`/household/members/${ben.id}/new-task`);
 
     await user.type(await screen.findByLabelText('Description (optional)'), 'Before Saturday');
-    await openReadyMade(user);
-    await user.click(screen.getByRole('button', { name: 'Make your bed' }));
+    await openSuggestions(user);
+    await pick(user, 'Make your bed');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     await waitFor(() => {
@@ -98,7 +106,7 @@ describe('ready-made tasks', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await openReadyMade(user);
+    await openSuggestions(user);
     expect(isOffered('Make your bed')).toBe(true);
     expect(isOffered('Cook dinner')).toBe(false);
   });
@@ -129,31 +137,21 @@ describe('ready-made tasks', () => {
     ]);
     await user.clear(name);
     await user.type(name, 'bath');
-    expect(suggestions()).toEqual(['Clean the bathroom3 points']);
+    expect(suggestions()).toEqual(['🛁Clean the bathroom3 points']);
   });
 
-  it('leaves out a ready-made task the household has starred, as it is among the favourites', async () => {
+  it('lists the most often added earlier tasks before the ready-made ones, before a name is typed', async () => {
     const anna = logInAsFamilyMember();
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 2 });
-    fakeFavouritesBackend.setFavouriteAs(anna.id, 'vacuum', true);
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await screen.findByRole('button', { name: /^Favourites/ });
-    await openReadyMade(user);
-    expect(isOffered('Vacuum')).toBe(false);
-    expect(isOffered('Do the laundry')).toBe(true);
-  });
-
-  it('keeps offering a starred ready-made task the household has never added', async () => {
-    const anna = logInAsFamilyMember();
-    fakeFavouritesBackend.setFavouriteAs(anna.id, 'vacuum', true);
-    const user = userEvent.setup();
-    renderAppAt('/tasks/new');
-
-    await screen.findByRole('button', { name: /^Favourites/ });
-    await openReadyMade(user);
-    expect(isOffered('Vacuum')).toBe(true);
+    await openSuggestions(user);
+    const options = screen.getAllByRole('option').map((option) => option.textContent);
+    expect(options[0]).toBe('VacuumOn the board · 2 points');
+    // The household's own "Vacuum" stands in for the ready-made one.
+    expect(options.filter((option) => option.includes('Vacuum'))).toHaveLength(1);
+    expect(options[1]).toBe('🍽️Empty the dishwasher3 points');
   });
 
   it('starts new tasks with the default points chosen in the settings', async () => {
@@ -169,8 +167,8 @@ describe('ready-made tasks', () => {
     await user.click(await screen.findByRole('link', { name: 'New task' }));
 
     expect(await screen.findByLabelText('Points')).toHaveValue(5);
-    await openReadyMade(user);
-    await user.click(screen.getByRole('button', { name: 'Vacuum' }));
+    await openSuggestions(user);
+    await pick(user, 'Vacuum');
     expect(screen.getByLabelText('Points')).toHaveValue(5);
   });
 
@@ -184,5 +182,41 @@ describe('ready-made tasks', () => {
     expect(
       screen.queryByRole('combobox', { name: 'Default points for tasks' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('opens the list with the down arrow, to pick with the keys', async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    (await screen.findByLabelText('Task')).focus();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+
+    expect(screen.getByLabelText('Task')).toHaveValue('Empty the dishwasher');
+  });
+
+  it("doesn't cover the form with the list when a name is left out", async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.click(await screen.findByRole('button', { name: 'Create task' }));
+
+    expect(screen.getByLabelText('Task')).toHaveFocus();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('opens the list again with nothing highlighted, so Enter saves rather than picks', async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    const name = await screen.findByLabelText('Task');
+    await user.click(name);
+    await user.keyboard('{ArrowDown}{Escape}');
+    await user.click(name);
+
+    expect(name).not.toHaveAttribute('aria-activedescendant');
   });
 });

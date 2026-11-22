@@ -26,7 +26,6 @@ export const taskForm: Messages['taskForm'] = {
   removeFavourite: 'Poista suosikeista',
   removeFavouriteLabel: (title) => `Poista suosikeista: ${title}`,
   readyMade: {
-    heading: 'Valmiit tehtävät',
     titles: {
       emptyDishwasher: 'Tyhjennä astianpesukone',
       takeOutRubbish: 'Vie roskat',

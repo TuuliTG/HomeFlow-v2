@@ -1,3 +1,4 @@
+import { MATCHING_SUGGESTIONS_LIMIT, matchingSuggestions } from '@/features/tasks/suggestions';
 import {
   DEFAULT_POINTS,
   NEW_TASK_DEFAULTS,
@@ -121,13 +122,17 @@ export function useReadyMadeTasks({
 }
 
 /**
- * What the name field lists while typing: the household's earlier tasks, then the ready-made ones they haven't
- * added under the same name.
+ * What the name field lists: with a name typed, the earlier and ready-made tasks that match it; before one is
+ * typed, the household's most often added earlier tasks, then the ready-made ones they haven't added under the
+ * same name.
  */
-export function withReadyMade(
+export function nameSuggestions(
   earlier: TaskSuggestion[],
   readyMade: TaskSuggestion[],
+  query: string,
 ): TaskSuggestion[] {
   const earlierKeys = new Set(earlier.map((task) => titleKey(task.title)));
-  return [...earlier, ...readyMade.filter((task) => !earlierKeys.has(titleKey(task.title)))];
+  const newReadyMade = readyMade.filter((task) => !earlierKeys.has(titleKey(task.title)));
+  if (titleKey(query) !== '') return matchingSuggestions([...earlier, ...newReadyMade], query);
+  return [...earlier.slice(0, MATCHING_SUGGESTIONS_LIMIT), ...newReadyMade];
 }

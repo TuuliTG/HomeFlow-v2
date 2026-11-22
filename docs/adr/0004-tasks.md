@@ -270,10 +270,10 @@ next one back rather than follow a fixed calendar.
   name lists the matching ones; picking one fills in the form without a due date. There is no templates table:
   deleted tasks drop out on their own, and labels can later filter the same list.
 - **Ready-made tasks**: so a new family needn't type every chore, the New task form offers everyday chores
-  (`readyMadeTasks.ts`) to fill it in from and adjust: folded away under "Ready-made tasks" next to the favourites
-  (leaving out ones starred there), and listed after the household's earlier tasks while typing a name (unless it
-  has its own of the same name). They are the app's, not the household's: each has a name in every language
-  (`taskForm.readyMade.titles`), a type, an icon and labels, and the list follows who the task is for, adults'
+  (`readyMadeTasks.ts`) to fill it in from and adjust, in the name field's list: tapped before a name is typed,
+  it lists the household's five most often added earlier tasks and then the ready-made ones, and typing narrows
+  both down (`nameSuggestions`, leaving out a ready-made one the household has its own of). They are the app's,
+  not the household's: each has a name in every language (`taskForm.readyMade.titles`), a type, an icon and labels, and the list follows who the task is for, adults'
   chores or children's (their own things, simple jobs and helping an adult, e.g. "Help cook dinner"). The
   product owner chose the lists one by one; meta work is left to type, as it differs most between families. An adults' one starts with the user's default points and a children's with one star, to
   change before saving or later. Picking one fills in its name, type, icon, labels and points, keeping who the

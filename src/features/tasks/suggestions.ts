@@ -6,7 +6,7 @@ import {
 } from '@/features/tasks/task';
 import type { Messages } from '@/lib/i18n/i18n';
 
-/** How many matching tasks are listed while the user types a name. */
+/** How many matching tasks are listed while the user types a name, and earlier tasks before one is typed. */
 export const MATCHING_SUGGESTIONS_LIMIT = 5;
 
 /** Earlier tasks whose name contains `query`, in the order given (most often added first). */

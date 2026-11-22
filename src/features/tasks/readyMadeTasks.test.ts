@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readyMadeTasks, withReadyMade } from '@/features/tasks/readyMadeTasks';
+import { nameSuggestions, readyMadeTasks } from '@/features/tasks/readyMadeTasks';
 import { NEW_TASK_DEFAULTS, type TaskSuggestion } from '@/features/tasks/task';
 import { en } from '@/locales/en';
 
@@ -36,12 +36,27 @@ describe('readyMadeTasks', () => {
   });
 });
 
-describe('withReadyMade', () => {
+describe('nameSuggestions', () => {
   it('lists earlier tasks first, leaving out ready-made ones the household has its own of', () => {
     const own = earlier('vacuum', false);
-    const titles = withReadyMade([own], readyMadeTasks(options)).map((task) => task.title);
+    const titles = nameSuggestions([own], readyMadeTasks(options), '').map((task) => task.title);
     expect(titles[0]).toBe('vacuum');
     expect(titles).not.toContain('Vacuum');
     expect(titles).toContain('Empty the dishwasher');
+  });
+
+  it('lists only the most often added earlier tasks before a name is typed, and every ready-made one', () => {
+    const own = ['a', 'b', 'c', 'd', 'e', 'f'].map((title) => earlier(title, false));
+    const titles = nameSuggestions(own, readyMadeTasks(options), '').map((task) => task.title);
+    expect(titles.slice(0, 6)).toEqual(['a', 'b', 'c', 'd', 'e', 'Empty the dishwasher']);
+    expect(titles).toHaveLength(5 + readyMadeTasks(options).length);
+  });
+
+  it('lists the earlier and ready-made tasks matching a typed name', () => {
+    const own = earlier('Clean the car', false);
+    const titles = nameSuggestions([own], readyMadeTasks(options), 'clean').map(
+      (task) => task.title,
+    );
+    expect(titles).toEqual(['Clean the car', 'Clean the bathroom', 'Clean the kitchen']);
   });
 });
