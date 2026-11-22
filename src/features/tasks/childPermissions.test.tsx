@@ -147,6 +147,26 @@ describe('what a child sees of tasks they may not change', () => {
     expect(screen.queryByLabelText('Task')).not.toBeInTheDocument();
   });
 
+  it('lets a child swipe away only the tasks they added themselves', async () => {
+    setUpFamily({ benCanAddTasks: true });
+    const ben = logInAsBen();
+    fakeTasksBackend.addTaskAs(ben.id, {
+      title: 'Draw a picture',
+      type: 'physical',
+      points: null,
+      forChildren: true,
+      assignedTo: ben.id,
+    });
+    const user = userEvent.setup();
+    renderAppAt('/me');
+
+    await user.click(await screen.findByRole('button', { name: 'Delete: Draw a picture' }));
+
+    expect(await screen.findByText('Feed the cat')).toBeInTheDocument();
+    expect(screen.queryByText('Draw a picture')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete: Feed the cat' })).not.toBeInTheDocument();
+  });
+
   it("makes an adult editing a child's waiting task choose the points", async () => {
     const { ben } = setUpFamily({ benCanAddTasks: true });
     fakeTasksBackend.addTaskAs(ben.id, {

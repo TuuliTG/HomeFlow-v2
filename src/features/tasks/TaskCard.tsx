@@ -5,10 +5,12 @@ import { type Messages, useMessages } from '@/lib/i18n/i18n';
 import { descriptionParts } from '@/features/tasks/descriptionLinks';
 import { canDoTask, earnedPoints, isToDoBy, type Task } from '@/features/tasks/task';
 import { AskLink, EditLink } from '@/features/tasks/TaskCardLinks';
+import { ConfirmTakeOver } from '@/features/tasks/ConfirmTakeOver';
 import { TaskFavouriteStar } from '@/features/tasks/TaskFavouriteStar';
 import { TaskImages } from '@/features/tasks/TaskImages';
 import { TaskPeople } from '@/features/tasks/TaskPeople';
 import { TaskReminder } from '@/features/tasks/TaskReminder';
+import { TaskSwipeToDelete } from '@/features/tasks/TaskSwipeToDelete';
 import { TaskRequestPanel } from '@/features/tasks/TaskRequestPanel';
 import { TaskTags } from '@/features/tasks/TaskTags';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
@@ -50,31 +52,40 @@ export function TaskCard({
       ref={isPanel ? focusWhenOpened : undefined}
       aria-labelledby={titleId}
       tabIndex={isPanel ? -1 : undefined}
-      className="bg-surface shadow-card flex flex-col gap-3 rounded-2xl p-4"
+      className="rounded-2xl"
     >
-      <div className="flex items-start gap-3">
-        <TaskTypeIcon type={task.type} icon={task.icon} />
-        <TaskDetails
-          task={task}
-          currentUserId={currentUserId}
-          titleId={titleId}
-          titleLevel={titleLevel}
-        />
-        <div className="-mt-2 -mr-2 ml-auto flex shrink-0 items-center gap-1">
-          {points !== null && (
-            <span className="bg-points-100 text-points-800 flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-extrabold whitespace-nowrap">
-              <StarIcon className="size-4 fill-current" />
-              {t.common.points(points)}
-            </span>
-          )}
-          <TaskFavouriteStar title={task.title} currentUserId={currentUserId} />
+      <TaskSwipeToDelete
+        task={task}
+        currentUserId={currentUserId}
+        className="shadow-card rounded-2xl"
+        contentClassName="bg-surface flex flex-col gap-3 p-4"
+      >
+        <div className="flex items-start gap-3">
+          <TaskTypeIcon type={task.type} icon={task.icon} />
+          <TaskDetails
+            task={task}
+            currentUserId={currentUserId}
+            titleId={titleId}
+            titleLevel={titleLevel}
+          />
+          <div className="-mt-2 -mr-2 ml-auto flex shrink-0 items-center gap-1">
+            {points !== null && (
+              <span className="bg-points-100 text-points-800 flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-extrabold whitespace-nowrap">
+                <StarIcon className="size-4 fill-current" />
+                {t.common.points(points)}
+              </span>
+            )}
+            <TaskFavouriteStar title={task.title} currentUserId={currentUserId} />
+          </div>
         </div>
-      </div>
-      <TaskImages paths={task.images} title={task.title} currentUserId={currentUserId} />
-      {isToDoBy(task, currentUserId) && <TaskReminder task={task} currentUserId={currentUserId} />}
-      <TaskRequestPanel task={task} currentUserId={currentUserId} />
-      <TaskActions task={task} currentUserId={currentUserId} />
-      {children}
+        <TaskImages paths={task.images} title={task.title} currentUserId={currentUserId} />
+        {isToDoBy(task, currentUserId) && (
+          <TaskReminder task={task} currentUserId={currentUserId} />
+        )}
+        <TaskRequestPanel task={task} currentUserId={currentUserId} />
+        <TaskActions task={task} currentUserId={currentUserId} />
+        {children}
+      </TaskSwipeToDelete>
     </Root>
   );
 }
@@ -238,41 +249,5 @@ function TaskActions({ task, currentUserId }: Pick<TaskCardProps, 'task' | 'curr
         </div>
       )}
     </>
-  );
-}
-
-interface ConfirmTakeOverProps {
-  pickerName: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-/** Asks before marking done a task another member has picked up. */
-function ConfirmTakeOver({ pickerName, onConfirm, onCancel }: ConfirmTakeOverProps) {
-  const t = useMessages();
-  return (
-    <div
-      role="group"
-      aria-label={t.tasks.card.confirmTakeOverLabel(pickerName)}
-      className="bg-notice-50 text-notice-900 flex flex-col gap-2 rounded-xl p-3 text-sm"
-    >
-      <p>{t.tasks.card.confirmTakeOver(pickerName)}</p>
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="bg-surface text-ink hover:bg-page min-h-11 rounded-xl px-4 font-bold"
-        >
-          {t.common.cancel}
-        </button>
-        <button
-          type="button"
-          onClick={onConfirm}
-          className="bg-brand-700 hover:bg-brand-900 min-h-11 rounded-xl px-4 font-bold text-white"
-        >
-          {t.tasks.card.yesIDidIt}
-        </button>
-      </div>
-    </div>
   );
 }

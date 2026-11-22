@@ -8,6 +8,7 @@ import { LoadingMessage } from '@/components/ui/LoadingMessage';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
 import { childTaskList, scheduleOf, tasksToCopy } from '@/features/tasks/childTasks';
 import type { Task } from '@/features/tasks/task';
+import { TaskSwipeToDelete } from '@/features/tasks/TaskSwipeToDelete';
 import { useHouseholdMembers } from '@/features/tasks/useHelpers';
 import { useTasks } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
@@ -78,32 +79,40 @@ function TaskSection({ heading, tasks, childId }: TaskSectionProps) {
   );
 }
 
-/** A task as a row opening it to edit: its icon, name, when it comes up and its stars. */
+/** A task as a row opening it to edit, or swiped to delete: its icon, name, when it comes up and its stars. */
 function TaskRow({ task, childId }: { task: Task; childId: string }) {
   const t = useMessages();
+  const user = useLoggedInUser();
   return (
     <li>
-      <Link
-        to={paths.editTask(task.id)}
-        state={{ returnToChild: childId }}
-        className="bg-surface shadow-card hover:bg-brand-50 flex items-center gap-3 rounded-2xl px-4 py-3"
+      <TaskSwipeToDelete
+        task={task}
+        currentUserId={user.id}
+        className="shadow-card rounded-2xl"
+        contentClassName="bg-surface"
       >
-        <TaskTypeIcon type={task.type} icon={task.icon} />
-        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-ink font-bold break-words">{task.title}</span>
-          <span className="text-ink-muted text-xs font-semibold">{scheduleOf(task, t)}</span>
-        </span>
-        {task.points !== null && task.points > 0 && (
-          <span
-            role="img"
-            aria-label={t.common.points(task.points)}
-            className="text-points-600 flex shrink-0 items-center gap-0.5 text-sm font-bold"
-          >
-            {task.points}
-            <StarIcon className="size-4 fill-current" />
+        <Link
+          to={paths.editTask(task.id)}
+          state={{ returnToChild: childId }}
+          className="hover:bg-brand-50 flex items-center gap-3 px-4 py-3"
+        >
+          <TaskTypeIcon type={task.type} icon={task.icon} />
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="text-ink font-bold break-words">{task.title}</span>
+            <span className="text-ink-muted text-xs font-semibold">{scheduleOf(task, t)}</span>
           </span>
-        )}
-      </Link>
+          {task.points !== null && task.points > 0 && (
+            <span
+              role="img"
+              aria-label={t.common.points(task.points)}
+              className="text-points-600 flex shrink-0 items-center gap-0.5 text-sm font-bold"
+            >
+              {task.points}
+              <StarIcon className="size-4 fill-current" />
+            </span>
+          )}
+        </Link>
+      </TaskSwipeToDelete>
     </li>
   );
 }

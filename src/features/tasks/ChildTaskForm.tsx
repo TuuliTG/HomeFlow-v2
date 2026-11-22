@@ -1,6 +1,7 @@
 import { type SyntheticEvent, useId, useRef, useState } from 'react';
 
 import { SegmentedChoice } from '@/components/ui/SegmentedChoice';
+import { childHasTask, wouldGiveTwice } from '@/features/tasks/childTasks';
 import { useReadyMadeTasks } from '@/features/tasks/readyMadeTasks';
 import type { NewTask } from '@/features/tasks/task';
 import { TaskChildrenField } from '@/features/tasks/TaskChildrenField';
@@ -20,6 +21,8 @@ import { TaskImagesField } from '@/features/tasks/TaskImagesField';
 import { TaskPointsField } from '@/features/tasks/TaskPointsField';
 import { DailyLimitField, ScheduleFields } from '@/features/tasks/TaskTimingFields';
 import { TaskTitleField } from '@/features/tasks/TaskTitleField';
+import { useHouseholdChildren } from '@/features/tasks/useHelpers';
+import { useTasks } from '@/features/tasks/useTasks';
 import { useTaskFieldRefs, useTaskFormFields } from '@/features/tasks/useTaskFormFields';
 import { useMessages } from '@/lib/i18n/i18n';
 
@@ -31,6 +34,8 @@ const CHILD_TASK_STARS = 1;
 interface ChildTaskFormProps {
   /** The task being edited; a new one is always there to begin with. */
   initial?: NewTask;
+  /** The id of the task being edited, which doesn't count as the child having it already. */
+  taskId?: string;
   /** The pictures of the task being edited, by file name. */
   initialImages?: string[];
   /**
@@ -56,6 +61,7 @@ type FormError = { field: FieldName | 'children' | null; message: string } | nul
  */
 export function ChildTaskForm({
   initial,
+  taskId,
   initialImages = [],
   childId,
   currentUserId,
@@ -70,13 +76,16 @@ export function ChildTaskForm({
   );
   const { fields, setFields, change, set } = useTaskFormFields(initialValues);
   const [assignedTo, setAssignedTo] = useState(childId);
+  // The household's open tasks, except the one being edited.
+  const tasks = (useTasks(currentUserId).data ?? []).filter((task) => task.id !== taskId);
+  const children = useHouseholdChildren(currentUserId);
   const readyMade = useReadyMadeTasks({
     isNew: !initial,
     isForChildren: true,
     isPrivate: false,
     defaultPoints: CHILD_TASK_STARS,
     earlier: [],
-  });
+  }).filter((task) => assignedTo === null || !childHasTask(tasks, assignedTo, task.title));
   const [images, setImages] = useState(() => savedImages(initialImages));
   const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [error, setError] = useState<FormError>(null);
@@ -103,6 +112,12 @@ export function ChildTaskForm({
       const field = fieldOf(parsed.path);
       setError({ field, message: parsed.message ?? t.taskForm.errors.checkDetails });
       fieldRefs[field].current?.focus();
+      return;
+    }
+    if (wouldGiveTwice(tasks, parsed.data, initial)) {
+      const name = children.find((child) => child.id === assignedTo)?.name ?? t.common.someone;
+      setError({ field: 'title', message: t.taskForm.errors.childHasTask(name) });
+      fieldRefs.title.current?.focus();
       return;
     }
     onSave(parsed.data, images).catch(() => {

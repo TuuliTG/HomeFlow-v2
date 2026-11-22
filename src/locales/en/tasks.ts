@@ -109,6 +109,7 @@ export const tasks = {
     imagesFailed: "We couldn't load the pictures.",
     edit: 'Edit',
     editLabel: (title: string) => `Edit: ${title}`,
+    deleteLabel: (title: string) => `Delete: ${title}`,
     pickUp: 'Pick up',
     putBack: 'Put back',
     markDone: 'Mark done',

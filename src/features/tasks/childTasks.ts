@@ -77,3 +77,23 @@ export function tasksToCopy(tasks: Task[], fromChildId: string, toChildId: strin
     return true;
   });
 }
+
+/** Whether the child has a task under this name among `tasks`: a child has each task once (ADR 0004). */
+export function childHasTask(tasks: Task[], childId: string, title: string): boolean {
+  return tasks.some(
+    (task) => task.assignedTo === childId && titleKey(task.title) === titleKey(title),
+  );
+}
+
+/**
+ * Whether saving `task` would give its child a task they have already (ADR 0004). Keeping an edited task's name and
+ * child doesn't, even if the child has it twice from before.
+ */
+export function wouldGiveTwice(tasks: Task[], task: NewTask, initial?: NewTask): boolean {
+  if (task.assignedTo === null) return false;
+  const isUnchanged =
+    initial !== undefined &&
+    titleKey(initial.title) === titleKey(task.title) &&
+    initial.assignedTo === task.assignedTo;
+  return !isUnchanged && childHasTask(tasks, task.assignedTo, task.title);
+}

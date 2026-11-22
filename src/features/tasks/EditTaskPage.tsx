@@ -8,9 +8,10 @@ import { ChildTaskForm } from '@/features/tasks/ChildTaskForm';
 import { canChange, type NewTask, type Task } from '@/features/tasks/task';
 import { TaskForm } from '@/features/tasks/TaskForm';
 import { type DraftImage, isImagesNotSavedState } from '@/features/tasks/taskImages';
+import { useHouseholdMembers } from '@/features/tasks/useHelpers';
 import { useDeleteTask, useMembership, useTasks, useUpdateTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
-import { useMessages } from '@/lib/i18n/i18n';
+import { type Messages, useMessages } from '@/lib/i18n/i18n';
 
 export function EditTaskPage() {
   const user = useLoggedInUser();
@@ -98,6 +99,7 @@ function EditTask({ task, userId, isChild }: { task: Task; userId: string; isChi
       {isChildrensTask(task, isChild) ? (
         <ChildTaskForm
           initial={task}
+          taskId={task.id}
           initialImages={imagesBefore}
           childId={task.assignedTo}
           currentUserId={userId}
@@ -127,8 +129,11 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
   const navigate = useNavigate();
   const returnTo = useReturnTo();
   const [isConfirming, setIsConfirming] = useState(false);
+  const members = useHouseholdMembers(userId);
   const { common, taskForm } = useMessages();
   const t = taskForm.edit;
+  const childName =
+    members.data?.find((member) => member.id === task.assignedTo)?.name ?? common.someone;
 
   if (!isConfirming) {
     return (
@@ -148,7 +153,7 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
       aria-label={t.delete}
       className="border-danger-200 bg-danger-50 flex flex-col gap-3 rounded-2xl border p-4"
     >
-      <p className="text-danger-900 text-sm">{t.confirmDelete(task.title)}</p>
+      <p className="text-danger-900 text-sm">{deleteQuestion(task, { userId, childName }, t)}</p>
       {deleteTask.isError && (
         <p role="alert" className="text-danger-700 text-sm">
           {t.deleteFailed}
@@ -182,4 +187,18 @@ function DeleteTask({ task, userId }: { task: Task; userId: string }) {
       </div>
     </section>
   );
+}
+
+/**
+ * Whom deleting the task affects: only the user for their private task or a child's own, only the child for a
+ * task given to them, and everyone for a shared one.
+ */
+function deleteQuestion(
+  task: Task,
+  { userId, childName }: { userId: string; childName: string },
+  t: Messages['taskForm']['edit'],
+): string {
+  if (task.isPrivate || task.assignedTo === userId) return t.confirmDeleteOwn(task.title);
+  if (task.assignedTo !== null) return t.confirmDeleteChild(task.title, childName);
+  return t.confirmDelete(task.title);
 }

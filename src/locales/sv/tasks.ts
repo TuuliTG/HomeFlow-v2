@@ -98,6 +98,7 @@ export const tasks: Messages['tasks'] = {
     imagesFailed: 'Det gick inte att ladda bilderna.',
     edit: 'Redigera',
     editLabel: (title) => `Redigera: ${title}`,
+    deleteLabel: (title) => `Ta bort: ${title}`,
     pickUp: 'Ta',
     putBack: 'Lämna tillbaka',
     markDone: 'Markera som gjord',
