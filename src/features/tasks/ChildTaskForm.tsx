@@ -241,7 +241,6 @@ function ChildTaskTiming({ fields, set, fieldRefs, errorPropsFor }: ChildTaskTim
       dueOnRef={fieldRefs.dueOn}
       dueOnErrorProps={errorPropsFor('dueOn')}
       alreadyDone={{ offered: false, checked: false, onChange: () => undefined }}
-      routine={{ offered: false, checked: false, onChange: () => undefined }}
     />
   );
 }

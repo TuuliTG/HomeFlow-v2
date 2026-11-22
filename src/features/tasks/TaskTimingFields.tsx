@@ -20,8 +20,6 @@ interface ScheduleFieldsProps {
   dueOnErrorProps: { 'aria-invalid': boolean; 'aria-describedby': string | undefined };
   /** "Already done", offered when adding a task; a task done already isn't asked for a due date. */
   alreadyDone: { offered: boolean; checked: boolean; onChange: (checked: boolean) => void };
-  /** Whether it is a routine, offered for repeating shared tasks (`canBeRoutine()`). */
-  routine: { offered: boolean; checked: boolean; onChange: (checked: boolean) => void };
 }
 
 /** The daily limit field's value: times a day as typed, or no limit. */
@@ -135,7 +133,7 @@ function StepButton({
   );
 }
 
-/** Whether it is done already, how often it repeats, when it is due and whether it is a routine. */
+/** Whether it is done already, how often it repeats and when it is due. */
 export function ScheduleFields({
   repeat,
   onRepeatChange,
@@ -146,7 +144,6 @@ export function ScheduleFields({
   dueOnRef,
   dueOnErrorProps,
   alreadyDone,
-  routine,
 }: ScheduleFieldsProps) {
   const t = useMessages();
   return (
@@ -185,15 +182,6 @@ export function ScheduleFields({
           </label>
         )}
       </div>
-
-      {routine.offered && (
-        <CheckboxField
-          name="isRoutine"
-          label={t.taskForm.routine}
-          checked={routine.checked}
-          onChange={routine.onChange}
-        />
-      )}
     </>
   );
 }

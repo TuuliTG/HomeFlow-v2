@@ -145,7 +145,7 @@ export const taskForm: Messages['taskForm'] = {
   },
   dueDate: 'Förfallodag',
   alreadyDone: 'Redan gjord',
-  routine: 'Snabb rutin: markera den som klar med ett tryck på tavlan',
+  routine: 'Rutin',
   dailyLimit: 'Högst antal gånger om dagen',
   dailyLimitFewer: 'En gång färre',
   dailyLimitMore: 'En gång fler',

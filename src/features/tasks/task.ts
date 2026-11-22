@@ -49,7 +49,10 @@ export const HELPERS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 /** The most bonus points a helper can get for one task (`task_helpers`). */
 export const MAX_HELPER_BONUS = 10;
 
-/** How long an always task rests after it is done before it can be done again; `complete_task()` enforces it. */
+/**
+ * How long an always task or a routine rests after it is done before it can be done again, so a double tap or two
+ * people at once don't count it twice; `complete_task()` enforces it.
+ */
 export const ALWAYS_TASK_PAUSE_MS = 2 * 60 * 1000;
 
 /** The most times a day an always task can be done (`tasks_daily_limit`). */
@@ -120,7 +123,8 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
       customLabels: z.array(z.string()),
       /**
        * An everyday chore, like emptying the dishwasher, that the board shows as a small chip marked done with
-       * one tap rather than as a card (ADR 0004). Only a repeating task can be one.
+       * one tap rather than as a card (ADR 0004). It is always available: it has no repeat or due date, and done,
+       * it is there again at once.
        */
       isRoutine: z.boolean(),
       /**
@@ -191,15 +195,16 @@ export type AlwaysTaskState =
   { kind: 'ready' } | { kind: 'resting'; until: number } | { kind: 'doneForToday' };
 
 /**
- * Where an always task stands at `now` on the local date `today`: done as often as its limit allows today, or
- * resting for `ALWAYS_TASK_PAUSE_MS` after it was last done (`complete_task()`). Other tasks are always ready.
+ * Where an always task or a routine stands at `now` on the local date `today`: done as often as its limit allows
+ * today, or resting for `ALWAYS_TASK_PAUSE_MS` after it was last done (`complete_task()`). Other tasks are always
+ * ready.
  */
 export function alwaysTaskState(
-  task: Pick<Task, 'isAlways' | 'dailyLimit' | 'timesDone' | 'lastDone'>,
+  task: Pick<Task, 'isAlways' | 'isRoutine' | 'dailyLimit' | 'timesDone' | 'lastDone'>,
   now: number,
   today: string,
 ): AlwaysTaskState {
-  if (!task.isAlways) return { kind: 'ready' };
+  if (!task.isAlways && !task.isRoutine) return { kind: 'ready' };
   const { dailyLimit, timesDone, lastDone } = task;
   if (dailyLimit !== null && timesDone.on === today && timesDone.count >= dailyLimit) {
     return { kind: 'doneForToday' };

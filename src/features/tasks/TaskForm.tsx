@@ -93,6 +93,7 @@ export function TaskForm({
     forChildren,
     canBeDoneAlready,
     isAlways: fields.isAlways,
+    isRoutine: fields.isRoutine,
   });
   const earlier = offeredSuggestions(suggestions, isChild);
   const readyMade = useReadyMadeTasks({
@@ -168,6 +169,11 @@ export function TaskForm({
         onPrivateChange={set('isPrivate')}
         forChildren={shown.isForChildren}
         onForChildrenChange={set('forChildren')}
+        routine={{
+          offered: canBeRoutine({ isChild, isPrivate, forChildren }),
+          pressed: fields.isRoutine,
+          onChange: set('isRoutine'),
+        }}
         currentUserId={currentUserId}
       />
       {shown.isForChildren ? (
@@ -225,8 +231,7 @@ export function TaskForm({
             />
           )}
 
-          {/* A child editing an always task can't change when it is done. */}
-          {!shown.isAlways && (
+          {shown.schedule && (
             <ScheduleFields
               repeat={fields.repeat}
               onRepeatChange={set('repeat')}
@@ -240,11 +245,6 @@ export function TaskForm({
                 offered: shown.alreadyDone,
                 checked: isDone,
                 onChange: checkAlreadyDone,
-              }}
-              routine={{
-                offered: canBeRoutine({ isChild, isPrivate, forChildren, repeat: fields.repeat }),
-                checked: fields.isRoutine,
-                onChange: set('isRoutine'),
               }}
             />
           )}

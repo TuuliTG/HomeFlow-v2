@@ -135,8 +135,8 @@ function taskInput(values: FieldValues, isChild: boolean) {
     description: values.description.trim() === '' ? null : values.description,
     icon: values.icon,
     ...labelsOf(values, isChild),
-    // The switch keeps its value while hidden, so turning repeating off and on again brings it back.
-    isRoutine: values.isRoutine && canBeRoutine({ ...values, isChild }),
+    // The toggle keeps its value while hidden, so making the task private and shared again brings it back.
+    isRoutine: isRoutineTask(values, isChild),
     ...audience(values, isChild),
   };
 }
@@ -153,6 +153,7 @@ interface FormState {
   /** Whether the form offers to add the task as already done. */
   canBeDoneAlready: boolean;
   isAlways: boolean;
+  isRoutine: boolean;
 }
 
 /**
@@ -166,14 +167,20 @@ export function shownFields({
   forChildren,
   canBeDoneAlready,
   isAlways,
+  isRoutine,
 }: FormState) {
+  const routine = isRoutine && canBeRoutine({ isChild, isPrivate, forChildren });
+  /**
+   * Whether it is done already, repeats or is due: not for a routine, which is always available, nor when a child
+   * edits an always task, which has no repeat or due date they can change.
+   */
+  const schedule = !routine && !(isAlways && isChild);
   return {
     isForChildren: !isChild && !isPrivate && forChildren,
     type: !isPrivate,
     points: !isPrivate,
-    alreadyDone: canBeDoneAlready && !isPrivate,
-    /** Whether a child is editing an always task, which has no repeat or due date they can change. */
-    isAlways: isAlways && isChild,
+    schedule,
+    alreadyDone: schedule && canBeDoneAlready && !isPrivate,
   };
 }
 
@@ -181,24 +188,29 @@ interface RoutineState {
   isChild: boolean;
   isPrivate: boolean;
   forChildren: boolean;
-  repeat: FieldValues['repeat'];
 }
 
-/**
- * Whether the task can be a routine: the board shows routines among the adults' shared tasks, and only a
- * repeating task can be one (`tasks_routine_repeats`).
- */
-export function canBeRoutine({ isChild, isPrivate, forChildren, repeat }: RoutineState): boolean {
-  return !isChild && !isPrivate && !forChildren && repeatDays(repeat) !== null;
+/** Whether the task can be a routine: the board shows routines among the adults' shared tasks. */
+export function canBeRoutine({ isChild, isPrivate, forChildren }: RoutineState): boolean {
+  return !isChild && !isPrivate && !forChildren;
+}
+
+/** Whether the field values make the task a routine; the toggle keeps its value while hidden. */
+function isRoutineTask(values: FieldValues, isChild: boolean): boolean {
+  return values.isRoutine && canBeRoutine({ ...values, isChild });
 }
 
 /**
  * When the task is to be done. Only an adult's task for children can be an always task
- * (`tasks_always_for_children`), which is never due and never repeats, but has a daily limit; the fields keep their
- * values while hidden, so turning it off brings them back.
+ * (`tasks_always_for_children`), which is never due and never repeats, but has a daily limit. A routine is always
+ * available, so it is never due and never repeats either (`tasks_routine_always_available`). The fields keep their
+ * values while hidden, so turning either off brings them back.
  */
 function timingOf(values: FieldValues, isChild: boolean) {
   const isAlways = values.isAlways && isSharedWithChildren(values, isChild);
+  if (isRoutineTask(values, isChild)) {
+    return { isAlways, repeatEveryDays: null, dueOn: null, dailyLimit: null };
+  }
   return isAlways
     ? {
         isAlways,

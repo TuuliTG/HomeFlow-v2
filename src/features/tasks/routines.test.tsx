@@ -1,7 +1,8 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ALWAYS_TASK_PAUSE_MS } from '@/features/tasks/task';
 import { fakeTasksBackend } from '@/test/fakeTasksBackend';
 import { renderAppAt } from '@/test/renderWithRouter';
 import { logInAsFamilyMember } from '@/test/session';
@@ -16,23 +17,16 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function addRoutine(userId: string, title: string, dueOn: string) {
-  fakeTasksBackend.addTaskAs(userId, {
-    title,
-    type: 'physical',
-    points: 1,
-    repeatEveryDays: 1,
-    dueOn,
-    isRoutine: true,
-  });
+function addRoutine(userId: string, title: string) {
+  fakeTasksBackend.addTaskAs(userId, { title, type: 'physical', points: 1, isRoutine: true });
 }
 
 const routines = () => screen.getByRole('region', { name: 'Routines' });
 
 describe('routines on the board', () => {
-  it('shows routines as chips rather than cards, and marks one done with a tap', async () => {
+  it('shows routines as chips rather than cards, and marks one done with a tap, again and again', async () => {
     const anna = logInAsFamilyMember();
-    addRoutine(anna.id, 'Empty the dishwasher', '2026-10-08');
+    addRoutine(anna.id, 'Empty the dishwasher');
     fakeTasksBackend.addTaskAs(anna.id, { title: 'Vacuum', type: 'physical', points: 3 });
     const user = userEvent.setup();
     renderAppAt('/');
@@ -45,29 +39,41 @@ describe('routines on the board', () => {
       within(routines()).getByRole('button', { name: 'Mark done: Empty the dishwasher' }),
     );
 
-    expect(await within(routines()).findByText('Done by you')).toBeInTheDocument();
-    expect(within(routines()).getByText('Empty the dishwasher')).toBeInTheDocument();
-    expect(
-      within(routines()).queryByRole('button', { name: /^Mark done/ }),
-    ).not.toBeInTheDocument();
+    const again = await within(routines()).findByRole('button', {
+      name: /^Mark done: Empty the dishwasher\s*Done by you$/,
+    });
+    expect(screen.getByRole('button', { name: /^Routines/ })).toHaveTextContent('0');
+    expect(again).toBeDisabled();
   });
 
-  it('can still mark an overdue routine done', async () => {
+  it('can be done again once its short pause is over', async () => {
     const anna = logInAsFamilyMember();
-    addRoutine(anna.id, 'Water plants', '2026-10-05');
+    const routineId = fakeTasksBackend.addTaskAs(anna.id, {
+      title: 'Empty the dishwasher',
+      type: 'physical',
+      points: 1,
+      isRoutine: true,
+    });
+    fakeTasksBackend.completeTaskAs(anna.id, routineId, '2026-10-08');
+    // The clock stands still here, so a moment more than the pause.
+    fakeTasksBackend.ageCompletions(ALWAYS_TASK_PAUSE_MS + 1000);
+    const user = userEvent.setup();
     renderAppAt('/');
 
-    expect(
+    await user.click(
       await within(await screen.findByRole('region', { name: 'Routines' })).findByRole('button', {
-        name: 'Mark done: Water plants',
+        name: /^Mark done: Empty the dishwasher/,
       }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Overdue' })).not.toBeInTheDocument();
+    );
+
+    await waitFor(() => {
+      expect(fakeTasksBackend.taskCount()).toBe(3);
+    });
   });
 
   it('shows routines as cards when searching, so they can be found and edited', async () => {
     const anna = logInAsFamilyMember();
-    addRoutine(anna.id, 'Empty the dishwasher', '2026-10-08');
+    addRoutine(anna.id, 'Empty the dishwasher');
     const user = userEvent.setup();
     renderAppAt('/');
     await screen.findByRole('region', { name: 'Routines' });
@@ -82,8 +88,8 @@ describe('routines on the board', () => {
 describe('hiding the routines', () => {
   it('folds them away, saying how many are still to do, and remembers it on this device', async () => {
     const anna = logInAsFamilyMember();
-    addRoutine(anna.id, 'Empty the dishwasher', '2026-10-08');
-    addRoutine(anna.id, 'Feed the cat', '2026-10-07');
+    addRoutine(anna.id, 'Empty the dishwasher');
+    addRoutine(anna.id, 'Feed the cat');
     const user = userEvent.setup();
     const { unmount } = renderAppAt('/');
     const toggle = await screen.findByRole('button', { name: /^Routines/ });
@@ -108,15 +114,19 @@ describe('hiding the routines', () => {
 });
 
 describe('making a task a routine', () => {
-  it('is offered for a repeating task and puts it among the routines', async () => {
+  it('is chosen first, leaves out when the task is due, and puts it among the routines', async () => {
     logInAsFamilyMember();
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await user.type(await screen.findByLabelText('Task'), 'Empty the dishwasher');
-    expect(screen.queryByRole('checkbox', { name: /Quick routine/ })).not.toBeInTheDocument();
+    const routine = await screen.findByRole('button', { name: 'Routine' });
     await user.selectOptions(screen.getByLabelText('Repeats'), 'Every day');
-    await user.click(screen.getByRole('checkbox', { name: /Quick routine/ }));
+    await user.click(routine);
+    expect(routine).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByLabelText('Repeats')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Due date')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'Already done' })).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('Task'), 'Empty the dishwasher');
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     expect(
@@ -124,5 +134,16 @@ describe('making a task a routine', () => {
         name: 'Mark done: Empty the dishwasher',
       }),
     ).toBeInTheDocument();
+  });
+
+  it('is not offered for a private task', async () => {
+    logInAsFamilyMember();
+    const user = userEvent.setup();
+    renderAppAt('/tasks/new');
+
+    await user.click(await screen.findByRole('button', { name: 'Private' }));
+
+    expect(screen.queryByRole('button', { name: 'Routine' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Repeats')).toBeInTheDocument();
   });
 });

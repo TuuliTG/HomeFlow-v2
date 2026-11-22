@@ -175,3 +175,12 @@ export function TrashIcon(props: IconProps) {
     </BaseIcon>
   );
 }
+
+/** Two arrows chasing each other round, for a routine that is always there to do again. */
+export function RepeatIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4" />
+    </BaseIcon>
+  );
+}

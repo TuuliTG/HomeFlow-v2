@@ -233,7 +233,7 @@ export const fakeTasksBackend = {
   },
   /**
    * Marks an open task in `userId`'s household done on `completedOn`, adding the next occurrence of
-   * a repeating task like `complete_task()` does, and delivers the changes live.
+   * a repeating task, or a fresh copy of a routine, like `complete_task()` does, and delivers the changes live.
    */
   completeTaskAs(userId: string, taskId: string, completedOn: string) {
     const task = openTaskOf(userId, taskId);
@@ -252,6 +252,10 @@ export const fakeTasksBackend = {
     deliver(task, { kind: 'changed' });
     if (task.isAlways) {
       addAlwaysTaskCopy(task, completedOn);
+      return;
+    }
+    if (task.isRoutine) {
+      store(nextOccurrenceOf(task, {}), true);
       return;
     }
     if (task.repeatEveryDays === null) return;

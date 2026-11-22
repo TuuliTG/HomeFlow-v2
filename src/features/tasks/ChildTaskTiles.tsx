@@ -1,19 +1,14 @@
-import { useEffect, useId, useState } from 'react';
+import { useId, useState } from 'react';
 
 import { CheckIcon, StarIcon } from '@/components/ui/icons';
 import { emptyClassName, sectionHeadingClassName } from '@/features/tasks/meStyles';
-import {
-  type AlwaysTaskState,
-  alwaysTaskState,
-  isWithoutPoints,
-  type Task,
-} from '@/features/tasks/task';
+import { type AlwaysTaskState, isWithoutPoints, type Task } from '@/features/tasks/task';
 import { EditLink } from '@/features/tasks/TaskCardLinks';
 import { TaskSwipeToDelete } from '@/features/tasks/TaskSwipeToDelete';
 import { TaskTypeIcon } from '@/components/ui/TaskTypeIcon';
+import { useAlwaysTaskState } from '@/features/tasks/useAlwaysTaskState';
 import { useCompleteTask } from '@/features/tasks/useTasks';
 import { useLoggedInUser } from '@/lib/auth';
-import { addDays, fromIsoDate, today } from '@/lib/dates';
 import { useMessages } from '@/lib/i18n/i18n';
 
 /** Tasks as big tiles with icons and stars and little text, for children (ADR 0004). */
@@ -87,32 +82,6 @@ function TaskTile({ task }: { task: Task }) {
       </TaskSwipeToDelete>
     </li>
   );
-}
-
-/** When an always task can next be done: once its pause is over, or tomorrow once done for today. */
-function changesAt(state: AlwaysTaskState): number | null {
-  if (state.kind === 'resting') return state.until;
-  if (state.kind === 'doneForToday') return fromIsoDate(addDays(today(), 1)).getTime();
-  return null;
-}
-
-/**
- * Where an always task stands (`alwaysTaskState()`), rendering again when that changes.
- */
-function useAlwaysTaskState(task: Task): AlwaysTaskState {
-  const [now, setNow] = useState(() => Date.now());
-  const state = alwaysTaskState(task, now, today());
-  const until = changesAt(state);
-  useEffect(() => {
-    if (until === null) return;
-    const timer = setTimeout(() => {
-      setNow(Date.now());
-    }, until - Date.now());
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [until]);
-  return state;
 }
 
 interface MarkDoneButtonProps {

@@ -222,15 +222,23 @@ next one back rather than follow a fixed calendar.
   it is remembered: the count keeps the folded tasks from going unnoticed.
 
 - **Routines**: an everyday chore like emptying the dishwasher would fill the board as a card every day, so a
-  repeating shared adults' task can be a **routine** (`is_routine`, a "Quick routine" check mark under Repeats;
-  `tasks_routine_repeats` keeps it to repeating tasks, `update_task()` clears it when a task stops repeating, the
-  next occurrence and "add again" keep it). The board shows routines as small chips above the due dates
-  (`RoutineChips`) instead of cards: a due one is a button that marks it done with one tap (it looks the same when overdue, since a routine is never alarming; no
-  confirmation even if someone picked it up, since anyone may do a routine), and one done until its next due date
-  is a quiet chip saying who did it. Like the due-date groups, the section folds away behind its heading
-  (`?routines=hidden`, remembered on the device), which still counts the routines left to do. Celebrating and "Who helped?" follow as for a card; undo is in the completed
-  list as for any task. A search shows routines as ordinary cards, which is how one is found to edit it. We chose an
-  explicit check mark over treating every daily task as a routine, because some daily tasks deserve a card.
+  shared adults' task can be a **routine** (`is_routine`, a "Routine" pill beside "Private" at the top of the form).
+  A routine is always available, like an always task: the pill hides Already done, Repeats and Due date, and
+  `tasks_routine_always_available` keeps an open routine without a repeat or due date (`update_task()` clears it
+  when a task gets one; open routines from when they repeated lost their repeat and due date). Marking one done adds
+  a fresh copy at once (`complete_task()`), after an always task's two-minute pause, so a double tap or two people at
+  once don't count it twice, but without a daily limit; the copies don't count
+  as added in Statistics (nor do the earlier occurrences of routines from when they repeated). Picking an earlier
+  routine from the name field keeps it a routine. The board shows routines as small chips above the due
+  dates (`RoutineChips`) instead of cards: each is a button that marks it done with one tap (no confirmation even if
+  someone picked it up, since anyone may do a routine), disabled during the pause, quieter once done today and then
+  saying who did it last.
+  Like the due-date groups, the section folds away behind its heading (`?routines=hidden`, remembered on the
+  device), which still counts the routines not done today. Celebrating and "Who helped?" follow as for a card; undo
+  is in the completed list as for any task. A search shows routines as ordinary cards, which is how one is found to
+  edit it. We chose an explicit choice over treating every daily task as a routine, because some daily tasks
+  deserve a card, and always available over repeating, because an everyday chore needs doing whenever it does,
+  not on a schedule.
 - **Always tasks**: parents wanted a child's everyday chores (brushing teeth, making the bed) always on the child's
   Me page without setting due dates or repeats. An adult's shared task for children can be an **always task**
   (`is_always`, "Always" on the child's form, which hides Repeats and Due date; `tasks_always_for_children` keeps it
@@ -359,7 +367,9 @@ next one back rather than follow a fixed calendar.
   star: removed as unused. News shows what was done, the Me page lists one's own done tasks (undo, star), cards
   have a star, and the New task form suggests earlier tasks.
 - Routines: every task repeating daily as a routine (no migration, but some daily tasks deserve a card); a long press
-  on a chip to edit it, like favourites (a hidden gesture; the search already reaches the card).
+  on a chip to edit it, like favourites (a hidden gesture; the search already reaches the card); routines that
+  repeat on a schedule, a check mark under Repeats (an everyday chore needs doing whenever it does, and choosing it
+  first lets the form leave out the timing).
 - Labels: one per task (a chore is often two kinds, e.g. Kitchen and Cleaning); a household labels table (renaming
   or removing an own label would be easier, but it's more to manage, and a label nobody uses any more drops out
   on its own); only free text (ready-made labels in each member's language keep statistics comparable).
