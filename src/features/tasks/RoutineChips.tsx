@@ -1,7 +1,6 @@
 import { useId } from 'react';
 
 import { FoldButton } from '@/components/ui/FoldButton';
-import { CheckIcon } from '@/components/ui/icons';
 import { TaskIcon } from '@/components/ui/TaskIcon';
 import { useFoldedParam } from '@/features/tasks/foldedParam';
 import type { Task } from '@/features/tasks/task';
@@ -97,7 +96,6 @@ function RoutineChip({
       onClick={onDone}
       className={`hover:bg-brand-50 flex min-h-11 max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm disabled:opacity-60 ${isDoneToday ? 'border-line bg-page text-ink-muted' : 'border-brand-600 bg-surface text-ink font-semibold'}`}
     >
-      {isDoneToday && <CheckIcon className="text-brand-600 size-4 shrink-0" />}
       {routine.icon && <TaskIcon name={routine.icon} className="text-base" />}
       <span className="truncate">
         <span className="sr-only">{t.tasks.card.markDone}:</span> {routine.title}
