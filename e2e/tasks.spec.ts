@@ -435,14 +435,16 @@ test('family member can make a task a routine and mark it done with one tap', as
   await page.getByRole('link', { name: 'Shared tasks' }).click();
 
   await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByRole('button', { name: 'Routine' }).click();
+  await expect(page.getByLabel('Repeats')).toBeHidden();
   await page.getByLabel('Task', { exact: true }).fill('Empty the dishwasher');
-  await page.getByLabel('Repeats').selectOption({ label: 'Every day' });
-  await page.getByRole('checkbox', { name: /Quick routine/ }).check();
   await page.getByRole('button', { name: 'Create task' }).click();
 
   const routines = page.getByRole('region', { name: 'Routines' });
   await routines.getByRole('button', { name: 'Mark done: Empty the dishwasher' }).click();
-  await expect(routines.getByText('Done by you')).toBeVisible();
+  await expect(
+    routines.getByRole('button', { name: 'Mark done: Empty the dishwasher Done by you' }),
+  ).toBeEnabled();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, 'a11y violations with routines on the board').toEqual([]);
 });

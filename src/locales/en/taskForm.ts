@@ -155,7 +155,7 @@ export const taskForm = {
   },
   dueDate: 'Due date',
   alreadyDone: 'Already done',
-  routine: 'Quick routine: mark it done with one tap on the board',
+  routine: 'Routine',
   dailyLimit: 'Times a day, at most',
   /** Buttons either side of the times-a-day number. */
   dailyLimitFewer: 'One fewer',

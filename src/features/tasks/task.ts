@@ -120,7 +120,8 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
       customLabels: z.array(z.string()),
       /**
        * An everyday chore, like emptying the dishwasher, that the board shows as a small chip marked done with
-       * one tap rather than as a card (ADR 0004). Only a repeating task can be one.
+       * one tap rather than as a card (ADR 0004). It is always available: it has no repeat or due date, and done,
+       * it is there again at once.
        */
       isRoutine: z.boolean(),
       /**

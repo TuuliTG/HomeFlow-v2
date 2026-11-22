@@ -447,7 +447,10 @@ export async function fakeSupabase(page: Page) {
     );
   }
 
-  /** Like complete_task(): marks the task done and adds the next occurrence of a repeating task. */
+  /**
+   * Like complete_task(): marks the task done and adds the next occurrence of a repeating task, or a fresh copy of
+   * a routine.
+   */
   async function completeTask(route: Route) {
     const { task_id, completed_on } = route.request().postDataJSON() as {
       task_id: string;
@@ -462,13 +465,12 @@ export async function fakeSupabase(page: Page) {
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
     task.completed_at = new Date().toISOString();
     task.completed_by = user.id;
-    if (task.repeat_every_days === null) return reply(route, 200, null);
-    const due = new Date(`${completed_on}T00:00:00Z`);
-    due.setUTCDate(due.getUTCDate() + task.repeat_every_days);
+    if (task.repeat_every_days === null && !task.is_routine) return reply(route, 200, null);
     const next = {
       ...task,
       id: `e2e-task-${String(tasks.length)}`,
-      due_on: due.toISOString().slice(0, 10),
+      due_on:
+        task.repeat_every_days === null ? null : addDays(completed_on, task.repeat_every_days),
       // Like complete_task(): the next occurrence is given to the same child.
       picked_up_by: task.assigned_to,
       created_at: new Date().toISOString(),
@@ -479,6 +481,13 @@ export async function fakeSupabase(page: Page) {
     tasks.unshift(next);
     taskImages.set(next.id, [...(taskImages.get(task.id) ?? [])]);
     return reply(route, 200, next.id);
+  }
+
+  /** The local date (YYYY-MM-DD) `days` after `isoDate`. */
+  function addDays(isoDate: string, days: number): string {
+    const date = new Date(`${isoDate}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + days);
+    return date.toISOString().slice(0, 10);
   }
 
   /** Like set_task_helpers(): who helped with a task the user did, each with a bonus of 1–10 points. */
