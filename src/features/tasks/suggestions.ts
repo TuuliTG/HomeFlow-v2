@@ -9,7 +9,7 @@ import type { Messages } from '@/lib/i18n/i18n';
 /** How many matching tasks are listed while the user types a name, and earlier tasks before one is typed. */
 export const MATCHING_SUGGESTIONS_LIMIT = 5;
 
-/** Earlier tasks whose name contains `query`, in the order given (most often added first). */
+/** The tasks whose name contains `query`, in the order given. */
 export function matchingSuggestions(
   suggestions: TaskSuggestion[],
   query: string,
@@ -19,17 +19,6 @@ export function matchingSuggestions(
   return suggestions
     .filter((suggestion) => titleKey(suggestion.title).includes(wanted))
     .slice(0, MATCHING_SUGGESTIONS_LIMIT);
-}
-
-/** The earlier tasks the household has starred (`favouriteKeys`, from `titleKey`), by name. */
-export function favouriteSuggestions(
-  suggestions: TaskSuggestion[],
-  favouriteKeys: string[],
-): TaskSuggestion[] {
-  const favourites = new Set(favouriteKeys);
-  return suggestions
-    .filter((suggestion) => favourites.has(titleKey(suggestion.title)))
-    .sort((a, b) => a.title.localeCompare(b.title));
 }
 
 /**

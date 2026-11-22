@@ -1,8 +1,7 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { LONG_PRESS_MS } from '@/features/tasks/FavouriteTaskList';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { fakeHouseholdBackend } from '@/test/fakeHouseholdApi';
 import { fakeFavouritesBackend } from '@/test/fakeFavouritesApi';
@@ -23,18 +22,28 @@ function favourite(userId: string, ...titles: string[]) {
   for (const title of titles) fakeFavouritesBackend.setFavouriteAs(userId, title, true);
 }
 
-/** Opens the favourites, folded away on the New task form. */
-async function openFavourites() {
-  const toggle = await screen.findByRole('button', { name: /^Favourites/ });
-  if (toggle.getAttribute('aria-expanded') === 'false') fireEvent.click(toggle);
+/** Opens the name field's list by tapping the field. */
+async function openList(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByLabelText('Task'));
 }
 
-/** The favourite tasks' buttons, once opened. */
-async function favouriteButtons() {
-  await openFavourites();
-  const favourites = screen.getByRole('region', { name: 'Favourites' });
-  const list = within(favourites).queryByRole('list');
-  return list ? within(list).getAllByRole('button') : [];
+/** The names of the tasks the opened list stars as favourites, in order. */
+function favouriteTitles() {
+  return screen
+    .queryAllByRole('option')
+    .filter((option) => within(option).queryByText('Favourite'))
+    .map((option) => option.firstElementChild?.textContent);
+}
+
+/** Waits for the opened list to star these favourites. */
+async function expectFavourites(...titles: string[]) {
+  await waitFor(() => {
+    expect(favouriteTitles()).toEqual(titles);
+  });
+}
+
+async function pickOption(user: ReturnType<typeof userEvent.setup>, title: RegExp) {
+  await user.click(await screen.findByRole('option', { name: title }));
 }
 
 describe('adding a task again', () => {
@@ -53,16 +62,9 @@ describe('adding a task again', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    const toggle = await screen.findByRole('button', { name: /^Favourites\s*2$/ });
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('button', { name: /Vacuum/ })).not.toBeInTheDocument();
-    const buttons = await favouriteButtons();
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(buttons.map((button) => button.textContent)).toEqual([
-      'Take out trash · 1 point',
-      'Vacuum · 3 points',
-    ]);
-    await user.click(buttons[0] ?? document.body);
+    await openList(user);
+    await expectFavourites('Take out trash', 'Vacuum');
+    await pickOption(user, /^Take out trash/);
 
     expect(screen.getByLabelText('Task')).toHaveValue('Take out trash');
     expect(screen.getByLabelText('Points')).toHaveValue(1);
@@ -71,7 +73,7 @@ describe('adding a task again', () => {
       'aria-pressed',
       'true',
     );
-    expect(screen.queryByRole('region', { name: 'Favourites' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     const task = await screen.findByRole('listitem', { name: 'Take out trash' });
@@ -85,7 +87,6 @@ describe('adding a task again', () => {
     renderAppAt('/tasks/new');
     const star = await screen.findByRole('button', { name: 'Favourite' });
     expect(star).toBeDisabled();
-    await screen.findByText("Tap the star by a task's name to keep it here for next time.");
 
     await user.type(screen.getByLabelText('Task'), 'take out trash');
     await user.click(star);
@@ -95,11 +96,9 @@ describe('adding a task again', () => {
       expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
     });
     await user.clear(screen.getByLabelText('Task'));
-    expect((await favouriteButtons()).map((button) => button.textContent)).toEqual([
-      'Take out trash · 1 point',
-    ]);
+    await expectFavourites('Take out trash');
 
-    await user.click(screen.getByRole('button', { name: /Take out trash/ }));
+    await pickOption(user, /^Take out trash/);
     await user.click(star);
 
     expect(star).toHaveAttribute('aria-pressed', 'false');
@@ -119,10 +118,8 @@ describe('adding a task again', () => {
     await screen.findByRole('listitem', { name: 'Water plants' });
     await user.click(screen.getByRole('link', { name: 'New task' }));
 
-    await openFavourites();
-    expect((await screen.findByRole('button', { name: /Water plants/ })).textContent).toBe(
-      'Water plants · 3 points',
-    );
+    await openList(user);
+    await expectFavourites('Water plants');
     expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['water plants']);
   });
 
@@ -142,15 +139,6 @@ describe('adding a task again', () => {
     });
   });
 
-  it("doesn't say how to add favourites when they can't be loaded", async () => {
-    logInAsFamilyMember();
-    fakeTasksBackend.failRequests();
-    renderAppAt('/tasks/new');
-
-    await screen.findByRole('button', { name: 'Favourite' });
-    expect(screen.queryByRole('region', { name: 'Favourites' })).not.toBeInTheDocument();
-  });
-
   it('shares favourites with the household, and any member can unstar them', async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
@@ -159,8 +147,9 @@ describe('adding a task again', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await openFavourites();
-    await user.click(await screen.findByRole('button', { name: /Take out trash/ }));
+    await openList(user);
+    await expectFavourites('Take out trash');
+    await pickOption(user, /^Take out trash/);
     const star = screen.getByRole('button', { name: 'Favourite' });
     expect(star).toHaveAttribute('aria-pressed', 'true');
     await user.click(star);
@@ -168,100 +157,6 @@ describe('adding a task again', () => {
     await waitFor(() => {
       expect(fakeFavouritesBackend.favouritesOf(ben.id)).toEqual([]);
     });
-  });
-
-  it('removes a favourite after pressing and holding it, without filling in the form', async () => {
-    const anna = logInAsFamilyMember();
-    fakeTasksBackend.addTaskAs(anna.id, TRASH);
-    favourite(anna.id, TRASH.title);
-    const user = userEvent.setup();
-    renderAppAt('/tasks/new');
-    await openFavourites();
-    await screen.findByText('Press and hold a favourite to remove it.');
-
-    const chip = await screen.findByRole('button', { name: /Take out trash/ });
-    await user.pointer({ keys: '[TouchA>]', target: chip });
-    await new Promise((resolve) => setTimeout(resolve, LONG_PRESS_MS + 50));
-    await user.pointer({ keys: '[/TouchA]', target: chip });
-
-    expect(screen.getByLabelText('Task')).toHaveValue('');
-    const remove = screen.getByRole('button', { name: 'Remove from favourites: Take out trash' });
-    expect(remove).toHaveFocus();
-    await user.click(remove);
-
-    await screen.findByText("Tap the star by a task's name to keep it here for next time.");
-    expect(screen.getByRole('button', { name: /^Favourites/ })).toHaveFocus();
-    await waitFor(() => {
-      expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual([]);
-    });
-  });
-
-  it('offers to remove a favourite on a right-click, keeps it on Escape, and picks it on Enter', async () => {
-    const anna = logInAsFamilyMember();
-    fakeTasksBackend.addTaskAs(anna.id, TRASH);
-    favourite(anna.id, TRASH.title);
-    const user = userEvent.setup();
-    renderAppAt('/tasks/new');
-
-    await openFavourites();
-    const chip = await screen.findByRole('button', { name: /Take out trash/ });
-    await user.pointer({ keys: '[MouseRight]', target: chip });
-    expect(screen.getByRole('button', { name: /Remove from favourites/ })).toHaveFocus();
-    await user.keyboard('{Escape}');
-
-    expect(
-      screen.queryByRole('button', { name: /Remove from favourites/ }),
-    ).not.toBeInTheDocument();
-    expect(chip).toHaveFocus();
-    expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
-    await user.keyboard('{Enter}');
-
-    expect(screen.getByLabelText('Task')).toHaveValue('Take out trash');
-  });
-
-  it('removes a favourite on Safari, where tapping Remove takes the focus off it first', async () => {
-    const anna = logInAsFamilyMember();
-    fakeTasksBackend.addTaskAs(anna.id, TRASH);
-    favourite(anna.id, TRASH.title);
-    const user = userEvent.setup();
-    renderAppAt('/tasks/new');
-    await openFavourites();
-
-    await user.pointer({
-      keys: '[MouseRight]',
-      target: await screen.findByRole('button', { name: /Take out trash/ }),
-    });
-    const remove = screen.getByRole('button', { name: /Remove from favourites/ });
-    // Safari doesn't focus a tapped button: the focus goes nowhere before the click.
-    fireEvent.blur(remove, { relatedTarget: null });
-    fireEvent.click(remove);
-
-    await waitFor(() => {
-      expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual([]);
-    });
-  });
-
-  it('closes Remove from favourites on a tap elsewhere or tabbing away', async () => {
-    const anna = logInAsFamilyMember();
-    fakeTasksBackend.addTaskAs(anna.id, TRASH);
-    favourite(anna.id, TRASH.title);
-    const user = userEvent.setup();
-    renderAppAt('/tasks/new');
-    await openFavourites();
-    const chip = await screen.findByRole('button', { name: /Take out trash/ });
-
-    await user.pointer({ keys: '[MouseRight]', target: chip });
-    await user.click(screen.getByRole('heading', { name: 'New task' }));
-    expect(
-      screen.queryByRole('button', { name: /Remove from favourites/ }),
-    ).not.toBeInTheDocument();
-
-    await user.pointer({ keys: '[MouseRight]', target: chip });
-    await user.tab();
-    expect(
-      screen.queryByRole('button', { name: /Remove from favourites/ }),
-    ).not.toBeInTheDocument();
-    expect(fakeFavouritesBackend.favouritesOf(anna.id)).toEqual(['take out trash']);
   });
 
   it('lists earlier tasks that match the name being typed', async () => {
@@ -327,8 +222,9 @@ describe('adding a task again', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await openFavourites();
-    await user.click(await screen.findByRole('button', { name: /Take out trash/ }));
+    await openList(user);
+    await expectFavourites('Take out trash');
+    await pickOption(user, /^Take out trash/);
 
     expect(screen.getByLabelText('Repeats')).toHaveValue('7');
     expect(screen.getByLabelText('Due date')).toHaveValue('');
@@ -341,8 +237,9 @@ describe('adding a task again', () => {
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
 
-    await openFavourites();
-    await user.click(await screen.findByRole('button', { name: /Take out trash/ }));
+    await openList(user);
+    await expectFavourites('Take out trash');
+    await pickOption(user, /^Take out trash/);
     expect(screen.getByText(/Take out trash is already on the board/)).toBeInTheDocument();
 
     await user.type(screen.getByLabelText('Task'), ' and recycling');
@@ -368,13 +265,11 @@ describe('adding a task again', () => {
     favourite(ben.id, 'Plan a surprise');
     const user = userEvent.setup();
     renderAppAt('/tasks/new');
-    await openFavourites();
+    await openList(user);
 
-    const button = await screen.findByRole('button', { name: /Buy a present/ });
-    expect((await favouriteButtons()).map((each) => each.textContent)).toEqual([
-      'Buy a present · Private',
-    ]);
-    await user.click(button);
+    await expectFavourites('Buy a present');
+    expect(screen.queryByRole('option', { name: /Plan a surprise/ })).not.toBeInTheDocument();
+    await pickOption(user, /^Buy a present/);
 
     expect(screen.getByRole('button', { name: 'Private' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByLabelText('Points')).not.toBeInTheDocument();
@@ -395,9 +290,8 @@ describe('adding a task again', () => {
     await screen.findByRole('heading', { level: 1, name: 'Shared tasks' });
     await user.click(screen.getByRole('link', { name: 'New task' }));
 
-    expect((await favouriteButtons()).map((button) => button.textContent)).toEqual([
-      'Take out trash · 1 point',
-    ]);
+    await openList(user);
+    await expectFavourites('Take out trash');
   });
 
   it('offers nothing when editing a task', async () => {
@@ -408,7 +302,6 @@ describe('adding a task again', () => {
     renderAppAt('/tasks/task:0/edit');
 
     await user.clear(await screen.findByDisplayValue('Take out trash'));
-    expect(screen.queryByRole('region', { name: 'Favourites' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Favourite' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Task'), 'Take');
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();

@@ -39,7 +39,10 @@ describe('readyMadeTasks', () => {
 describe('nameSuggestions', () => {
   it('lists earlier tasks first, leaving out ready-made ones the household has its own of', () => {
     const own = earlier('vacuum', false);
-    const titles = nameSuggestions([own], readyMadeTasks(options), '').map((task) => task.title);
+    const titles = nameSuggestions(
+      { earlier: [own], readyMade: readyMadeTasks(options), favouriteKeys: [] },
+      '',
+    ).map((task) => task.title);
     expect(titles[0]).toBe('vacuum');
     expect(titles).not.toContain('Vacuum');
     expect(titles).toContain('Empty the dishwasher');
@@ -47,16 +50,39 @@ describe('nameSuggestions', () => {
 
   it('lists only the most often added earlier tasks before a name is typed, and every ready-made one', () => {
     const own = ['a', 'b', 'c', 'd', 'e', 'f'].map((title) => earlier(title, false));
-    const titles = nameSuggestions(own, readyMadeTasks(options), '').map((task) => task.title);
+    const titles = nameSuggestions(
+      { earlier: own, readyMade: readyMadeTasks(options), favouriteKeys: [] },
+      '',
+    ).map((task) => task.title);
     expect(titles.slice(0, 6)).toEqual(['a', 'b', 'c', 'd', 'e', 'Empty the dishwasher']);
     expect(titles).toHaveLength(5 + readyMadeTasks(options).length);
   });
 
   it('lists the earlier and ready-made tasks matching a typed name', () => {
     const own = earlier('Clean the car', false);
-    const titles = nameSuggestions([own], readyMadeTasks(options), 'clean').map(
-      (task) => task.title,
-    );
+    const titles = nameSuggestions(
+      { earlier: [own], readyMade: readyMadeTasks(options), favouriteKeys: [] },
+      'clean',
+    ).map((task) => task.title);
     expect(titles).toEqual(['Clean the car', 'Clean the bathroom', 'Clean the kitchen']);
+  });
+
+  it('lists the favourites first by name, earlier or ready-made, and not again after them', () => {
+    const own = ['a', 'Water the car'].map((title) => earlier(title, false));
+    const titles = nameSuggestions(
+      {
+        earlier: own,
+        readyMade: readyMadeTasks(options),
+        favouriteKeys: ['water the car', 'vacuum'],
+      },
+      '',
+    ).map((task) => task.title);
+    expect(titles.slice(0, 3)).toEqual(['Vacuum', 'Water the car', 'a']);
+    expect(titles.filter((title) => title === 'Vacuum')).toHaveLength(1);
+    const typed = nameSuggestions(
+      { earlier: own, readyMade: readyMadeTasks(options), favouriteKeys: ['water the car'] },
+      'water',
+    );
+    expect(typed.map((task) => task.title)).toEqual(['Water the car', 'Water the plants']);
   });
 });

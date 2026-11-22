@@ -21,11 +21,6 @@ export const taskForm: Messages['taskForm'] = {
   task: 'Uppgift',
   titlePlaceholder: 't.ex. Gå ut med återvinningen',
   alreadyOnBoard: (title) => `${title} finns redan på listan. Du kan ändå lägga till den igen.`,
-  favourites: 'Favoriter',
-  noFavourites: 'Tryck på stjärnan vid en uppgifts namn så finns den här nästa gång.',
-  holdToRemoveFavourite: 'Håll in en favorit för att ta bort den.',
-  removeFavourite: 'Ta bort från favoriter',
-  removeFavouriteLabel: (title) => `Ta bort från favoriter: ${title}`,
   readyMade: {
     titles: {
       emptyDishwasher: 'Töm diskmaskinen',

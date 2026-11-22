@@ -121,18 +121,33 @@ export function useReadyMadeTasks({
   return isNew ? readyMadeTasks({ ...options, defaultPoints, t }) : [];
 }
 
+interface NameSuggestionSources {
+  earlier: TaskSuggestion[];
+  readyMade: TaskSuggestion[];
+  /** The household's favourites, as `titleKey` gives them. */
+  favouriteKeys: string[];
+}
+
 /**
- * What the name field lists: with a name typed, the earlier and ready-made tasks that match it; before one is
- * typed, the household's most often added earlier tasks, then the ready-made ones they haven't added under the
- * same name.
+ * What the name field lists: the household's favourites by name, then their
+ * earlier tasks, then the ready-made ones they haven't added under the same name. With a name typed, those that
+ * match it; before one is typed, every favourite and ready-made task but only the most often added earlier ones.
  */
 export function nameSuggestions(
-  earlier: TaskSuggestion[],
-  readyMade: TaskSuggestion[],
+  { earlier, readyMade, favouriteKeys }: NameSuggestionSources,
   query: string,
 ): TaskSuggestion[] {
+  const favouriteSet = new Set(favouriteKeys);
+  const isFavourite = (task: TaskSuggestion) => favouriteSet.has(titleKey(task.title));
   const earlierKeys = new Set(earlier.map((task) => titleKey(task.title)));
   const newReadyMade = readyMade.filter((task) => !earlierKeys.has(titleKey(task.title)));
-  if (titleKey(query) !== '') return matchingSuggestions([...earlier, ...newReadyMade], query);
-  return [...earlier.slice(0, MATCHING_SUGGESTIONS_LIMIT), ...newReadyMade];
+  const favourites = [...earlier, ...newReadyMade]
+    .filter(isFavourite)
+    .sort((a, b) => a.title.localeCompare(b.title));
+  const otherEarlier = earlier.filter((task) => !isFavourite(task));
+  const otherReadyMade = newReadyMade.filter((task) => !isFavourite(task));
+  if (titleKey(query) !== '') {
+    return matchingSuggestions([...favourites, ...otherEarlier, ...otherReadyMade], query);
+  }
+  return [...favourites, ...otherEarlier.slice(0, MATCHING_SUGGESTIONS_LIMIT), ...otherReadyMade];
 }

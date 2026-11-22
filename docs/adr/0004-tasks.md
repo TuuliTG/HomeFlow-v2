@@ -271,9 +271,10 @@ next one back rather than follow a fixed calendar.
   deleted tasks drop out on their own, and labels can later filter the same list.
 - **Ready-made tasks**: so a new family needn't type every chore, the New task form offers everyday chores
   (`readyMadeTasks.ts`) to fill it in from and adjust, in the name field's list: tapped before a name is typed,
-  it lists the household's five most often added earlier tasks and then the ready-made ones, and typing narrows
-  both down (`nameSuggestions`, leaving out a ready-made one the household has its own of). They are the app's,
-  not the household's: each has a name in every language (`taskForm.readyMade.titles`), a type, an icon and labels, and the list follows who the task is for, adults'
+  it lists the favourites, the household's five most often added other tasks and then the ready-made ones, and
+  typing narrows them down (`nameSuggestions`, leaving out a ready-made one the household has its own of).
+  They are the app's, not the household's: each has a name in every language (`taskForm.readyMade.titles`), a
+  type, an icon and labels, and the list follows who the task is for, adults'
   chores or children's (their own things, simple jobs and helping an adult, e.g. "Help cook dinner"). The
   product owner chose the lists one by one; meta work is left to type, as it differs most between families. An adults' one starts with the user's default points and a children's with one star, to
   change before saving or later. Picking one fills in its name, type, icon, labels and points, keeping who the
@@ -295,13 +296,12 @@ next one back rather than follow a fixed calendar.
   without any access to HomeFlow. The link only fills in the form: the user chooses the type, points and who it's
   for and saves it as usual, so the normal checks, RLS and push apply. A name or description too long to save is
   shortened and a due date that isn't a date is left out. A link opened while logged out is lost at the login.
-- **Favourites**: before a name is typed, the form offers the household's favourite tasks by name instead of the
-  most often added ones, which changed under the user and weren't what they wanted. They are folded away behind
-  a Favourites button showing how many there are, closed each time, so a long list doesn't push the form down. A star by the name field stars
-  or unstars the task being named, also a new one, saved straight away; so does a star on each open task card and
-  on each done task in the board's and the Me page's Completed lists. Favourites are shared by the household:
-  any member's star shows for everyone, and any member can remove it, also by pressing and holding a favourite
-  on the form (or right-clicking it, or its context-menu key), which shows a Remove from favourites button.
+- **Favourites**: the name field's list starts with the household's favourite tasks by name, each with a star,
+  so they stay put while the most often added tasks below them change. A star by the name field stars or unstars
+  the task being named, also a new one or a ready-made one, saved straight away; so does a star on each open task
+  card and on each done task in the board's and the Me page's Completed lists. To remove a favourite on the form,
+  a member picks it and taps that star. Favourites are shared by the household: any member's star shows for
+  everyone, and any member can remove it.
   `favourite_tasks` stores only the name ignoring case (`title_key`), one row per member who starred it, so a star never reveals a private task: a member
   sees a star they set or one on a task they can see (`private.can_see_favourite()`, which leans on the tasks'
   RLS). The details come from `task_suggestions()`, which returns the 50 most often added tasks plus every

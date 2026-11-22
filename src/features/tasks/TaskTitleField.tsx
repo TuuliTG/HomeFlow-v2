@@ -1,15 +1,15 @@
 import { type KeyboardEvent, type RefObject, useEffect, useId, useState } from 'react';
 
 import { inputClassName } from '@/components/ui/formStyles';
+import { StarIcon } from '@/components/ui/icons';
 import { TaskIcon } from '@/components/ui/TaskIcon';
 import { FavouriteStarButton } from '@/features/tasks/FavouriteStarButton';
-import { FavouriteTaskList } from '@/features/tasks/FavouriteTaskList';
 import { nameSuggestions } from '@/features/tasks/readyMadeTasks';
-import { favouriteSuggestions, suggestionPointsLabel } from '@/features/tasks/suggestions';
+import { suggestionPointsLabel } from '@/features/tasks/suggestions';
 import { TITLE_MAX_LENGTH, type TaskSuggestion, titleKey } from '@/features/tasks/task';
 import { useMessages } from '@/lib/i18n/i18n';
 
-/** The tasks the household has starred, offered on the New task form to add again. */
+/** The tasks the household has starred, listed first on the New task form to add again. */
 export interface FavouriteTasks {
   /** Their names, as `titleKey` gives them; undefined while they (or the suggestions) load. */
   keys: string[] | undefined;
@@ -28,7 +28,7 @@ interface TaskTitleFieldProps {
   readyMade: TaskSuggestion[];
   /** Fills the form with an earlier task's details. */
   onPick: (suggestion: TaskSuggestion) => void;
-  /** The household's favourites, starred with a button by the name; none when editing. */
+  /** The household's favourites, listed first and starred with a button by the name; none when editing. */
   favourites?: FavouriteTasks | undefined;
   inputRef: RefObject<HTMLInputElement | null>;
   /** `aria-invalid` and `aria-describedby` while the title has an error. */
@@ -36,9 +36,8 @@ interface TaskTitleFieldProps {
 }
 
 /**
- * The task's name, as a combobox with a star to make it a favourite. Tapped (or ArrowDown), it lists earlier
- * and ready-made tasks (`nameSuggestions`), narrowed down to those matching what is typed. Before anything is
- * typed, the household's favourites are offered above it.
+ * The task's name, as a combobox with a star to make it a favourite. Tapped (or ArrowDown), it lists the
+ * favourites, earlier and ready-made tasks (`nameSuggestions`), narrowed down to those matching what is typed.
  */
 export function TaskTitleField({
   value,
@@ -55,7 +54,10 @@ export function TaskTitleField({
   const [activeIndex, setActiveIndex] = useState(-1);
   /** The earlier or ready-made task picked, until the name is changed. */
   const [picked, setPicked] = useState<TaskSuggestion | null>(null);
-  const matches = isListOpen ? nameSuggestions(suggestions, readyMade, value) : [];
+  const favouriteKeys = favourites?.keys ?? [];
+  const matches = isListOpen
+    ? nameSuggestions({ earlier: suggestions, readyMade, favouriteKeys }, value)
+    : [];
   const optionId = (index: number) => `${listId}-${String(index)}`;
   const t = useMessages();
 
@@ -104,9 +106,6 @@ export function TaskTitleField({
 
   return (
     <div className="flex flex-col gap-3">
-      {value === '' && (
-        <Favourites suggestions={suggestions} favourites={favourites} onPick={pick} />
-      )}
       <div className="relative flex items-end gap-2">
         <label className="text-ink flex flex-1 flex-col gap-1 text-sm font-medium">
           {t.taskForm.task}
@@ -145,6 +144,7 @@ export function TaskTitleField({
           matches={matches}
           activeIndex={activeIndex}
           optionId={optionId}
+          favouriteKeys={favouriteKeys}
           onPick={pick}
         />
       </div>
@@ -152,27 +152,6 @@ export function TaskTitleField({
         <p className="text-notice-800 text-sm">{t.taskForm.alreadyOnBoard(picked.title)}</p>
       )}
     </div>
-  );
-}
-
-interface FavouritesProps {
-  suggestions: TaskSuggestion[];
-  favourites: FavouriteTasks | undefined;
-  onPick: (suggestion: TaskSuggestion) => void;
-}
-
-/** Before a name is typed: the household's favourites, to fill in the form from. */
-function Favourites({ suggestions, favourites, onPick }: FavouritesProps) {
-  if (!favourites?.keys) return null;
-  return (
-    <FavouriteTaskList
-      suggestions={favouriteSuggestions(suggestions, favourites.keys)}
-      onPick={onPick}
-      onRemove={(title) => {
-        favourites.onChange(title, false);
-      }}
-      isSaving={favourites.isSaving}
-    />
   );
 }
 
@@ -198,11 +177,20 @@ interface SuggestionListProps {
   matches: TaskSuggestion[];
   activeIndex: number;
   optionId: (index: number) => string;
+  /** The favourites' names (`titleKey`), starred in the list. */
+  favouriteKeys: string[];
   onPick: (suggestion: TaskSuggestion) => void;
 }
 
-/** Earlier and ready-made tasks (matching the name being typed), below the input; scrolls when long. */
-function SuggestionList({ id, matches, activeIndex, optionId, onPick }: SuggestionListProps) {
+/** The favourites, earlier and ready-made tasks (matching the name typed), below the input; scrolls when long. */
+function SuggestionList({
+  id,
+  matches,
+  activeIndex,
+  optionId,
+  favouriteKeys,
+  onPick,
+}: SuggestionListProps) {
   const t = useMessages();
   return (
     <div
@@ -238,7 +226,13 @@ function SuggestionList({ id, matches, activeIndex, optionId, onPick }: Suggesti
             {suggestion.icon && <TaskIcon name={suggestion.icon} />}
             {suggestion.title}
           </span>
-          <span className="text-ink-muted shrink-0">
+          <span className="text-ink-muted flex shrink-0 items-center gap-1">
+            {favouriteKeys.includes(titleKey(suggestion.title)) && (
+              <>
+                <StarIcon className="text-points-600 size-4" fill="currentColor" />
+                <span className="sr-only">{t.tasks.favourite}</span>
+              </>
+            )}
             {suggestion.isOpen ? t.taskForm.onTheBoard : ''}
             {suggestionPointsLabel(suggestion, t)}
           </span>
