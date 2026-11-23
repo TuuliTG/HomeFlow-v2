@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 
-import { ChevronDownIcon, FlagIcon } from '@/components/ui/icons';
+import { ChevronDownIcon } from '@/components/ui/icons';
 import { TaskIcon } from '@/components/ui/TaskIcon';
 import { describeDueDate } from '@/features/tasks/dueDate';
 import type { Task } from '@/features/tasks/task';
@@ -27,13 +27,9 @@ export function PriorityTasks({ tasks, currentUserId }: PriorityTasksProps) {
   return (
     <section
       aria-labelledby={headingId}
-      className="bg-brand-900 shadow-hero flex flex-col gap-2 rounded-2xl p-3 text-white"
+      className="bg-brand-900 shadow-hero mt-2 flex flex-col gap-2 rounded-2xl p-3 text-white"
     >
-      <h2
-        id={headingId}
-        className="flex items-center gap-2 px-1 text-sm font-extrabold tracking-wide uppercase"
-      >
-        <FlagIcon className="size-4" />
+      <h2 id={headingId} className="px-1 text-sm font-extrabold tracking-wide uppercase">
         {t.tasks.priority.heading}
       </h2>
       <ul className="flex flex-col gap-2">
@@ -77,15 +73,14 @@ function PriorityTask({ task, isOpen, onOpenChange, currentUserId }: PriorityTas
         {task.icon && <TaskIcon name={task.icon} className="text-xl" />}
         <span className="flex min-w-0 flex-col">
           <span className="font-bold break-words">{task.title}</span>
-          {task.dueOn !== null && (
+          {/* Open, its card shows when it is due. */}
+          {!isOpen && task.dueOn !== null && (
             <span className="text-brand-100 text-xs">
               {describeDueDate(task.dueOn, today(), t)}
             </span>
           )}
         </span>
-        <ChevronDownIcon
-          className={`ml-auto size-5 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
+        <ChevronDownIcon className={`ml-auto size-5 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <div id={cardId} hidden={!isOpen}>
         {isOpen && (
