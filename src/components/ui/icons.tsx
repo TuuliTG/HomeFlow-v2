@@ -184,3 +184,12 @@ export function RepeatIcon(props: IconProps) {
     </BaseIcon>
   );
 }
+
+/** A flag on a pole, for a task marked a priority. */
+export function FlagIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M5 21V4M5 4h12l-2.5 4.5L17 13H5" />
+    </BaseIcon>
+  );
+}

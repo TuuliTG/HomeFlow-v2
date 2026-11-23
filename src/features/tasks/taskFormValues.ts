@@ -63,6 +63,7 @@ export function fieldValues(task?: NewTask, defaultPoints = DEFAULT_POINTS) {
     labels: task.labels,
     customLabels: task.customLabels,
     isRoutine: task.isRoutine,
+    isPriority: task.isPriority,
     isAlways: task.isAlways,
     // An empty value is no limit; a task that isn't an always task yet starts at once a day.
     dailyLimit: dailyLimitValue(task),
@@ -139,6 +140,7 @@ function taskInput(values: FieldValues, isChild: boolean) {
     ...labelsOf(values, isChild),
     // The toggle keeps its value while hidden, so making the task private and shared again brings it back.
     isRoutine: isRoutineTask(values, isChild),
+    isPriority: values.isPriority && canBePriority({ ...values, isChild }),
     ...audience(values, isChild),
   };
 }
@@ -195,6 +197,14 @@ interface RoutineState {
 /** Whether the task can be a routine: the board shows routines among the adults' shared tasks. */
 export function canBeRoutine({ isChild, isPrivate, forChildren }: RoutineState): boolean {
   return !isChild && !isPrivate && !forChildren;
+}
+
+/**
+ * Whether the task can be a priority, listed at the top of the board: an adults' shared task that isn't a routine
+ * (`tasks_priority_adults_shared`).
+ */
+export function canBePriority(state: RoutineState & { isRoutine: boolean }): boolean {
+  return canBeRoutine(state) && !state.isRoutine;
 }
 
 /** Whether the field values make the task a routine; the toggle keeps its value while hidden. */

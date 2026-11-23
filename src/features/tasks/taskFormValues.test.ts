@@ -29,4 +29,19 @@ describe('checkTask', () => {
       data: { isRoutine: false, repeatEveryDays: 1, dueOn: '2026-10-08' },
     });
   });
+
+  it("keeps a task a priority only while it is an adults' shared task that is no routine", () => {
+    const priority = { ...repeating, isPriority: true };
+
+    expect(checkTask(priority, false, en)).toMatchObject({ data: { isPriority: true } });
+    expect(checkTask({ ...priority, isPrivate: true }, false, en)).toMatchObject({
+      data: { isPriority: false },
+    });
+    expect(checkTask({ ...priority, forChildren: true }, false, en)).toMatchObject({
+      data: { isPriority: false },
+    });
+    expect(checkTask({ ...priority, isRoutine: true }, false, en)).toMatchObject({
+      data: { isPriority: false },
+    });
+  });
 });

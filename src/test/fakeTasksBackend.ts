@@ -164,6 +164,8 @@ function nextOccurrenceOf(task: StoredTask, changes: Partial<StoredTask>): Store
     completed: null,
     helpers: [],
     images: [...task.images],
+    // Like complete_task(): the next occurrence isn't a priority.
+    isPriority: false,
     ...changes,
   };
 }
@@ -202,6 +204,7 @@ export const fakeTasksBackend = {
         isRoutine: false,
         isAlways: false,
         dailyLimit: null,
+        isPriority: false,
         ...task,
         timesDone: { count: 0, on: null },
         id,

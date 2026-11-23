@@ -1,9 +1,15 @@
 import type { ReactNode } from 'react';
 
-import { LockIcon, RepeatIcon } from '@/components/ui/icons';
+import { FlagIcon, LockIcon, RepeatIcon } from '@/components/ui/icons';
 import { TaskAudienceChoice } from '@/features/tasks/TaskAudienceChoice';
 import { useHouseholdChildren } from '@/features/tasks/useHelpers';
 import { useMessages } from '@/lib/i18n/i18n';
+
+interface Toggle {
+  offered: boolean;
+  pressed: boolean;
+  onChange: (pressed: boolean) => void;
+}
 
 interface TaskAudienceFieldsProps {
   isNew: boolean;
@@ -16,7 +22,9 @@ interface TaskAudienceFieldsProps {
   forChildren: boolean;
   onForChildrenChange: (forChildren: boolean) => void;
   /** Whether it is a routine, offered for the adults' shared tasks (`canBeRoutine()`). */
-  routine: { offered: boolean; pressed: boolean; onChange: (pressed: boolean) => void };
+  routine: Toggle;
+  /** Whether it is a priority, offered for the adults' shared tasks that aren't routines (`canBePriority()`). */
+  priority: Toggle;
   currentUserId: string;
 }
 
@@ -26,7 +34,7 @@ interface TaskAudienceFieldsProps {
  * when editing),
  * and a task for the children can't be private. A private task being edited can be made shared, with the family
  * it was for: an adult's with the adults, a child's as their own chore. Beside "Private", an adults' shared task can
- * be made a routine, which is always available.
+ * be made a routine, which is always available, or a priority, listed at the top of the board.
  */
 export function TaskAudienceFields({
   isNew,
@@ -37,30 +45,27 @@ export function TaskAudienceFields({
   forChildren,
   onForChildrenChange,
   routine,
+  priority,
   currentUserId,
 }: TaskAudienceFieldsProps) {
   const t = useMessages().taskForm;
   const hasChildren = useHouseholdChildren(currentUserId).length > 0;
-  const toggles = (canBePrivate || routine.offered) && (
+  const offered = [
+    {
+      toggle: { offered: canBePrivate, pressed: isPrivate, onChange: onPrivateChange },
+      icon: <LockIcon className="size-4" />,
+      label: t.privateTask,
+    },
+    { toggle: routine, icon: <RepeatIcon className="size-4" />, label: t.routine },
+    { toggle: priority, icon: <FlagIcon className="size-4" />, label: t.priority },
+  ].filter(({ toggle }) => toggle.offered);
+  const toggles = offered.length > 0 && (
     <div className="flex flex-wrap gap-2">
-      {canBePrivate && (
-        <TogglePill
-          pressed={isPrivate}
-          onChange={onPrivateChange}
-          icon={<LockIcon className="size-4" />}
-        >
-          {t.privateTask}
+      {offered.map(({ toggle, icon, label }) => (
+        <TogglePill key={label} pressed={toggle.pressed} onChange={toggle.onChange} icon={icon}>
+          {label}
         </TogglePill>
-      )}
-      {routine.offered && (
-        <TogglePill
-          pressed={routine.pressed}
-          onChange={routine.onChange}
-          icon={<RepeatIcon className="size-4" />}
-        >
-          {t.routine}
-        </TogglePill>
-      )}
+      ))}
     </div>
   );
   if (isChild || isPrivate || !hasChildren || !isNew) return toggles;

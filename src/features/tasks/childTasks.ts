@@ -42,6 +42,7 @@ export function newTaskOf(task: Task): NewTask {
     isRoutine,
     isAlways,
     dailyLimit,
+    isPriority,
   } = task;
   return {
     title,
@@ -59,6 +60,7 @@ export function newTaskOf(task: Task): NewTask {
     isRoutine,
     isAlways,
     dailyLimit,
+    isPriority,
   };
 }
 

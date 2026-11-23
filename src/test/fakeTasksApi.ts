@@ -61,6 +61,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           isRoutine,
           isAlways,
           dailyLimit,
+          isPriority,
           timesDone,
           createdBy,
           pickedUpBy,
@@ -83,6 +84,7 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
           isRoutine,
           isAlways,
           dailyLimit,
+          isPriority,
           timesDone: { ...timesDone },
           createdBy,
           creatorName: fakeAuthBackend.displayNameOf(createdBy),
@@ -95,6 +97,13 @@ export const fetchTasks: typeof tasksApi.fetchTasks = () => {
       ),
   );
 };
+
+/** Like `tasks_priority_adults_shared`: only an adults' shared task that is no routine can be a priority. */
+function priorityOf(
+  task: Pick<NewTask, 'isPriority' | 'isPrivate' | 'forChildren' | 'isRoutine'>,
+): boolean {
+  return task.isPriority && !task.isPrivate && !task.forChildren && !task.isRoutine;
+}
 
 /** Like the insert policy, for each task, and adding all or none. */
 export const addTasks: typeof tasksApi.addTasks = (newTasks) =>
@@ -113,6 +122,9 @@ export const addTasks: typeof tasksApi.addTasks = (newTasks) =>
         throw new Error('Only adults add always tasks, for children');
       }
       checkGivenToAChild(userId, task);
+      if (task.isPriority !== priorityOf(task)) {
+        throw new Error("Only the adults' shared tasks can be a priority");
+      }
     }
     return newTasks.map((task) => fakeTasksBackend.addTaskAs(userId, ownChore(userId, task)));
   });
@@ -259,6 +271,8 @@ export const updateTask: typeof tasksApi.updateTask = (taskId, details) =>
       // Like update_task(): a child's edit keeps whether it is an always task.
       isAlways: isChild ? task.isAlways : details.isAlways,
       dailyLimit: isChild ? task.dailyLimit : details.dailyLimit,
+      // Like update_task(): only the adults' shared tasks can be a priority.
+      isPriority: priorityOf({ ...details, isPrivate }),
     });
     deliver(task, { kind: 'changed' });
   });

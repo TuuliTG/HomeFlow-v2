@@ -146,6 +146,7 @@ export const taskForm: Messages['taskForm'] = {
   dueDate: 'Määräpäivä',
   alreadyDone: 'Jo tehty',
   routine: 'Rutiini',
+  priority: 'Tärkeä',
   dailyLimit: 'Kertaa päivässä enintään',
   dailyLimitFewer: 'Yksi vähemmän',
   dailyLimitMore: 'Yksi enemmän',

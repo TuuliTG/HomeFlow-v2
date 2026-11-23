@@ -2,6 +2,7 @@ import { type SyntheticEvent, useId, useState } from 'react';
 
 import { type NewTask, type TaskSuggestion } from '@/features/tasks/task';
 import {
+  canBePriority,
   canBeRoutine,
   checkTask,
   type FieldName,
@@ -184,6 +185,11 @@ export function TaskForm({
           offered: canBeRoutine({ isChild, isPrivate, forChildren }),
           pressed: fields.isRoutine,
           onChange: set('isRoutine'),
+        }}
+        priority={{
+          offered: canBePriority({ isChild, isPrivate, forChildren, isRoutine: fields.isRoutine }),
+          pressed: fields.isPriority,
+          onChange: set('isPriority'),
         }}
         currentUserId={currentUserId}
       />
