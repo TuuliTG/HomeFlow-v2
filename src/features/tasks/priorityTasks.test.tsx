@@ -38,7 +38,7 @@ describe('priority tasks on the board', () => {
       points: 5,
       dueOn: '2026-10-05',
     });
-    renderAppAt('/?show=undated');
+    renderAppAt('/?show=undated&q=oven');
 
     await screen.findByRole('region', { name: 'Priority' });
     expect(openTask('Pay the daycare invoice')).toHaveTextContent('Was due Mon 5 Oct');
