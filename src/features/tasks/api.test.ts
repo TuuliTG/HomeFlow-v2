@@ -47,6 +47,7 @@ const newTask: NewTask = {
   isRoutine: false,
   isAlways: false,
   dailyLimit: null,
+  isPriority: false,
 };
 const row = {
   id: 't1',
@@ -67,6 +68,7 @@ const row = {
   is_routine: false,
   is_always: false,
   daily_limit: null,
+  is_priority: false,
   times_done: 0,
   times_done_on: null,
   task_images: [],
@@ -165,6 +167,7 @@ describe('tasks api', () => {
       labels: ['cleaning'],
       customLabels: ['Upstairs'],
       isRoutine: true,
+      isPriority: true,
     });
 
     expect(client.rpc).toHaveBeenCalledWith('update_task', {
@@ -185,9 +188,19 @@ describe('tasks api', () => {
       task_is_always: false,
       task_daily_limit: null,
       task_is_private: false,
+      task_is_priority: true,
     });
     client.rpc.mockResolvedValueOnce({ data: null, error: failure });
     await expect(api.updateTask('t1', newTask)).rejects.toBe(failure);
+  });
+
+  it('reads whether a task is a priority', async () => {
+    respondWithTasks({ data: [{ ...row, is_priority: true }], error: null });
+    query.in.mockResolvedValue({ data: [], error: null });
+
+    const [task] = await api.fetchTasks();
+
+    expect(task?.isPriority).toBe(true);
   });
 
   it('reads how often a task repeats and when it is due', async () => {
@@ -401,6 +414,7 @@ describe('tasks api', () => {
       is_routine: true,
       is_always: false,
       daily_limit: null,
+      is_priority: false,
     };
     expect(query.insert).toHaveBeenCalledWith([row, { ...row, assigned_to: 'carol' }]);
     expect(query.select).toHaveBeenCalledWith('id');

@@ -57,6 +57,10 @@ export const tasks = {
   routines: {
     heading: 'Routines',
   },
+  /** The tasks marked a priority, at the top of the board. */
+  priority: {
+    heading: 'Priority',
+  },
   /** "Every day", "Every 3 days", "Every week", "Every 2 weeks". */
   repeat: (days: number) => {
     if (days === 1) return 'Every day';

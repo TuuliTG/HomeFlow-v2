@@ -27,6 +27,7 @@ const taskRowsSchema = z.array(
     is_routine: z.boolean(),
     is_always: z.boolean(),
     daily_limit: z.number().nullable(),
+    is_priority: z.boolean(),
     times_done: z.number(),
     times_done_on: z.string().nullable(),
     task_images: z.array(z.object({ path: z.string(), position: z.number() })),
@@ -46,7 +47,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, assigned_to, labels, custom_labels, is_routine, is_always, daily_limit, times_done, times_done_on, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
+      'id, title, description, type, points, created_by, repeat_every_days, due_on, picked_up_by, is_private, for_children, icon, assigned_to, labels, custom_labels, is_routine, is_always, daily_limit, is_priority, times_done, times_done_on, task_images(path, position), previous:previous_occurrence(completed_by, completed_at), request:task_requests(requested_by, requested_for, answer)',
     )
     .is('completed_at', null)
     .order('due_on', { ascending: true, nullsFirst: false })
@@ -78,6 +79,7 @@ export async function fetchTasks(): Promise<Task[]> {
       is_routine,
       is_always,
       daily_limit,
+      is_priority,
       times_done,
       times_done_on,
       task_images,
@@ -91,6 +93,7 @@ export async function fetchTasks(): Promise<Task[]> {
       isRoutine: is_routine,
       isAlways: is_always,
       dailyLimit: daily_limit,
+      isPriority: is_priority,
       timesDone: { count: times_done, on: times_done_on },
       images: task_images.toSorted((a, b) => a.position - b.position).map((image) => image.path),
       isPrivate: is_private,
@@ -125,6 +128,7 @@ function taskRow({
   isRoutine,
   isAlways,
   dailyLimit,
+  isPriority,
   ...task
 }: NewTask) {
   return {
@@ -138,6 +142,7 @@ function taskRow({
     is_routine: isRoutine,
     is_always: isAlways,
     daily_limit: dailyLimit,
+    is_priority: isPriority,
   };
 }
 
@@ -205,6 +210,7 @@ export async function updateTask(
     isAlways,
     dailyLimit,
     isPrivate,
+    isPriority,
   }: NewTask,
 ): Promise<void> {
   const { error } = await getSupabaseClient().rpc('update_task', {
@@ -226,6 +232,7 @@ export async function updateTask(
     task_is_always: isAlways,
     task_daily_limit: dailyLimit,
     task_is_private: isPrivate,
+    task_is_priority: isPriority,
   });
   if (error) throw error;
 }

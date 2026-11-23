@@ -12,6 +12,7 @@ import { NewTaskLink } from '@/features/tasks/NewTaskLink';
 import type { HouseholdMember } from '@/features/tasks/helpersApi';
 import { nothingPickedUpMessage, usePickerFilter } from '@/features/tasks/pickerFilter';
 import { PointsToAward } from '@/features/tasks/PointsToAward';
+import { PriorityTasks } from '@/features/tasks/PriorityTasks';
 import { RoutineChips } from '@/features/tasks/RoutineChips';
 import type { Task } from '@/features/tasks/task';
 import { useIsChild, useTasks } from '@/features/tasks/useTasks';
@@ -172,28 +173,34 @@ function TaskList({ filter, picker, search }: TaskListProps) {
       </p>
     );
   }
-  // Private tasks are listed only on the Me page, and children's on their pages.
-  const listed = tasks.data.filter((task) => !task.isPrivate && !task.forChildren);
+  // Private tasks are listed only on the Me page, and children's on their pages. Priority tasks are at the top
+  // whatever the filters.
+  const shared = tasks.data.filter((task) => !task.isPrivate && !task.forChildren);
+  const priority = shared.filter((task) => task.isPriority);
+  const listed = shared.filter((task) => !task.isPriority);
   const shown = searchTasks(
     pickedUpBy(filterTasks(listed, filter, today()), picker?.id ?? null),
     search,
   );
   const searched = search.trim();
   const { routines, cards } = splitRoutines(shown, searched !== '');
-  function emptyMessage(): string {
-    if (listed.length === 0) return t.empty.all;
+  function emptyMessage(): string | null {
+    if (listed.length === 0) return priority.length === 0 ? t.empty.all : null;
     if (searched !== '') return t.noMatches(searched);
     if (picker !== null) return nothingPickedUpMessage(picker, user.id, messages);
     return (filter.availableOnly ? t.emptyAvailable : t.empty)[filter.due];
   }
+  const message = emptyMessage();
   return (
     <>
-      {/* Mounted while the tasks show, so screen readers hear how many match as the search is typed. */}
+      {/* Mounted while the tasks show, so screen readers hear how many match as the search is typed. The priority
+          tasks above stay whatever the search, so they aren't counted. */}
       <p role="status" className="sr-only">
         {searched === '' ? '' : t.matches(shown.length)}
       </p>
+      <PriorityTasks tasks={priority} currentUserId={user.id} />
       <RoutineChips routines={routines} currentUserId={user.id} />
-      {shown.length === 0 && <EmptyMessage>{emptyMessage()}</EmptyMessage>}
+      {shown.length === 0 && message !== null && <EmptyMessage>{message}</EmptyMessage>}
       {cards.length > 0 && <DueTaskGroups tasks={cards} currentUserId={user.id} headingLevel={2} />}
     </>
   );

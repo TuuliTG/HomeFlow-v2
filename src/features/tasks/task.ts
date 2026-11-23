@@ -139,6 +139,11 @@ export const newTaskSchema = ({ taskForm: { errors, labels } }: Messages) =>
         .min(1, errors.dailyLimitRange(MAX_DAILY_LIMIT))
         .max(MAX_DAILY_LIMIT, errors.dailyLimitRange(MAX_DAILY_LIMIT))
         .nullable(),
+      /**
+       * An adults' shared task that matters more than its due date says, listed at the top of the board (ADR 0004).
+       * Done, a repeating one comes back without it.
+       */
+      isPriority: z.boolean(),
     })
     .refine((task) => !task.isPrivate || task.points === null, {
       path: ['points'],
@@ -165,6 +170,7 @@ export const NEW_TASK_DEFAULTS: Readonly<Omit<NewTask, 'title' | 'description' |
   isRoutine: false,
   isAlways: false,
   dailyLimit: null,
+  isPriority: false,
 };
 
 export interface Task extends NewTask {
@@ -288,7 +294,7 @@ export function canChange(task: Task, userId: string, isChild: boolean): boolean
 /** A task the household has added before, to add again with the same details (`task_suggestions()`). */
 export interface TaskSuggestion extends Omit<
   NewTask,
-  'dueOn' | 'assignedTo' | 'isAlways' | 'dailyLimit'
+  'dueOn' | 'assignedTo' | 'isAlways' | 'dailyLimit' | 'isPriority'
 > {
   /** How many times members have added it; repeats a task adds itself don't count. */
   timesAdded: number;

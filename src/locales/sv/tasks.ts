@@ -50,6 +50,9 @@ export const tasks: Messages['tasks'] = {
   routines: {
     heading: 'Rutiner',
   },
+  priority: {
+    heading: 'Viktiga',
+  },
   repeat: (days) => {
     if (days === 1) return 'Varje dag';
     if (days === 2) return 'Varannan dag';

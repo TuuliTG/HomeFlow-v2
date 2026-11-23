@@ -54,6 +54,7 @@ export function suggestionAsTask({
     assignedTo: null,
     isAlways: false,
     dailyLimit: null,
+    isPriority: false,
   };
 }
 

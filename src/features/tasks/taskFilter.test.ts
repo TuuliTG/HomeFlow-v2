@@ -29,6 +29,7 @@ function task(title: string, dueOn: string | null, pickedUpBy: string | null = n
     isRoutine: false,
     isAlways: false,
     dailyLimit: null,
+    isPriority: false,
     timesDone: { count: 0, on: null },
     createdBy: 'anna',
     creatorName: 'Anna',

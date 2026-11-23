@@ -27,6 +27,7 @@ describe('taskFromLink', () => {
       isRoutine: false,
       isAlways: false,
       dailyLimit: null,
+      isPriority: false,
     });
   });
 

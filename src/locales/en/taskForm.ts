@@ -156,6 +156,8 @@ export const taskForm = {
   dueDate: 'Due date',
   alreadyDone: 'Already done',
   routine: 'Routine',
+  /** Marks an adults' shared task a priority, listed at the top of the board. */
+  priority: 'Priority',
   dailyLimit: 'Times a day, at most',
   /** Buttons either side of the times-a-day number. */
   dailyLimitFewer: 'One fewer',
