@@ -1,6 +1,6 @@
 # 0004. Tasks
 
-- **Updated:** 2026-11-23 (a routine chip opens a menu to mark it done, edit or delete it)
+- **Updated:** 2026-11-23 (a shared adults' task can be a priority, listed at the top of the board)
 
 ## Context
 
@@ -245,6 +245,14 @@ next one back rather than follow a fixed calendar.
   is in the completed list as for any task. A search shows routines as ordinary cards. We chose an explicit choice
   over treating every daily task as a routine, because some daily tasks deserve a card, and always available over
   repeating, because an everyday chore needs doing whenever it does, not on a schedule.
+- **Priority tasks**: an overdue task isn't always urgent, so the due date alone can't say what matters most. A
+  shared adults' task that isn't a routine can be a **priority** (`is_priority`, a "Priority" pill beside "Private"
+  and "Routine"; `tasks_priority_adults_shared` keeps it off private tasks, children's tasks and routines, and
+  `update_task()` clears it when a task becomes one). The board lists priority tasks in a dark panel at the top
+  (`PriorityTasks`) whatever its filters and search, and leaves them out of the due-date groups; each is a short row
+  with its due date that opens its card in place. Marking one done doesn't carry the flag on: `complete_task()`
+  doesn't copy it, so a repeating task comes back as an ordinary one (undo brings it back). Children's tasks have no
+  priority, and the flag shows only on the board, not on the Me page.
 - **Always tasks**: parents wanted a child's everyday chores (brushing teeth, making the bed) always on the child's
   Me page without setting due dates or repeats. An adult's shared task for children can be an **always task**
   (`is_always`, "Always" on the child's form, which hides Repeats and Due date; `tasks_always_for_children` keeps it
