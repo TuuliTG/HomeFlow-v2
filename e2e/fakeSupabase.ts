@@ -49,6 +49,8 @@ interface TaskRow {
   /** A child's chore always on their Me page, with how many times a day it earns points (null: no limit). */
   is_always: boolean;
   daily_limit: number | null;
+  /** Listed at the top of the board; a repeating task's next occurrence isn't one. */
+  is_priority: boolean;
   /** How many times the always task was done on `times_done_on` before this copy. */
   times_done: number;
   times_done_on: string | null;
@@ -141,6 +143,7 @@ export async function fakeSupabase(page: Page) {
       is_routine: false,
       is_always: false,
       daily_limit: null,
+      is_priority: false,
       times_done: 0,
       times_done_on: null,
       created_at: new Date().toISOString(),
@@ -358,6 +361,7 @@ export async function fakeSupabase(page: Page) {
     | 'is_routine'
     | 'is_always'
     | 'daily_limit'
+    | 'is_priority'
   >;
 
   async function tasksEndpoint(route: Route) {
@@ -477,6 +481,7 @@ export async function fakeSupabase(page: Page) {
       completed_at: null,
       completed_by: null,
       previous_task_id: task.id,
+      is_priority: false,
     };
     tasks.unshift(next);
     taskImages.set(next.id, [...(taskImages.get(task.id) ?? [])]);
@@ -578,6 +583,7 @@ export async function fakeSupabase(page: Page) {
       task_is_always: boolean;
       task_daily_limit: number | null;
       task_is_private: boolean | null;
+      task_is_priority: boolean;
     };
     const task = ownOpenTask(body.task_id);
     if (!task) return reply(route, 400, { code: 'P0002', message: 'No open task with this id' });
@@ -595,6 +601,7 @@ export async function fakeSupabase(page: Page) {
       is_routine: body.task_is_routine,
       is_always: body.task_is_always,
       daily_limit: body.task_daily_limit,
+      is_priority: body.task_is_priority,
       // A private task can be made shared, a shared one not private. (Only adults log in here.)
       is_private: task.is_private && body.task_is_private !== false,
       ...(task.is_private &&

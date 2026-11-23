@@ -457,6 +457,26 @@ test('family member can make a task a routine and mark it done from its menu', a
   expect(results.violations, 'a11y violations with routines on the board').toEqual([]);
 });
 
+test('family member can make a task a priority, listed at the top until it is done', async ({
+  page,
+}) => {
+  await fakeSupabase(page);
+  await logInAsFamilyMember(page);
+  await page.getByRole('link', { name: 'Shared tasks' }).click();
+
+  await page.getByRole('link', { name: 'New task' }).click();
+  await page.getByRole('button', { name: 'Priority' }).click();
+  await page.getByLabel('Task', { exact: true }).fill('Pay the daycare invoice');
+  await page.getByRole('button', { name: 'Create task' }).click();
+
+  const priority = page.getByRole('region', { name: 'Priority' });
+  await priority.getByRole('button', { name: /^Pay the daycare invoice/ }).click();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, 'a11y violations with a priority task open').toEqual([]);
+  await priority.getByRole('button', { name: 'Mark done: Pay the daycare invoice' }).click();
+  await expect(priority).toBeHidden();
+});
+
 test('family member can make a private task shared by editing it', async ({ page }) => {
   await fakeSupabase(page);
   await logInAsFamilyMember(page);
