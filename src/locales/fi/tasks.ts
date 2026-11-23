@@ -48,6 +48,9 @@ export const tasks: Messages['tasks'] = {
   routines: {
     heading: 'Rutiinit',
   },
+  priority: {
+    heading: 'Tärkeät',
+  },
   repeat: (days) => {
     if (days === 1) return 'Joka päivä';
     if (days === 7) return 'Joka viikko';
