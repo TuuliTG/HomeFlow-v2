@@ -190,15 +190,17 @@ function TaskList({ filter, picker, search }: TaskListProps) {
     if (picker !== null) return nothingPickedUpMessage(picker, user.id, messages);
     return (filter.availableOnly ? t.emptyAvailable : t.empty)[filter.due];
   }
+  const message = emptyMessage();
   return (
     <>
-      {/* Mounted while the tasks show, so screen readers hear how many match as the search is typed. */}
+      {/* Mounted while the tasks show, so screen readers hear how many match as the search is typed. The priority
+          tasks above stay whatever the search, so they aren't counted. */}
       <p role="status" className="sr-only">
         {searched === '' ? '' : t.matches(shown.length)}
       </p>
       <PriorityTasks tasks={priority} currentUserId={user.id} />
       <RoutineChips routines={routines} currentUserId={user.id} />
-      {shown.length === 0 && <EmptyMessage>{emptyMessage()}</EmptyMessage>}
+      {shown.length === 0 && message !== null && <EmptyMessage>{message}</EmptyMessage>}
       {cards.length > 0 && <DueTaskGroups tasks={cards} currentUserId={user.id} headingLevel={2} />}
     </>
   );
@@ -213,8 +215,7 @@ function splitRoutines(tasks: Task[], isSearching: boolean): { routines: Task[];
   };
 }
 
-function EmptyMessage({ children }: { children: string | null }) {
-  if (children === null) return null;
+function EmptyMessage({ children }: { children: string }) {
   return (
     <p className="border-line text-ink-muted mt-3 rounded-2xl border-2 border-dashed p-6 text-center text-sm">
       {children}

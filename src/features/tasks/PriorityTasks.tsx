@@ -27,9 +27,9 @@ export function PriorityTasks({ tasks, currentUserId }: PriorityTasksProps) {
   return (
     <section
       aria-labelledby={headingId}
-      className="bg-brand-900 shadow-hero mt-2 flex flex-col gap-2 rounded-2xl p-3 text-white"
+      className="bg-brand-900 shadow-hero mt-2 flex flex-col gap-2 rounded-2xl p-3"
     >
-      <h2 id={headingId} className="px-1 text-sm font-extrabold tracking-wide uppercase">
+      <h2 id={headingId} className="px-1 text-sm font-extrabold tracking-wide text-white uppercase">
         {t.tasks.priority.heading}
       </h2>
       <ul className="flex flex-col gap-2">
@@ -68,7 +68,7 @@ function PriorityTask({ task, isOpen, onOpenChange, currentUserId }: PriorityTas
         onClick={() => {
           onOpenChange(!isOpen);
         }}
-        className="bg-brand-700 hover:bg-brand-600 flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-left"
+        className="bg-brand-700 hover:bg-brand-600 flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-left text-white"
       >
         {task.icon && <TaskIcon name={task.icon} className="text-xl" />}
         <span className="flex min-w-0 flex-col">
