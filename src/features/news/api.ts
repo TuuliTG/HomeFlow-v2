@@ -20,7 +20,10 @@ const newsRowsSchema = z.array(
     completed_at: z.string(),
     completed_by: z.string().nullable(),
     task_helpers: z.array(z.object({ user_id: z.string(), points: z.number() })),
-    task_likes: z.array(z.object({ user_id: z.string(), emoji: z.enum(reactions) })),
+    task_likes: z.array(
+      // An emoji this version doesn't know (added later) shows as a thumbs up rather than breaking News.
+      z.object({ user_id: z.string(), emoji: z.enum(reactions).catch(reactions[0]) }),
+    ),
     task_comments: z.array(
       z.object({
         id: z.string(),

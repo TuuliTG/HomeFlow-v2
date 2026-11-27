@@ -116,6 +116,18 @@ describe('news api', () => {
     await expect(api.fetchNews(new Date())).rejects.toBe(failure);
   });
 
+  it('reads an emoji it does not know as a thumbs up', async () => {
+    respondWithNews({
+      data: [
+        { ...row, task_likes: [{ user_id: 'u1', emoji: '🦄', created_at: row.completed_at }] },
+      ],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [{ id: 'u1', display_name: 'Anna' }], error: null });
+    const [item] = await api.fetchNews(new Date());
+    expect(item?.reactions).toEqual([{ person: { userId: 'u1', name: 'Anna' }, emoji: '👍' }]);
+  });
+
   it('reacts to a task, changing the emoji when the user has reacted already', async () => {
     query.insert.mockResolvedValueOnce({ error: null });
     await api.reactToTask('t1', '🎉');
