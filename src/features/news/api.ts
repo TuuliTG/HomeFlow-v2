@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { type NewsItem, type NewsPerson, workTypes } from '@/features/news/news';
+import {
+  type NewsItem,
+  type NewsPerson,
+  type Reaction,
+  reactions,
+  workTypes,
+} from '@/features/news/news';
 import { getSupabaseClient } from '@/lib/supabase';
 import { taskIconSchema } from '@/lib/taskIcons';
 
@@ -14,7 +20,7 @@ const newsRowsSchema = z.array(
     completed_at: z.string(),
     completed_by: z.string().nullable(),
     task_helpers: z.array(z.object({ user_id: z.string(), points: z.number() })),
-    task_likes: z.array(z.object({ user_id: z.string() })),
+    task_likes: z.array(z.object({ user_id: z.string(), emoji: z.enum(reactions) })),
     task_comments: z.array(
       z.object({
         id: z.string(),
@@ -26,8 +32,8 @@ const newsRowsSchema = z.array(
   }),
 );
 const profileRowsSchema = z.array(z.object({ id: z.string(), display_name: z.string() }));
-/** Postgres' unique_violation: the user has liked the task already. */
-const ALREADY_LIKED = '23505';
+/** Postgres' unique_violation: the user has reacted to the task already. */
+const ALREADY_REACTED = '23505';
 
 type NewsRow = z.infer<typeof newsRowsSchema>[number];
 
@@ -52,20 +58,21 @@ async function fetchDisplayNames(userIds: string[]): Promise<Map<string, string>
 }
 
 /**
- * The shared tasks done in the user's household since `since`, newest first, with who helped, who liked
- * them and their comments, oldest first. Tasks with 0 points count for nobody, so they aren't news. Row Level
- * Security limits tasks, likes and comments to the household.
+ * The shared tasks done in the user's household since `since`, newest first, with who helped, who reacted
+ * with which emoji and their comments, oldest first. Tasks with 0 points count for nobody, so they aren't news. Row Level
+ * Security limits tasks, reactions and comments to the household.
  */
 export async function fetchNews(since: Date): Promise<NewsItem[]> {
   const { data, error } = await getSupabaseClient()
     .from('tasks')
     .select(
-      'id, title, type, icon, points, completed_at, completed_by, task_helpers(user_id, points), task_likes(user_id), task_comments(id, author_id, body, created_at)',
+      'id, title, type, icon, points, completed_at, completed_by, task_helpers(user_id, points), task_likes(user_id, emoji, created_at), task_comments(id, author_id, body, created_at)',
     )
     .eq('is_private', false)
     .or('points.is.null,points.gt.0')
     .gte('completed_at', since.toISOString())
     .order('completed_at', { ascending: false })
+    .order('created_at', { referencedTable: 'task_likes', ascending: true })
     .order('created_at', { referencedTable: 'task_comments', ascending: true });
   if (error) throw error;
   const rows = newsRowsSchema.parse(data);
@@ -86,7 +93,7 @@ export async function fetchNews(since: Date): Promise<NewsItem[]> {
       person: person(helper.user_id),
       points: helper.points,
     })),
-    likedBy: row.task_likes.map((like) => person(like.user_id)),
+    reactions: row.task_likes.map((like) => ({ person: person(like.user_id), emoji: like.emoji })),
     comments: row.task_comments.map((comment) => ({
       id: comment.id,
       author: person(comment.author_id),
@@ -96,14 +103,23 @@ export async function fetchNews(since: Date): Promise<NewsItem[]> {
   }));
 }
 
-/** Gives the user's thumbs up to a task someone else has done. */
-export async function likeTask(taskId: string): Promise<void> {
-  const { error } = await getSupabaseClient().from('task_likes').insert({ task_id: taskId });
-  if (error && error.code !== ALREADY_LIKED) throw error;
+/** Reacts to a task someone else has done, or changes the user's emoji if they have reacted already. */
+export async function reactToTask(taskId: string, emoji: Reaction): Promise<void> {
+  const { error } = await getSupabaseClient().from('task_likes').insert({ task_id: taskId, emoji });
+  if (error?.code !== ALREADY_REACTED) {
+    if (error) throw error;
+    return;
+  }
+  // Row Level Security lets the user change only their own.
+  const { error: updateError } = await getSupabaseClient()
+    .from('task_likes')
+    .update({ emoji })
+    .eq('task_id', taskId);
+  if (updateError) throw updateError;
 }
 
-/** Takes back the user's thumbs up; Row Level Security lets them delete only their own. */
-export async function unlikeTask(taskId: string): Promise<void> {
+/** Takes back the user's reaction; Row Level Security lets them delete only their own. */
+export async function removeReaction(taskId: string): Promise<void> {
   const { error } = await getSupabaseClient().from('task_likes').delete().eq('task_id', taskId);
   if (error) throw error;
 }

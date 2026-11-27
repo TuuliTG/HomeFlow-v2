@@ -1,10 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { addComment, deleteComment, fetchNews, likeTask, unlikeTask } from '@/features/news/api';
-import { newsStart, type NewsItem } from '@/features/news/news';
+import {
+  addComment,
+  deleteComment,
+  fetchNews,
+  reactToTask,
+  removeReaction,
+} from '@/features/news/api';
+import { newsStart, type NewsItem, type NewsReaction, type Reaction } from '@/features/news/news';
 import { today } from '@/lib/dates';
 
-/** How often the news is refreshed while open, to show others' thumbs up and comments. */
+/** How often the news is refreshed while open, to show others' reactions and comments. */
 const REFRESH_EVERY_MS = 60_000;
 
 const newsKey = (userId: string) => ['news', userId] as const;
@@ -18,25 +24,38 @@ export function useNews(userId: string) {
   });
 }
 
-/** Gives or takes back a thumbs up. It changes straight away and goes back if saving fails. */
-export function useToggleLike(userId: string) {
+/**
+ * Reacts with an emoji, changes it, or takes the reaction back (`emoji` null). It changes straight away and goes
+ * back if saving fails.
+ */
+export function useReact(userId: string) {
   const queryClient = useQueryClient();
   const queryKey = newsKey(userId);
   return useMutation({
-    mutationFn: ({ taskId, liked }: { taskId: string; liked: boolean }) =>
-      liked ? likeTask(taskId) : unlikeTask(taskId),
-    onMutate: async ({ taskId, liked }) => {
+    mutationFn: ({ taskId, emoji }: { taskId: string; emoji: Reaction | null }) =>
+      emoji ? reactToTask(taskId, emoji) : removeReaction(taskId),
+    onMutate: async ({ taskId, emoji }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<NewsItem[]>(queryKey);
-      const toggle = (item: NewsItem): NewsItem => {
+      const react = (item: NewsItem): NewsItem => {
         if (item.taskId !== taskId) return item;
-        const others = item.likedBy.filter((person) => person.userId !== userId);
-        return { ...item, likedBy: liked ? [...others, { userId, name: null }] : others };
+        const isMine = (reaction: NewsReaction) => reaction.person.userId === userId;
+        if (!emoji) return { ...item, reactions: item.reactions.filter((r) => !isMine(r)) };
+        if (!item.reactions.some(isMine)) {
+          return {
+            ...item,
+            reactions: [...item.reactions, { person: { userId, name: null }, emoji }],
+          };
+        }
+        return {
+          ...item,
+          reactions: item.reactions.map((r) => (isMine(r) ? { ...r, emoji } : r)),
+        };
       };
-      queryClient.setQueryData(queryKey, previous?.map(toggle));
+      queryClient.setQueryData(queryKey, previous?.map(react));
       return { previous };
     },
-    onError: (_error, _like, context) => {
+    onError: (_error, _reaction, context) => {
       queryClient.setQueryData(queryKey, context?.previous);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey }),

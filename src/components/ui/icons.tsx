@@ -85,10 +85,11 @@ export function NewsIcon(props: IconProps) {
   );
 }
 
-export function ThumbsUpIcon(props: IconProps) {
+export function SmileIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>
-      <path d="M7 10v11H4V10zM7 10l4-7a2 2 0 0 1 3 2l-1 4h6a2 2 0 0 1 2 2.3l-1.4 7A2 2 0 0 1 17.6 21H7" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 14a4 4 0 0 0 7 0M9 9.5h.01M15 9.5h.01" />
     </BaseIcon>
   );
 }

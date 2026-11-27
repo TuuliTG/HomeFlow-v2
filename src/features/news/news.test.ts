@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupByDay, newsStart, type NewsItem } from '@/features/news/news';
+import { groupByDay, groupReactions, newsStart, type NewsItem } from '@/features/news/news';
 import { en } from '@/locales/en';
 
 const anna = { userId: 'u1', name: 'Anna' };
@@ -20,7 +20,7 @@ function item(details: Partial<NewsItem> & Pick<NewsItem, 'taskId' | 'completedA
     points: 3,
     doneBy: anna,
     helpers: [],
-    likedBy: [],
+    reactions: [],
     comments: [],
     ...details,
   };
@@ -83,5 +83,23 @@ describe('groupByDay', () => {
 describe('newsStart', () => {
   it('starts at local midnight six days before today, so the news covers a week', () => {
     expect(newsStart('2026-10-10')).toEqual(new Date(2026, 9, 4));
+  });
+});
+
+describe('groupReactions', () => {
+  it('groups by emoji in the order first given, the user first in each group', () => {
+    const groups = groupReactions(
+      [
+        { person: ben, emoji: '❤️' },
+        { person: carl, emoji: '👍' },
+        { person: anna, emoji: '❤️' },
+      ],
+      anna.userId,
+    );
+
+    expect(groups).toEqual([
+      { emoji: '❤️', people: [anna, ben] },
+      { emoji: '👍', people: [carl] },
+    ]);
   });
 });

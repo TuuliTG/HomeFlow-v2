@@ -4,7 +4,7 @@ import { useNotificationPreferences } from '@/features/notifications/useNotifica
 import { useMessages } from '@/lib/i18n/i18n';
 
 interface NotificationChoicesProps {
-  /** Children have no News, so they aren't told about finished tasks, thumbs up or comments (ADR 0008). */
+  /** Children have no News, so they aren't told about finished tasks, reactions or comments (ADR 0008). */
   isChild: boolean;
 }
 

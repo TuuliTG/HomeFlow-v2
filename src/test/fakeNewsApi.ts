@@ -1,14 +1,14 @@
 import type * as newsApi from '@/features/news/api';
-import type { NewsPerson } from '@/features/news/news';
+import type { NewsPerson, Reaction } from '@/features/news/news';
 import { fakeAuthBackend } from '@/test/fakeAuthApi';
 import { isVisible, requestsFailing, type StoredTask, tasks } from '@/test/fakeTasksBackend';
 
 /**
  * In-memory stand-in for `@/features/news/api`, installed for every unit test in `setup.ts`. Reads the done
- * tasks in `fakeTasksBackend` and keeps likes and comments like `task_likes` and `task_comments`: only on done
- * shared tasks the user can see, no thumbs up for one's own work, and only one's own to take back.
+ * tasks in `fakeTasksBackend` and keeps reactions and comments like `task_likes` and `task_comments`: only on
+ * done shared tasks the user can see, one reaction each, none to one's own work, and only one's own to change.
  */
-const likes: { taskId: string; userId: string }[] = [];
+const likes: { taskId: string; userId: string; emoji: Reaction }[] = [];
 const comments: {
   id: string;
   taskId: string;
@@ -42,8 +42,8 @@ export const fakeNewsBackend = {
     comments.length = 0;
     commentsFail = false;
   },
-  likeAs(userId: string, taskId: string) {
-    likes.push({ taskId, userId });
+  reactAs(userId: string, taskId: string, emoji: Reaction = '👍') {
+    likes.push({ taskId, userId, emoji });
   },
   commentAs(userId: string, taskId: string, body: string) {
     comments.push({
@@ -82,7 +82,9 @@ export const fetchNews: typeof newsApi.fetchNews = (since) => {
           person: person(helper.userId),
           points: helper.points,
         })),
-        likedBy: likes.filter((like) => like.taskId === task.id).map((like) => person(like.userId)),
+        reactions: likes
+          .filter((like) => like.taskId === task.id)
+          .map((like) => ({ person: person(like.userId), emoji: like.emoji })),
         comments: comments
           .filter((comment) => comment.taskId === task.id)
           .map(({ id, authorId, body, createdAt }) => ({
@@ -95,15 +97,15 @@ export const fetchNews: typeof newsApi.fetchNews = (since) => {
   );
 };
 
-export const likeTask: typeof newsApi.likeTask = (taskId) =>
+export const reactToTask: typeof newsApi.reactToTask = (taskId, emoji) =>
   onDoneTask(taskId, (userId, task) => {
     if (task.completed?.by === userId) throw new Error('Row level security');
-    if (!likes.some((like) => like.taskId === taskId && like.userId === userId)) {
-      likes.push({ taskId, userId });
-    }
+    const own = likes.find((like) => like.taskId === taskId && like.userId === userId);
+    if (own) own.emoji = emoji;
+    else likes.push({ taskId, userId, emoji });
   });
 
-export const unlikeTask: typeof newsApi.unlikeTask = (taskId) =>
+export const removeReaction: typeof newsApi.removeReaction = (taskId) =>
   onDoneTask(taskId, (userId) => {
     const index = likes.findIndex((like) => like.taskId === taskId && like.userId === userId);
     if (index >= 0) likes.splice(index, 1);

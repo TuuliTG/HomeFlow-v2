@@ -28,7 +28,7 @@ function fakeDeps(overrides: Partial<NotifyPraiseDependencies> = {}) {
   const names: Record<string, string> = { anna: 'Anna', ben: 'Ben', cleo: 'Cleo' };
   return {
     taskById: vi.fn((taskId: string) => Promise.resolve(taskId === 't1' ? task : null)),
-    likeExists: vi.fn(() => Promise.resolve(true)),
+    reactionOf: vi.fn(() => Promise.resolve<string | null>('🎉')),
     commentById: vi.fn((id: string) => Promise.resolve(id === 'c1' ? comment : null)),
     commentersOn: vi.fn(() => Promise.resolve<string[]>([])),
     membersOf: vi.fn(() =>
@@ -56,7 +56,7 @@ const like = { kind: 'liked', taskId: 't1', likedBy: 'anna' } as const;
 const commented = { kind: 'commented', commentId: 'c1' } as const;
 
 describe('parse praise', () => {
-  it('reads a new thumbs up', () => {
+  it('reads a new reaction', () => {
     expect(
       parsePraise({
         type: 'INSERT',
@@ -90,7 +90,7 @@ describe('parse praise', () => {
 });
 
 describe('notify praise', () => {
-  it('tells whoever did the task, and its helpers, who gave a thumbs up, opening News', async () => {
+  it('tells whoever did the task, and its helpers, who reacted with which emoji, opening News', async () => {
     const deps = fakeDeps();
 
     await expect(notifyPraise(like, deps)).resolves.toEqual({ sent: 2, removed: 0, failed: 0 });
@@ -98,19 +98,19 @@ describe('notify praise', () => {
     expect(notifiedUsers(deps)).toEqual(['ben', 'cleo']);
     expect(deps.send).toHaveBeenCalledWith(device('ben'), {
       title: 'HomeFlow',
-      body: 'Anna gave you a thumbs up for Dishes',
+      body: 'Anna reacted 🎉 to Dishes',
       url: '/news',
     });
   });
 
-  it('sends nothing for a thumbs up taken back before the webhook arrived', async () => {
-    const deps = fakeDeps({ likeExists: vi.fn(() => Promise.resolve(false)) });
+  it('sends nothing for a reaction taken back before the webhook arrived', async () => {
+    const deps = fakeDeps({ reactionOf: vi.fn(() => Promise.resolve(null)) });
 
     await expect(notifyPraise(like, deps)).resolves.toEqual({ sent: 0, removed: 0, failed: 0 });
     expect(deps.send).not.toHaveBeenCalled();
   });
 
-  it('never tells the member who gave the thumbs up, even when they helped', async () => {
+  it('never tells the member who reacted, even when they helped', async () => {
     const deps = fakeDeps({
       taskById: vi.fn(() => Promise.resolve({ ...task, helpers: ['anna', 'cleo'] })),
     });
@@ -173,7 +173,7 @@ describe('notify praise', () => {
 
     expect(deps.send).toHaveBeenCalledWith(device('ben'), {
       title: 'HomeFlow',
-      body: 'Someone gave you a thumbs up for Dishes',
+      body: 'Someone reacted 🎉 to Dishes',
       url: '/news',
     });
   });

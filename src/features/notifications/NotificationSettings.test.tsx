@@ -231,7 +231,7 @@ describe('notification settings', () => {
     expect(await within(choices).findAllByRole('checkbox')).toHaveLength(4);
     for (const name of [
       'someone finishes a shared task',
-      'someone gives a thumbs up for a task I did',
+      'someone reacts to a task I did',
       'someone comments on a task I did or commented on',
     ]) {
       expect(within(choices).queryByRole('checkbox', { name })).not.toBeInTheDocument();

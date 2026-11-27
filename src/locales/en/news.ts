@@ -1,6 +1,6 @@
 import { common } from '@/locales/en/common';
 
-/** The News tab: done tasks, thumbs up and comments. */
+/** The News tab: done tasks, reactions and comments. */
 export const news = {
   title: 'What the family has done',
   loadFailed: "We couldn't load the news. Check your connection and reload the page.",
@@ -15,10 +15,10 @@ export const news = {
   },
   /** The verb between who did a task and its name: "Ben completed Vacuum". */
   completed: { you: 'completed', other: 'completed' },
-  thumbsUp: 'Thumbs up',
-  thumbsUpLabel: (title: string) => `Thumbs up: ${title}`,
-  likedBy: (names: string[]) => `${common.joinNames(names)} gave a thumbs up`,
-  likeFailed: "We couldn't save your thumbs up. Try again.",
+  react: 'React',
+  reactTo: (title: string) => `React to ${title}`,
+  reactions: 'Reactions',
+  reactFailed: "We couldn't save your reaction. Try again.",
   comments: 'Comments',
   comment: 'Comment',
   commentOn: (title: string) => `Comment on ${title}`,
