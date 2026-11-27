@@ -79,14 +79,18 @@ function Responses({ item, userId }: { item: NewsItem; userId: string }) {
     <div className="border-line flex flex-col gap-3 border-t pt-3">
       <div className="flex flex-wrap items-center gap-2">
         {item.doneBy.userId !== userId && (
-          <ReactButton
-            item={item}
-            userId={userId}
-            isOpen={isReacting}
-            onToggle={() => {
+          <button
+            type="button"
+            aria-expanded={isReacting}
+            aria-label={t.news.reactTo(item.title)}
+            onClick={() => {
               setIsReacting(!isReacting);
             }}
-          />
+            className={`${actionClassName} ${idleActionClassName}`}
+          >
+            <SmileIcon className="size-5" />
+            {t.news.react}
+          </button>
         )}
         {!isWriting && (
           <button
@@ -145,42 +149,6 @@ function Points({ points }: { points: number }) {
 
 function ownReaction(item: NewsItem, userId: string) {
   return item.reactions.find((reaction) => reaction.person.userId === userId)?.emoji;
-}
-
-/** Opens the emoji to react with; shows the user's own once they have reacted. */
-function ReactButton({
-  item,
-  userId,
-  isOpen,
-  onToggle,
-}: {
-  item: NewsItem;
-  userId: string;
-  isOpen: boolean;
-  onToggle: () => void;
-}) {
-  const t = useMessages();
-  const own = ownReaction(item, userId);
-  return (
-    <button
-      type="button"
-      aria-expanded={isOpen}
-      aria-label={t.news.reactTo(item.title)}
-      onClick={onToggle}
-      className={`${actionClassName} ${
-        own ? 'border-brand-600 bg-brand-100 text-brand-900' : idleActionClassName
-      }`}
-    >
-      {own ? (
-        <span aria-hidden="true" className="text-lg leading-none">
-          {own}
-        </span>
-      ) : (
-        <SmileIcon className="size-5" />
-      )}
-      {t.news.react}
-    </button>
-  );
 }
 
 /** The emoji to react with; the user's current one again (`null`) takes it back. */
