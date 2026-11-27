@@ -7,8 +7,15 @@ alter table public.task_likes
 
 grant insert (emoji), update (emoji) on table public.task_likes to authenticated;
 
--- Changing the emoji keeps the like a member's own, on a task they could like.
+-- A member changes only their own emoji (the grant allows no other column), and only while the task is one they could
+-- react to: done, shared and not their own work, like the insert policy.
 create policy "Members can change the emoji of their own likes"
   on public.task_likes for update to authenticated
   using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
+  with check (
+    exists (
+      select 1 from public.tasks t
+      where t.id = task_likes.task_id and t.completed_at is not null and not t.is_private
+        and t.completed_by is distinct from (select auth.uid())
+    )
+  );

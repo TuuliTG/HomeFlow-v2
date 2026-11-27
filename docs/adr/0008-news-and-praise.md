@@ -17,7 +17,8 @@ Seeing what others in the family have done, and thanking them for it, is positiv
   in a week.
 - **Reactions**: `task_likes` (one per member and task, primary key `(task_id, user_id)`) with an `emoji`, one of
   👍 ❤️ 👏 🎉 💪 😂 (a check constraint, `reactions` in `news.ts`; 👍 by default). A member reacts to a done shared task
-  someone else did, never their own work, and changes (only `emoji` can be updated) or takes back only their own.
+  someone else did, never their own work, and changes (only `emoji` can be updated, while they still could react)
+  or takes back only their own. An emoji the app doesn't know yet shows as 👍, so adding one doesn't break older apps.
   The client inserts and, if they had reacted already, updates the emoji. The card's React button opens the emoji in
   a row; reactions show grouped by emoji (`groupReactions()`): "❤️ You and Ben".
 - **Comments**: `task_comments` (trimmed, 1–500 characters) on a done shared task, also one's own (to reply). Only

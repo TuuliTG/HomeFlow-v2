@@ -2,7 +2,7 @@
 -- Anna and Ben share a household; Ben has done Vacuum and Dust.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(7);
+select plan(9);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.com'),
@@ -35,20 +35,25 @@ select is(
   '👍',
   'a like without an emoji is a thumbs up'
 );
-select lives_ok(
-  $$ insert into public.task_likes (task_id, emoji) values (current_setting('test.vacuum')::uuid, '❤️') $$,
-  'a member can react with an emoji'
-);
 select throws_ok(
   $$ insert into public.task_likes (task_id, emoji) values (current_setting('test.vacuum')::uuid, '🍕') $$,
   '23514', null,
   'only the offered emoji can be used'
+);
+select lives_ok(
+  $$ insert into public.task_likes (task_id, emoji) values (current_setting('test.vacuum')::uuid, '❤️') $$,
+  'a member can react with an emoji'
 );
 update public.task_likes set emoji = '🎉' where task_id = current_setting('test.vacuum')::uuid;
 select is(
   (select emoji from public.task_likes where task_id = current_setting('test.vacuum')::uuid),
   '🎉',
   'a member can change their emoji'
+);
+select throws_ok(
+  $$ update public.task_likes set emoji = '🍕' $$,
+  '23514', null,
+  'an emoji can only be changed to an offered one'
 );
 select throws_ok(
   $$ update public.task_likes set task_id = current_setting('test.dust')::uuid $$,
@@ -63,6 +68,16 @@ select throws_ok(
   $$ update public.task_likes set user_id = '22222222-2222-2222-2222-222222222222' $$,
   '42501', null,
   'a like cannot be given to someone else'
+);
+
+reset role;
+update public.tasks set completed_at = null where id = current_setting('test.dust')::uuid;
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+select throws_ok(
+  $$ update public.task_likes set emoji = '💪' where task_id = current_setting('test.dust')::uuid $$,
+  '42501', null,
+  'an emoji cannot be changed once the task is no longer done'
 );
 
 select * from finish();
