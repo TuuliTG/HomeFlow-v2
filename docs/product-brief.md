@@ -34,7 +34,7 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
   an adult who shared it) bonus points on top of the task's; helpers see the tasks they helped with under _Completed_. _To do_ can also show
   as a private timetable of a day or a week, to plan when to do each task by dragging it to a time.
 - **News** — what the family has done in the last week, by day: each member's points that day (physical and meta
-  work apart) and each shared task done. Members give a thumbs up to others' work and comment on it.
+  work apart) and each shared task done. Members react to others' work with an emoji and comment on it.
 - **Rewards** — shared goals (for the whole family or the members an adult picks, e.g. two siblings; their points
   count) and personal goals (only yours count; the family sees them to cheer each other on), each a reward with the
   points needed and its progress; a shared goal can ask each participant for their own minimum, e.g. less for a
@@ -51,4 +51,4 @@ unevenly shared, which causes unfairness and conflict. Existing chore apps only 
   only once they accept. The one exception: an adult can give a child a chore of their own.
 - Clearly separate **tasks done** from **tasks created** everywhere points appear.
 - Encourage rotation: bonus for unfamiliar tasks, diminishing points for repeating the same task (later iteration).
-- Avoid pure competition; praise each other with a thumbs up or a comment (News). Open question: reward reset period.
+- Avoid pure competition; praise each other with an emoji reaction or a comment (News). Open question: reward reset period.
