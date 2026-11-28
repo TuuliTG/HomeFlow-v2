@@ -8,6 +8,10 @@ const NEWS_DAYS = 7;
 export const workTypes = ['physical', 'meta'] as const;
 type WorkType = (typeof workTypes)[number];
 
+/** The emoji a member can react with, like `task_likes.emoji`; the first is the default. */
+export const reactions = ['👍', '❤️', '👏', '🎉', '💪', '😂'] as const;
+export type Reaction = (typeof reactions)[number];
+
 export interface NewsPerson {
   userId: string | null;
   /** Their display name; null if they haven't chosen one or have left the household. */
@@ -28,7 +32,13 @@ interface NewsHelper {
   points: number;
 }
 
-/** A shared task someone in the household has done, with the thumbs up and comments it got. */
+/** A member's emoji reaction to a task; one each. */
+export interface NewsReaction {
+  person: NewsPerson;
+  emoji: Reaction;
+}
+
+/** A shared task someone in the household has done, with the reactions and comments it got. */
 export interface NewsItem {
   taskId: string;
   title: string;
@@ -41,7 +51,8 @@ export interface NewsItem {
   doneBy: NewsPerson;
   /** Their bonus points come on top of the task's, which are all the doer's. */
   helpers: NewsHelper[];
-  likedBy: NewsPerson[];
+  /** Oldest first. */
+  reactions: NewsReaction[];
   /** Oldest first. */
   comments: NewsComment[];
 }
@@ -123,4 +134,19 @@ export const COMMENT_MAX_LENGTH = 500;
 export function nameFor(person: NewsPerson, userId: string, t: Messages): string {
   if (person.userId === userId) return t.common.you;
   return person.name ?? t.common.someone;
+}
+
+/** The reactions grouped by emoji, in the order each emoji was first given, the user first in each group. */
+export function groupReactions(
+  reactions: NewsReaction[],
+  userId: string,
+): { emoji: Reaction; people: NewsPerson[] }[] {
+  const groups = new Map<Reaction, NewsPerson[]>();
+  for (const { emoji, person } of reactions) {
+    const people = groups.get(emoji) ?? [];
+    if (person.userId === userId) people.unshift(person);
+    else people.push(person);
+    groups.set(emoji, people);
+  }
+  return [...groups].map(([emoji, people]) => ({ emoji, people }));
 }

@@ -20,7 +20,7 @@ export const notifications: Messages['notifications'] = {
     kinds: {
       taskAdded: 'joku lisää yhteisen tehtävän',
       taskCompleted: 'joku tekee yhteisen tehtävän',
-      taskLiked: 'joku antaa peukun tekemälleni tehtävälle',
+      taskLiked: 'joku reagoi tekemääni tehtävään',
       taskCommented: 'joku kommentoi tehtävää, jonka tein tai jota kommentoin',
       taskRequested: 'joku pyytää minua tekemään tehtävän',
       requestAnswered: 'joku vastaa, kun pyydän häntä tekemään tehtävän',

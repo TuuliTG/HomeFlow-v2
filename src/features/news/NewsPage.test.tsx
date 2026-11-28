@@ -109,7 +109,7 @@ describe('news page', () => {
     ).toBeInTheDocument();
   });
 
-  it("gives a thumbs up to someone else's work and takes it back", async () => {
+  it("reacts with an emoji to someone else's work, changes it and takes it back", async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
     doTask(anna.id, ben.id, { title: 'Vacuum' });
@@ -117,36 +117,48 @@ describe('news page', () => {
     const user = userEvent.setup();
     renderAppAt('/news');
 
-    const thumbsUp = await screen.findByRole('button', { name: 'Thumbs up: Vacuum' });
-    expect(thumbsUp).toHaveAttribute('aria-pressed', 'false');
+    const vacuum = () => card('Ben completed Vacuum');
+    const react = await screen.findByRole('button', { name: 'React to Vacuum' });
     expect(
-      within(card('You completed Dust')).queryByRole('button', { name: /Thumbs up/ }),
+      within(card('You completed Dust')).queryByRole('button', { name: /React to/ }),
     ).not.toBeInTheDocument();
 
-    await user.click(thumbsUp);
-    expect(thumbsUp).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      await within(card('Ben completed Vacuum')).findByText('You gave a thumbs up'),
-    ).toBeInTheDocument();
+    await user.click(react);
+    expect(react).toHaveAttribute('aria-expanded', 'true');
+    await user.click(within(vacuum()).getByRole('button', { name: '❤️' }));
+    expect(await within(vacuum()).findByText('You')).toBeInTheDocument();
+    expect(within(vacuum()).getByRole('list', { name: 'Reactions' })).toHaveTextContent('❤️You');
+    expect(within(vacuum()).queryByRole('group')).not.toBeInTheDocument();
 
-    await user.click(thumbsUp);
-    expect(thumbsUp).toHaveAttribute('aria-pressed', 'false');
+    await user.click(react);
+    expect(within(vacuum()).getByRole('button', { name: '❤️' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await user.click(within(vacuum()).getByRole('button', { name: '🎉' }));
     await expect
-      .poll(() => within(card('Ben completed Vacuum')).queryByText(/gave a thumbs up/))
-      .toBeNull();
+      .poll(() => within(vacuum()).getByRole('list', { name: 'Reactions' }).textContent)
+      .toBe('🎉You');
+
+    await user.click(react);
+    await user.click(within(vacuum()).getByRole('button', { name: '🎉' }));
+    await expect.poll(() => within(vacuum()).queryByRole('list', { name: 'Reactions' })).toBeNull();
   });
 
-  it('shows who gave a thumbs up to your work', async () => {
+  it('groups who reacted to your work by emoji', async () => {
     const anna = logInAsFamilyMember();
     const ben = addBen();
     const carl = fakeAuthBackend.addProfile('carl@example.com', 'Carl');
     fakeHouseholdBackend.addMember(carl.id, 'The Virtanens');
     const dust = doTask(ben.id, anna.id, { title: 'Dust' });
-    fakeNewsBackend.likeAs(ben.id, dust);
-    fakeNewsBackend.likeAs(carl.id, dust);
+    fakeNewsBackend.reactAs(ben.id, dust);
+    fakeNewsBackend.reactAs(carl.id, dust, '💪');
     renderAppAt('/news');
 
-    expect(await screen.findByText('Ben and Carl gave a thumbs up')).toBeInTheDocument();
+    const groups = within(await screen.findByRole('list', { name: 'Reactions' })).getAllByRole(
+      'listitem',
+    );
+    expect(groups.map((group) => group.textContent)).toEqual(['👍Ben', '💪Carl']);
   });
 
   it('comments on a task and deletes only your own comments', async () => {

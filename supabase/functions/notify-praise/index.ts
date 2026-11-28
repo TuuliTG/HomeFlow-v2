@@ -1,4 +1,4 @@
-// notify-praise Edge Function (ADR 0005): a Database Webhook calls it when a member gives a thumbs up to or comments
+// notify-praise Edge Function (ADR 0005): a Database Webhook calls it when a member reacts with an emoji to or comments
 // on a done task in News; it tells whoever did the task (and earlier commenters). The logic lives in notifyPraise.ts.
 import { isAuthorized } from '../_shared/push.ts';
 import { displayNameOf, membersOf } from '../_shared/deno/household.ts';
@@ -39,15 +39,15 @@ async function taskById(taskId: string): Promise<PraisedTask | null> {
     : null;
 }
 
-async function likeExists(taskId: string, userId: string): Promise<boolean> {
+async function reactionOf(taskId: string, userId: string): Promise<string | null> {
   const { data, error } = await supabase
     .from('task_likes')
-    .select('task_id')
+    .select('emoji')
     .eq('task_id', taskId)
     .eq('user_id', userId)
     .maybeSingle();
   if (error) throw error;
-  return data !== null;
+  return (data as { emoji: string } | null)?.emoji ?? null;
 }
 
 async function commentById(commentId: string): Promise<TaskComment | null> {
@@ -91,7 +91,7 @@ Deno.serve(async (request) => {
     notifyPraise(praise, {
       ...pushDependencies,
       taskById,
-      likeExists,
+      reactionOf,
       commentById,
       commentersOn,
       membersOf,

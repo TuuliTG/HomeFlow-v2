@@ -644,8 +644,8 @@ export async function fakeSupabase(page: Page) {
     );
   }
 
-  /** Likes and comments, like task_likes and task_comments with Row Level Security. */
-  const likes: { task_id: string; user_id: string }[] = [];
+  /** Reactions and comments, like task_likes and task_comments with Row Level Security. */
+  const likes: { task_id: string; user_id: string; emoji: string }[] = [];
   const comments: {
     id: string;
     task_id: string;
@@ -654,15 +654,20 @@ export async function fakeSupabase(page: Page) {
     created_at: string;
   }[] = [];
 
-  /** Adds or takes back the user's like. */
+  /** Adds, changes or takes back the user's reaction. */
   async function likesEndpoint(route: Route) {
     const request = route.request();
     if (request.method() === 'POST') {
-      const { task_id } = request.postDataJSON() as { task_id: string };
-      likes.push({ task_id, user_id: user.id });
+      const { task_id, emoji } = request.postDataJSON() as { task_id: string; emoji: string };
+      likes.push({ task_id, user_id: user.id, emoji });
       return reply(route, 201);
     }
     const taskId = filterIds(new URL(request.url()).searchParams.get('task_id'))[0];
+    if (request.method() === 'PATCH') {
+      const { emoji } = request.postDataJSON() as { emoji: string };
+      for (const like of likes) if (like.task_id === taskId) like.emoji = emoji;
+      return reply(route, 204);
+    }
     likes.splice(0, likes.length, ...likes.filter((like) => like.task_id !== taskId));
     return reply(route, 204);
   }

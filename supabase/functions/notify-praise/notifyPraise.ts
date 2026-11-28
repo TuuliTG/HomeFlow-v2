@@ -30,7 +30,7 @@ export interface TaskComment {
   body: string;
 }
 
-/** A thumbs up or a comment that was just added. */
+/** An emoji reaction (`task_likes`) or a comment that was just added. */
 export type Praise =
   { kind: 'liked'; taskId: string; likedBy: string } | { kind: 'commented'; commentId: string };
 
@@ -42,8 +42,8 @@ interface HouseholdMember {
 export interface NotifyPraiseDependencies extends PushDependencies {
   /** The task, read from the database rather than trusted from the webhook payload. */
   taskById: (taskId: string) => Promise<PraisedTask | null>;
-  /** Whether the thumbs up is still there, i.e. wasn't taken back before the webhook arrived. */
-  likeExists: (taskId: string, userId: string) => Promise<boolean>;
+  /** The member's reaction emoji; null if it was taken back before the webhook arrived. */
+  reactionOf: (taskId: string, userId: string) => Promise<string | null>;
   commentById: (commentId: string) => Promise<TaskComment | null>;
   /** Everyone who has commented on the task, including the new comment's author. */
   commentersOn: (taskId: string) => Promise<string[]>;
@@ -56,8 +56,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * The thumbs up or comment a Database Webhook payload reports as inserted; null for anything else.
- * Only the keys are used: the like, comment and task are read from the database, so a forged
+ * The reaction or comment a Database Webhook payload reports as inserted; null for anything else.
+ * Only the keys are used: the reaction, comment and task are read from the database, so a forged
  * payload can't choose who is notified or the text.
  */
 export function parsePraise(payload: unknown): Praise | null {
@@ -99,17 +99,16 @@ interface Delivery {
 async function deliveryFor(praise: Praise, deps: NotifyPraiseDependencies) {
   if (praise.kind === 'liked') {
     const { taskId, likedBy } = praise;
-    const [task, stillLiked] = await Promise.all([
+    const [task, emoji] = await Promise.all([
       deps.taskById(taskId),
-      deps.likeExists(taskId, likedBy),
+      deps.reactionOf(taskId, likedBy),
     ]);
-    if (!task || !stillLiked) return null;
+    if (!task || !emoji) return null;
     return {
       task,
       actor: likedBy,
       others: [],
-      message: (name, title) =>
-        notification('task_liked', `${name} gave you a thumbs up for ${title}`),
+      message: (name, title) => notification('task_liked', `${name} reacted ${emoji} to ${title}`),
     } satisfies Delivery;
   }
   const comment = await deps.commentById(praise.commentId);
@@ -130,10 +129,10 @@ async function deliveryFor(praise: Praise, deps: NotifyPraiseDependencies) {
 }
 
 /**
- * Tells whoever did a task, and its helpers, that someone gave it a thumbs up or commented on it;
+ * Tells whoever did a task, and its helpers, that someone reacted to it with an emoji or commented on it;
  * a comment also reaches those who commented before, so replies are heard. Everyone opens News. The
  * member who praised isn't told, nor are children (they have no News, ADR 0008) or anyone no longer
- * in the household. A thumbs up taken back, a comment deleted, or a task undone or made private
+ * in the household. A reaction taken back, a comment deleted, or a task undone or made private
  * before the webhook arrived sends nothing. Members who turned that kind off are skipped.
  */
 export async function notifyPraise(

@@ -1,6 +1,6 @@
 # 0005. Push notifications
 
-- **Updated:** 2026-11-04 (thumbs up and comments)
+- **Updated:** 2026-11-27 (emoji reactions)
 
 ## Context
 
@@ -26,10 +26,10 @@ for apps added to the home screen (iOS 16.4+).
   asked whether they accepted or declined (opening the board). It reads the request with the service role and skips
   a request answered or replaced before the webhook arrived.
 - The **`notify-praise` Edge Function**, called by a Database Webhook on insert into `task_likes` and
-  `task_comments` with the same shared secret, tells whoever did the task and its helpers that someone gave it a
-  thumbs up or commented (opening News); a comment also reaches those who commented on it before, so replies are
+  `task_comments` with the same shared secret, tells whoever did the task and its helpers that someone reacted to
+  it with an emoji or commented (opening News); a comment also reaches those who commented on it before, so replies are
   heard. Never the member who praised, nor children (no News, ADR 0008). It reads the like or comment and the task
-  with the service role, so a thumbs up taken back, a comment deleted or a task undone before it runs sends nothing.
+  with the service role, so a reaction taken back, a comment deleted or a task undone before it runs sends nothing.
 - The **`send-reminders` Edge Function** sends task reminders (ADR 0004). **Supabase Cron** calls it every minute
   with the same shared secret, so reminders arrive within about a minute of their time.
 - **Choosing what to get:** `notification_preferences` holds one row per user, with a boolean per kind
@@ -43,7 +43,7 @@ for apps added to the home screen (iOS 16.4+).
 - Each function's logic is in a plain module (`notify.ts`, `notifyRequest.ts`, `notifyPraise.ts`, `remind.ts`), and sending to devices in
   `_shared/push.ts`, all unit-tested; the Deno-only parts (`index.ts`, `_shared/deno/`) are checked with
   `deno check`.
-- A notification says only who added which task and opens the board, who did, gave a thumbs up for or commented on
+- A notification says only who added which task and opens the board, who did, reacted to (with which emoji) or commented on
   which task (with the start of the comment, at most 100 characters) and opens News, who asks the user to do which
   task or how they answered, or which task a reminder is for and opens My tasks. `src/sw.ts` shows it; push messages are validated by hand (`src/lib/pushNotification.ts`) to keep the worker small.
 
@@ -55,7 +55,7 @@ for apps added to the home screen (iOS 16.4+).
 - A reminder is taken before it is sent: if sending fails it is lost rather than sent twice.
 - The tasks webhook now runs on every task update (each pick-up, edit and live-refresh touch); the function drops
   those after parsing the payload, so they cost only an invocation.
-- Taking a thumbs up back and giving it again notifies again; a family is unlikely to bother.
+- Taking a reaction back and giving it again notifies again; a family is unlikely to bother.
 - A task marked done and undone within the hour still sent "did"; adding a task as "Already done" (ADR 0004)
   sends both "added" and "did".
 

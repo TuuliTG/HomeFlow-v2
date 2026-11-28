@@ -11,6 +11,7 @@ const supabase = vi.hoisted(() => {
     order: vi.fn(),
     in: vi.fn(),
     insert: vi.fn(),
+    update: vi.fn(),
     delete: vi.fn(),
   };
   return { query, client: { from: vi.fn(() => query) } };
@@ -31,16 +32,16 @@ const row = {
   completed_at: '2026-10-10T08:00:00Z',
   completed_by: 'u2',
   task_helpers: [{ user_id: 'u3', points: 1 }],
-  task_likes: [{ user_id: 'u1' }],
+  task_likes: [{ user_id: 'u1', emoji: '❤️', created_at: '2026-10-10T09:00:00Z' }],
   task_comments: [
     { id: 'c1', author_id: 'u1', body: 'Thanks!', created_at: '2026-10-10T09:00:00Z' },
     { id: 'c2', author_id: null, body: 'Nice', created_at: '2026-10-10T10:00:00Z' },
   ],
 };
 
-/** The news query's result: it is ordered twice (newest done first, then comments oldest first). */
+/** The news query's result: it is ordered thrice (newest done first, then reactions and comments oldest first). */
 function respondWithNews(result: { data: unknown; error: unknown }) {
-  query.order.mockReturnValueOnce(query).mockResolvedValueOnce(result);
+  query.order.mockReturnValueOnce(query).mockReturnValueOnce(query).mockResolvedValueOnce(result);
 }
 
 describe('news api', () => {
@@ -51,6 +52,7 @@ describe('news api', () => {
     query.gte.mockReturnValue(query);
     query.or.mockReturnValue(query);
     query.delete.mockReturnValue(query);
+    query.update.mockReturnValue(query);
   });
 
   it('reads shared tasks done since the start, leaving out reminders, with helpers, likes and comments and everyone named', async () => {
@@ -74,7 +76,7 @@ describe('news api', () => {
         completedAt: '2026-10-10T08:00:00Z',
         doneBy: { userId: 'u2', name: 'Ben' },
         helpers: [{ person: { userId: 'u3', name: 'Carl' }, points: 1 }],
-        likedBy: [{ userId: 'u1', name: 'Anna' }],
+        reactions: [{ person: { userId: 'u1', name: 'Anna' }, emoji: '❤️' }],
         comments: [
           {
             id: 'c1',
@@ -114,26 +116,46 @@ describe('news api', () => {
     await expect(api.fetchNews(new Date())).rejects.toBe(failure);
   });
 
-  it('likes a task, ignoring a like that is already there', async () => {
-    query.insert.mockResolvedValueOnce({ error: null });
-    await api.likeTask('t1');
-    expect(client.from).toHaveBeenCalledWith('task_likes');
-    expect(query.insert).toHaveBeenCalledWith({ task_id: 't1' });
-
-    query.insert.mockResolvedValueOnce({ error: { code: '23505' } });
-    await expect(api.likeTask('t1')).resolves.toBeUndefined();
-
-    query.insert.mockResolvedValueOnce({ error: failure });
-    await expect(api.likeTask('t1')).rejects.toBe(failure);
+  it('reads an emoji it does not know as a thumbs up', async () => {
+    respondWithNews({
+      data: [
+        { ...row, task_likes: [{ user_id: 'u1', emoji: '🦄', created_at: row.completed_at }] },
+      ],
+      error: null,
+    });
+    query.in.mockResolvedValue({ data: [{ id: 'u1', display_name: 'Anna' }], error: null });
+    const [item] = await api.fetchNews(new Date());
+    expect(item?.reactions).toEqual([{ person: { userId: 'u1', name: 'Anna' }, emoji: '👍' }]);
   });
 
-  it('takes back a like', async () => {
+  it('reacts to a task, changing the emoji when the user has reacted already', async () => {
+    query.insert.mockResolvedValueOnce({ error: null });
+    await api.reactToTask('t1', '🎉');
+    expect(client.from).toHaveBeenCalledWith('task_likes');
+    expect(query.insert).toHaveBeenCalledWith({ task_id: 't1', emoji: '🎉' });
+    expect(query.update).not.toHaveBeenCalled();
+
+    query.insert.mockResolvedValueOnce({ error: { code: '23505' } });
     query.eq.mockResolvedValueOnce({ error: null });
-    await api.unlikeTask('t1');
+    await api.reactToTask('t1', '💪');
+    expect(query.update).toHaveBeenCalledWith({ emoji: '💪' });
+    expect(query.eq).toHaveBeenCalledWith('task_id', 't1');
+
+    query.insert.mockResolvedValueOnce({ error: { code: '23505' } });
+    query.eq.mockResolvedValueOnce({ error: failure });
+    await expect(api.reactToTask('t1', '💪')).rejects.toBe(failure);
+
+    query.insert.mockResolvedValueOnce({ error: failure });
+    await expect(api.reactToTask('t1', '👍')).rejects.toBe(failure);
+  });
+
+  it('takes back a reaction', async () => {
+    query.eq.mockResolvedValueOnce({ error: null });
+    await api.removeReaction('t1');
     expect(query.eq).toHaveBeenCalledWith('task_id', 't1');
 
     query.eq.mockResolvedValueOnce({ error: failure });
-    await expect(api.unlikeTask('t1')).rejects.toBe(failure);
+    await expect(api.removeReaction('t1')).rejects.toBe(failure);
   });
 
   it('adds a trimmed comment', async () => {
